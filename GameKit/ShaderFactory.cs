@@ -43,6 +43,14 @@ public class SubDirectoryShaderPathResolver: IShaderPathResolver
     }
 }
 
+public class ShaderLoader
+{
+    public Shader Load(string path)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 // TODO: release shaders!
 //SDL3.SDL_ReleaseGPUShader(SdlGpuDevice, vertexShader);
 //SDL3.SDL_ReleaseGPUShader(SdlGpuDevice, fragmentShader);
