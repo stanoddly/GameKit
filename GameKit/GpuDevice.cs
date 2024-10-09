@@ -31,6 +31,18 @@ public struct GpuDevice: IDisposable
         SdlWindow = sdlWindow;
     }
 
+    public ShaderFormats GetSupportedShaderFormats()
+    {
+        unsafe
+        {
+            SDL_GPUShaderFormat formats = SDL3.SDL_GetGPUShaderFormats(SdlGpuDevice);
+            
+            ShaderFormats shaderFormats = new ShaderFormats((uint)formats);
+
+            return shaderFormats;
+        }
+    }
+
     public GpuCommandBuffer AcquireCommandBuffer()
     {
         unsafe

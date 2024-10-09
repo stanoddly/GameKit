@@ -13,12 +13,38 @@ public enum ShaderStage
 
 public enum ShaderFormat: uint
 {
+    None = 0,
     Private = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_PRIVATE,
     SpirV = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
     Dxbc = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC,
     Dxil = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
     Msl = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
     MetalLib = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_METALLIB
+}
+
+public readonly struct ShaderFormats
+{
+    private readonly uint _flags;
+
+    public ShaderFormats(uint flags)
+    {
+        _flags = flags;
+    }
+
+    public static ShaderFormats operator &(ShaderFormats a, ShaderFormat b)
+    {
+        return new ShaderFormats(a._flags & (uint)b);
+    }
+    
+    public static ShaderFormats operator |(ShaderFormats a, ShaderFormat b)
+    {
+        return new ShaderFormats(a._flags | (uint)b);
+    }
+
+    public bool Contains(ShaderFormat format)
+    {
+        return (_flags & (uint)format) == (uint)format;
+    }
 }
 
 
@@ -40,14 +66,6 @@ public class SubDirectoryShaderPathResolver: IShaderPathResolver
             // TODO: better exception type and message
             _ => throw new NotImplementedException("Shader format not supported"),
         };
-    }
-}
-
-public class ShaderLoader
-{
-    public Shader Load(string path)
-    {
-        throw new NotImplementedException();
     }
 }
 
