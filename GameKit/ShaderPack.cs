@@ -19,7 +19,7 @@ public class ShaderInstance
     public required string EntryPoint { get; init; }
 }
 
-public class ShaderMeta
+public class ShaderPack
 {
     public required ShaderStage Stage { get; init; }
     public required ShaderResources Resources { get; init; }
@@ -32,14 +32,14 @@ public class ShaderMeta
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
     UseStringEnumConverter = true)]
-[JsonSerializable(typeof(ShaderMeta))]
+[JsonSerializable(typeof(ShaderPack))]
 public partial class ShaderMetaJsonContext : JsonSerializerContext;
 
 public class ShaderLoader
 {
     private readonly GpuDevice _gpuDevice;
     private readonly IFileSystem _fileSystem;
-    private ShaderFormats _shaderFormats;
+    private readonly ShaderFormats _shaderFormats;
 
     public ShaderLoader(GpuDevice gpuDevice, IFileSystem? fileSystem=null)
     {
@@ -56,10 +56,10 @@ public class ShaderLoader
         }
     }
 
-    public Shader Load(Stream stream)
+    public Shader Load(Stream stream, string? parentPath = null)
     {
         // reflection free deserialization
-        ShaderMeta? shaderMeta = JsonSerializer.Deserialize(stream, ShaderMetaJsonContext.Default.ShaderMeta);
+        ShaderPack? shaderMeta = JsonSerializer.Deserialize(stream, ShaderMetaJsonContext.Default.ShaderMetadata);
 
         if (shaderMeta == null)
         {
@@ -70,13 +70,13 @@ public class ShaderLoader
         return Load(shaderMeta);
     }
 
-    public Shader Load(ShaderMeta shaderMeta)
+    public Shader Load(ShaderPack shaderPack)
     {
-        foreach (ShaderInstance shaderInstance in shaderMeta.Shaders)
+        foreach (ShaderInstance shaderInstance in shaderPack.Shaders)
         {
             if (_shaderFormats.Contains(shaderInstance.Format))
             {
-                return CreateShader(shaderInstance, shaderMeta.Resources, shaderMeta.Stage);
+                return CreateShader(shaderInstance, shaderPack.Resources, shaderPack.Stage);
             }
         }
 
@@ -86,24 +86,10 @@ public class ShaderLoader
     
     private Shader CreateShader(ShaderInstance shaderInstance, ShaderResources shaderResources, ShaderStage shaderStage)
     {
-        ShaderFormat shaderFormat = DetermineSupportedShaderFormat();
-        _shaderCreateInfo.Format = (SDL_GPUShaderFormat)shaderFormat;
-
-        if (_shaderCreateInfo.Name != null && _shaderCreateInfo.Code != null)
-        {
-            // TODO: throw something reasonable
-            throw new NotImplementedException();
-        }
-
         byte[] shaderCode;
-        if (_shaderCreateInfo.Code != null)
+        if (shaderInstance.Binary != null)
         {
-            shaderCode = _shaderCreateInfo.Code;
-        }
-        else if (_shaderCreateInfo.Name != null)
-        {
-            string filename = _shaderPathResolver.Resolve(_shaderCreateInfo.Stage, shaderFormat, _shaderCreateInfo.Name!);
-            shaderCode = File.ReadAllBytes(filename);
+            shaderCode = shaderInstance.Binary;
         }
         else
         {
@@ -111,34 +97,29 @@ public class ShaderLoader
             throw new NotImplementedException();
         }
 
-        ReadOnlySpan<byte> entryPoint = _shaderCreateInfo.EntryPoint ?? "main"u8;
-
-        SDL_GPUShaderStage sdlGpuShaderStage = (SDL_GPUShaderStage)_shaderCreateInfo.Stage;
+        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint);
 
         unsafe
         {
-            SDL_GPUShaderCreateInfo sdlGpuShaderCreateInfo;
             fixed (byte* contentPointer = shaderCode)
             fixed (byte* entrypoint = entryPoint)
             {
-                sdlGpuShaderCreateInfo = new SDL_GPUShaderCreateInfo() {
+                SDL_GPUShaderCreateInfo sdlGpuShaderCreateInfo = new() {
                     code = contentPointer,
                     code_size = (nuint)shaderCode.Length,
                     entrypoint = entrypoint,
-                    format = _shaderCreateInfo.Format,
-                    stage = sdlGpuShaderStage,
-                    num_samplers = (uint)_shaderCreateInfo.Samplers,
-                    num_uniform_buffers = (uint)_shaderCreateInfo.UniformBuffers,
-                    num_storage_buffers = (uint)_shaderCreateInfo.StorageBuffers,
-                    num_storage_textures = (uint)_shaderCreateInfo.StorageTextures
+                    format = (SDL_GPUShaderFormat)shaderInstance.Format,
+                    stage = (SDL_GPUShaderStage)shaderStage,
+                    num_samplers = (uint)shaderResources.Samplers,
+                    num_uniform_buffers = (uint)shaderResources.UniformBuffers,
+                    num_storage_buffers = (uint)shaderResources.StorageBuffers,
+                    num_storage_textures = (uint)shaderResources.StorageTextures
                 };
                 
                 SDL_GPUShader* sdlGpuShader = SDL3.SDL_CreateGPUShader(_gpuDevice.SdlGpuDevice, &sdlGpuShaderCreateInfo);
                 if (sdlGpuShader == null) throw new GameKitInitializationException($"SDL_CreateGPUShader failed: {SDL3.SDL_GetError()}");
 
-                Shader shader = new Shader(sdlGpuShader, _shaderCreateInfo.Stage, _shaderCreateInfo.Samplers, _shaderCreateInfo.StorageTextures, _shaderCreateInfo.StorageBuffers, _shaderCreateInfo.UniformBuffers);
-                _shaderCreateInfo = default;
-
+                Shader shader = new Shader(sdlGpuShader, shaderStage, shaderResources.Samplers, shaderResources.StorageTextures, shaderResources.StorageBuffers, shaderResources.UniformBuffers);
                 return shader;
             }
         }
