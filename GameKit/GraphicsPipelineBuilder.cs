@@ -42,14 +42,12 @@ public class GraphicsPipelineBuilder
 {
     private GpuDevice _gpuDevice;
     private Window _window;
-    private ShaderBuilder? _shaderBuilder;
     private PipelineBuilderInfo _info = new();
 
-    public GraphicsPipelineBuilder(GpuDevice gpuDevice, Window window, ShaderBuilder? shaderBuilder = null)
+    public GraphicsPipelineBuilder(GpuDevice gpuDevice, Window window)
     {
         _gpuDevice = gpuDevice;
         _window = window;
-        _shaderBuilder = shaderBuilder;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay()
