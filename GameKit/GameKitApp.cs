@@ -7,7 +7,7 @@ public sealed class GameKitApp: IDisposable
 {
     public required Window Window { get; init; }
     public required GpuDevice GpuDevice { get; init; }
-    public required ShaderBuilder ShaderBuilder { get; init; }
+    public required ShaderLoader ShaderLoader { get; init; }
     public required GpuMemoryUploader GpuMemoryUploader { get; init; }
     public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
     
@@ -170,7 +170,7 @@ public struct GameKitAppBuilder
         {
             GpuDevice = gpuDevice,
             Window = window,
-            ShaderBuilder = new ShaderBuilder(gpuDevice),
+            ShaderLoader = new ShaderLoader(gpuDevice),
             GpuMemoryUploader = new GpuMemoryUploader(gpuDevice),
             GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window)
         };

@@ -4,8 +4,8 @@ using var gameKitApp = new GameKitAppBuilder()
     .WithRootDirectoryFromExecutable("Content")
     .Build();
 
-Shader vertexShader = gameKitApp.ShaderBuilder.UseVertexStage().FromFileBasedOnFormat("PositionColor").Build();
-Shader fragmentShader = gameKitApp.ShaderBuilder.UseFragmentStage().FromFileBasedOnFormat("SolidColor").Build();
+Shader vertexShader = gameKitApp.ShaderLoader.Load("PositionColor.spak.json");
+Shader fragmentShader  = gameKitApp.ShaderLoader.Load("SolidColor.spak.json");
 
 RenderingPipeline renderingPipeline = gameKitApp.GraphicsPipelineBuilder
     .AddColorFormatFromDisplay()
