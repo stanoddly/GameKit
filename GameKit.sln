@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit", "GameKit\GameKit.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples/Examples.Triangle", "Examples/Examples.Triangle\Examples.Triangle.csproj", "{7A636882-84DF-4344-8C7A-8CE411B55A16}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.ImageLoader.StbImageSharp", "GameKit.ImageLoader.StbImageSharp\GameKit.ImageLoader.StbImageSharp.csproj", "{D7CB6EFB-0B11-4769-B0EE-32E8A4BE1342}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{7A636882-84DF-4344-8C7A-8CE411B55A16}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A636882-84DF-4344-8C7A-8CE411B55A16}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A636882-84DF-4344-8C7A-8CE411B55A16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7CB6EFB-0B11-4769-B0EE-32E8A4BE1342}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7CB6EFB-0B11-4769-B0EE-32E8A4BE1342}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7CB6EFB-0B11-4769-B0EE-32E8A4BE1342}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7CB6EFB-0B11-4769-B0EE-32E8A4BE1342}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
