@@ -3,7 +3,7 @@ using GameKit.ImageLoader.StbImageSharp;
 
 using var gameKitApp = new GameKitAppBuilder()
     .UseStbImageLoader()
-    .WithSize(64, 64)
+    .WithSize(512, 512)
     .Build();
 
 Shader vertexShader = gameKitApp.LoadShader("Content/TexturedQuadVertex.spak.json");
