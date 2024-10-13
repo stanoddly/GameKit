@@ -58,15 +58,21 @@ public struct MemoryTransfer: IDisposable
         }
     }
 
-    public Texture AddTexture(Span<ushort> textureData, int width, int height)
+    public Texture AddTexture(Image image)
     {
-        uint sizeInBytes = (uint)(Unsafe.SizeOf<ushort>() * textureData.Length);
+        SdlError.Clear();
+
+        // TODO: check parameters
+        ReadOnlySpan<byte> imageData = image.Data;
+        (int width, int height) = image.Size;
+        uint sizeInBytes = (uint)imageData.Length;
+
         unsafe
         {
-            SDL_GPUTextureCreateInfo sdlGpuTextureCreateInfo = new SDL_GPUTextureCreateInfo()
+            SDL_GPUTextureCreateInfo sdlGpuTextureCreateInfo = new SDL_GPUTextureCreateInfo
             {
                 type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D,
-                format = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
+                format = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
                 width = (uint)width,
                 height = (uint)height,
                 layer_count_or_depth = 1,
@@ -75,7 +81,7 @@ public struct MemoryTransfer: IDisposable
             };
             Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
 
-            SDL_GPUTransferBufferCreateInfo sdlGpuTransferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo()
+            SDL_GPUTransferBufferCreateInfo sdlGpuTransferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
             {
                 usage = SDL_GPUTransferBufferUsage.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
                 size = (uint)(width * height * 4)
@@ -86,20 +92,20 @@ public struct MemoryTransfer: IDisposable
             );
 
             ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, SDL_bool.SDL_FALSE);
-            fixed (ushort* textureDataPointer = textureData)
+            fixed (byte* textureDataPointer = imageData)
             {
                 Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
             }
             
             SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer);
 
-            SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo()
+            SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo
             {
                 transfer_buffer = textureTransferBuffer,
                 offset = 0
             };
 
-            SDL_GPUTextureRegion sdlGpuTextureRegion = new SDL_GPUTextureRegion()
+            SDL_GPUTextureRegion sdlGpuTextureRegion = new SDL_GPUTextureRegion
             {
                 texture = sdlGpuTexture,
                 w = (uint)width,
@@ -112,6 +118,7 @@ public struct MemoryTransfer: IDisposable
                 &sdlGpuTextureTransferInfo,
                 &sdlGpuTextureRegion,
                 SDL_bool.SDL_FALSE);
+            SdlError.ThrowOnError();
 
             return new Texture(sdlGpuTexture, width, height);
         }

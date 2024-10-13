@@ -30,6 +30,12 @@ public struct GameKitAppBuilder
         _windowSize = size;
         return this;
     }
+    
+    public GameKitAppBuilder WithSize(int width, int height)
+    {
+        _windowSize = (width, height);
+        return this;
+    }
 
     public GameKitAppBuilder WithTitle(string title)
     {
@@ -70,7 +76,7 @@ public struct GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder WithLoaderRegistration(IContentLoaderRegistration loaderRegistration)
+    public GameKitAppBuilder WithContentLoader(IContentLoaderRegistration loaderRegistration)
     {
         _loaderRegistrations ??= new List<IContentLoaderRegistration>();
         _loaderRegistrations.Add(loaderRegistration);

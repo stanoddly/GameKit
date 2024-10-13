@@ -187,7 +187,7 @@ public class GraphicsPipelineBuilder
                     target_info = new()
                     {
                         num_color_targets = (uint)sdlGpuColorTargetDescriptions.Length,
-                        color_target_descriptions = sdlGpuColorTargetDescriptionsPointer
+                        color_target_descriptions = sdlGpuColorTargetDescriptionsPointer,
                     },
                     vertex_input_state = new SDL_GPUVertexInputState()
                     {
@@ -196,7 +196,7 @@ public class GraphicsPipelineBuilder
                         num_vertex_attributes = (uint)sdlGpuVertexAttributes.Length,
                         vertex_attributes = sdlGpuVertexAttributePointer
                     },
-                    primitive_type = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+                    primitive_type = (SDL_GPUPrimitiveType)_info.PrimitiveType,
                     vertex_shader = _info.VertexShader!.Pointer,
                     fragment_shader = _info.FragmentShader!.Pointer
                 };

@@ -57,6 +57,16 @@ public struct FrameRenderPass: IDisposable
             SDL3.SDL_BindGPUVertexBuffers(SdlGpuRenderPass, 0, &sdlGpuBufferBinding, 1);
         }
     }
+    
+    public void BindFragmentSampler(Texture texture, Sampler sampler)
+    {
+        unsafe
+        {
+            SDL_GPUTextureSamplerBinding sdlGpuBufferBinding = new SDL_GPUTextureSamplerBinding { texture = texture.Pointer, sampler = sampler.Pointer };
+            // TODO: first slot 0!!
+            SDL3.SDL_BindGPUFragmentSamplers(SdlGpuRenderPass, 0, &sdlGpuBufferBinding, 1);
+        }
+    }
 
     public void DrawPrimitive()
     {
