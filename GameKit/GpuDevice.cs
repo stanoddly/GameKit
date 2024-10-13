@@ -145,6 +145,28 @@ public struct GpuDevice: IDisposable
             return new FrameRenderContext {ColorTargetInfo = colorTargetInfo, GpuCommandBuffer = gpuCommandBuffer, Size = (width, height), SwapchainTexture = swapchainTexture };
         }
     }
+    
+    public Sampler CreatePixelArtSampler()
+    {
+        SDL_GPUSamplerCreateInfo sdlGpuSamplerCreateInfo = new SDL_GPUSamplerCreateInfo()
+        {
+            min_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+            mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
+            mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+            address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+            address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+            address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+            compare_op = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
+            enable_compare = SDL_bool.SDL_TRUE
+        };
+        unsafe
+        {
+            Pointer<SDL_GPUSampler> samplerPointer = SDL3.SDL_CreateGPUSampler(SdlGpuDevice, &sdlGpuSamplerCreateInfo);
+            SdlError.ThrowOnNull(samplerPointer);
+
+            return new Sampler(samplerPointer);
+        }
+    }
 
     public void Dispose()
     {

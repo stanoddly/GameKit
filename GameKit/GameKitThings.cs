@@ -70,16 +70,6 @@ public class Shader
     }
 }
 
-public struct RenderingPipeline<TVertexType> where TVertexType: unmanaged, IVertexType
-{
-    public Pointer<SDL_GPUGraphicsPipeline> Pointer { get; private set; }
-
-    public RenderingPipeline(Pointer<SDL_GPUGraphicsPipeline> pointer)
-    {
-        Pointer = pointer;
-    }
-}
-
 public struct RenderingPipeline
 {
     public Pointer<SDL_GPUGraphicsPipeline> Pointer { get; private set; }

@@ -32,6 +32,8 @@ public static class StbImageGameKitBuilderExtensions
 {
     public static GameKitAppBuilder UseStbImageLoader(this GameKitAppBuilder builder)
     {
+        StbImageLoader imageLoader = new StbImageLoader();
+        builder.WithContentLoader(imageLoader);
         return builder;
     }
 }
