@@ -13,6 +13,58 @@ public enum PrimitiveType
     PointList = SDL_GPUPrimitiveType.SDL_GPU_PRIMITIVETYPE_POINTLIST
 }
 
+public enum SampleCount
+{
+    Count1 = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
+    Count2 = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_2,
+    Count4 = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_4,
+    Count8 = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_8
+}
+
+public enum CompareOperation
+{
+    Invalid = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_INVALID,
+    Never = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
+    Less = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS,
+    Equal = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_EQUAL,
+    LessOrEqual = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+    Greater = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER,
+    NotEqual = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NOT_EQUAL,
+    GreaterOrEqual = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_GREATER_OR_EQUAL,
+    Always = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_ALWAYS
+}
+
+public enum StencilOperation
+{
+    Invalid = SDL_GPUStencilOp.SDL_GPU_STENCILOP_INVALID,
+    Keep = SDL_GPUStencilOp.SDL_GPU_STENCILOP_KEEP,
+    Zero = SDL_GPUStencilOp.SDL_GPU_STENCILOP_ZERO,
+    Replace = SDL_GPUStencilOp.SDL_GPU_STENCILOP_REPLACE,
+    IncrementAndClamp = SDL_GPUStencilOp.SDL_GPU_STENCILOP_INCREMENT_AND_CLAMP,
+    DecrementAndClamp = SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_CLAMP,
+    Invert = SDL_GPUStencilOp.SDL_GPU_STENCILOP_INVERT,
+    IncrementAndWrap = SDL_GPUStencilOp.SDL_GPU_STENCILOP_INCREMENT_AND_WRAP,
+    DecrementAndWrap = SDL_GPUStencilOp.SDL_GPU_STENCILOP_DECREMENT_AND_WRAP,
+}
+
+public readonly record struct StencilOperationState(
+    StencilOperation Fail,
+    StencilOperation Pass,
+    StencilOperation DepthFail,
+    CompareOperation Compare)
+{
+    public static implicit operator SDL_GPUStencilOpState(in StencilOperationState stencilOperationState)
+    {
+        return new SDL_GPUStencilOpState
+        {
+            compare_op = (SDL_GPUCompareOp)stencilOperationState.Compare,
+            depth_fail_op = (SDL_GPUStencilOp)stencilOperationState.DepthFail,
+            fail_op = (SDL_GPUStencilOp)stencilOperationState.Fail,
+            pass_op = (SDL_GPUStencilOp)stencilOperationState.Pass
+        };
+    }
+}
+
 internal struct PipelineBuilderInfo
 {
     public PipelineBuilderInfo()
@@ -23,6 +75,8 @@ internal struct PipelineBuilderInfo
     public List<SDL_GPUColorTargetDescription> SdlGpuColorTargetDescriptions { get; } = new();
     public List<SDL_GPUVertexAttribute> SdlGpuVertexAttributes { get; } = new();
     public List<SDL_GPUVertexBufferDescription> SdlGpuVertexBufferDescriptions { get; } = new();
+    public SDL_GPUMultisampleState SdlGpuMultisampleState { get; set; }
+    public SDL_GPUDepthStencilState SdlGpuDepthStencilState = new();
     
     public Shader? VertexShader { get; set; } = null;
     public Shader? FragmentShader { get; set; } = null;
@@ -35,6 +89,8 @@ internal struct PipelineBuilderInfo
         VertexShader = null;
         FragmentShader = null;
         PrimitiveType = PrimitiveType.TriangleList;
+        SdlGpuMultisampleState = new();
+        SdlGpuDepthStencilState = new();
     }
 }
 
@@ -114,7 +170,7 @@ public class GraphicsPipelineBuilder
         return this;
     }
     
-    public GraphicsPipelineBuilder UseShaders(Shader vertexShader, Shader fragmentShader)
+    public GraphicsPipelineBuilder SetShaders(Shader vertexShader, Shader fragmentShader)
     {
         if (vertexShader.Stage != ShaderStage.Vertex)
         {
@@ -132,13 +188,79 @@ public class GraphicsPipelineBuilder
         return this;
     }
 
-    public GraphicsPipelineBuilder UsePrimitiveType(PrimitiveType primitiveType)
+    public GraphicsPipelineBuilder SetPrimitiveType(PrimitiveType primitiveType)
     {
         _info.PrimitiveType = primitiveType;
         return this;
     }
+
+    public GraphicsPipelineBuilder EnableMultiSampling(SampleCount sampleCount, UInt32? mask = null)
+    {
+        // TODO: check the value with SDL_GPUTextureSupportsSampleCount
+        _info.SdlGpuMultisampleState = _info.SdlGpuMultisampleState with
+        {
+            sample_count = (SDL_GPUSampleCount)sampleCount,
+            enable_mask = mask.HasValue ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE,
+            sample_mask = mask ?? 0
+        };
+
+        return this;
+    }
     
-    public RenderingPipeline Build()
+    // public GraphicsPipelineBuilder EnableBestSupportedMultiSampling()
+    // {
+    //     throw new NotImplementedException();
+    // }
+    
+    public GraphicsPipelineBuilder EnableDepthTesting(CompareOperation compareOperation = CompareOperation.Less)
+    {
+        _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
+        {
+            enable_depth_test = SDL_bool.SDL_TRUE,
+            compare_op = (SDL_GPUCompareOp)compareOperation
+        };
+        
+        return this;
+    }
+    
+    public GraphicsPipelineBuilder EnableDepthWriting()
+    {
+        _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
+        {
+            enable_depth_test = SDL_bool.SDL_TRUE,
+            enable_depth_write = SDL_bool.SDL_TRUE
+        };
+        return this;
+    }
+    
+    public GraphicsPipelineBuilder EnableStencilTesting(in StencilOperationState frontFacing, CompareOperation compareOperation, byte compareMask=0xFF, byte writeMask=0xFF)
+    {
+        _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
+        {
+            enable_stencil_test = SDL_bool.SDL_TRUE,
+            compare_op = (SDL_GPUCompareOp)compareOperation,
+            front_stencil_state = frontFacing,
+            compare_mask = compareMask,
+            write_mask = writeMask
+        };
+        return this;
+    }
+    
+    public GraphicsPipelineBuilder EnableStencilTesting(in StencilOperationState frontFacing, in StencilOperationState backFacing, CompareOperation compareOperation, byte compareMask=0xFF, byte writeMask=0xFF)
+    {
+        _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
+        {
+            enable_stencil_test = SDL_bool.SDL_TRUE,
+            compare_op = (SDL_GPUCompareOp)compareOperation,
+            front_stencil_state = frontFacing,
+            back_stencil_state = backFacing,
+            compare_mask = compareMask,
+            write_mask = writeMask
+        };
+        return this;
+    }
+    
+    public GraphicsPipeline Build()
     {
         Span<SDL_GPUColorTargetDescription> sdlGpuColorTargetDescriptions =
             CollectionsMarshal.AsSpan(_info.SdlGpuColorTargetDescriptions);
@@ -189,7 +311,7 @@ public class GraphicsPipelineBuilder
                         num_color_targets = (uint)sdlGpuColorTargetDescriptions.Length,
                         color_target_descriptions = sdlGpuColorTargetDescriptionsPointer,
                     },
-                    vertex_input_state = new SDL_GPUVertexInputState()
+                    vertex_input_state = new SDL_GPUVertexInputState
                     {
                         num_vertex_buffers = 1,
                         vertex_buffer_descriptions = sdlGpuVertexBufferDescriptionPointer,
@@ -198,7 +320,9 @@ public class GraphicsPipelineBuilder
                     },
                     primitive_type = (SDL_GPUPrimitiveType)_info.PrimitiveType,
                     vertex_shader = _info.VertexShader!.Pointer,
-                    fragment_shader = _info.FragmentShader!.Pointer
+                    fragment_shader = _info.FragmentShader!.Pointer,
+                    multisample_state = _info.SdlGpuMultisampleState,
+                    depth_stencil_state = _info.SdlGpuDepthStencilState
                 };
 
                 var pipeline = SDL3.SDL_CreateGPUGraphicsPipeline(_gpuDevice.SdlGpuDevice, &sdlGpuGraphicsPipelineCreateInfo);
@@ -208,9 +332,9 @@ public class GraphicsPipelineBuilder
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
 
-                RenderingPipeline renderingPipeline = new RenderingPipeline(pipeline);
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(pipeline);
                 _info.Reset();
-                return renderingPipeline;
+                return graphicsPipeline;
             }
         }
     }

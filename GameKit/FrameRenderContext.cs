@@ -97,7 +97,7 @@ public readonly struct FrameRenderContext: IDisposable
     public required ColorTargetInfo ColorTargetInfo { get; init; }
     public required (uint, uint) Size { get; init; }
 
-    public FrameRenderPass CreateRenderPass(RenderingPipeline graphicsPipeline)
+    public FrameRenderPass CreateRenderPass(GraphicsPipeline graphicsPipeline)
     {
         unsafe
         {
