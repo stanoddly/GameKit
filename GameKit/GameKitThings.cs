@@ -70,11 +70,11 @@ public class Shader
     }
 }
 
-public struct RenderingPipeline
+public struct GraphicsPipeline
 {
     public Pointer<SDL_GPUGraphicsPipeline> Pointer { get; private set; }
 
-    public RenderingPipeline(Pointer<SDL_GPUGraphicsPipeline> pointer)
+    public GraphicsPipeline(Pointer<SDL_GPUGraphicsPipeline> pointer)
     {
         Pointer = pointer;
     }

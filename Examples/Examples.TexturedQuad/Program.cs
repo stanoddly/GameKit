@@ -9,11 +9,11 @@ using var gameKitApp = new GameKitAppBuilder()
 Shader vertexShader = gameKitApp.LoadShader("Content/TexturedQuadVertex.spak.json");
 Shader fragmentShader  = gameKitApp.LoadShader("Content/TexturedQuadFragment.spak.json");
 
-RenderingPipeline renderingPipeline = gameKitApp.GraphicsPipelineBuilder
-    .UsePrimitiveType(PrimitiveType.TriangleStrip)
+GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
+    .SetPrimitiveType(PrimitiveType.TriangleStrip)
     .AddColorFormatFromDisplay()
     .AddVertexBufferConfig<PositionTextureVertex>()
-    .UseShaders(vertexShader, fragmentShader)
+    .SetShaders(vertexShader, fragmentShader)
     .Build();
 
 Span<PositionTextureVertex> vertices =
@@ -41,7 +41,7 @@ gameKitApp.Draw(app =>
 {
     using FrameRenderContext frameRenderContext = app.GpuDevice.CreateFrameRenderContext();
 
-    using FrameRenderPass frameRenderPass = frameRenderContext.CreateRenderPass(renderingPipeline);
+    using FrameRenderPass frameRenderPass = frameRenderContext.CreateRenderPass(graphicsPipeline);
 
     frameRenderPass.BindVertexBuffer(vertexBuffer);
     frameRenderPass.BindFragmentSampler(texture, sampler);
