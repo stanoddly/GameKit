@@ -60,7 +60,7 @@ internal readonly record struct FileInfo;
 
 internal readonly record struct DirectoryInfo(string[] Children);
 
-public class FileSystem
+public class VirtualFileSystem
 {
     private static readonly string[] Empty = new string[0]; 
     private Dictionary<string, FileInfo> _files = new Dictionary<string, FileInfo>();
