@@ -45,4 +45,9 @@ public class ContentManager
             
         return loader.Load(_fileSystem, path);
     }
+
+    public Stream Read(string path)
+    {
+        throw new NotImplementedException();
+    }
 }

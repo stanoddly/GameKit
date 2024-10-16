@@ -120,7 +120,7 @@ public struct GameKitAppBuilder
             throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
         }
 
-        ContentManager contentManager = new ContentManager(new FileSystem());
+        ContentManager contentManager = new ContentManager(new VirtualFileSystem());
 
         _loaderRegistrations ??= new List<IContentLoaderRegistration>();
         _loaderRegistrations.Add(new ShaderPackLoader());

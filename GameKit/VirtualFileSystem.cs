@@ -1,28 +1,22 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 
 namespace GameKit;
 
-public enum EntryType: byte
+public abstract class FileEntry
 {
-    Directory,
-    File
-};
-
-public abstract class Entry
-{
-    public EntryType Type { get; protected set; }
     public abstract Stream Open();
 }
 
-public sealed class RealFileEntry: Entry
+public sealed class RealFileEntry: FileEntry
 {
     private string _filename;
 
     public RealFileEntry(string filename)
     {
         _filename = filename;
-        Type = EntryType.File;
     }
 
     public override Stream Open()
@@ -46,38 +40,100 @@ public sealed class ZipFileEntry
     }
 }
 
-public sealed class DirectoryEntry: Entry
+public interface IFileSystem
 {
-    public override Stream Open()
+    ReadOnlySpan<string> GetFiles(string path);
+    ReadOnlySpan<string> GetDirectories(string path);
+    bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream);
+    
+    Stream ReadFile(string path)
     {
-        throw new InvalidOperationException();
+        if (TryReadFile(path, out Stream? stream))
+        {
+            return stream;
+        }
+
+        throw new FileNotFoundException();
     }
 }
 
-internal readonly record struct FileSystemEntry(string Name, FileSystemEntryType Type);
-
-internal readonly record struct FileInfo;
-
-internal readonly record struct DirectoryInfo(string[] Children);
-
-public class VirtualFileSystem
+public sealed class ContentFileSystem: IFileSystem
 {
-    private static readonly string[] Empty = new string[0]; 
-    private Dictionary<string, FileInfo> _files = new Dictionary<string, FileInfo>();
-    private Dictionary<string, DirectoryInfo> _directories = new Dictionary<string, DirectoryInfo>();
+    private string _rootDirectory;
+
+    public ContentFileSystem(string rootDirectory)
+    {
+        _rootDirectory = rootDirectory;
+    }
 
     public ReadOnlySpan<string> GetFiles(string path)
     {
-        if (_directories.TryGetValue(path, out DirectoryInfo directory))
-        {
-            return directory.Children;
-        }
-
-        return Empty;
+        Directory.GetFiles()
     }
 
     public ReadOnlySpan<string> GetDirectories(string path)
     {
         throw new NotImplementedException();
+    }
+
+    public bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public readonly record struct DirectoryInfo(ImmutableArray<string> SubDirectories, ImmutableArray<string> Files);
+
+public sealed class VirtualFileSystem
+{
+    private IReadOnlyDictionary<string, FileEntry> _files;
+    private IReadOnlyDictionary<string, DirectoryInfo> _directories;
+
+    public VirtualFileSystem(IReadOnlyDictionary<string, FileEntry> files, IReadOnlyDictionary<string, DirectoryInfo> directories)
+    {
+        _files = files;
+        _directories = directories;
+    }
+
+    public ImmutableArray<string> GetFiles(string path)
+    {
+        if (_directories.TryGetValue(path, out DirectoryInfo directory))
+        {
+            return directory.Files;
+        }
+
+        throw new DirectoryNotFoundException(path);
+    }
+
+    public ImmutableArray<string> GetDirectories(string path)
+    {
+        if (_directories.TryGetValue(path, out DirectoryInfo directory))
+        {
+            return directory.Files;
+        }
+
+        throw new DirectoryNotFoundException(path);
+    }
+
+    public Stream ReadFile(string path)
+    {
+        if (_files.TryGetValue(path, out FileEntry? fileEntry))
+        {
+            return fileEntry.Open();
+        }
+        throw new FileNotFoundException(path);
+    }
+    
+    public bool TryReadFile(string path, out Stream? stream)
+    {
+        
+        if (!_files.TryGetValue(path, out FileEntry? fileEntry))
+        {
+            stream = null;
+            return false;
+        }
+        
+        stream = fileEntry.Open();
+        return true;
     }
 }
