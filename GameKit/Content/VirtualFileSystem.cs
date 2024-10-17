@@ -1,35 +1,65 @@
-using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
+using System.Runtime.CompilerServices;
 
-namespace GameKit;
+namespace GameKit.Content;
 
-public abstract class FileEntry
+public abstract class ContentFile
 {
+    public abstract string Path { get; }
+    public abstract long Length { get; }
+
     public abstract Stream Open();
 }
 
-public sealed class RealFileEntry: FileEntry
+public abstract class FileSystem: IDisposable
+{
+    public abstract ReadOnlySpan<string> GetFiles(string path);
+    public abstract ReadOnlySpan<string> GetDirectories(string path);
+    public abstract bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream);
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Stream ReadFile(string path)
+    {
+        if (TryReadFile(path, out Stream? stream))
+        {
+            return stream;
+        }
+
+        throw new FileNotFoundException();
+    }
+
+    public virtual void Dispose()
+    {
+    }
+}
+
+public sealed class NativeContentFile: ContentFile
 {
     private string _filename;
+    private string _nativeFilename;
 
-    public RealFileEntry(string filename)
+    public NativeContentFile(string filename, string nativeFilename)
     {
         _filename = filename;
+        _nativeFilename = nativeFilename;
     }
 
     public override Stream Open()
     {
-        return File.OpenRead(_filename);
+        return File.OpenRead(_nativeFilename);
     }
+
+    public override string Path => _filename;
+    public override long Length => new FileInfo(_nativeFilename).Length;
 }
 
-public sealed class ZipFileEntry
+public sealed class ZipContentFile
 {
     private ZipArchiveEntry _entry;
 
-    public ZipFileEntry(ZipArchiveEntry entry)
+    public ZipContentFile(ZipArchiveEntry entry)
     {
         _entry = entry;
     }
@@ -40,43 +70,24 @@ public sealed class ZipFileEntry
     }
 }
 
-public interface IFileSystem
+public sealed class ZipFileSystem: FileSystem
 {
-    ReadOnlySpan<string> GetFiles(string path);
-    ReadOnlySpan<string> GetDirectories(string path);
-    bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream);
-    
-    Stream ReadFile(string path)
-    {
-        if (TryReadFile(path, out Stream? stream))
-        {
-            return stream;
-        }
-
-        throw new FileNotFoundException();
-    }
-}
-
-public sealed class ContentFileSystem: IFileSystem
-{
-    private string _rootDirectory;
-
-    public ContentFileSystem(string rootDirectory)
-    {
-        _rootDirectory = rootDirectory;
-    }
-
-    public ReadOnlySpan<string> GetFiles(string path)
-    {
-        Directory.GetFiles()
-    }
-
-    public ReadOnlySpan<string> GetDirectories(string path)
+    public override ReadOnlySpan<string> GetDirectories(string path)
     {
         throw new NotImplementedException();
     }
 
-    public bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream)
+    public override ReadOnlySpan<string> GetFiles(string path)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Dispose()
     {
         throw new NotImplementedException();
     }

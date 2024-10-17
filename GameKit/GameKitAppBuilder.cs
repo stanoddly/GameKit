@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using System.Reflection;
+using GameKit.Content;
 using SDL;
 
 namespace GameKit;

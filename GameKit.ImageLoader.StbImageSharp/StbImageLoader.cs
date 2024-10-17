@@ -1,5 +1,7 @@
 ﻿using System.IO.Abstractions;
+using GameKit.Content;
 using StbImageSharp;
+using IFileSystem = GameKit.Content.IFileSystem;
 
 namespace GameKit.ImageLoader.StbImageSharp;
 

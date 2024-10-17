@@ -1,6 +1,6 @@
-using System.Collections.Frozen;
+namespace GameKit.Content;
 
-namespace GameKit;
+
 
 public class VirtualFileSystemBuilder
 {
@@ -60,28 +60,6 @@ public class VirtualFileSystemBuilder
         
 
         return this;
-    }
-    
-    
-    
-    static void ListAllItems(string path)
-    {
-        string root = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
-
-        
-
-        // Process all files directly under this folder
-        foreach (string filename in Directory.GetFiles(path))
-        {
-            root = root.Replace(Path.DirectorySeparatorChar, '/');
-        }
-
-        // Recurse into subfolders of this folder
-        foreach (string subDir in Directory.GetDirectories(path))
-        {
-            Console.WriteLine($"Directory: {subDir}");
-            ListAllItems(subDir);
-        }
     }
     
     VirtualFileSystem Create()

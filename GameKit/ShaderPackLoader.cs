@@ -1,5 +1,7 @@
 using System.IO.Abstractions;
 using System.Text.Json;
+using GameKit.Content;
+using IFileSystem = GameKit.Content.IFileSystem;
 
 namespace GameKit;
 

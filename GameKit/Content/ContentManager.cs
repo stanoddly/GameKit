@@ -1,6 +1,4 @@
-using System.IO.Abstractions;
-
-namespace GameKit;
+namespace GameKit.Content;
 
 public interface IContentLoaderRegistration
 {
@@ -14,15 +12,15 @@ public abstract class ContentLoader<TContent>: IContentLoaderRegistration
         contentManager.InjectLoader(this);
     }
     
-    public abstract TContent Load(IFileSystem fileSystem, string path);
+    public abstract TContent Load(FileSystem fileSystem, string path);
 }
 
 public class ContentManager
 {
     private readonly Dictionary<Type, object> _loaders = new();
-    private readonly IFileSystem _fileSystem;
+    private readonly FileSystem _fileSystem;
 
-    public ContentManager(IFileSystem fileSystem)
+    public ContentManager(FileSystem fileSystem)
     {
         _fileSystem = fileSystem;
     }
