@@ -7,22 +7,37 @@ namespace GameKit;
 
 public struct GameKitAppBuilder
 {
-#if DEBUG
-    private const bool DebugBuild = true;
-#else
-    private const bool DebugBuild = false;
-#endif
-
+    private readonly bool _notDefault;
     private static readonly string DefaultTitle = "GameKit App";
     private static readonly (int, int) DefaultSize = (640, 480);
     private (int, int)? _windowSize;
     private string? _windowTitle;
     private bool? _debugMode;
-    private List<IContentLoaderRegistration>? _loaderRegistrations;
+    private List<IContentLoader<object>> _contentLoaders;
+    private VirtualFileSystemBuilder _virtualFileSystemBuilder;
+
+#if DEBUG
+    private const bool DebugBuild = true;
+#else
+    private const bool DebugBuild = false;
+#endif
+    
+    public GameKitAppBuilder()
+    {
+        _notDefault = true;
+        _contentLoaders = new List<IContentLoader<object>>();
+        _virtualFileSystemBuilder = new VirtualFileSystemBuilder();
+    }
     
 
     public GameKitApp Build()
     {
+        if (!_notDefault)
+        {
+            // TODO
+            throw new NotImplementedException();
+        }
+        
         return UnsafeBuild();
     }
 
@@ -77,10 +92,28 @@ public struct GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder WithContentLoader(IContentLoaderRegistration loaderRegistration)
+    public GameKitAppBuilder WithContentLoader<TContent>(IContentLoader<TContent> loaderRegistration) where TContent: class
     {
-        _loaderRegistrations ??= new List<IContentLoaderRegistration>();
-        _loaderRegistrations.Add(loaderRegistration);
+        _contentLoaders.Add(loaderRegistration);
+        
+        return this;
+    }
+    
+    public GameKitAppBuilder AddContentFromZip(string filename)
+    {
+        _virtualFileSystemBuilder.AddContentFromZip(filename);
+        return this;
+    }
+    
+    public GameKitAppBuilder AddContentFromDirectory(string directory)
+    {
+        _virtualFileSystemBuilder.AddContentFromDirectory(directory);
+        return this;
+    }
+
+    public GameKitAppBuilder AddContentFromProjectDirectory(string? subdirectory = null)
+    {
+        _virtualFileSystemBuilder.AddContentFromProjectDirectory(subdirectory);
         
         return this;
     }
@@ -121,15 +154,11 @@ public struct GameKitAppBuilder
             throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
         }
 
-        ContentManager contentManager = new ContentManager(new VirtualFileSystem());
+        _contentLoaders.Add(new ShaderPackLoader());
 
-        _loaderRegistrations ??= new List<IContentLoaderRegistration>();
-        _loaderRegistrations.Add(new ShaderPackLoader());
+        VirtualFileSystem fileSystem = _virtualFileSystemBuilder.Create();
         
-        foreach (IContentLoaderRegistration contentLoaderRegistration in _loaderRegistrations)
-        {
-            contentLoaderRegistration.Register(contentManager);
-        }
+        ContentManager contentManager = new ContentManager(fileSystem, _contentLoaders);
 
         GpuDevice gpuDevice = new GpuDevice(device, sdlWindow);
         Window window = new Window(sdlWindow);

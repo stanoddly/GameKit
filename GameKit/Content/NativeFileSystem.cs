@@ -4,43 +4,62 @@ namespace GameKit.Content;
 
 public sealed class NativeFileSystem: FileSystem
 {
+    private static readonly bool NativeDirSeparatorIsSlash = Path.DirectorySeparatorChar == '/'; 
     private string _rootPath;
 
     public NativeFileSystem(string rootPath)
     {
-        _rootPath = rootPath;
+        _rootPath = Path.GetFullPath(rootPath);
     }
 
-    private string ToNativePath(string path)
+    private string FromVirtualToNativePath(string path)
     {
-        if (OperatingSystem.IsWindows())
+        string relativePath = path;
+        if (NativeDirSeparatorIsSlash)
         {
-            return path.Replace(Path.DirectorySeparatorChar, '/');
+            relativePath = path.Replace(Path.DirectorySeparatorChar, '/');
         }
-        return path;
+        
+        string almostReadAbsolutePath = Path.Combine(_rootPath, relativePath);
+        // if there was a dot it may lead to something like: a/./b
+        return Path.GetFullPath(almostReadAbsolutePath);
+
     }
 
-    private string ToVirtualPath(string path)
+    private string FromRelativeToVirtualPath(string path)
     {
-        if (Path.DirectorySeparatorChar == '/')
+        if (NativeDirSeparatorIsSlash)
         {
             return path;
         }
 
         return path.Replace(Path.DirectorySeparatorChar, '/');
     }
-
-    public override ReadOnlySpan<string> GetFiles(string path)
+    
+    private string FromAbsoluteToVirtualPath(string path)
     {
-        string nativePath = ToNativePath(path);
+        string relativePath = Path.GetRelativePath(_rootPath, path);
+        
+        if (NativeDirSeparatorIsSlash)
+        {
+            return relativePath;
+        }
+
+        return relativePath.Replace(Path.DirectorySeparatorChar, '/');
+    }
+
+    public override ReadOnlySpan<ContentFile> GetFiles(string path)
+    {
+        string nativePath = FromVirtualToNativePath(path);
 
         string[] filenames = Directory.GetFiles(nativePath);
-        string[] result = new string[filenames.Length];
+        ContentFile[] result = new ContentFile[filenames.Length];
 
         for (int i = 0; i < filenames.Length; i++)
         {
             string relativeFilename = Path.GetRelativePath(_rootPath, filenames[i]);
-            result[i] = ToVirtualPath(relativeFilename);
+            string virtualPath = FromRelativeToVirtualPath(relativeFilename);
+            result[i] = new NativeContentFile(virtualPath, filenames[i]);
         }
 
         return result;
@@ -48,7 +67,7 @@ public sealed class NativeFileSystem: FileSystem
 
     public override ReadOnlySpan<string> GetDirectories(string path)
     {
-        string nativePath = ToNativePath(path);
+        string nativePath = FromVirtualToNativePath(path);
 
         string[] filenames = Directory.GetDirectories(nativePath);
         string[] result = new string[filenames.Length];
@@ -56,14 +75,17 @@ public sealed class NativeFileSystem: FileSystem
         for (int i = 0; i < filenames.Length; i++)
         {
             string relativeFilename = Path.GetRelativePath(_rootPath, filenames[i]);
-            result[i] = ToVirtualPath(relativeFilename);
+            result[i] = FromRelativeToVirtualPath(relativeFilename);
         }
 
         return result;
     }
 
-    public override  bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream)
+    public override bool TryGetFile(string path, [NotNullWhen(true)] out ContentFile? contentFile)
     {
-        throw new NotImplementedException();
+        string nativePath = FromVirtualToNativePath(path);
+        
+        contentFile = new NativeContentFile(path, nativePath);
+        return true;
     }
 }

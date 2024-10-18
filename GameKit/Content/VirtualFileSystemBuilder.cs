@@ -1,7 +1,5 @@
 namespace GameKit.Content;
 
-
-
 public class VirtualFileSystemBuilder
 {
     private static readonly char[] Separators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
@@ -10,13 +8,13 @@ public class VirtualFileSystemBuilder
     
     public VirtualFileSystemBuilder AddContentFromZip(string filename)
     {
-        throw new NotImplementedException();
+        _zipFiles.Add(filename);
         return this;
     }
     
     public VirtualFileSystemBuilder AddContentFromDirectory(string directory)
     {
-        throw new NotImplementedException();
+        _directories.Add(directory);
         return this;
     }
 
@@ -58,14 +56,11 @@ public class VirtualFileSystemBuilder
             _directories.Add(directoryName);
         }
         
-
         return this;
     }
-    
-    VirtualFileSystem Create()
+
+    public VirtualFileSystem Create()
     {
-        Dictionary<string, FileEntry> files = new();
-        
-        
+        throw new NotImplementedException();
     }
 }

@@ -1,7 +1,5 @@
-﻿using System.IO.Abstractions;
-using GameKit.Content;
+﻿using GameKit.Content;
 using StbImageSharp;
-using IFileSystem = GameKit.Content.IFileSystem;
 
 namespace GameKit.ImageLoader.StbImageSharp;
 
@@ -19,11 +17,11 @@ public class StbImage : Image
     public override void Dispose() {}
 }
 
-public class StbImageLoader : ContentLoader<Image>
+public class StbImageLoader : IContentLoader<Image>
 {
-    public override Image Load(IFileSystem fileSystem, string path)
+    public Image Load(IContentManager contentManager, FileSystem fileSystem, string path)
     {
-        using Stream fileStream = fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using Stream fileStream = fileSystem.GetFile(path).Open();
         ImageResult imageResult = ImageResult.FromStream(fileStream, ColorComponents.RedGreenBlueAlpha);
 
         return new StbImage(imageResult);

@@ -1,15 +1,15 @@
 using System.IO.Abstractions;
 using System.Text.Json;
 using GameKit.Content;
-using IFileSystem = GameKit.Content.IFileSystem;
+using FileSystem = GameKit.Content.FileSystem;
 
 namespace GameKit;
 
-public class ShaderPackLoader: ContentLoader<ShaderPack>
+public class ShaderPackLoader: IContentLoader<ShaderPack>
 {
-    public override ShaderPack Load(IFileSystem fileSystem, string path)
+    public ShaderPack Load(IContentManager contentManager, FileSystem fileSystem, string path)
     {
-        using Stream stream = fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using Stream stream = fileSystem.GetFile(path).Open();
         // reflection free deserialization
         ShaderPack? shaderPack = JsonSerializer.Deserialize(stream, ShaderMetaJsonContext.Default.ShaderPack);
 

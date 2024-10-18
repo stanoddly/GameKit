@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
@@ -9,22 +10,21 @@ public abstract class ContentFile
 {
     public abstract string Path { get; }
     public abstract long Length { get; }
-
     public abstract Stream Open();
 }
 
 public abstract class FileSystem: IDisposable
 {
-    public abstract ReadOnlySpan<string> GetFiles(string path);
+    public abstract ReadOnlySpan<ContentFile> GetFiles(string path);
     public abstract ReadOnlySpan<string> GetDirectories(string path);
-    public abstract bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream);
+    public abstract bool TryGetFile(string path, [NotNullWhen(true)] out ContentFile? stream);
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Stream ReadFile(string path)
+    public ContentFile GetFile(string path)
     {
-        if (TryReadFile(path, out Stream? stream))
+        if (TryGetFile(path, out ContentFile? contentFile))
         {
-            return stream;
+            return contentFile;
         }
 
         throw new FileNotFoundException();
@@ -55,16 +55,20 @@ public sealed class NativeContentFile: ContentFile
     public override long Length => new FileInfo(_nativeFilename).Length;
 }
 
-public sealed class ZipContentFile
+public sealed class ZipContentFile: ContentFile
 {
-    private ZipArchiveEntry _entry;
+    private readonly ZipArchiveEntry _entry;
 
-    public ZipContentFile(ZipArchiveEntry entry)
+    public ZipContentFile(ZipArchiveEntry entry, string path)
     {
         _entry = entry;
+        Path = path;
     }
 
-    public Stream Open()
+    public override string Path { get; }
+    public override long Length => _entry.Length;
+
+    public override Stream Open()
     {
         return _entry.Open();
     }
@@ -77,12 +81,12 @@ public sealed class ZipFileSystem: FileSystem
         throw new NotImplementedException();
     }
 
-    public override ReadOnlySpan<string> GetFiles(string path)
+    public override bool TryGetFile(string path, [NotNullWhen(true)] out ContentFile? stream)
     {
         throw new NotImplementedException();
     }
 
-    public override bool TryReadFile(string path, [NotNullWhen(true)] out Stream? stream)
+    public override ReadOnlySpan<ContentFile> GetFiles(string path)
     {
         throw new NotImplementedException();
     }
@@ -93,58 +97,45 @@ public sealed class ZipFileSystem: FileSystem
     }
 }
 
-public readonly record struct DirectoryInfo(ImmutableArray<string> SubDirectories, ImmutableArray<string> Files);
-
-public sealed class VirtualFileSystem
+public sealed class VirtualFileSystem: FileSystem
 {
-    private IReadOnlyDictionary<string, FileEntry> _files;
-    private IReadOnlyDictionary<string, DirectoryInfo> _directories;
+    private readonly IReadOnlyDictionary<string, ImmutableArray<ContentFile>> _files;
+    private readonly IReadOnlyDictionary<string, ImmutableArray<string>> _directories;
+    private FrozenDictionary<string, ContentFile> _directFilesLookup;
 
-    public VirtualFileSystem(IReadOnlyDictionary<string, FileEntry> files, IReadOnlyDictionary<string, DirectoryInfo> directories)
+    public VirtualFileSystem(IReadOnlyDictionary<string, ImmutableArray<ContentFile>> files, IReadOnlyDictionary<string, ImmutableArray<string>> directories)
     {
         _files = files;
         _directories = directories;
+        
+        _directFilesLookup = files
+            .Select(pair => pair.Value)
+            .SelectMany(item => item)
+            .ToFrozenDictionary(item => item.Path, item=>item);
     }
 
-    public ImmutableArray<string> GetFiles(string path)
+    public override ReadOnlySpan<ContentFile> GetFiles(string path)
     {
-        if (_directories.TryGetValue(path, out DirectoryInfo directory))
+        if (_files.TryGetValue(path, out ImmutableArray<ContentFile> files))
         {
-            return directory.Files;
+            return files.AsSpan();
         }
 
         throw new DirectoryNotFoundException(path);
     }
 
-    public ImmutableArray<string> GetDirectories(string path)
+    public override ReadOnlySpan<string> GetDirectories(string path)
     {
-        if (_directories.TryGetValue(path, out DirectoryInfo directory))
+        if (_directories.TryGetValue(path, out ImmutableArray<string> directories))
         {
-            return directory.Files;
+            return directories.AsSpan();
         }
 
         throw new DirectoryNotFoundException(path);
     }
 
-    public Stream ReadFile(string path)
+    public override bool TryGetFile(string path, [NotNullWhen(true)] out ContentFile? stream)
     {
-        if (_files.TryGetValue(path, out FileEntry? fileEntry))
-        {
-            return fileEntry.Open();
-        }
-        throw new FileNotFoundException(path);
-    }
-    
-    public bool TryReadFile(string path, out Stream? stream)
-    {
-        
-        if (!_files.TryGetValue(path, out FileEntry? fileEntry))
-        {
-            stream = null;
-            return false;
-        }
-        
-        stream = fileEntry.Open();
-        return true;
+        return _directFilesLookup.TryGetValue(path, out stream);
     }
 }
