@@ -19,9 +19,9 @@ public class StbImage : Image
 
 public class StbImageLoader : IContentLoader<Image>
 {
-    public Image Load(IContentManager contentManager, FileSystem fileSystem, string path)
+    public Image Load(IContentManager contentManager, VirtualFileSystem virtualFileSystem, string path)
     {
-        using Stream fileStream = fileSystem.GetFile(path).Open();
+        using Stream fileStream = virtualFileSystem.GetFile(path).Open();
         ImageResult imageResult = ImageResult.FromStream(fileStream, ColorComponents.RedGreenBlueAlpha);
 
         return new StbImage(imageResult);

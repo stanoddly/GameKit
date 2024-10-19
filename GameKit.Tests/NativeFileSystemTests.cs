@@ -6,27 +6,35 @@ namespace GameKit.Tests;
 
 public class NativeFileSystemTests
 {
-    private NativeFileSystem _nativeFileSystem = null!;
     [SetUp]
     public void Setup()
     {
-        _nativeFileSystem = new NativeFileSystem("Content");
+        
     }
 
     [Test]
     public void Test1()
     {
-        var files = _nativeFileSystem.GetFiles(".");
+        using NativeFileSystem nativeFileSystem = new NativeFileSystem("Content");
+        
+        var files = nativeFileSystem.GetFiles(".");
 
         string[] expected = ["a.txt", "b.txt"];
-        ContentFile[] items = files.ToArray();
+        VirtualFile[] items = files.ToArray();
         
         CollectionAssert.AreEquivalent(expected, items.Select(x => x.Path));
     }
-
-    [TearDown]
-    public void TearDown()
+    
+    [Test]
+    public void Test2()
     {
-        _nativeFileSystem.Dispose();
+        using NativeFileSystem nativeFileSystem = new NativeFileSystem("Content");
+        
+        var files = nativeFileSystem.GetFiles("dir1");
+
+        string[] expected = ["dir1a.txt", "dir1b.txt"];
+        VirtualFile[] items = files.ToArray();
+        
+        CollectionAssert.AreEquivalent(expected, items.Select(x => x.Path));
     }
 }

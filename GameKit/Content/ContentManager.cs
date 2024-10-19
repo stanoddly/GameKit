@@ -2,8 +2,8 @@ namespace GameKit.Content;
 
 public interface IContentLoader<out TContent> where TContent: class
 {
-    sealed Type SupportedType => typeof(TContent);
-    TContent Load(IContentManager contentManager, FileSystem fileSystem, string path);
+    Type SupportedType => typeof(TContent);
+    TContent Load(IContentManager contentManager, VirtualFileSystem virtualFileSystem, string path);
 }
 
 public interface IContentManager
@@ -15,11 +15,11 @@ public interface IContentManager
 public sealed class ContentManager: IContentManager
 {
     private readonly Dictionary<Type, IContentLoader<object>> _loaders = new();
-    private readonly FileSystem _fileSystem;
+    private readonly VirtualFileSystem _virtualFileSystem;
 
-    public ContentManager(FileSystem fileSystem, IEnumerable<IContentLoader<object>> contentLoaders)
+    public ContentManager(VirtualFileSystem virtualFileSystem, IEnumerable<IContentLoader<object>> contentLoaders)
     {
-        _fileSystem = fileSystem;
+        _virtualFileSystem = virtualFileSystem;
 
         foreach (IContentLoader<object> contentLoader in contentLoaders)
         {
@@ -38,7 +38,7 @@ public sealed class ContentManager: IContentManager
         // TODO: isn't it safe to use unsafe cast here?
         IContentLoader<TContent> loader = (IContentLoader<TContent>)obj;
             
-        return loader.Load(this, _fileSystem, path);
+        return loader.Load(this, _virtualFileSystem, path);
     }
 
     public Stream OpenStream(string path)

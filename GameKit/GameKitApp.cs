@@ -10,6 +10,7 @@ public sealed class GameKitApp: IDisposable
     public required ShaderLoader ShaderLoader { get; init; }
     public required GpuMemoryUploader GpuMemoryUploader { get; init; }
     public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
+    public required VirtualFileSystem FileSystem { get; init; }
     public required ContentManager ContentManager { get; init; }
     
     private Action<GameKitApp> _update = _ => { };

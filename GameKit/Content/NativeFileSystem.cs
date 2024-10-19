@@ -2,10 +2,30 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GameKit.Content;
 
-public sealed class NativeFileSystem: FileSystem
+public sealed class NativeFile: VirtualFile
 {
-    private static readonly bool NativeDirSeparatorIsSlash = Path.DirectorySeparatorChar == '/'; 
-    private string _rootPath;
+    private readonly string _filename;
+    private readonly string _nativeFilename;
+
+    public NativeFile(string filename, string nativeFilename)
+    {
+        _filename = filename;
+        _nativeFilename = nativeFilename;
+    }
+
+    public override Stream Open()
+    {
+        return File.OpenRead(_nativeFilename);
+    }
+
+    public override string Path => _filename;
+    public override long Length => new FileInfo(_nativeFilename).Length;
+}
+
+public sealed class NativeFileSystem: VirtualFileSystem
+{
+    public static readonly bool NativeDirSeparatorIsSlash = Path.DirectorySeparatorChar == '/'; 
+    private readonly string _rootPath;
 
     public NativeFileSystem(string rootPath)
     {
@@ -15,7 +35,7 @@ public sealed class NativeFileSystem: FileSystem
     private string FromVirtualToNativePath(string path)
     {
         string relativePath = path;
-        if (NativeDirSeparatorIsSlash)
+        if (!NativeDirSeparatorIsSlash)
         {
             relativePath = path.Replace(Path.DirectorySeparatorChar, '/');
         }
@@ -48,18 +68,18 @@ public sealed class NativeFileSystem: FileSystem
         return relativePath.Replace(Path.DirectorySeparatorChar, '/');
     }
 
-    public override ReadOnlySpan<ContentFile> GetFiles(string path)
+    public override ReadOnlySpan<VirtualFile> GetFiles(string path)
     {
         string nativePath = FromVirtualToNativePath(path);
 
         string[] filenames = Directory.GetFiles(nativePath);
-        ContentFile[] result = new ContentFile[filenames.Length];
+        VirtualFile[] result = new VirtualFile[filenames.Length];
 
         for (int i = 0; i < filenames.Length; i++)
         {
             string relativeFilename = Path.GetRelativePath(_rootPath, filenames[i]);
             string virtualPath = FromRelativeToVirtualPath(relativeFilename);
-            result[i] = new NativeContentFile(virtualPath, filenames[i]);
+            result[i] = new NativeFile(virtualPath, filenames[i]);
         }
 
         return result;
@@ -81,11 +101,11 @@ public sealed class NativeFileSystem: FileSystem
         return result;
     }
 
-    public override bool TryGetFile(string path, [NotNullWhen(true)] out ContentFile? contentFile)
+    public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
     {
         string nativePath = FromVirtualToNativePath(path);
         
-        contentFile = new NativeContentFile(path, nativePath);
+        file = new NativeFile(path, nativePath);
         return true;
     }
 }

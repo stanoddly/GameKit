@@ -1,4 +1,3 @@
-using System.IO.Abstractions;
 using System.Reflection;
 using GameKit.Content;
 using SDL;
@@ -14,7 +13,7 @@ public struct GameKitAppBuilder
     private string? _windowTitle;
     private bool? _debugMode;
     private List<IContentLoader<object>> _contentLoaders;
-    private VirtualFileSystemBuilder _virtualFileSystemBuilder;
+    private FileSystemBuilder _fileSystemBuilder;
 
 #if DEBUG
     private const bool DebugBuild = true;
@@ -26,7 +25,7 @@ public struct GameKitAppBuilder
     {
         _notDefault = true;
         _contentLoaders = new List<IContentLoader<object>>();
-        _virtualFileSystemBuilder = new VirtualFileSystemBuilder();
+        _fileSystemBuilder = new FileSystemBuilder();
     }
     
 
@@ -65,33 +64,6 @@ public struct GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder WithRootDirectoryFromExecutable(string? subdirectory = null)
-    {
-        string? executableDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-        // no need to change anything
-        if (executableDirectory == null && subdirectory == null)
-        {
-            return this;
-        }
-        
-        if (subdirectory == null)
-        {
-            Directory.SetCurrentDirectory(executableDirectory!);
-            return this;
-        }
-
-        // we are at root
-        if (executableDirectory == null)
-        {
-            Directory.SetCurrentDirectory(subdirectory!);
-            return this;
-        }
-        
-        Directory.SetCurrentDirectory(Path.Combine(executableDirectory, "Content"));
-        return this;
-    }
-
     public GameKitAppBuilder WithContentLoader<TContent>(IContentLoader<TContent> loaderRegistration) where TContent: class
     {
         _contentLoaders.Add(loaderRegistration);
@@ -99,22 +71,22 @@ public struct GameKitAppBuilder
         return this;
     }
     
-    public GameKitAppBuilder AddContentFromZip(string filename)
-    {
-        _virtualFileSystemBuilder.AddContentFromZip(filename);
-        return this;
-    }
-    
     public GameKitAppBuilder AddContentFromDirectory(string directory)
     {
-        _virtualFileSystemBuilder.AddContentFromDirectory(directory);
+        _fileSystemBuilder.AddContentFromDirectory(directory);
         return this;
     }
 
     public GameKitAppBuilder AddContentFromProjectDirectory(string? subdirectory = null)
     {
-        _virtualFileSystemBuilder.AddContentFromProjectDirectory(subdirectory);
+        _fileSystemBuilder.AddContentFromProjectDirectory(subdirectory);
         
+        return this;
+    }
+
+    public GameKitAppBuilder WithCachedFileSystem()
+    {
+        _fileSystemBuilder.WithCache();
         return this;
     }
 
@@ -156,7 +128,7 @@ public struct GameKitAppBuilder
 
         _contentLoaders.Add(new ShaderPackLoader());
 
-        VirtualFileSystem fileSystem = _virtualFileSystemBuilder.Create();
+        VirtualFileSystem fileSystem = _fileSystemBuilder.Create();
         
         ContentManager contentManager = new ContentManager(fileSystem, _contentLoaders);
 
@@ -169,6 +141,7 @@ public struct GameKitAppBuilder
             ShaderLoader = new ShaderLoader(gpuDevice),
             GpuMemoryUploader = new GpuMemoryUploader(gpuDevice),
             GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window),
+            FileSystem = fileSystem,
             ContentManager = contentManager
         };
     }
