@@ -27,6 +27,11 @@ public abstract class VirtualFileSystem: IDisposable
         throw new FileNotFoundException();
     }
 
+    public Stream OpenStream(string path)
+    {
+        return GetFile(path).Open();
+    }
+
     // TODO: dispose pattern https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/dispose-pattern
     public virtual void Dispose()
     {

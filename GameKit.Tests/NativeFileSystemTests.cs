@@ -30,9 +30,9 @@ public class NativeFileSystemTests
     {
         using NativeFileSystem nativeFileSystem = new NativeFileSystem("Content");
         
-        var files = nativeFileSystem.GetFiles("dir1");
+        var files = nativeFileSystem.GetFiles("./dir1");
 
-        string[] expected = ["dir1a.txt", "dir1b.txt"];
+        string[] expected = ["dir1/dir1a.txt", "dir1/dir1b.txt"];
         VirtualFile[] items = files.ToArray();
         
         CollectionAssert.AreEquivalent(expected, items.Select(x => x.Path));
