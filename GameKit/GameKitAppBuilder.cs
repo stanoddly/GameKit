@@ -4,9 +4,8 @@ using SDL;
 
 namespace GameKit;
 
-public struct GameKitAppBuilder
+public class GameKitAppBuilder
 {
-    private readonly bool _notDefault;
     private static readonly string DefaultTitle = "GameKit App";
     private static readonly (int, int) DefaultSize = (640, 480);
     private (int, int)? _windowSize;
@@ -23,7 +22,6 @@ public struct GameKitAppBuilder
     
     public GameKitAppBuilder()
     {
-        _notDefault = true;
         _contentLoaders = new List<IContentLoader<object>>();
         _fileSystemBuilder = new FileSystemBuilder();
     }
@@ -31,12 +29,6 @@ public struct GameKitAppBuilder
 
     public GameKitApp Build()
     {
-        if (!_notDefault)
-        {
-            // TODO
-            throw new NotImplementedException();
-        }
-        
         return UnsafeBuild();
     }
 

@@ -6,6 +6,8 @@ A filesystem abstraction for simple, read only operations to unify access over n
 
 ## Detailed design
 
+### Read-only, immutable
+
 ### No support for `async`/`await`
 
 ### No security

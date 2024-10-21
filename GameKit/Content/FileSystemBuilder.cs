@@ -2,13 +2,8 @@ namespace GameKit.Content;
 
 public class FileSystemBuilder
 {
-    private enum CacheLevel
-    {
-        None, LazyCache, HardCache
-    }
-    
     private readonly List<VirtualFileSystem> _fileSystems = new();
-    private CacheLevel _cacheLevel = CacheLevel.None;
+    private bool _cached = false;
     
     public FileSystemBuilder AddContentFromDirectory(string directory)
     {
@@ -67,9 +62,9 @@ public class FileSystemBuilder
         return this;
     }
 
-    public FileSystemBuilder WithCache(bool lazyCache = false)
+    public FileSystemBuilder WithCache()
     {
-        _cacheLevel = lazyCache ? CacheLevel.LazyCache : CacheLevel.HardCache;
+        _cached = true;
         return this;
     }
 
@@ -91,9 +86,9 @@ public class FileSystemBuilder
             finalVirtualFileSystem = new CompositeFileSystem(_fileSystems);
         }
 
-        if (_cacheLevel != CacheLevel.None)
+        if (_cached)
         {
-            finalVirtualFileSystem = new CachedFileSystem(finalVirtualFileSystem);
+            finalVirtualFileSystem = CachedFileSystem.Create(finalVirtualFileSystem);
         }
 
         return finalVirtualFileSystem;
