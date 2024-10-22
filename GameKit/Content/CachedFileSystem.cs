@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
@@ -40,17 +41,17 @@ public sealed class CachedFileSystem: VirtualFileSystem
         Stack<string> analyzedDirectories = new();
         analyzedDirectories.Push(".");
         
-        List<(string, string[])> resultDirectories = new();
-        List<(string, VirtualFile[])> resultFiles = new();
-
-
+        List<(string, ImmutableArray<string>)> resultDirectories = new();
+        List<(string, ImmutableArray<VirtualFile>)> resultFiles = new();
+         
         while (analyzedDirectories.TryPop(out string? directory))
         {
             ReadOnlySpan<string> sourceSubdirectories = source.GetDirectories(directory);
-            resultDirectories.Add((directory, sourceSubdirectories.ToArray()));
+            resultDirectories.Add((directory, ImmutableArray.Create(sourceSubdirectories)));
             
             ReadOnlySpan<VirtualFile> sourceFiles = source.GetFiles(directory);
-            resultFiles.Add((directory, sourceFiles.ToArray()));
+            
+            resultFiles.Add((directory, ImmutableArray.Create(sourceFiles)));
             
             foreach (string sourceSubdirectory in sourceSubdirectories)
             {

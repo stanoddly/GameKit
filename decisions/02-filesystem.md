@@ -13,3 +13,13 @@ A filesystem abstraction for simple, read only operations to unify access over n
 ### No security
 
 ### Only full paths returned
+
+### ImmutableDictionary
+
+### IReadOnlyDictionary
+
+### Not smart, e.g. ..
+
+### Inspired by Directory
+
+### NativeFileSystem and Garbage colletion

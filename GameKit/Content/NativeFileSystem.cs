@@ -24,12 +24,12 @@ public sealed class NativeFile: VirtualFile
 
 public sealed class NativeFileSystem: VirtualFileSystem
 {
-    public static readonly bool NativeDirSeparatorIsSlash = Path.DirectorySeparatorChar == '/'; 
-    private readonly string _rootPath;
+    public static readonly bool NativeDirSeparatorIsSlash = Path.DirectorySeparatorChar == '/';
+    public string RootPath { get; }
 
     public NativeFileSystem(string rootPath)
     {
-        _rootPath = Path.GetFullPath(rootPath);
+        RootPath = Path.GetFullPath(rootPath);
     }
 
     private string FromVirtualToNativePath(string path)
@@ -40,7 +40,7 @@ public sealed class NativeFileSystem: VirtualFileSystem
             relativePath = path.Replace(Path.DirectorySeparatorChar, '/');
         }
         
-        string almostReadAbsolutePath = Path.Combine(_rootPath, relativePath);
+        string almostReadAbsolutePath = Path.Combine(RootPath, relativePath);
         // if there was a dot it may lead to something like: a/./b
         return Path.GetFullPath(almostReadAbsolutePath);
 
@@ -58,7 +58,7 @@ public sealed class NativeFileSystem: VirtualFileSystem
     
     private string FromAbsoluteToVirtualPath(string path)
     {
-        string relativePath = Path.GetRelativePath(_rootPath, path);
+        string relativePath = Path.GetRelativePath(RootPath, path);
         
         if (NativeDirSeparatorIsSlash)
         {
@@ -77,7 +77,7 @@ public sealed class NativeFileSystem: VirtualFileSystem
 
         for (int i = 0; i < filenames.Length; i++)
         {
-            string relativeFilename = Path.GetRelativePath(_rootPath, filenames[i]);
+            string relativeFilename = Path.GetRelativePath(RootPath, filenames[i]);
             string virtualPath = FromRelativeToVirtualPath(relativeFilename);
             result[i] = new NativeFile(virtualPath, filenames[i]);
         }
@@ -94,7 +94,7 @@ public sealed class NativeFileSystem: VirtualFileSystem
 
         for (int i = 0; i < filenames.Length; i++)
         {
-            string relativeFilename = Path.GetRelativePath(_rootPath, filenames[i]);
+            string relativeFilename = Path.GetRelativePath(RootPath, filenames[i]);
             result[i] = FromRelativeToVirtualPath(relativeFilename);
         }
 
@@ -104,6 +104,12 @@ public sealed class NativeFileSystem: VirtualFileSystem
     public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
     {
         string nativePath = FromVirtualToNativePath(path);
+
+        if (!File.Exists(nativePath))
+        {
+            file = null;
+            return false;
+        }
         
         file = new NativeFile(path, nativePath);
         return true;

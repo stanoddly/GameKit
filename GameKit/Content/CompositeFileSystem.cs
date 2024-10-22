@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GameKit.Content;
 
-public class CompositeFileSystem: VirtualFileSystem
+public sealed class CompositeFileSystem: VirtualFileSystem
 {
     private readonly List<VirtualFileSystem> _fileSystems;
 
