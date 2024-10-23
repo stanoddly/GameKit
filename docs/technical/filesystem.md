@@ -23,7 +23,7 @@ E.g.
 classDiagram
 CachedFileSystem o-- CompositeFileSystem
 CompositeFileSystem o-- NativeFileSystem
-CompositeFileSystem o-- NativeFileSystem
+CompositeFileSystem o-- DictFileSystem
 ```
 
 This also opens an opportunity to create more virtual filesystems, for example based on zip.
