@@ -1,10 +1,11 @@
 ﻿using GameKit;
 
 using var gameKitApp = new GameKitAppBuilder()
+    .AddContentFromProjectDirectory("Content")
     .Build();
 
-Shader vertexShader = gameKitApp.LoadShader("Content/PositionColor.spak.json");
-Shader fragmentShader  = gameKitApp.LoadShader("Content/SolidColor.spak.json");
+Shader vertexShader = gameKitApp.LoadShader("PositionColor.spak.json");
+Shader fragmentShader  = gameKitApp.LoadShader("SolidColor.spak.json");
 
 GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
     .SetPrimitiveType(PrimitiveType.TriangleStrip)

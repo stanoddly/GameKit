@@ -2,11 +2,11 @@ namespace GameKit.Content.Tests;
 
 public class ContentLoaderTests
 {
-    public record ContentA;
+    private record ContentA;
     
     private class LoaderA : IContentLoader<ContentA>
     {
-        public ContentA Load(IContentManager contentManager, VirtualFileSystem virtualFileSystem, string path)
+        public ContentA Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
         {
             throw new NotImplementedException();
         }

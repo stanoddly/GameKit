@@ -51,7 +51,7 @@ public class FileSystemBuilderTests
         // assert
         Assert.IsTrue(fileSystem is NativeFileSystem);
         NativeFileSystem nativeFileSystem = (NativeFileSystem)fileSystem;
-        var expectedPath = Path.Join("GameKit.Tests", "ContentInDevRoot");
+        var expectedPath = Path.Join(typeof(FileSystemBuilderTests).Namespace, "ContentInDevRoot");
         Assert.IsTrue(nativeFileSystem.RootPath.EndsWith(expectedPath));
     }
 }

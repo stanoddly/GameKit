@@ -11,7 +11,7 @@ public sealed class GameKitApp: IDisposable
     public required GpuMemoryUploader GpuMemoryUploader { get; init; }
     public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
     public required VirtualFileSystem FileSystem { get; init; }
-    public required ContentManager ContentManager { get; init; }
+    public required IContentManager ContentManager { get; init; }
     
     private Action<GameKitApp> _update = _ => { };
     private Action<GameKitApp> _draw = _ => { };
