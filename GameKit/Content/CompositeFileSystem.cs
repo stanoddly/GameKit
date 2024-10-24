@@ -47,7 +47,7 @@ public sealed class CompositeFileSystem: VirtualFileSystem
 
     public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
     {
-        for (int i = (_fileSystems.Count - 1); i < _fileSystems.Count; i--)
+        for (int i = (_fileSystems.Count - 1); i >= 0; i--)
         {
             if (_fileSystems[i].TryGetFile(path, out file))
             {

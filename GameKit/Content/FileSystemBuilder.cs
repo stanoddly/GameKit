@@ -74,7 +74,7 @@ public class FileSystemBuilder
 
         if (_fileSystems.Count == 0)
         {
-            throw new Exception();
+            return DictFileSystem.Empty;
         }
 
         if (_fileSystems.Count == 1)

@@ -66,6 +66,13 @@ public abstract class BaseVirtualFileSystemTests
         Assert.That(fileContents, Is.EqualTo("Hello a"));
     }
     
+    [Test]
+    public void OpenStreamFromNonexistentThrowsException()
+    {
+        // act & assert
+        Assert.Throws<FileNotFoundException>(() => FileSystem.OpenStream("nonexistent"));
+    }
+    
     [TearDown]
     public void Teardown()
     {
