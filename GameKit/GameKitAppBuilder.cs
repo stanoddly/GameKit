@@ -1,23 +1,30 @@
-using System.IO.Abstractions;
 using System.Reflection;
+using GameKit.Content;
 using SDL;
 
 namespace GameKit;
 
-public struct GameKitAppBuilder
+public class GameKitAppBuilder
 {
-#if DEBUG
-    private const bool DebugBuild = true;
-#else
-    private const bool DebugBuild = false;
-#endif
-
     private static readonly string DefaultTitle = "GameKit App";
     private static readonly (int, int) DefaultSize = (640, 480);
     private (int, int)? _windowSize;
     private string? _windowTitle;
     private bool? _debugMode;
-    private List<IContentLoaderRegistration>? _loaderRegistrations;
+    private List<IContentLoader<object>> _contentLoaders;
+    private FileSystemBuilder _fileSystemBuilder;
+
+#if DEBUG
+    private const bool DebugBuild = true;
+#else
+    private const bool DebugBuild = false;
+#endif
+    
+    public GameKitAppBuilder()
+    {
+        _contentLoaders = new List<IContentLoader<object>>();
+        _fileSystemBuilder = new FileSystemBuilder();
+    }
     
 
     public GameKitApp Build()
@@ -49,38 +56,29 @@ public struct GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder WithRootDirectoryFromExecutable(string? subdirectory = null)
+    public GameKitAppBuilder WithContentLoader<TContent>(IContentLoader<TContent> loaderRegistration) where TContent: class
     {
-        string? executableDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-        // no need to change anything
-        if (executableDirectory == null && subdirectory == null)
-        {
-            return this;
-        }
+        _contentLoaders.Add(loaderRegistration);
         
-        if (subdirectory == null)
-        {
-            Directory.SetCurrentDirectory(executableDirectory!);
-            return this;
-        }
-
-        // we are at root
-        if (executableDirectory == null)
-        {
-            Directory.SetCurrentDirectory(subdirectory!);
-            return this;
-        }
-        
-        Directory.SetCurrentDirectory(Path.Combine(executableDirectory, "Content"));
+        return this;
+    }
+    
+    public GameKitAppBuilder AddContentFromDirectory(string directory)
+    {
+        _fileSystemBuilder.AddContentFromDirectory(directory);
         return this;
     }
 
-    public GameKitAppBuilder WithContentLoader(IContentLoaderRegistration loaderRegistration)
+    public GameKitAppBuilder AddContentFromProjectDirectory(string? subdirectory = null)
     {
-        _loaderRegistrations ??= new List<IContentLoaderRegistration>();
-        _loaderRegistrations.Add(loaderRegistration);
+        _fileSystemBuilder.AddContentFromProjectDirectory(subdirectory);
         
+        return this;
+    }
+
+    public GameKitAppBuilder WithCachedFileSystem()
+    {
+        _fileSystemBuilder.WithCache();
         return this;
     }
 
@@ -120,15 +118,11 @@ public struct GameKitAppBuilder
             throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
         }
 
-        ContentManager contentManager = new ContentManager(new FileSystem());
+        _contentLoaders.Add(new ShaderPackLoader());
 
-        _loaderRegistrations ??= new List<IContentLoaderRegistration>();
-        _loaderRegistrations.Add(new ShaderPackLoader());
+        VirtualFileSystem fileSystem = _fileSystemBuilder.Create();
         
-        foreach (IContentLoaderRegistration contentLoaderRegistration in _loaderRegistrations)
-        {
-            contentLoaderRegistration.Register(contentManager);
-        }
+        ContentManager contentManager = new ContentManager(fileSystem, _contentLoaders);
 
         GpuDevice gpuDevice = new GpuDevice(device, sdlWindow);
         Window window = new Window(sdlWindow);
@@ -139,6 +133,7 @@ public struct GameKitAppBuilder
             ShaderLoader = new ShaderLoader(gpuDevice),
             GpuMemoryUploader = new GpuMemoryUploader(gpuDevice),
             GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window),
+            FileSystem = fileSystem,
             ContentManager = contentManager
         };
     }

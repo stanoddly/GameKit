@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.ImageLoader.StbImag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.TexturedQuad", "Examples\Examples.TexturedQuad\Examples.TexturedQuad.csproj", "{68B47E19-9983-4C57-842F-1DC75C2E36AA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Content.Tests", "GameKit.Content.Tests\GameKit.Content.Tests.csproj", "{83D75A50-2A6C-4FEE-919C-07CEA01F9BFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{68B47E19-9983-4C57-842F-1DC75C2E36AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68B47E19-9983-4C57-842F-1DC75C2E36AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68B47E19-9983-4C57-842F-1DC75C2E36AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83D75A50-2A6C-4FEE-919C-07CEA01F9BFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83D75A50-2A6C-4FEE-919C-07CEA01F9BFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83D75A50-2A6C-4FEE-919C-07CEA01F9BFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83D75A50-2A6C-4FEE-919C-07CEA01F9BFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -2,12 +2,13 @@
 using GameKit.ImageLoader.StbImageSharp;
 
 using var gameKitApp = new GameKitAppBuilder()
+    .AddContentFromProjectDirectory("Content")
     .UseStbImageLoader()
     .WithSize(512, 512)
     .Build();
 
-Shader vertexShader = gameKitApp.LoadShader("Content/TexturedQuadVertex.spak.json");
-Shader fragmentShader  = gameKitApp.LoadShader("Content/TexturedQuadFragment.spak.json");
+Shader vertexShader = gameKitApp.LoadShader("TexturedQuadVertex.spak.json");
+Shader fragmentShader  = gameKitApp.LoadShader("TexturedQuadFragment.spak.json");
 
 GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
     .SetPrimitiveType(PrimitiveType.TriangleStrip)
@@ -31,7 +32,7 @@ using (MemoryTransfer memoryTransfer = gameKitApp.GpuMemoryUploader.CreateMemory
 {
     vertexBuffer = memoryTransfer.AddVertexBuffer(vertices);
     
-    using Image image = gameKitApp.ContentManager.Load<Image>("Content/Earth.png");
+    using Image image = gameKitApp.ContentManager.Load<Image>("Earth.png");
     texture = memoryTransfer.AddTexture(image);
 }
 
