@@ -3,7 +3,8 @@
 A virtual filesystem provides a simple abstraction for read only operations to unify access over native filesystem or game packages and provide a way to create downloadable content.
 
 The interface it is based on is fairly simple, it could be simplified into this:
-```
+
+```csharp
 class VirtualFileSystem
 {
     ReadOnlySpan<VirtualFile> GetFiles(string path);
@@ -18,7 +19,8 @@ Based on this class interface several classes have been implemented which can be
 * `CachedFileSystem` that cached filesystem entries on creation
 * `NativeFileSystem` for a native filesystem access
 
-E.g.
+They could be structured into interesting compositions:
+
 ```mermaid
 classDiagram
 CachedFileSystem o-- CompositeFileSystem
@@ -26,7 +28,9 @@ CompositeFileSystem o-- NativeFileSystem
 CompositeFileSystem o-- DictFileSystem
 ```
 
-This also opens an opportunity to create more virtual filesystems, for example based on zip.
+The aspect of composition is used by `VirtualFileSystemBuilder` which can help to create the most suitable virtual filesystem.
+
+This also opens an opportunity to create more virtual filesystems, for example based on zip, and mix them with the existing ones. `BaseVirtualFileSystemTests` exists to help with testing of new classes.
 
 ## No security
 
@@ -38,27 +42,41 @@ For example it's still possible to list items out of a parent directory `nativeF
 
 There are several reasons for not having asynchronous methods.
 
-Games inherently work in frames, the default `SynchronizationContext` doesn't obviously respect frames. It would be possible to use frame based `SynchronizationContext` to ensure that coroutines are handled within a frame, but that would increase the complexity.
+First of all it's only native filesystem that supports asynchronous methods currently and not `ZipArchive` ([source](https://github.com/dotnet/runtime/issues/1541)). `ZipArchive` is likely going to be primarly used. `NativeFileSystem` is useful for development, but not in a released game.
 
-It's only native filesystem that supports asynchronous methods currently and not `ZipArchive` ([source](https://github.com/dotnet/runtime/issues/1541)). `ZipArchive` that is likely going to be primarly used. NativeFileSystem is useful for development, but not in a released game.
+Games inherently work in frames and the default `SynchronizationContext` doesn't obviously respect frames. It would be possible to use frame based `SynchronizationContext` to ensure that coroutines are handled within a frame, but a proper implementation and async support in the right places is costly.
 
-Asynchronous code raises complexity and it's fairly easy to load content via threads anyway. In the end, content loading from a zip file is a mix of I/O and CPU bound operations.
+Furthermore asynchronous code raises complexity on its own where it's fairly easy to load content via threads anyway. In the end, content loading from a zip file is a mix of I/O and CPU bound operations.
 
-## Read-only, immutable
+## Only slash is expected in a virtual path
 
+`VirtualFileSystem` derived classes use slash `/` instead of a backslash `\`, e.g.:
+
+```
+dir/subdir/file1.txt
+dir/subdir/file2.txt
+```
 
 ## Only full paths returned
 
-## ImmutableDictionary
+Unlike with `Dictionary.GetDirectories` or `Dictionary.GetFiles` which return files relatively to a given path, `VirtualFileSystem` methods are expected to always return a virtual path, e.g. for `dir/subdir` a method `GetDirectories` would return these directories:
 
-## IReadOnlyDictionary
+```
+dir/subdir/subsubdir1
+dir/subdir/subsubdir2
+```
 
-## Not smart, e.g. ..
+And not relative to `dir/subdir`:
 
-## Inspired by Directory
+```
+subsubdir1
+subsubdir2
+```
 
 ## NativeFileSystem and Garbage collection
 
-## No thread safety
+When it comes to string manipulation C# is not different. Any string manipulation leads to garbage. That being said, if
 
-https://mropert.github.io/2020/07/26/threading_with_physfs/
+## Thread-safety
+
+GameKit's `VirtualFileSystem` derived classes are guaranteed to be thread-safe without any locks. The only caveat is `DictFileSystem`, because a `Dictionary` could be injected and manipulated outside of the `VirtualFileSystem`.

@@ -1,8 +1,10 @@
 # Content loading
 
-The content loading via a `ContentManager` draws an inspiration from XNA and its [`ContentManager`](https://learn.microsoft.com/en-us/previous-versions/windows/xna/bb195436(v=xnagamestudio.40)).
+The `ContentManager` is a component which loads game assets from a virtual filesystem.
 
-Its basic interface is:
+It draws an inspiration from XNA 4.0 and its [`ContentManager`](https://learn.microsoft.com/en-us/previous-versions/windows/xna/bb195436(v=xnagamestudio.40)).
+
+Its basic interface is mostly the same as XNA's:
 
 ```csharp
 public interface IContentManager
@@ -12,21 +14,21 @@ public interface IContentManager
 }
 ```
 
-Exactly like XNA's `ContentManager`. While GameKit has builders to create it, a constructor has these arguments:
+ContentManager is build as part of the GameKitBuilder, however it's possible to create via a constructor with these arguments:
 
 ```csharp
 public ContentManager(FileSystem fileSystem, IEnumerable<IContentLoader<object>> contentLoaders)
 ```
 
-where IContentLoader<object> is a covariant (about that bellow).
+This is important to highlight, because GameKit's `ContentManager.Load` only throws `NotSupportedException` without any registered `IContentLoaders<TContent>`. They are supposed to be injected via constructor to make things work.
 
 ## `TContent` is constrained to a class (`where TContent: class`)
 
 The constrain is there to have a decent way to inject `ContentLoader` instances into a `ContentManager`. Usually, `TContent` is simply impractical to be handled as a value anyway. But let's go into technical details.
 
-The `IContentLoader<out TContent>` is [a contravariant](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/creating-variant-generic-interfaces), so it could be implicitly casted to `IContentLoader<TContent>`. Therefore ContentManager can accept `IEnumerable<IContentLoader<TContent>>`, something that is understood by dependency injection containers. The type is recognized by `IContentLoader<TContent>.SupportedType` property and loaded by `ContentManager`.
+The `IContentLoader<out TContent>` is [a contravariant](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/creating-variant-generic-interfaces), so it could be implicitly casted to `IContentLoader<object>`. Therefore ContentManager can accept `IEnumerable<IContentLoader<object>>`, something that is understood by dependency injection containers. The type is recognized by `IContentLoader<TContent>.SupportedType` property and loaded by `ContentManager`.
 
-A generic argument for a covariant interface can't be a type of value if the target is `object`. Also, a generic argument cannot be an interface to make the covariancy to work.
+A generic argument for a covariant interface can't be a value type if the target is `object`. Also, a generic argument cannot be an interface to make the covariancy to work.
 
 An alternative solution would be to avoid a covariant completely and have a common interface generic-free interface `IContentLoader` with `SupportedType`, which is implemented by `IContentLoader<TContent>`:
 
@@ -43,18 +45,19 @@ public interface IContentLoader<TContent>: IContentLoader
 }
 ```
 
-However that would mean that `IContentManager` would accept `IContentLoader` without any guarantees that such interface derives from `IContentLoader<TContent>`. The only way how to check this involves type reflection during execution (see [here](https://stackoverflow.com/a/18233467)). `IContentLoader<out TContent>` provides strong guarantees.
+However that would mean that `IContentManager` would accept `IContentLoader` without any guarantees that such interface derives from `IContentLoader<TContent>`. The only way how to check this for a generic interface would lead to a type reflection during execution (see [here](https://stackoverflow.com/a/18233467)). So a covariant `IContentLoader<out TContent>` provides strong guarantees.
 
 So in the end `TContent` is indeed constrained to a class.
 
 ## IContentLoader<TContent>.Load doesn't accept `stream` directly
 
 A method to load specific content `IContentLoader<out TContent>.Load` doesn't accept a stream directly, but plenty of arguments instead:
+
 ```csharp
-TContent Load(IContentManager contentManager, FileSystem fileSystem, string path);
+TContent Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path);
 ```
 
-While accepting stream would be more straighfoward, there might be cases where one content type requires to load several other content types. A good example is glTF which can have embedded textures but also external textures. External textures could be handled by `ContentManager`, so that's why it's passed alongside `FileSystem` and `path`.
+While accepting stream would be more straighfoward, there might be cases where one content type requires to load several other content types, or where a path is intentionally a directory. A good example is [glTF](https://en.wikipedia.org/wiki/GlTF) which can have embedded textures but also external textures. External textures could be handled by `ContentManager`, so that's why it's passed alongside `FileSystem` and `path`.
 
 ## `IContentLoader` isn't an abstract class, but an interface
 

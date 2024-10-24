@@ -16,15 +16,15 @@ public interface IContentManager
 public sealed class ContentManager: IContentManager
 {
     private readonly FrozenDictionary<Type, IContentLoader<object>> _loaders;
-    private readonly VirtualFileSystem _virtualFileSystem;
+    private readonly VirtualFileSystem _fileSystem;
 
-    public ContentManager(VirtualFileSystem virtualFileSystem, IEnumerable<IContentLoader<object>> contentLoaders)
+    public ContentManager(VirtualFileSystem fileSystem, IEnumerable<IContentLoader<object>> contentLoaders)
     {
-        _virtualFileSystem = virtualFileSystem;
+        _fileSystem = fileSystem;
 
         _loaders = contentLoaders.ToFrozenDictionary(item => item.SupportedType);
     }
-    
+
     public TContent Load<TContent>(string path) where TContent: class
     {
         if (!_loaders.TryGetValue(typeof(TContent), out var obj))
@@ -34,6 +34,11 @@ public sealed class ContentManager: IContentManager
         
         IContentLoader<TContent> loader = (IContentLoader<TContent>)obj;
             
-        return loader.Load(this, _virtualFileSystem, path);
+        return loader.Load(this, _fileSystem, path);
+    }
+
+    public Stream OpenStream(string path)
+    {
+        return _fileSystem.OpenStream(path);
     }
 }
