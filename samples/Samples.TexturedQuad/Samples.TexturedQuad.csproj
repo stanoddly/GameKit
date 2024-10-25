@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\GameKit.ImageLoader.StbImageSharp\GameKit.ImageLoader.StbImageSharp.csproj" />
-      <ProjectReference Include="..\..\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.ImageLoader.StbImageSharp\GameKit.ImageLoader.StbImageSharp.csproj" />
+      <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
     </ItemGroup>
 
 </Project>
