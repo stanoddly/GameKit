@@ -24,7 +24,7 @@ This is important to highlight, because GameKit's `ContentManager.Load` only thr
 
 ## `TContent` is constrained to a class (`where TContent: class`)
 
-The constrain is there to have a decent way to inject `ContentLoader` instances into a `ContentManager`. Usually, `TContent` is simply impractical to be handled as a value anyway. But let's go into technical details.
+The constraint is there to have a decent way to inject `ContentLoader` instances into a `ContentManager`. Usually, `TContent` is simply impractical to be handled as a value anyway. But let's go into technical details.
 
 The `IContentLoader<out TContent>` is [a contravariant](https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/creating-variant-generic-interfaces), so it could be implicitly casted to `IContentLoader<object>`. Therefore ContentManager can accept `IEnumerable<IContentLoader<object>>`, something that is understood by dependency injection containers. The type is recognized by `IContentLoader<TContent>.SupportedType` property and loaded by `ContentManager`.
 
@@ -57,7 +57,7 @@ A method to load specific content `IContentLoader<out TContent>.Load` doesn't ac
 TContent Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path);
 ```
 
-While accepting stream would be more straighfoward, there might be cases where one content type requires to load several other content types, or where a path is intentionally a directory. A good example is [glTF](https://en.wikipedia.org/wiki/GlTF) which can have embedded textures but also external textures. External textures could be handled by `ContentManager`, so that's why it's passed alongside `FileSystem` and `path`.
+While accepting stream would be more straighfoward, there might be cases where one content type requires loading several other content types, or where a path is intentionally a directory. A good example is [glTF](https://en.wikipedia.org/wiki/GlTF) which can have embedded textures but also external textures. External textures could be handled by `ContentManager`, so that's why it's passed alongside `FileSystem` and `path`.
 
 ## `IContentLoader` isn't an abstract class, but an interface
 

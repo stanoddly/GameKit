@@ -4,6 +4,7 @@ namespace GameKit.Content.Tests;
 
 public abstract class BaseVirtualFileSystemTests
 {
+    // this is supposed to be assigned in a derived class
     protected VirtualFileSystem FileSystem { get; set; } = DictFileSystem.Empty;
 
     [Test]

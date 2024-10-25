@@ -8,7 +8,7 @@ public class ContentLoaderTests
     {
         public ContentA Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
         {
-            throw new NotImplementedException();
+            return new ContentA();
         }
     }
     

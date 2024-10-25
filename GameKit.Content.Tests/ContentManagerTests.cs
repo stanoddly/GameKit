@@ -1,6 +1,6 @@
 namespace GameKit.Content.Tests;
 
-public class ContentTests
+public class ContentManagerTests
 {
     private record ContentA(string Value);
     private class ContentLoaderA : IContentLoader<ContentA>
