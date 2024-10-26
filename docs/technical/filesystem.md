@@ -1,42 +1,90 @@
-# Virtual filesystem
+# Virtual Filesystem
 
-A virtual filesystem provides a simple abstraction for read only operations to unify access over native filesystem or game packages and provide a way to create downloadable content.
+A virtual filesystem provides a unified abstraction layer for read-only operations across multiple storage sources. It
+seamlessly handles both native filesystem access and game package archives, while enabling distribution of translations
+and downloadable content (DLC) through a standardized interface.
 
-The interface it is based on is fairly simple, it could be simplified into this:
+## Core Interface
+The API provides a minimal yet comprehensive interface for read-only filesystem operations:
 
 ```csharp
 class VirtualFileSystem
 {
+    // Returns all files in the specified directory
     ReadOnlySpan<VirtualFile> GetFiles(string path);
+
+    // Returns all subdirectories in the specified directory
     ReadOnlySpan<string> GetDirectories(string path);
+
+    // Returns a specific file by its path
     VirtualFile GetFile(string path);
 }
 ```
 
-Based on this class interface several classes have been implemented which can be combined via composition into very useful combinations:
-* `DictFileSystem` for `IReadOnlyDictionary` based fake filesystem
-* `CompositeFileSystem` to combine several filesystems
-* `CachedFileSystem` that cached filesystem entries on creation
-* `NativeFileSystem` for a native filesystem access
+The `VirtualFile` class provides a unified abstraction over different storage types (filesystem files, memory buffers,
+or compressed package entries):
 
-They could be structured into interesting compositions:
+```csharp
+class VirtualFile
+{
+    // Full path of the virtual file
+    string Path { get; }
 
-```mermaid
-classDiagram
-CachedFileSystem o-- CompositeFileSystem
-CompositeFileSystem o-- NativeFileSystem
-CompositeFileSystem o-- DictFileSystem
+    // Size of the file in bytes
+    long Length { get; }
+
+    // Opens a stream to read the file's contents
+    Stream Open();
+}
 ```
 
-The aspect of composition is used by `VirtualFileSystemBuilder` which can help to create the most suitable virtual filesystem.
+## Implementation Types and Composition
 
-This also opens an opportunity to create more virtual filesystems, for example based on zip, and mix them with the existing ones. `BaseVirtualFileSystemTests` exists to help with testing of new classes.
+The interface supports several specialized implementations that can be combined through composition:
 
-## No security
+Core Implementations:
 
-It's important to highlight that virtual filesystems are intentionally not secure.
+- `DictFileSystem`, in-memory filesystem based on `IReadOnlyDictionary`. Useful for testing and temporary storage.
+- `CompositeFileSystem`, combines multiple filesystem implementations into a single unified view.
+- `CachedFileSystem`, improves performance by caching filesystem entries during initialization.
+- `NativeFileSystem`, provides direct access to the operating system's filesystem.
 
-For example it's still possible to list items out of a parent directory `nativeFileSystem.GetDirectories("..")` if `NativeFileSystem` is used directly. It's only meant to load game content, security is beyond its scope.
+The `VirtualFileSystemBuilder` facilitates creating optimized filesystem combinations for specific use cases. This
+pattern enables:
+
+- Flexible mixing of different storage types
+- Easy addition of new implementations (e.g., ZIP-based filesystems)
+- Consistent testing through `BaseVirtualFileSystemTests`
+
+For example, you could combine a cached game package filesystem with a native filesystem during development, or layer
+multiple content packages in a specific order.
+
+```mermaid
+graph TD;
+    CachedFileSystem-->CompositeFileSystem;
+    CompositeFileSystem-->package1.zip;
+    CompositeFileSystem-->package2.zip;
+    CompositeFileSystem-->development directory;
+```
+
+## Security Considerations
+
+This virtual filesystem implementation is designed for game content loading only and intentionally does not implement security measures.
+
+Users should be aware of the following limitations:
+
+- Directory traversal is possible (e.g., `nativeFileSystem.GetDirectories("..")`)
+- No access control or permission system
+- No file integrity verification
+
+Usage Guidelines:
+
+- Only use for trusted game content
+- Implement security at the application level when needed
+- Do not use for user-generated content without additional validation
+- Consider wrapping in a secure facade if public access is required
+
+Security measures should be implemented by the consuming application based on its specific requirements.
 
 ## No support for `async`/`await`
 
@@ -48,35 +96,62 @@ Games inherently work in frames and the default `SynchronizationContext` doesn't
 
 Furthermore asynchronous code raises complexity on its own where it's fairly easy to load content via threads anyway. In the end, content loading from a zip file is a mix of I/O and CPU bound operations.
 
-## Only slash is expected in a virtual path
+## Synchronous-Only Implementation
 
-`VirtualFileSystem` derived classes use slash `/` instead of a backslash `\`, e.g.:
+The virtual filesystem intentionally omits `async`/`await` support for several technical and practical reasons:
 
-```
+- `ZipArchive`, a primary target implementation, lacks async support ([GitHub Issue](https://github.com/dotnet/runtime/issues/1541))
+- While `NativeFileSystem` supports async operations, it should be primarily used during development, not in released games
+
+There are also game-specific considerations
+
+- Games operate on a frame-by-frame basis
+- Default `SynchronizationContext` doesn't align with frame-based execution
+- Implementing a frame-aware async context would add significant complexity:
+  - Requires custom `SynchronizationContext`
+  - Needs careful handling of frame boundaries
+  - Increases implementation and testing complexity
+
+Threading provides a simpler and more predictable solution for content loading.
+
+## Virtual Path Format
+
+All `VirtualFileSystem` implementations use forward slash (`/`) as the standard path separator. This ensures cross-platform compatibility
+and simplifies path handling in compressed archives. E.g. valid paths:
+
+```plaintext
 dir/subdir/file1.txt
 dir/subdir/file2.txt
 ```
 
-## Only full paths returned
+## Full Path Returns
 
-Unlike with `Dictionary.GetDirectories` or `Dictionary.GetFiles` which return files relatively to a given path, `VirtualFileSystem` methods are expected to always return a virtual path, e.g. for `dir/subdir` a method `GetDirectories` would return these directories:
+Unlike `Directory.GetDirectories`/`Directory.GetFiles` which return relative paths, `VirtualFileSystem` methods always
+return full virtual paths.
 
-```
+For example, calling `GetDirectories("dir/subdir")` returns:
+
+```plaintext
 dir/subdir/subsubdir1
 dir/subdir/subsubdir2
 ```
 
-And not relative to `dir/subdir`:
+Not the relative paths:
 
 ```
 subsubdir1
 subsubdir2
 ```
 
-## NativeFileSystem and Garbage collection
-
-When it comes to string manipulation C# is not different. Any string manipulation leads to garbage. That being said, if
-
 ## Thread-safety
 
-GameKit's `VirtualFileSystem` derived classes are guaranteed to be thread-safe without any locks. The only caveat is `DictFileSystem`, because a `Dictionary` could be injected and manipulated outside of the `VirtualFileSystem`.
+All `VirtualFileSystem` implementations are thread-safe by design, with no locking overhead.
+
+Exception: `DictFileSystem` cannot guarantee thread-safety if its underlying `Dictionary` is modified externally. To ensure thread-safety with `DictFileSystem`, either:
+
+- Use an immutable dictionary like `FrozenDictionary`
+- Don't modify the dictionary after initialization
+
+## UNRESOLVED: Zip packages
+
+[#21](https://github.com/stanoddly/GameKit/issues/21)
