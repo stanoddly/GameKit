@@ -64,7 +64,7 @@ graph TD;
     CachedFileSystem-->CompositeFileSystem;
     CompositeFileSystem-->package1.zip;
     CompositeFileSystem-->package2.zip;
-    CompositeFileSystem-->development directory;
+    CompositeFileSystem-->development-directory;
 ```
 
 ## Security Considerations
