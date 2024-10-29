@@ -16,7 +16,7 @@ public abstract class BaseVirtualFileSystemTests
         // assert
         string[] expected = ["a.txt", "b.txt"];
         VirtualFile[] items = files.ToArray();
-        CollectionAssert.AreEquivalent(expected, items.Select(x => x.Path));
+        Assert.That(items.Select(x => x.Path), Is.EquivalentTo(expected));
     }
     
     [Test]
@@ -28,7 +28,7 @@ public abstract class BaseVirtualFileSystemTests
         // assert
         string[] expected = ["dir1", "dir2"];
         string[] items = dirs.ToArray();
-        CollectionAssert.AreEquivalent(expected, items);
+        Assert.That(items, Is.EquivalentTo(expected));
     }
     
     [Test]
@@ -40,7 +40,7 @@ public abstract class BaseVirtualFileSystemTests
         // assert
         string[] expected = ["dir1/dir1a.txt", "dir1/dir1b.txt"];
         VirtualFile[] items = files.ToArray();
-        CollectionAssert.AreEquivalent(expected, items.Select(x => x.Path));
+        Assert.That(items.Select(x => x.Path), Is.EquivalentTo(expected));
     }
     
     [Test]

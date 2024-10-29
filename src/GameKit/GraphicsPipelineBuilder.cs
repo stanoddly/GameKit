@@ -200,7 +200,7 @@ public class GraphicsPipelineBuilder
         _info.SdlGpuMultisampleState = _info.SdlGpuMultisampleState with
         {
             sample_count = (SDL_GPUSampleCount)sampleCount,
-            enable_mask = mask.HasValue ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE,
+            enable_mask = mask.HasValue,
             sample_mask = mask ?? 0
         };
 
@@ -216,7 +216,7 @@ public class GraphicsPipelineBuilder
     {
         _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
         {
-            enable_depth_test = SDL_bool.SDL_TRUE,
+            enable_depth_test = true,
             compare_op = (SDL_GPUCompareOp)compareOperation
         };
         
@@ -227,8 +227,8 @@ public class GraphicsPipelineBuilder
     {
         _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
         {
-            enable_depth_test = SDL_bool.SDL_TRUE,
-            enable_depth_write = SDL_bool.SDL_TRUE
+            enable_depth_test = true,
+            enable_depth_write = true
         };
         return this;
     }
@@ -237,7 +237,7 @@ public class GraphicsPipelineBuilder
     {
         _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
         {
-            enable_stencil_test = SDL_bool.SDL_TRUE,
+            enable_stencil_test = true,
             compare_op = (SDL_GPUCompareOp)compareOperation,
             front_stencil_state = frontFacing,
             compare_mask = compareMask,
@@ -250,7 +250,7 @@ public class GraphicsPipelineBuilder
     {
         _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
         {
-            enable_stencil_test = SDL_bool.SDL_TRUE,
+            enable_stencil_test = true,
             compare_op = (SDL_GPUCompareOp)compareOperation,
             front_stencil_state = frontFacing,
             back_stencil_state = backFacing,

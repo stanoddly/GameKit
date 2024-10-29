@@ -11,7 +11,7 @@ public class FileSystemBuilderTests
             .Create();
         
         // assert
-        Assert.IsTrue(fileSystem is NativeFileSystem);
+        Assert.That(fileSystem is NativeFileSystem);
     }
     
     [Test]
@@ -24,7 +24,7 @@ public class FileSystemBuilderTests
             .Create();
         
         // assert
-        Assert.IsTrue(fileSystem is CompositeFileSystem);
+        Assert.That(fileSystem is CompositeFileSystem);
     }
     
     [Test]
@@ -37,7 +37,7 @@ public class FileSystemBuilderTests
             .Create();
         
         // assert
-        Assert.IsTrue(fileSystem is CachedFileSystem);
+        Assert.That(fileSystem is CachedFileSystem);
     }
     
     [Test]
@@ -49,9 +49,9 @@ public class FileSystemBuilderTests
             .Create();
         
         // assert
-        Assert.IsTrue(fileSystem is NativeFileSystem);
+        Assert.That(fileSystem is NativeFileSystem);
         NativeFileSystem nativeFileSystem = (NativeFileSystem)fileSystem;
         var expectedPath = Path.Join(typeof(FileSystemBuilderTests).Namespace, "ContentInDevRoot");
-        Assert.IsTrue(nativeFileSystem.RootPath.EndsWith(expectedPath));
+        Assert.That(nativeFileSystem.RootPath.EndsWith(expectedPath));
     }
 }

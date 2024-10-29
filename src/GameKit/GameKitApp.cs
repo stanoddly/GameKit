@@ -21,7 +21,7 @@ public sealed class GameKitApp: IDisposable
         unsafe
         {
             SDL_Event evt;
-            while (SDL3.SDL_PollEvent(&evt) == SDL_bool.SDL_TRUE)
+            while (SDL3.SDL_PollEvent(&evt) == true)
             {
                 if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
                 {
