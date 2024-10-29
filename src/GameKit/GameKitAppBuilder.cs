@@ -84,12 +84,12 @@ public class GameKitAppBuilder
 
     private unsafe GameKitApp UnsafeBuild()
     {
-        if (SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO) == SDL_bool.SDL_FALSE)
+        if (SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO) == false)
         {
             throw new GameKitInitializationException($"SDL_Init failed: {SDL3.SDL_GetError()}");
         }
         
-        Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, SDL_bool.SDL_TRUE, (byte*)null);
+        Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, true, (byte*)null);
         if (device.IsNull())
         {
             throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");
@@ -113,7 +113,7 @@ public class GameKitAppBuilder
             throw new GameKitInitializationException($"SDL_CreateWindow failed: {SDL3.SDL_GetError()}");
         }
 
-        if (SDL3.SDL_ClaimWindowForGPUDevice(device, sdlWindow) == SDL_bool.SDL_FALSE)
+        if (SDL3.SDL_ClaimWindowForGPUDevice(device, sdlWindow) == false)
         {
             throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
         }

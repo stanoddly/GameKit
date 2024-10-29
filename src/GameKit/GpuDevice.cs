@@ -84,7 +84,7 @@ public struct GpuDevice: IDisposable
             SDL_GPUTransferBuffer* transferBuffer = SDL3.SDL_CreateGPUTransferBuffer(SdlGpuDevice, &sdlGpuTransferBufferCreateInfo);
             SdlError.ThrowOnNull(transferBuffer);
 
-            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(SdlGpuDevice, transferBuffer, SDL_bool.SDL_FALSE);
+            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(SdlGpuDevice, transferBuffer, false);
             SdlError.ThrowOnNull(transferBufferPointer);
             Span<TVertexType> transferBufferSpan = new Span<TVertexType>(transferBufferPointer, vertices.Length);
             
@@ -103,7 +103,7 @@ public struct GpuDevice: IDisposable
             SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
             SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
                 { buffer = vertexBuffer, offset = 0, size = sizeBytes };
-            SDL3.SDL_UploadToGPUBuffer(copyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, SDL_bool.SDL_FALSE);
+            SDL3.SDL_UploadToGPUBuffer(copyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
             SdlError.ThrowOnError();
             SDL3.SDL_EndGPUCopyPass(copyPass);
             SdlError.ThrowOnError();
@@ -128,8 +128,8 @@ public struct GpuDevice: IDisposable
             GpuCommandBuffer gpuCommandBuffer = AcquireCommandBuffer();
 
             uint width, height;
-            SDL_GPUTexture* swapchainTexturePointer = SDL3.SDL_AcquireGPUSwapchainTexture(gpuCommandBuffer.Pointer, SdlWindow, &width, &height);
-            if (swapchainTexturePointer == null)
+            SDL_GPUTexture* swapchainTexturePointer;
+            if (SDL3.SDL_AcquireGPUSwapchainTexture(gpuCommandBuffer.Pointer, SdlWindow, &swapchainTexturePointer, &width, &height) == false)
             {
                 throw new GameKitInitializationException($"SDL_AcquireGPUSwapchainTexture failed: {SDL3.SDL_GetError()}");
             }
@@ -157,7 +157,7 @@ public struct GpuDevice: IDisposable
             address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
             address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
             compare_op = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
-            enable_compare = SDL_bool.SDL_TRUE
+            enable_compare = true
         };
         unsafe
         {

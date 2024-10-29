@@ -41,7 +41,7 @@ public struct MemoryTransfer: IDisposable
             SDL_GPUTransferBuffer* transferBuffer = SDL3.SDL_CreateGPUTransferBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuTransferBufferCreateInfo);
             _tranferBuffers.Add(transferBuffer);
 
-            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, SDL_bool.SDL_FALSE);
+            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
             Span<TVertexType> transferBufferSpan = new Span<TVertexType>(transferBufferPointer, vertices.Length);
             
             vertices.CopyTo(transferBufferSpan);
@@ -52,7 +52,7 @@ public struct MemoryTransfer: IDisposable
             SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
                 { buffer = vertexBuffer, offset = 0, size = sizeBytes };
             
-            SDL3.SDL_UploadToGPUBuffer(_copyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, SDL_bool.SDL_FALSE);
+            SDL3.SDL_UploadToGPUBuffer(_copyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
             
             return new VertexBuffer<TVertexType>(vertexBuffer, vertices.Length);
         }
@@ -91,7 +91,7 @@ public struct MemoryTransfer: IDisposable
                 &sdlGpuTransferBufferCreateInfo
             );
 
-            ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, SDL_bool.SDL_FALSE);
+            ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, false);
             fixed (byte* textureDataPointer = imageData)
             {
                 Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
@@ -117,7 +117,7 @@ public struct MemoryTransfer: IDisposable
                 _copyPass,
                 &sdlGpuTextureTransferInfo,
                 &sdlGpuTextureRegion,
-                SDL_bool.SDL_FALSE);
+                false);
             SdlError.ThrowOnError();
 
             return new Texture(sdlGpuTexture, width, height);
