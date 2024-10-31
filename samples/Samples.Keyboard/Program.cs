@@ -5,14 +5,14 @@ using var gameKitApp = new GameKitAppBuilder()
     .AddContentFromProjectDirectory("Content")
     .Build();
 
-gameKitApp.Input.KeyDown += (Keyboard sender, in KeyEventArgs eventArgs) =>
+gameKitApp.Input.KeyDown += (Keyboard keyboard, in KeyEventArgs eventArgs) =>
 {
-    Console.WriteLine("KeyDown!");
+    Console.WriteLine($"Key down! Scancode {eventArgs.Scancode}, key {eventArgs.Key}!");
 };
 
-gameKitApp.Input.KeyUp += (Keyboard sender, in KeyEventArgs eventArgs) =>
+gameKitApp.Input.KeyUp += (Keyboard keyboard, in KeyEventArgs eventArgs) =>
 {
-    Console.WriteLine("KeyUp!");
+    Console.WriteLine($"Key up! Scancode {eventArgs.Scancode}, key {eventArgs.Key}!");
 };
 
 return gameKitApp.Run();

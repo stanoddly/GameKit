@@ -5,7 +5,7 @@ namespace GameKit.Input;
 /// <summary>
 /// SDL Scancode enum representing physical keyboard keys.
 /// </summary>
-public enum ScanCode: ushort
+public enum Scancode: ushort
 {
     Unknown = SDL_Scancode.SDL_SCANCODE_UNKNOWN,
 

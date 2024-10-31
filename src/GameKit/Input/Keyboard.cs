@@ -14,16 +14,16 @@ public class Keyboard
     private const int IntBitShift = 5;
     private const int One = 0x1;
 
-    public bool IsPressed(ScanCode scanCode)
+    public bool IsPressed(Scancode scancode)
     {
-        int index = (int)scanCode;
+        int index = (int)scancode;
 
         return (_bitArray[index >>> IntBitShift] & (One << (index & IntSizeMinusOne))) != 0;
     }
     
-    internal bool Set(ScanCode scanCode)
+    internal bool Set(Scancode scancode)
     {
-        int index = (int)scanCode;
+        int index = (int)scancode;
 
         ref var value = ref _bitArray[index >>> IntBitShift];
         int mask = One << (index & IntSizeMinusOne);
@@ -32,18 +32,18 @@ public class Keyboard
         return wasUnset;
     }
     
-    internal void Unset(ScanCode scanCode)
+    internal void Unset(Scancode scancode)
     {
-        int index = (int)scanCode;
+        int index = (int)scancode;
         
         ref var value = ref _bitArray[index >>> IntBitShift];
         int mask = One << (index & IntSizeMinusOne);
         value &= ~mask;
     }
     
-    public bool Shift => IsPressed(ScanCode.LeftShift) || IsPressed(ScanCode.RightShift);
-    public bool Alt => IsPressed(ScanCode.LeftAlt) || IsPressed(ScanCode.RightAlt);
-    public bool Ctrl => IsPressed(ScanCode.LeftCtrl) || IsPressed(ScanCode.RightCtrl);
-    public bool Gui => IsPressed(ScanCode.LeftGui) || IsPressed(ScanCode.RightGui);
-    public bool Super => IsPressed(ScanCode.LeftGui) || IsPressed(ScanCode.RightGui);
+    public bool Shift => IsPressed(Scancode.LeftShift) || IsPressed(Scancode.RightShift);
+    public bool Alt => IsPressed(Scancode.LeftAlt) || IsPressed(Scancode.RightAlt);
+    public bool Ctrl => IsPressed(Scancode.LeftCtrl) || IsPressed(Scancode.RightCtrl);
+    public bool Gui => IsPressed(Scancode.LeftGui) || IsPressed(Scancode.RightGui);
+    public bool Super => IsPressed(Scancode.LeftGui) || IsPressed(Scancode.RightGui);
 }

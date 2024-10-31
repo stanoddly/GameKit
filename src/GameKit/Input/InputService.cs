@@ -1,10 +1,9 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using SDL;
 
 namespace GameKit.Input;
 
-public readonly record struct KeyEventArgs(ScanCode Code, ulong Timestamp);
+public readonly record struct KeyEventArgs(Scancode Scancode, VirtualKey Key, ulong Timestamp);
 
 public delegate void KeyDownEventHandler(Keyboard keyboard, in KeyEventArgs keyEventArgs);
 public delegate void KeyUpEventHandler(Keyboard keyboard, in KeyEventArgs keyEventArgs);
@@ -19,9 +18,10 @@ public class InputService
     
     internal void OnKeyEvent(in SDL_KeyboardEvent keyboardEvent)
     {
-        ScanCode scanCode = (ScanCode)keyboardEvent.scancode;
+        Scancode scancode = (Scancode)keyboardEvent.scancode;
         ulong timestamp = keyboardEvent.timestamp;
         SDL_KeyboardID keyboardId = keyboardEvent.which;
+        VirtualKey virtualKey = (VirtualKey)keyboardEvent.key;
         
         ref Keyboard? keyboard = ref CollectionsMarshal.GetValueRefOrAddDefault(_keyboards, keyboardId, out bool exists);
 
@@ -30,17 +30,18 @@ public class InputService
             keyboard = new Keyboard();
         }
 
-        KeyEventArgs keyEventArgs = new KeyEventArgs(scanCode, timestamp);
+        KeyEventArgs keyEventArgs = new KeyEventArgs(scancode, virtualKey, timestamp);
         if (keyboardEvent.down)
         {
-            if (keyboard.Set(scanCode))
+            Console.WriteLine("DOWN");
+            if (keyboard.Set(scancode))
             {
                 KeyDown?.Invoke(keyboard, keyEventArgs);
             }
         }
         else
         {
-            keyboard.Unset(scanCode);
+            keyboard.Unset(scancode);
             KeyUp?.Invoke(keyboard, keyEventArgs);
         }
     }
