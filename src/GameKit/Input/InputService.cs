@@ -33,7 +33,6 @@ public class InputService
         KeyEventArgs keyEventArgs = new KeyEventArgs(scancode, virtualKey, timestamp);
         if (keyboardEvent.down)
         {
-            Console.WriteLine("DOWN");
             if (keyboard.Set(scancode))
             {
                 KeyDown?.Invoke(keyboard, keyEventArgs);
