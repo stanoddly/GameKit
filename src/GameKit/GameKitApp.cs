@@ -1,4 +1,5 @@
 using GameKit.Content;
+using GameKit.Input;
 using SDL;
 
 namespace GameKit;
@@ -12,26 +13,12 @@ public sealed class GameKitApp: IDisposable
     public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
     public required VirtualFileSystem FileSystem { get; init; }
     public required IContentManager ContentManager { get; init; }
+    public required InputService Input { get; init; }
+    public required EventService Events { get; init; }
+    public required AppControl AppControl { get; init; }
     
     private Action<GameKitApp> _update = _ => { };
     private Action<GameKitApp> _draw = _ => { };
-    
-    private bool ConsumeEventsAndFalseOnQuit()
-    {
-        unsafe
-        {
-            SDL_Event evt;
-            while (SDL3.SDL_PollEvent(&evt) == true)
-            {
-                if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     public void Dispose()
     {
@@ -55,13 +42,18 @@ public sealed class GameKitApp: IDisposable
 
     public int Run()
     {
-        while (ConsumeEventsAndFalseOnQuit())
+        while (true)
         {
+            Events.ProcessEvents();
+
+            if (AppControl.QuitRequested)
+            {
+                return 0;
+            }
+            
             _update(this);
             _draw(this);
         }
-
-        return 0;
     }
 }
 

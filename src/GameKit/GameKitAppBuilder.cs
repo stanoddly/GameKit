@@ -1,5 +1,6 @@
 using System.Reflection;
 using GameKit.Content;
+using GameKit.Input;
 using SDL;
 
 namespace GameKit;
@@ -126,6 +127,11 @@ public class GameKitAppBuilder
 
         GpuDevice gpuDevice = new GpuDevice(device, sdlWindow);
         Window window = new Window(sdlWindow);
+
+        AppControl appControl = new AppControl();
+        InputService inputService = new InputService();
+        EventService eventService = new EventService(inputService, appControl);
+        
         return new GameKitApp
         {
             GpuDevice = gpuDevice,
@@ -134,7 +140,10 @@ public class GameKitAppBuilder
             GpuMemoryUploader = new GpuMemoryUploader(gpuDevice),
             GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window),
             FileSystem = fileSystem,
-            ContentManager = contentManager
+            ContentManager = contentManager,
+            Input = inputService,
+            Events = eventService,
+            AppControl = appControl
         };
     }
 }
