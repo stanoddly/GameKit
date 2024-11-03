@@ -87,7 +87,7 @@ public class GameKitAppBuilder
         InputService inputService = gameKitFactory.CreateInput();
         EventService eventService = gameKitFactory.CreateEventService(inputService, appControl);
 
-        ImmutableArray<IDisposable> disposables = [gpuDevice, window, gameKitFactory];
+        ImmutableArray<IDisposable> disposables = [fileSystem, gpuDevice, window, gameKitFactory];
 
         return new GameKitApp
         {
