@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using GameKit.Content;
 using GameKit.Input;
 using SDL;
@@ -16,18 +17,30 @@ public sealed class GameKitApp: IDisposable
     public required InputService Input { get; init; }
     public required EventService Events { get; init; }
     public required AppControl AppControl { get; init; }
+    public required ImmutableArray<IDisposable> Disposables { get; init; }
     
     private Action<GameKitApp> _update = _ => { };
     private Action<GameKitApp> _draw = _ => { };
 
     public void Dispose()
     {
-        unsafe
+        List<Exception> exceptions = new();
+        foreach (IDisposable disposable in Disposables)
         {
-            SDL3.SDL_ReleaseWindowFromGPUDevice(GpuDevice.SdlGpuDevice, Window.Pointer);
+            try
+            {
+                disposable.Dispose();
+            }
+            catch (Exception e)
+            {
+                exceptions.Add(e);
+            }
         }
-        GpuDevice.Dispose();
-        Window.Dispose();
+
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(exceptions);
+        }
     }
 
     public void Update(Action<GameKitApp> update)
@@ -44,7 +57,7 @@ public sealed class GameKitApp: IDisposable
     {
         while (true)
         {
-            Events.ProcessEvents();
+            Events.Process();
 
             if (AppControl.QuitRequested)
             {

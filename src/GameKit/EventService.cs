@@ -3,7 +3,12 @@ using SDL;
 
 namespace GameKit;
 
-public class EventService
+public interface IEventProcessor
+{
+    public void Process();
+}
+
+public class EventService: IEventProcessor
 {
     private readonly InputService _inputService;
     private readonly AppControl _appControl;
@@ -14,7 +19,7 @@ public class EventService
         _appControl = appControl;
     }
 
-    public void ProcessEvents()
+    public void Process()
     {
         unsafe
         {

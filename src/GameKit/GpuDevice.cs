@@ -18,7 +18,7 @@ public struct VertexBuffer<TVertexType> where TVertexType : unmanaged, IVertexTy
 
 
 
-public struct GpuDevice: IDisposable
+public class GpuDevice: IDisposable
 {
     private static readonly (float r, float g, float b, float a) DefaultClearColor = (0.3f, 0.4f, 0.5f, 1.0f);
 
@@ -172,6 +172,7 @@ public struct GpuDevice: IDisposable
     {
         unsafe
         {
+            SDL3.SDL_ReleaseWindowFromGPUDevice(SdlGpuDevice, SdlWindow);
             SDL3.SDL_DestroyGPUDevice(SdlGpuDevice);
             SdlGpuDevice = null;
         }
