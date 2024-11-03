@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reflection;
 using GameKit.Content;
 using GameKit.Input;
@@ -7,31 +8,18 @@ namespace GameKit;
 
 public class GameKitAppBuilder
 {
-    private static readonly string DefaultTitle = "GameKit App";
-    private static readonly (int, int) DefaultSize = (640, 480);
+
     private (int, int)? _windowSize;
     private string? _windowTitle;
     private bool? _debugMode;
-    private List<IContentLoader<object>> _contentLoaders;
-    private FileSystemBuilder _fileSystemBuilder;
+    private List<IContentLoader<object>> _contentLoaders = new();
+    private FileSystemBuilder _fileSystemBuilder = new();
 
 #if DEBUG
     private const bool DebugBuild = true;
 #else
     private const bool DebugBuild = false;
 #endif
-    
-    public GameKitAppBuilder()
-    {
-        _contentLoaders = new List<IContentLoader<object>>();
-        _fileSystemBuilder = new FileSystemBuilder();
-    }
-    
-
-    public GameKitApp Build()
-    {
-        return UnsafeBuild();
-    }
 
     public GameKitAppBuilder WithSize((int, int) size)
     {
@@ -82,42 +70,12 @@ public class GameKitAppBuilder
         _fileSystemBuilder.WithCache();
         return this;
     }
-
-    private unsafe GameKitApp UnsafeBuild()
+    
+    public GameKitApp Build()
     {
-        if (SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO) == false)
-        {
-            throw new GameKitInitializationException($"SDL_Init failed: {SDL3.SDL_GetError()}");
-        }
-        
-        Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, true, (byte*)null);
-        if (device.IsNull())
-        {
-            throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");
-        }
-
-        string windowTitle;
-        if (_windowTitle == null)
-        {
-            using var process = System.Diagnostics.Process.GetCurrentProcess();
-            windowTitle = process.ProcessName;
-        }
-        else
-        {
-            windowTitle = _windowTitle;
-        }
-        
-        (int width, int height) = _windowSize ?? DefaultSize;
-        Pointer<SDL_Window> sdlWindow = SDL3.SDL_CreateWindow(windowTitle, width, height, SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
-        if (sdlWindow.IsNull())
-        {
-            throw new GameKitInitializationException($"SDL_CreateWindow failed: {SDL3.SDL_GetError()}");
-        }
-
-        if (SDL3.SDL_ClaimWindowForGPUDevice(device, sdlWindow) == false)
-        {
-            throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
-        }
+        GameKitFactory gameKitFactory = new GameKitFactory();
+        Window window = gameKitFactory.CreateWindow(_windowSize, _windowTitle);
+        GpuDevice gpuDevice = gameKitFactory.CreateGpuDevice(window);
 
         _contentLoaders.Add(new ShaderPackLoader());
 
@@ -125,13 +83,12 @@ public class GameKitAppBuilder
         
         ContentManager contentManager = new ContentManager(fileSystem, _contentLoaders);
 
-        GpuDevice gpuDevice = new GpuDevice(device, sdlWindow);
-        Window window = new Window(sdlWindow);
-
         AppControl appControl = new AppControl();
-        InputService inputService = new InputService();
-        EventService eventService = new EventService(inputService, appControl);
-        
+        InputService inputService = gameKitFactory.CreateInput();
+        EventService eventService = gameKitFactory.CreateEventService(inputService, appControl);
+
+        ImmutableArray<IDisposable> disposables = [gpuDevice, window, gameKitFactory];
+
         return new GameKitApp
         {
             GpuDevice = gpuDevice,
@@ -143,7 +100,8 @@ public class GameKitAppBuilder
             ContentManager = contentManager,
             Input = inputService,
             Events = eventService,
-            AppControl = appControl
+            AppControl = appControl,
+            Disposables = disposables
         };
     }
 }

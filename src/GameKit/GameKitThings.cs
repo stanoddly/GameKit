@@ -21,7 +21,7 @@ public class GameKitInitializationException : Exception
     }
 }
 
-public struct Window: IDisposable
+public class Window: IDisposable
 {
     public Pointer<SDL_Window> Pointer { get; private set; }
 
