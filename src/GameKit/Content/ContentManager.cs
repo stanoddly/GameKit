@@ -2,13 +2,17 @@ using System.Collections.Frozen;
 
 namespace GameKit.Content;
 
-public interface IContentLoader<out TContent> where TContent: class
+public interface IContentLoader<out TContent>: IDisposable where TContent: class
 {
     Type SupportedType => typeof(TContent);
     TContent Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path);
+
+    void IDisposable.Dispose()
+    {
+    }
 }
 
-public interface IContentManager
+public interface IContentManager: IDisposable
 {
     public TContent Load<TContent>(string path) where TContent: class;
 }
@@ -40,5 +44,26 @@ public sealed class ContentManager: IContentManager
     public Stream OpenStream(string path)
     {
         return _fileSystem.OpenStream(path);
+    }
+
+    public void Dispose()
+    {
+        List<Exception> exceptions = new List<Exception>();
+        foreach (var loader in _loaders.Values)
+        {
+            try
+            {
+                loader.Dispose();
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        }
+
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(exceptions);
+        }
     }
 }

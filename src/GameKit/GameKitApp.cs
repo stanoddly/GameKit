@@ -31,6 +31,10 @@ public sealed class GameKitApp: IDisposable
             {
                 disposable.Dispose();
             }
+            catch (AggregateException e)
+            {
+                exceptions.AddRange(e.InnerExceptions);
+            }
             catch (Exception e)
             {
                 exceptions.Add(e);
