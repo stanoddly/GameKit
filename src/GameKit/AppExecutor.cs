@@ -4,63 +4,65 @@ using SDL;
 
 namespace GameKit;
 
-public interface IDrawable
+internal static class GameKitCallbackAppExecutor
 {
-    public void Draw();
-}
-
-public interface IUpdateable
-{
-    public void Update();
-}
-
-
-
-public class SdlLifecycleWrapper
-{
-    private readonly GameKitApp _app;
-
-    public SdlLifecycleWrapper(GameKitApp app)
+    private static GameKitApp _app = null!;
+    
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)], EntryPoint = "AppInit")]
+    private static unsafe SDL_AppResult AppInit(IntPtr* appState, int argc, byte** argv)
     {
-        _app = app;
-        SDL3.SDL_EnterAppMainCallbacks()
+        // this is dummy, the setup is done before the call
+        // TODO: to be verified
+        // https://discourse.libsdl.org/t/is-it-safe-to-call-sdl-init-before-sdl-enterappmaincallbacks/55434
+        return SDL_AppResult.SDL_APP_CONTINUE;
     }
 
-    public unsafe delegate SDL_AppResult AppInit(IntPtr* appState, int argc, byte** argv);
-    public unsafe delegate SDL_AppResult AppIterate(IntPtr appState);
-    public unsafe delegate SDL_AppResult AppEvent(IntPtr appState, SDL_Event* e);
-    public unsafe delegate void AppQuit(IntPtr appState, SDL_AppResult result);
-
-    /*
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)], EntryPoint = "AppIterate")]
-    internal static unsafe SDL_AppResult Iterate(void* appState)
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)], EntryPoint = "AppIterate")]
+    private static unsafe SDL_AppResult AppIterate(IntPtr appState)
     {
+        _app.Events.Process();
 
-        return SDL_AppResult.SDL_APP_FAILURE;
+        if (_app.AppControl.QuitRequested)
+        {
+            return SDL_AppResult.SDL_APP_SUCCESS;
+        }
+        
+        _app.DoUpdate();
+        
+        if (_app.AppControl.QuitRequested)
+        {
+            return SDL_AppResult.SDL_APP_SUCCESS;
+        }
+
+        _app.DoDraw();
+        return SDL_AppResult.SDL_APP_CONTINUE;
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)], EntryPoint = "AppInit")]
-    internal static unsafe SDL_AppResult AppInit(void** appState, int argc, byte** argv)
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)], EntryPoint = "AppEvent")]
+    private static unsafe SDL_AppResult AppEvent(IntPtr appState, SDL_Event* e)
     {
-        return SDL_AppResult.SDL_APP_FAILURE;
+        _app.Events.EnqueueEvent(e);
+
+        return SDL_AppResult.SDL_APP_CONTINUE;
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)], EntryPoint = "AppIterate")]
-    internal static unsafe SDL_AppResult AppIterate(void* appState)
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)], EntryPoint = "AppQuit")]
+    private static unsafe void AppQuit(IntPtr appState, SDL_AppResult result)
     {
-
-        return SDL_AppResult.SDL_APP_FAILURE;
+        _app.CleanUp();
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)], EntryPoint = "AppEvent")]
-    internal static unsafe SDL_AppResult AppEvent(void* appState, SDL_Event* e)
+    internal static int Execute(GameKitApp gameKitApp)
     {
-        return SDL_AppResult.SDL_APP_FAILURE;
-    }
+        if (_app != null)
+        {
+            throw new Exception();
+        }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)], EntryPoint = "AppEvent")]
-    internal static unsafe void SDL_AppQuit(void *appState, SDL_AppResult result)
-    {
+        _app = gameKitApp;
+        unsafe
+        {
+            return SDL3.SDL_EnterAppMainCallbacks(0, null, &AppInit, &AppIterate, &AppEvent, &AppQuit);
+        }
     }
-    */
 }

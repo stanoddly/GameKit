@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using GameKit.Input;
 using SDL;
 
@@ -10,6 +11,7 @@ public interface IEventProcessor
 
 public class EventService: IEventProcessor
 {
+    private readonly ConcurrentQueue<SDL_Event> _eventQueue = new();
     private readonly InputService _inputService;
     private readonly AppControl _appControl;
 
@@ -21,24 +23,25 @@ public class EventService: IEventProcessor
 
     public void Process()
     {
-        unsafe
+        while (_eventQueue.TryDequeue(out SDL_Event evt))
         {
-            SDL_Event evt;
-            while (SDL3.SDL_PollEvent(&evt) == true)
+            if (evt.Type == SDL_EventType.SDL_EVENT_KEY_DOWN)
             {
-                if (evt.Type == SDL_EventType.SDL_EVENT_KEY_DOWN)
-                {
-                    _inputService.OnKeyEvent(evt.key);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_KEY_UP)
-                {
-                    _inputService.OnKeyEvent(evt.key);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
-                {
-                    _appControl.Quit();
-                }
+                _inputService.OnKeyEvent(evt.key);
+            }
+            else if (evt.Type == SDL_EventType.SDL_EVENT_KEY_UP)
+            {
+                _inputService.OnKeyEvent(evt.key);
+            }
+            else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
+            {
+                _appControl.Quit();
             }
         }
+    }
+
+    internal unsafe void EnqueueEvent(SDL_Event* evt)
+    {
+        _eventQueue.Enqueue(*evt);
     }
 }

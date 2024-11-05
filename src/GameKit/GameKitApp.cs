@@ -5,7 +5,7 @@ using SDL;
 
 namespace GameKit;
 
-public sealed class GameKitApp: IDisposable
+public sealed class GameKitApp
 {
     public required Window Window { get; init; }
     public required GpuDevice GpuDevice { get; init; }
@@ -22,7 +22,7 @@ public sealed class GameKitApp: IDisposable
     private Action<GameKitApp> _update = _ => { };
     private Action<GameKitApp> _draw = _ => { };
 
-    public void Dispose()
+    internal void CleanUp()
     {
         List<Exception> exceptions = new();
         foreach (IDisposable disposable in Disposables)
@@ -30,6 +30,11 @@ public sealed class GameKitApp: IDisposable
             try
             {
                 disposable.Dispose();
+            }
+            // well, something has exploded magnificently!
+            catch (AggregateException e)
+            {
+                exceptions.AddRange(e.InnerExceptions);
             }
             catch (Exception e)
             {
@@ -43,9 +48,19 @@ public sealed class GameKitApp: IDisposable
         }
     }
 
+    internal void DoUpdate()
+    {
+        _update(this);
+    }
+
     public void Update(Action<GameKitApp> update)
     {
         _update = update;
+    }
+
+    internal void DoDraw()
+    {
+        _draw(this);
     }
 
     public void Draw(Action<GameKitApp> draw)
@@ -55,18 +70,7 @@ public sealed class GameKitApp: IDisposable
 
     public int Run()
     {
-        while (true)
-        {
-            Events.Process();
-
-            if (AppControl.QuitRequested)
-            {
-                return 0;
-            }
-            
-            _update(this);
-            _draw(this);
-        }
+        return GameKitCallbackAppExecutor.Execute(this);
     }
 }
 
