@@ -1,4 +1,3 @@
-path: "**/*.cs"
 tone_instructions: "Focus on code issues, avoid refactoring suggestions."
 reviews:
   request_changes_workflow: false
