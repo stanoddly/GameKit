@@ -95,8 +95,13 @@ public readonly record struct Color(SDL_Color SdlColor)
     public static implicit operator Color(SDL_Color sdlColor) => new Color(sdlColor);
 }
 
+public interface IPositionable
+{
+    Vector3 Position { get; init; }
+}
+
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly record struct PositionColorVertex(Vector3 Position, Color Color) : IVertexType
+public readonly record struct PositionColorVertex(Vector3 Position, Color Color) : IVertexType, IPositionable
 {
     public static implicit operator PositionColorVertex((Vector3 position, Color color) tuple) => new PositionColorVertex(tuple.position, tuple.color);
     public static implicit operator PositionColorVertex((float x, float y, float z, byte r, byte g, byte b, byte a) tuple)
@@ -106,11 +111,21 @@ public readonly record struct PositionColorVertex(Vector3 Position, Color Color)
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly record struct PositionTextureVertex(Vector3 Position, Vector2 TextureCoords) : IVertexType
+public readonly record struct PositionTextureVertex(Vector3 Position, Vector2 TextureCoords) : IVertexType, IPositionable
 {
     public static implicit operator PositionTextureVertex((Vector3 position, Vector2 textureCoords) tuple) => new PositionTextureVertex(tuple.position, tuple.textureCoords);
     public static implicit operator PositionTextureVertex((float x, float y, float z, float u, float v) tuple)
         => new PositionTextureVertex(new Vector3(tuple.x, tuple.y, tuple.z), new Vector2(tuple.u, tuple.v));
 
     public static ImmutableArray<VertexElementFormat> VertexElements { get; } = [VertexElementFormat.Float3, VertexElementFormat.Float2];
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public readonly record struct PositionTextureNormalVertex(Vector3 Position, Vector3 Normal, Vector2 TextureCoords) : IVertexType, IPositionable
+{
+    public static implicit operator PositionTextureNormalVertex((Vector3 position, Vector3 normal, Vector2 textureCoords) tuple) => new PositionTextureNormalVertex(tuple.position, tuple.normal, tuple.textureCoords);
+    public static implicit operator PositionTextureNormalVertex((float x, float y, float z, float normalX, float normalY, float normalZ, float u, float v) tuple)
+        => new PositionTextureNormalVertex(new Vector3(tuple.x, tuple.y, tuple.z), new Vector3(tuple.normalX, tuple.normalY, tuple.normalZ), new Vector2(tuple.u, tuple.v));
+
+    public static ImmutableArray<VertexElementFormat> VertexElements { get; } = [VertexElementFormat.Float3, VertexElementFormat.Float2, VertexElementFormat.Float3];
 }

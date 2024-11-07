@@ -14,7 +14,7 @@ GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
     .SetShaders(vertexShader, fragmentShader)
     .Build();
 
-Span<PositionColorVertex> vertices =
+ReadOnlySpan<PositionColorVertex> vertices =
 [
     (-1, -1, 0, 255, 0, 0, 255),
     (1, -1, 0, 0, 255, 0, 255),
