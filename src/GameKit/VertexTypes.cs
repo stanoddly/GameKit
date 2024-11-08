@@ -127,5 +127,5 @@ public readonly record struct PositionTextureNormalVertex(Vector3 Position, Vect
     public static implicit operator PositionTextureNormalVertex((float x, float y, float z, float normalX, float normalY, float normalZ, float u, float v) tuple)
         => new PositionTextureNormalVertex(new Vector3(tuple.x, tuple.y, tuple.z), new Vector3(tuple.normalX, tuple.normalY, tuple.normalZ), new Vector2(tuple.u, tuple.v));
 
-    public static ImmutableArray<VertexElementFormat> VertexElements { get; } = [VertexElementFormat.Float3, VertexElementFormat.Float2, VertexElementFormat.Float3];
+    public static ImmutableArray<VertexElementFormat> VertexElements { get; } = [VertexElementFormat.Float3, VertexElementFormat.Float3, VertexElementFormat.Float2];
 }
