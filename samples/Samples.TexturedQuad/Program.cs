@@ -17,20 +17,12 @@ GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
     .SetShaders(vertexShader, fragmentShader)
     .Build();
 
-Span<PositionTextureVertex> vertices =
-[
-    (-1,  1, 0, 0, 0),  // Top-left
-    (1,  1, 0, 1, 0),   // Top-right
-    (-1, -1, 0, 0, 1),  // Bottom-left
-    (1, -1, 0, 1, 1)    // Bottom-right
-];
-
 VertexBuffer<PositionTextureVertex> vertexBuffer;
 Texture texture;
 
 using (MemoryTransfer memoryTransfer = gameKitApp.GpuMemoryUploader.CreateMemoryTransfer())
 {
-    vertexBuffer = memoryTransfer.AddVertexBuffer(vertices);
+    vertexBuffer = memoryTransfer.AddVertexBuffer(PositionTextureShapes.HorizontalQuad);
     
     using Image image = gameKitApp.ContentManager.Load<Image>("Earth.png");
     texture = memoryTransfer.AddTexture(image);

@@ -19,7 +19,7 @@ public struct MemoryTransfer: IDisposable
         _uploadCommandBuffer = uploadCommandBuffer;
     }
 
-    public VertexBuffer<TVertexType> AddVertexBuffer<TVertexType>(Span<TVertexType> vertices) where TVertexType: unmanaged, IVertexType 
+    public VertexBuffer<TVertexType> AddVertexBuffer<TVertexType>(ReadOnlySpan<TVertexType> vertices) where TVertexType: unmanaged, IVertexType
     {
         uint sizeBytes = (uint)(Unsafe.SizeOf<TVertexType>() * vertices.Length);
         unsafe
@@ -56,6 +56,12 @@ public struct MemoryTransfer: IDisposable
             
             return new VertexBuffer<TVertexType>(vertexBuffer, vertices.Length);
         }
+    }
+
+    public VertexBuffer<TVertexType> AddVertexBuffer<TVertexType>(in Shape<TVertexType> shape)
+        where TVertexType : unmanaged, IVertexType
+    {
+        return AddVertexBuffer((ReadOnlySpan<TVertexType>)shape);
     }
 
     public Texture AddTexture(Image image)
