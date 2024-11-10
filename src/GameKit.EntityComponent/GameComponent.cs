@@ -25,7 +25,7 @@ public abstract class GameComponent
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TComponent GetSiblingOrFactory<TComponent>(Func<TComponent> factory) where TComponent: GameComponent, new()
+    public TComponent GetSiblingOrFactory<TComponent>(Func<TComponent> factory) where TComponent: GameComponent
     {
         return Owner.GetOrFactory<TComponent>(factory);
     }
