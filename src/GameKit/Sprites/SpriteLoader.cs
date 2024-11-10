@@ -19,7 +19,7 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
     private readonly JsonSerializerOptions _options = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip, PropertyNameCaseInsensitive = true,
-        Converters = {new Vector2JsonConverter(), new Vector2JsonConverter()}
+        Converters = {new Vector2JsonConverter()}
     };
 
     private AnimatedSprite CreateAnimation(IContentManager contentManager, AnimatedSpriteDto animatedSpriteDto)
