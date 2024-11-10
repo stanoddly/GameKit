@@ -21,6 +21,15 @@ internal static class JsonReaderExtensions
         reader.ValidateJsonTokenType(jsonTokenType);
         return result;
     }
+    
+    internal static float GetFloat(this ref Utf8JsonReader reader)
+    {
+        var value = reader.GetDouble();
+        if (value < float.MinValue || value > float.MaxValue)
+            throw new JsonException($"X value {value} is outside the valid range for float ({float.MinValue}, {float.MaxValue})");
+
+        return (float)value;
+    }
 }
 
 public class Vector2JsonConverter : JsonConverter<Vector2>
@@ -30,9 +39,9 @@ public class Vector2JsonConverter : JsonConverter<Vector2>
         Vector2 result = default;
         reader.ValidateJsonTokenType(JsonTokenType.StartArray);
         reader.ValidatedRead(JsonTokenType.Number);
-        result.X = (float)reader.GetDouble();
+        result.X = reader.GetFloat();
         reader.ValidatedRead(JsonTokenType.Number);
-        result.Y = (float)reader.GetDouble();
+        result.Y = reader.GetFloat();
         reader.ValidatedRead(JsonTokenType.EndArray);
         return result;
     }
