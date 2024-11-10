@@ -10,7 +10,6 @@ public sealed class GameKitApp: IDisposable
     public required Window Window { get; init; }
     public required GpuDevice GpuDevice { get; init; }
     public required ShaderLoader ShaderLoader { get; init; }
-    public required GpuMemoryUploader GpuMemoryUploader { get; init; }
     public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
     public required VirtualFileSystem FileSystem { get; init; }
     public required IContentManager ContentManager { get; init; }

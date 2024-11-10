@@ -23,7 +23,7 @@ ReadOnlySpan<PositionColorVertex> vertices =
 
 VertexBuffer<PositionColorVertex> vertexBuffer;
 
-using (MemoryTransfer memoryTransfer = gameKitApp.GpuMemoryUploader.CreateMemoryTransfer())
+using (GpuMemoryTransfer memoryTransfer = gameKitApp.GpuDevice.CreateMemoryTransfer())
 {
     vertexBuffer = memoryTransfer.AddVertexBuffer(vertices);
 }
