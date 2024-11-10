@@ -103,14 +103,13 @@ public class GameObject: IEnumerable<GameComponent>
     public TComponent GetOrFail<TComponent>() where TComponent: GameComponent
     {
         int id = TypeId<TComponent>.Id;
-        try
+        
+        if (_components.TryGetValue(id, out GameComponent? component))
         {
-            return Unsafe.As<TComponent>(_components[id]);
+            return Unsafe.As<TComponent>(component);
         }
-        catch (KeyNotFoundException)
-        {
-            throw new ComponentNotFound(TypeId<TComponent>.Name);
-        }
+
+        throw new ComponentNotFound(TypeId<TComponent>.Name);
     }
     
     public TComponent? TryGet<TComponent>() where TComponent: GameComponent
