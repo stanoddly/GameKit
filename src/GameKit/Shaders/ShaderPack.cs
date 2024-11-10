@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Shaders;
 
 
 public enum ShaderStage

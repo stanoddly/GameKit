@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
+using GameKit.Shaders;
+using GameKit.Utilities;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public struct VertexBuffer<TVertexType> where TVertexType : unmanaged, IVertexType
 {

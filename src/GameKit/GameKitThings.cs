@@ -1,5 +1,7 @@
 ﻿using System.Numerics;
 using System.Reflection;
+using GameKit.Shaders;
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit;

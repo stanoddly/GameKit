@@ -1,4 +1,4 @@
-﻿namespace GameKit;
+﻿namespace GameKit.Utilities;
 
 public readonly struct Pointer<TValue> where TValue : unmanaged
 {

@@ -1,6 +1,7 @@
+using GameKit.Utilities;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public struct Sampler
 {

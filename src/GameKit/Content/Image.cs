@@ -1,4 +1,4 @@
-namespace GameKit;
+namespace GameKit.Content;
 
 public abstract class Image: IDisposable
 {

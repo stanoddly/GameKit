@@ -1,4 +1,5 @@
 ﻿using GameKit;
+using GameKit.Gpu;
 
 using var gameKitApp = new GameKitAppBuilder()
     .AddContentFromProjectDirectory("Content")
