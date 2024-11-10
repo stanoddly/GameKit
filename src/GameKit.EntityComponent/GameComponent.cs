@@ -5,7 +5,7 @@ namespace GameKit.EntityComponent;
 public abstract class GameComponent
 {
     internal GameObject? InternalOwner = null;
-    protected GameObject Owner => InternalOwner ?? throw new Exception("missing parent");
+    protected GameObject Owner => InternalOwner ?? throw new InvalidOperationException("missing parent");
 
     public bool HasOwner()
     {
