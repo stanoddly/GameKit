@@ -26,6 +26,7 @@ public class Transform25d: GameComponent
 
     public void UpdateDirection(Vector2 direction)
     {
+        direction = Vector2.Normalize(direction);
         if (direction == Direction) return;
 
         Direction = direction;
