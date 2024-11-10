@@ -11,8 +11,9 @@ public class GameWorld
 
     public void Remove(string name)
     {
-        if (_gameObjects.TryGetValue(name, out var gameObject))
+        if (_gameObjects.Remove(name, out GameObject? gameObject))
         {
+            gameObject.DetachAll();
         }
     }
 }

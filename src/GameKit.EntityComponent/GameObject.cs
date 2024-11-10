@@ -90,7 +90,14 @@ public class GameObject: IEnumerable<GameComponent>
 
     public void DetachAll()
     {
-        throw new NotImplementedException("yup, not implemented yet!");
+        foreach ((_, GameComponent component) in _components)
+        {
+            component.OnDetach();
+            Unsubscribe(component);
+            component.InternalOwner = null;
+        }
+        // TODO: make sure OnDetach didn't create new components
+        _components.Clear();
     }
 
     public TComponent GetOrFail<TComponent>() where TComponent: GameComponent
