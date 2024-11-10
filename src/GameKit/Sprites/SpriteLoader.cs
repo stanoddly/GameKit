@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Immutable;
+using System.Numerics;
 using System.Text.Json;
 using GameKit.Content;
 using GameKit.Gpu;
@@ -9,7 +10,7 @@ namespace GameKit.Sprites;
 public record Sprite(Texture Texture, Vector2 TopLeft, Vector2 BottomRight, Vector2 Pivot);
 
 public readonly record struct AnimatedSpriteFrame(Vector2 TopLeft, Vector2 BottomRight, Vector2 Pivot); 
-public record AnimatedSprite(float FrameDuration, Texture Texture, List<AnimatedSpriteFrame> Frames, bool Repeat);
+public record AnimatedSprite(float FrameDuration, Texture Texture, ImmutableArray<AnimatedSpriteFrame> Frames, bool Repeat);
 
 public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<AnimatedSprite>
 {
@@ -25,14 +26,15 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
     {
         Texture texture = contentManager.Load<Texture>(animatedSpriteDto.Image);
 
-        List<AnimatedSpriteFrame> animationFrames = new();
+        ImmutableArray<AnimatedSpriteFrame>.Builder animationFramesBuilder = ImmutableArray.CreateBuilder<AnimatedSpriteFrame>(animatedSpriteDto.Frames.Count);
         foreach (AnimationFrameDto animationFrameDto in animatedSpriteDto.Frames)
         {
             AnimatedSpriteFrame animatedSpriteFrame = new AnimatedSpriteFrame(animationFrameDto.TopLeft, animationFrameDto.BottomRight,
                 animationFrameDto.Pivot);
-            animationFrames.Add(animatedSpriteFrame);
+            animationFramesBuilder.Add(animatedSpriteFrame);
         }
-        
+
+        ImmutableArray<AnimatedSpriteFrame> animationFrames = animationFramesBuilder.MoveToImmutable();
         AnimatedSprite animatedSprite = new AnimatedSprite((float)animatedSpriteDto.FrameDuration, texture, animationFrames, animatedSpriteDto.Repeat);
 
         return animatedSprite;
