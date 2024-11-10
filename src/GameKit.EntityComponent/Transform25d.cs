@@ -19,7 +19,11 @@ public class Transform25d: GameComponent
         Direction = new Vector2(1, 0);
     }
 
-    public Transform25d() { }
+    public Transform25d()
+    {
+        Position = Vector2.Zero;
+        Direction = new Vector2(1, 0);
+    }
 
     public Vector2 Position { get; private set; }
     public Vector2 Direction { get; private set; }
