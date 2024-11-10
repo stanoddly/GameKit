@@ -1,4 +1,5 @@
 using GameKit.Content;
+using SDL;
 
 namespace GameKit.Gpu;
 
@@ -30,5 +31,16 @@ public class TextureLoader: IContentLoader<Texture>
         _textures[path] = texture;
         
         return texture;
+    }
+
+    public void Dispose()
+    {
+        foreach (Texture texture in _textures.Values)
+        {
+            unsafe
+            {
+                SDL3.SDL_ReleaseGPUTexture(_gpuDevice.SdlGpuDevice, texture.Pointer);
+            }
+        }
     }
 }
