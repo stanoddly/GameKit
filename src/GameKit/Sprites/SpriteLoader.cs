@@ -50,7 +50,7 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
         using var spritesJsonStream = contentManager.OpenStream(path);
 
         SpriteDto spriteDto = JsonSerializer.Deserialize<SpriteDto>(spritesJsonStream, _options)
-                               ?? throw new NullReferenceException();
+                               ?? throw new JsonException("Deserialization returned null for SpriteDto.");
         
         Texture texture = contentManager.Load<Texture>(spriteDto.Filename);
         Sprite sprite = new Sprite(texture, spriteDto.TopLeft, spriteDto.BottomRight, spriteDto.Pivot);
@@ -69,7 +69,7 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
 
         using var stream = contentManager.OpenStream(path);
         AnimatedSpriteDto animatedSpriteDto = JsonSerializer.Deserialize<AnimatedSpriteDto>(stream, _options)
-                                    ?? throw new NullReferenceException();
+                                    ?? throw new JsonException("Deserialization returned null for AnimatedSpriteDto.");
 
         AnimatedSprite animatedSprite = CreateAnimation(contentManager, animatedSpriteDto);
         _animatedSprites[path] = animatedSprite;
