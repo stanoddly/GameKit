@@ -43,7 +43,7 @@ public class GameObject: IEnumerable<GameComponent>
         {
             if (!_eventHandlersPerType.TryGetValue(whateverInterface, out List<object>? value))
             {
-                return;
+                continue;
             }
 
             value.Remove(obj);
