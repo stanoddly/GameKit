@@ -6,7 +6,13 @@ public class GameWorld
 
     public void Add(string name, GameObject gameObject)
     {
-        _gameObjects.Add(name, gameObject);
+        if (string.IsNullOrEmpty(name)) throw new ArgumentException($"'{nameof(name)}' cannot be null or empty");
+
+        if (!_gameObjects.TryAdd(name, gameObject))
+        {
+            throw new ArgumentException($"GameObject with '{name}' already exists");
+        }
+            
     }
 
     public void Remove(string name)
