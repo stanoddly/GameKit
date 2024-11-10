@@ -15,6 +15,9 @@ internal static class JsonReaderExtensions
     internal static bool ValidatedRead(this ref Utf8JsonReader reader, JsonTokenType jsonTokenType)
     {
         var result = reader.Read();
+        if (!result)
+            throw new JsonException("Failed to read next token");
+
         reader.ValidateJsonTokenType(jsonTokenType);
         return result;
     }
