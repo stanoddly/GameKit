@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
+using GameKit.Content;
+using GameKit.Utilities;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public struct GpuMemoryTransfer: IDisposable
 {

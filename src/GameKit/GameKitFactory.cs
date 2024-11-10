@@ -1,4 +1,6 @@
+using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit;

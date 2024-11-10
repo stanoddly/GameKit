@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public readonly struct Shape<TVertexType> where TVertexType : unmanaged, IVertexType
 {

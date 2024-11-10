@@ -15,6 +15,7 @@ public interface IContentLoader<out TContent>: IDisposable where TContent: class
 public interface IContentManager: IDisposable
 {
     public TContent Load<TContent>(string path) where TContent: class;
+    Stream OpenStream(string path);
 }
 
 public sealed class ContentManager: IContentManager

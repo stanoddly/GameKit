@@ -1,6 +1,7 @@
+using GameKit.Gpu;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Shaders;
 
 public class ShaderLoader
 {

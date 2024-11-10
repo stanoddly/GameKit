@@ -1,6 +1,7 @@
+using GameKit.Utilities;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public readonly struct ColorTargetInfo
 {
@@ -22,7 +23,7 @@ public readonly struct ColorTargetInfo
     }
 }
 
-public readonly struct Texture
+public class Texture
 {
     public Pointer<SDL_GPUTexture> Pointer { get; }
     public int Width { get; }

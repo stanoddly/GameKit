@@ -1,10 +1,9 @@
 using System.Collections.Immutable;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public enum VertexElementFormat
 {

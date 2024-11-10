@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using GameKit.Content;
+using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.Shaders;
 using SDL;
 
 namespace GameKit;

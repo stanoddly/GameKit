@@ -1,4 +1,6 @@
 ﻿using GameKit;
+using GameKit.Content;
+using GameKit.Gpu;
 using GameKit.ImageLoader.StbImageSharp;
 
 using var gameKitApp = new GameKitAppBuilder()

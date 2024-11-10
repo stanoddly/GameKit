@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using GameKit.Shaders;
 using SDL;
 
-namespace GameKit;
+namespace GameKit.Gpu;
 
 public enum PrimitiveType
 {

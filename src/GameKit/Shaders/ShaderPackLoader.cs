@@ -1,7 +1,7 @@
 using System.Text.Json;
 using GameKit.Content;
 
-namespace GameKit;
+namespace GameKit.Shaders;
 
 public class ShaderPackLoader: IContentLoader<ShaderPack>
 {
