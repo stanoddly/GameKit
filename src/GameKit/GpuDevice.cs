@@ -167,6 +167,19 @@ public class GpuDevice: IDisposable
             return new Sampler(samplerPointer);
         }
     }
+    
+    public GpuMemoryTransfer CreateMemoryTransfer()
+    {
+        unsafe
+        {
+            SDL_GPUCommandBuffer* uploadCmdBuf = SDL3.SDL_AcquireGPUCommandBuffer(SdlGpuDevice);
+            SdlError.ThrowOnNull(uploadCmdBuf);
+
+            SDL_GPUCopyPass* copyPass = SDL3.SDL_BeginGPUCopyPass(uploadCmdBuf);
+            
+            return new GpuMemoryTransfer(SdlGpuDevice, uploadCmdBuf, copyPass);
+        }
+    }
 
     public void Dispose()
     {

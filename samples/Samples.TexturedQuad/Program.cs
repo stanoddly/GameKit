@@ -20,7 +20,7 @@ GraphicsPipeline graphicsPipeline = gameKitApp.GraphicsPipelineBuilder
 VertexBuffer<PositionTextureVertex> vertexBuffer;
 Texture texture;
 
-using (MemoryTransfer memoryTransfer = gameKitApp.GpuMemoryUploader.CreateMemoryTransfer())
+using (GpuMemoryTransfer memoryTransfer = gameKitApp.GpuDevice.CreateMemoryTransfer())
 {
     vertexBuffer = memoryTransfer.AddVertexBuffer(PositionTextureShapes.HorizontalQuad);
     

@@ -3,18 +3,18 @@ using SDL;
 
 namespace GameKit;
 
-public struct MemoryTransfer: IDisposable
+public struct GpuMemoryTransfer: IDisposable
 {
-    private readonly GpuDevice _gpuDevice;
+    private readonly Pointer<SDL_GPUDevice> _sdlGpuDevice;
 
     private Pointer<SDL_GPUCopyPass> _copyPass;
     private Pointer<SDL_GPUCommandBuffer> _uploadCommandBuffer;
     
     List<Pointer<SDL_GPUTransferBuffer>> _tranferBuffers = new();
 
-    public MemoryTransfer(GpuDevice gpuDevice, Pointer<SDL_GPUCommandBuffer> uploadCommandBuffer, Pointer<SDL_GPUCopyPass> copyPass)
+    public GpuMemoryTransfer(Pointer<SDL_GPUDevice> sdlGpuDevice, Pointer<SDL_GPUCommandBuffer> uploadCommandBuffer, Pointer<SDL_GPUCopyPass> copyPass)
     {
-        _gpuDevice = gpuDevice;
+        _sdlGpuDevice = sdlGpuDevice;
         _copyPass = copyPass;
         _uploadCommandBuffer = uploadCommandBuffer;
     }
@@ -30,7 +30,7 @@ public struct MemoryTransfer: IDisposable
                 size = sizeBytes
             };
             
-            SDL_GPUBuffer* vertexBuffer = SDL3.SDL_CreateGPUBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuBufferCreateInfo);
+            SDL_GPUBuffer* vertexBuffer = SDL3.SDL_CreateGPUBuffer(_sdlGpuDevice, &sdlGpuBufferCreateInfo);
             
             SDL_GPUTransferBufferCreateInfo sdlGpuTransferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
             {
@@ -38,15 +38,15 @@ public struct MemoryTransfer: IDisposable
                 size = sizeBytes
             };
             
-            SDL_GPUTransferBuffer* transferBuffer = SDL3.SDL_CreateGPUTransferBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuTransferBufferCreateInfo);
+            SDL_GPUTransferBuffer* transferBuffer = SDL3.SDL_CreateGPUTransferBuffer(_sdlGpuDevice, &sdlGpuTransferBufferCreateInfo);
             _tranferBuffers.Add(transferBuffer);
 
-            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
+            TVertexType* transferBufferPointer = (TVertexType*)SDL3.SDL_MapGPUTransferBuffer(_sdlGpuDevice, transferBuffer, false);
             Span<TVertexType> transferBufferSpan = new Span<TVertexType>(transferBufferPointer, vertices.Length);
             
             vertices.CopyTo(transferBufferSpan);
             
-            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer);
+            SDL3.SDL_UnmapGPUTransferBuffer(_sdlGpuDevice, transferBuffer);
             
             SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
             SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
@@ -85,7 +85,7 @@ public struct MemoryTransfer: IDisposable
                 num_levels = 1,
                 usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
             };
-            Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
+            Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_sdlGpuDevice, &sdlGpuTextureCreateInfo);
 
             SDL_GPUTransferBufferCreateInfo sdlGpuTransferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
             {
@@ -93,17 +93,17 @@ public struct MemoryTransfer: IDisposable
                 size = (uint)(width * height * 4)
             };
             SDL_GPUTransferBuffer* textureTransferBuffer = SDL3.SDL_CreateGPUTransferBuffer(
-                _gpuDevice.SdlGpuDevice,
+                _sdlGpuDevice,
                 &sdlGpuTransferBufferCreateInfo
             );
 
-            ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, false);
+            ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_sdlGpuDevice, textureTransferBuffer, false);
             fixed (byte* textureDataPointer = imageData)
             {
                 Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
             }
             
-            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer);
+            SDL3.SDL_UnmapGPUTransferBuffer(_sdlGpuDevice, textureTransferBuffer);
 
             SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo
             {
@@ -142,32 +142,9 @@ public struct MemoryTransfer: IDisposable
 
             foreach (Pointer<SDL_GPUTransferBuffer> tranferBuffer in _tranferBuffers)
             {
-                SDL3.SDL_ReleaseGPUTransferBuffer(_gpuDevice.SdlGpuDevice, tranferBuffer);
+                SDL3.SDL_ReleaseGPUTransferBuffer(_sdlGpuDevice, tranferBuffer);
             }
             _tranferBuffers.Clear();
-        }
-    }
-}
-
-public class GpuMemoryUploader
-{
-    private GpuDevice _gpuDevice;
-
-    public GpuMemoryUploader(GpuDevice gpuDevice)
-    {
-        _gpuDevice = gpuDevice;
-    }
-
-    public MemoryTransfer CreateMemoryTransfer()
-    {
-        unsafe
-        {
-            SDL_GPUCommandBuffer* uploadCmdBuf = SDL3.SDL_AcquireGPUCommandBuffer(_gpuDevice.SdlGpuDevice);
-            SdlError.ThrowOnNull(uploadCmdBuf);
-
-            SDL_GPUCopyPass* copyPass = SDL3.SDL_BeginGPUCopyPass(uploadCmdBuf);
-            
-            return new MemoryTransfer(_gpuDevice, uploadCmdBuf, copyPass);
         }
     }
 }

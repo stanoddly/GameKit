@@ -94,7 +94,6 @@ public class GameKitAppBuilder
             GpuDevice = gpuDevice,
             Window = window,
             ShaderLoader = new ShaderLoader(gpuDevice),
-            GpuMemoryUploader = new GpuMemoryUploader(gpuDevice),
             GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window),
             FileSystem = fileSystem,
             ContentManager = contentManager,
