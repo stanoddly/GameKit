@@ -22,6 +22,18 @@ internal static class JsonReaderExtensions
         return result;
     }
     
+    internal static int ValidatedGetInt32(this ref Utf8JsonReader reader)
+    {;
+        if (!reader.Read())
+        {
+            throw new JsonException("Failed to read next token");
+        }
+
+        reader.ValidateJsonTokenType(JsonTokenType.Number);
+
+        return reader.GetInt32();
+    }
+    
     internal static float GetFloat(this ref Utf8JsonReader reader)
     {
         var value = reader.GetDouble();
@@ -47,6 +59,29 @@ public class Vector2JsonConverter : JsonConverter<Vector2>
     }
 
     public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
+    {
+        writer.WriteStartArray();
+        writer.WriteNumberValue(value.X);
+        writer.WriteNumberValue(value.Y);
+        writer.WriteEndArray();
+    }
+}
+
+public class RectangleJsonConverter : JsonConverter<Rectangle>
+{
+    public override Rectangle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        reader.ValidateJsonTokenType(JsonTokenType.StartArray);
+        int x = reader.ValidatedGetInt32();
+        int y = reader.ValidatedGetInt32();
+        int width = reader.ValidatedGetInt32();
+        int height = reader.ValidatedGetInt32();
+        reader.ValidatedRead(JsonTokenType.EndArray);
+        
+        return new Rectangle(x, y, width, height);
+    }
+
+    public override void Write(Utf8JsonWriter writer, Rectangle value, JsonSerializerOptions options)
     {
         writer.WriteStartArray();
         writer.WriteNumberValue(value.X);
