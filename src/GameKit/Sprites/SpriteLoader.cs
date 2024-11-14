@@ -7,10 +7,9 @@ using GameKit.Utilities;
 
 namespace GameKit.Sprites;
 
-public record Sprite(Texture Texture, Vector2 TopLeft, Vector2 BottomRight, Vector2 Pivot);
+public record Sprite(Texture Texture, Rectangle SourceRectangle);
 
-public readonly record struct AnimatedSpriteFrame(Vector2 TopLeft, Vector2 BottomRight, Vector2 Pivot); 
-public record AnimatedSprite(float FrameDuration, Texture Texture, ImmutableArray<AnimatedSpriteFrame> Frames, bool Repeat);
+public record AnimatedSprite(float FrameDuration, Texture Texture, ImmutableArray<Rectangle> Frames, bool Repeat);
 
 public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<AnimatedSprite>
 {
@@ -19,23 +18,13 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
     private readonly JsonSerializerOptions _options = new()
     {
         ReadCommentHandling = JsonCommentHandling.Skip, PropertyNameCaseInsensitive = true,
-        Converters = {new Vector2JsonConverter()}
+        Converters = {new RectangleJsonConverter()}
     };
 
     private AnimatedSprite CreateAnimation(IContentManager contentManager, AnimatedSpriteDto animatedSpriteDto)
     {
         Texture texture = contentManager.Load<Texture>(animatedSpriteDto.Image);
-
-        ImmutableArray<AnimatedSpriteFrame>.Builder animationFramesBuilder = ImmutableArray.CreateBuilder<AnimatedSpriteFrame>(animatedSpriteDto.Frames.Count);
-        foreach (AnimationFrameDto animationFrameDto in animatedSpriteDto.Frames)
-        {
-            AnimatedSpriteFrame animatedSpriteFrame = new AnimatedSpriteFrame(animationFrameDto.TopLeft, animationFrameDto.BottomRight,
-                animationFrameDto.Pivot);
-            animationFramesBuilder.Add(animatedSpriteFrame);
-        }
-
-        ImmutableArray<AnimatedSpriteFrame> animationFrames = animationFramesBuilder.MoveToImmutable();
-        AnimatedSprite animatedSprite = new AnimatedSprite((float)animatedSpriteDto.FrameDuration, texture, animationFrames, animatedSpriteDto.Repeat);
+        AnimatedSprite animatedSprite = new AnimatedSprite((float)animatedSpriteDto.FrameDuration, texture, animatedSpriteDto.Frames, animatedSpriteDto.Repeat);
 
         return animatedSprite;
     }
@@ -52,8 +41,8 @@ public sealed class SpriteLoader: IContentLoader<Sprite>, IContentLoader<Animate
         SpriteDto spriteDto = JsonSerializer.Deserialize<SpriteDto>(spritesJsonStream, _options)
                                ?? throw new JsonException("Deserialization returned null for SpriteDto.");
         
-        Texture texture = contentManager.Load<Texture>(spriteDto.Filename);
-        Sprite sprite = new Sprite(texture, spriteDto.TopLeft, spriteDto.BottomRight, spriteDto.Pivot);
+        Texture texture = contentManager.Load<Texture>(spriteDto.Image);
+        Sprite sprite = new Sprite(texture, spriteDto.SourceRectangle);
         
         _sprites[path] = sprite;
 
