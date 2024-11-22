@@ -12,7 +12,7 @@ public static class ServiceLocator
         Type type = typeof(TService);
         return Unsafe.As<TService>(Dictionary[type]);
     }
-    
+
     public static void ClearServices()
     {
         Dictionary.Clear();

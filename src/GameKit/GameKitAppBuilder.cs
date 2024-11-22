@@ -10,7 +10,6 @@ namespace GameKit;
 
 public class GameKitAppBuilder
 {
-
     private (int, int)? _windowSize;
     private string? _windowTitle;
     private bool? _debugMode;
