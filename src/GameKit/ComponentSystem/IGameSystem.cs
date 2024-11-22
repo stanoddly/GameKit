@@ -96,15 +96,8 @@ public class GameWorldBuilder
     }
 }*/
 
-public abstract class BaseGameSystem<TEntityKey> where TEntityKey: struct, IKey<TEntityKey>
+public abstract class GameSystem<TEntityKey> where TEntityKey: struct, IKey<TEntityKey>
 {
     public abstract void Remove(TEntityKey id);
 }
 
-public abstract class GameSystem<TGameComponent, TEntityKey>: BaseGameSystem<TEntityKey> where TEntityKey: struct, IKey<TEntityKey>
-{
-    internal int TypeId => TypeId<TGameComponent>.Id;
-    public abstract void Add(TEntityKey key, in TGameComponent component);
-    public abstract TGameComponent Get(TEntityKey key);
-    public abstract bool TryGet(TEntityKey key, out TGameComponent component);
-}
