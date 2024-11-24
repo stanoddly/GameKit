@@ -101,3 +101,8 @@ public abstract class GameSystem<TEntityKey> where TEntityKey: struct, IKey<TEnt
     public abstract void Remove(TEntityKey id);
 }
 
+public interface IGameSystem<TEntityKey, TComponent> where TEntityKey: struct, IKey<TEntityKey>
+{
+    void SetComponent(TEntityKey id, in TComponent component);
+    void RemoveComponent(TEntityKey id);
+}

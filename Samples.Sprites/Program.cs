@@ -33,9 +33,6 @@ using (GpuMemoryTransfer memoryTransfer = gameKitApp.GpuDevice.CreateMemoryTrans
 
 Sampler sampler = gameKitApp.GpuDevice.CreatePixelArtSampler();
 
-GameWorld gameWorld = new GameWorldBuilder()
-    .Build();
-
 gameKitApp.Draw(app =>
 {
     using FrameRenderContext frameRenderContext = app.GpuDevice.CreateFrameRenderContext();

@@ -331,11 +331,11 @@ public class BaseSparseSet<TKey>
     public Span<TKey> Keys => _dense.AsSpan();
 }
 
-public class SparseDictionary<TKey, TValue> : BaseSparseSet<TKey> where TKey: IKey<TKey>
+public class SparseMap<TKey, TValue> : BaseSparseSet<TKey> where TKey: IKey<TKey>
 {
     protected FastList<TValue> _values;
 
-    public SparseDictionary()
+    public SparseMap()
     {
         _values = new();
     }
