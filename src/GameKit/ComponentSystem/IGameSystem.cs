@@ -104,5 +104,19 @@ public abstract class GameSystem<TEntityKey> where TEntityKey: struct, IKey<TEnt
 public interface IGameSystem<TEntityKey, TComponent> where TEntityKey: struct, IKey<TEntityKey>
 {
     void SetComponent(TEntityKey id, in TComponent component);
+
+    void SetComponents(ReadOnlySpan<TEntityKey> keys, ReadOnlySpan<TComponent> component)
+    {
+        if (keys.Length != component.Length)
+        {
+            throw new ArgumentException("Keys and Components must have the same length.");
+        }
+
+        for (int i = 0; i < keys.Length; i++)
+        {
+            SetComponent(keys[i], component[i]);
+        }
+    }
+
     void RemoveComponent(TEntityKey id);
 }
