@@ -6,10 +6,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <None Update="StructureOfArrays.cs.T4.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-      </None>
-    </ItemGroup>
-
 </Project>
