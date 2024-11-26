@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace GameKit.Utilities;
+namespace GameKit.Collections;
 
 public class FastList<TValue>
 {

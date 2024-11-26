@@ -1,4 +1,4 @@
-namespace GameKit.Utilities;
+namespace GameKit.Collections;
 
 public class SlotMap<THandle, TValue>
     where THandle : unmanaged, IHandle<THandle>

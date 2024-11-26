@@ -1,10 +1,10 @@
-// Generated using jinja2-cli: jinja2 MultiArray.cs.jinja2 > MultiArray.cs
+// Generated using jinja2-cli: jinja2 MultiArray.cs.jinja > MultiArray.cs
 using System;
 
 namespace GameKit.Collections;
 
 {% for type in [("class", ""), ("struct", "Struct")] -%}
-{% for n in range(1, 11) -%}
+{% for n in range(2, 11) -%}
 public {{type[0]}} MultiArray{{type[1]}}<{% for i in range(1, n + 1) %}TValue{{i}}{% if not loop.last %}, {% endif %}{% endfor %}>
 {
     private const int DefaultCapacity = 32;
@@ -55,38 +55,32 @@ public {{type[0]}} MultiArray{{type[1]}}<{% for i in range(1, n + 1) %}TValue{{i
         _count++;
     }
 
+    public void Set(int index, {% for i in range(1, n + 1) %}TValue{{i}} value{{i}}{% if not loop.last %}, {% endif %}{% endfor %})
+    {
+        if (index < 0 || index >= _count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+            
+        {% for i in range(1, n + 1) %}
+        _values{{i}}[index] = value{{i}};
+        {% endfor %}
+    }
+
     {% for i in range(1, n + 1) %}
-    public TValue{{i}} GetValue{{i}}(int index)
-    {
-        if (index < 0 || index >= _count)
-            throw new ArgumentOutOfRangeException(nameof(index));
-
-        return _values{{i}}[index];
-    }
-
-    public void SetValue{{i}}(int index, TValue{{i}} value)
-    {
-        if (index < 0 || index >= _count)
-            throw new ArgumentOutOfRangeException(nameof(index));
-
-        _values{{i}}[index] = value;
-    }
-
     public Span<TValue{{i}}> Values{{i}} => new Span<TValue{{i}}>(_values{{i}}, 0, _count);
     {% endfor %}
 
-    public bool SwapRemove(int index)
+    public bool SwapRemove(int index, out int swappedIndex)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             {% for i in range(1, n + 1) %}
-            _values{{i}}[index] = _values{{i}}[lastIndex];
+            _values{{i}}[index] = _values{{i}}[swappedIndex];
             {%- endfor %}
+            swappedIndex = default;
+            return false;
         }
+
         _count--;
         return true;
     }

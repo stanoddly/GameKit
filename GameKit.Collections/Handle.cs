@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace GameKit.Utilities;
+namespace GameKit.Collections;
 
 public interface IHandle<TSelf> where TSelf: unmanaged, IHandle<TSelf>
 {

@@ -1,0 +1,145 @@
+// Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
+namespace GameKit.Collections;
+{% for type in [("class", ""), ("struct", "Struct")] -%}
+{% for n in range(3, 11) -%}
+
+public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> where TKey: IKey<TKey>
+{
+    private FastList<TKey> _sparse;
+    private MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+
+    public SparseSet()
+    {
+        _sparse = new FastList<TKey>();
+        _dense = new MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
+    }
+
+    public int Set(TKey key{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        int sparseIndex = key.Index;
+        int keyVersion = key.Version;
+        int denseIndex;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+        }
+
+        ref TKey denseKey = ref _sparse[sparseIndex];
+        
+        // nonexistent
+        if (denseKey.IsTombStone())
+        {
+            denseIndex = _dense.Add(key);
+            denseKey = key.WithIndex(denseIndex);
+            return denseIndex;
+        }
+        
+        // already exists with correct version
+        if (keyVersion == denseKey.Version)
+        {
+            return denseKey.Index;
+        }
+        
+        // exists, but needs to change the version
+        denseKey = denseKey.WithVersion(keyVersion);
+        denseIndex = denseKey.Index;
+        _dense[denseIndex] = key;
+        _dense.Set(key, {% for i in range(1, n + 1) %}, value{{i}}{% endfor %})
+
+        return denseIndex;
+    }
+    
+    public bool SwapRemove(TKey key)
+    {
+        int index = key.Index;
+        if (index > (_sparse.Length - 1))
+        {
+            return false;
+        }
+
+        ref TKey denseKey = ref _sparse[index];
+
+        if (denseKey.IsTombStone())
+        {
+            return false;
+        }
+
+        // The key isn't here actually, incompatible versions 
+        if (key.Version != denseKey.Version)
+        {
+            return false;
+        }
+        
+        if (_dense.SwapRemove(denseKey.Index, out TKey? swappedKey))
+        {
+            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
+            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+
+            return SwapRemoveResult.Swap;
+        }
+
+        denseKey = TKey.TombStone;
+        return true;
+    }
+    
+    public bool Contains(TKey key)
+    {
+        return Contains(key, out _);
+    }
+    
+    public bool Contains(TKey key, out int keyIndex) 
+    {
+        int index = key.Index;
+        if (index > _sparse.LastIndex)
+        {
+            keyIndex = default;
+            return false;
+        }
+        
+        var denseKey = _sparse[index];
+
+        if (denseKey.IsTombStone())
+        {
+            keyIndex = default;
+            return false;
+        }
+        
+        if (key.Version != denseKey.Version)
+        {
+            keyIndex = default;
+            return false;
+        }
+
+        keyIndex = default;
+        return true;
+    }
+    
+    public int GetKeysIndex(TKey key)
+    {
+        int index = key.Index;
+        if (index > _sparse.LastIndex)
+        {
+            return -1;
+        }
+        
+        TKey denseKey = _sparse[index];
+
+        if (denseKey.IsTombStone())
+        {
+            return -1;
+        }
+        
+        if (denseKey.Version != key.Version)
+        {
+            return -1;
+        }
+
+        return denseKey.Index;
+    }
+
+    public Span<TKey> Keys => _dense.AsSpan();
+}
+
+{% endfor %}
+{% endfor %}
