@@ -1,14 +1,14 @@
 // Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
 namespace GameKit.Collections;
 {% for type in [("class", ""), ("struct", "Struct")] -%}
-{% for n in range(3, 11) -%}
+{% for n in range(3, 9) -%}
 
 public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> where TKey: IKey<TKey>
 {
     private FastList<TKey> _sparse;
     private MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
 
-    public SparseSet()
+    public MultiMap{{type[1]}}()
     {
         _sparse = new FastList<TKey>();
         _dense = new MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
@@ -26,15 +26,15 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         }
 
         ref TKey denseKey = ref _sparse[sparseIndex];
-        
+
         // nonexistent
         if (denseKey.IsTombStone())
         {
-            denseIndex = _dense.Add(key);
+            denseIndex = _dense.Add(key{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
             denseKey = key.WithIndex(denseIndex);
             return denseIndex;
         }
-        
+
         // already exists with correct version
         if (keyVersion == denseKey.Version)
         {
@@ -44,13 +44,13 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         // exists, but needs to change the version
         denseKey = denseKey.WithVersion(keyVersion);
         denseIndex = denseKey.Index;
-        _dense[denseIndex] = key;
-        _dense.Set(key, {% for i in range(1, n + 1) %}, value{{i}}{% endfor %})
+
+        _dense.Set(denseIndex, key{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
 
         return denseIndex;
     }
     
-    public bool SwapRemove(TKey key)
+    public bool Remove(TKey key)
     {
         int index = key.Index;
         if (index > (_sparse.Length - 1))
@@ -71,18 +71,18 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
             return false;
         }
         
-        if (_dense.SwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
 
-            return SwapRemoveResult.Swap;
+            return true;
         }
 
         denseKey = TKey.TombStone;
         return true;
     }
-    
+
     public bool Contains(TKey key)
     {
         return Contains(key, out _);
@@ -138,7 +138,10 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         return denseKey.Index;
     }
 
-    public Span<TKey> Keys => _dense.AsSpan();
+    public Span<TKey> Keys => _dense.Values1;
+    {% for i in range(1, n) %}
+    public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
+    {%- endfor %}
 }
 
 {% endfor %}

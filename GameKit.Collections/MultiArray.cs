@@ -42,7 +42,7 @@ public class MultiArray<TValue1, TValue2>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2)
+    public int Add(TValue1 value1, TValue2 value2)
     {
         EnsureCapacity(_count + 1);
 
@@ -50,7 +50,7 @@ public class MultiArray<TValue1, TValue2>
         _values1[_count] = value1;
         _values2[_count] = value2;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2)
@@ -73,18 +73,34 @@ public class MultiArray<TValue1, TValue2>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -151,7 +167,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3)
     {
         EnsureCapacity(_count + 1);
 
@@ -160,7 +176,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
         _values2[_count] = value2;
         _values3[_count] = value3;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3)
@@ -187,19 +203,36 @@ public class MultiArray<TValue1, TValue2, TValue3>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -272,7 +305,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         EnsureCapacity(_count + 1);
 
@@ -282,7 +315,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         _values3[_count] = value3;
         _values4[_count] = value4;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
@@ -313,20 +346,38 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -405,7 +456,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         EnsureCapacity(_count + 1);
 
@@ -416,7 +467,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         _values4[_count] = value4;
         _values5[_count] = value5;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
@@ -451,21 +502,40 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -550,7 +620,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         EnsureCapacity(_count + 1);
 
@@ -562,7 +632,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         _values5[_count] = value5;
         _values6[_count] = value6;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
@@ -601,22 +671,42 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -707,7 +797,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         EnsureCapacity(_count + 1);
 
@@ -720,7 +810,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values6[_count] = value6;
         _values7[_count] = value7;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
@@ -763,23 +853,44 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -876,7 +987,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         EnsureCapacity(_count + 1);
 
@@ -890,7 +1001,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values7[_count] = value7;
         _values8[_count] = value8;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
@@ -937,24 +1048,46 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1057,7 +1190,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
     {
         EnsureCapacity(_count + 1);
 
@@ -1072,7 +1205,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values8[_count] = value8;
         _values9[_count] = value9;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
@@ -1123,25 +1256,48 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
-            _values9[index] = _values9[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1250,7 +1406,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
     {
         EnsureCapacity(_count + 1);
 
@@ -1266,7 +1422,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values9[_count] = value9;
         _values10[_count] = value10;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
@@ -1321,26 +1477,50 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
-            _values9[index] = _values9[lastIndex];
-            _values10[index] = _values10[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            _values10[index] = _values10[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            _values10[index] = _values10[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1420,7 +1600,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2)
+    public int Add(TValue1 value1, TValue2 value2)
     {
         EnsureCapacity(_count + 1);
 
@@ -1428,7 +1608,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
         _values1[_count] = value1;
         _values2[_count] = value2;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2)
@@ -1451,18 +1631,34 @@ public struct MultiArrayStruct<TValue1, TValue2>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1529,7 +1725,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3)
     {
         EnsureCapacity(_count + 1);
 
@@ -1538,7 +1734,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         _values2[_count] = value2;
         _values3[_count] = value3;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3)
@@ -1565,19 +1761,36 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1650,7 +1863,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         EnsureCapacity(_count + 1);
 
@@ -1660,7 +1873,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         _values3[_count] = value3;
         _values4[_count] = value4;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
@@ -1691,20 +1904,38 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1783,7 +2014,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         EnsureCapacity(_count + 1);
 
@@ -1794,7 +2025,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         _values4[_count] = value4;
         _values5[_count] = value5;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
@@ -1829,21 +2060,40 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -1928,7 +2178,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         EnsureCapacity(_count + 1);
 
@@ -1940,7 +2190,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values5[_count] = value5;
         _values6[_count] = value6;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
@@ -1979,22 +2229,42 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -2085,7 +2355,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         EnsureCapacity(_count + 1);
 
@@ -2098,7 +2368,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values6[_count] = value6;
         _values7[_count] = value7;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
@@ -2141,23 +2411,44 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -2254,7 +2545,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         EnsureCapacity(_count + 1);
 
@@ -2268,7 +2559,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values7[_count] = value7;
         _values8[_count] = value8;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
@@ -2315,24 +2606,46 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -2435,7 +2748,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
     {
         EnsureCapacity(_count + 1);
 
@@ -2450,7 +2763,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values8[_count] = value8;
         _values9[_count] = value9;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9)
@@ -2501,25 +2814,48 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
-            _values9[index] = _values9[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
@@ -2628,7 +2964,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         }
     }
 
-    public void Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
+    public int Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
     {
         EnsureCapacity(_count + 1);
 
@@ -2644,7 +2980,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values9[_count] = value9;
         _values10[_count] = value10;
 
-        _count++;
+        return _count++;
     }
 
     public void Set(int index, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8, TValue9 value9, TValue10 value10)
@@ -2699,26 +3035,50 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemove(int index)
     {
-        if (index < 0 || index >= _count)
-            return false;
-
-        int lastIndex = _count - 1;
-        if (index != lastIndex)
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
         {
             
-            _values1[index] = _values1[lastIndex];
-            _values2[index] = _values2[lastIndex];
-            _values3[index] = _values3[lastIndex];
-            _values4[index] = _values4[lastIndex];
-            _values5[index] = _values5[lastIndex];
-            _values6[index] = _values6[lastIndex];
-            _values7[index] = _values7[lastIndex];
-            _values8[index] = _values8[lastIndex];
-            _values9[index] = _values9[lastIndex];
-            _values10[index] = _values10[lastIndex];
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            _values10[index] = _values10[swappedIndex];
+            return false;
         }
+
         _count--;
         return true;
+    }
+    
+    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            value1 = _values1[index];
+            
+            _values1[index] = _values1[swappedIndex];
+            _values2[index] = _values2[swappedIndex];
+            _values3[index] = _values3[swappedIndex];
+            _values4[index] = _values4[swappedIndex];
+            _values5[index] = _values5[swappedIndex];
+            _values6[index] = _values6[swappedIndex];
+            _values7[index] = _values7[swappedIndex];
+            _values8[index] = _values8[swappedIndex];
+            _values9[index] = _values9[swappedIndex];
+            _values10[index] = _values10[swappedIndex];
+            return true;
+        }
+
+        value1 = default!;
+        _count--;
+        return false;
     }
 
     public void Clear()
