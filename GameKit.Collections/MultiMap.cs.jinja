@@ -5,12 +5,12 @@ namespace GameKit.Collections;
 
 public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
 
     public MultiMap{{type[1]}}()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
     }
 

@@ -2,12 +2,12 @@
 namespace GameKit.Collections;
 public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3>();
     }
 
@@ -143,12 +143,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
 
 public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4>();
     }
 
@@ -285,12 +285,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
 
 public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
@@ -428,12 +428,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
 
 public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
@@ -572,12 +572,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
 public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
@@ -717,12 +717,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
 public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
 
     public MultiMap()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 
@@ -864,12 +864,12 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3>();
     }
 
@@ -1005,12 +1005,12 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4>();
     }
 
@@ -1147,12 +1147,12 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
@@ -1290,12 +1290,12 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
@@ -1434,12 +1434,12 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
@@ -1579,12 +1579,12 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
 public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> where TKey: IKey<TKey>
 {
-    private FastList<TKey> _sparse;
+    private FastListStruct<TKey> _sparse;
     private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
 
     public MultiMapStruct()
     {
-        _sparse = new FastList<TKey>();
+        _sparse = new FastListStruct<TKey>();
         _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 

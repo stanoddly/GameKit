@@ -1,7 +1,4 @@
-﻿using GameKit.Utilities;
-using NUnit.Framework.Interfaces;
-
-namespace GameKit.Utils.Tests;
+﻿namespace GameKit.Collections.Tests;
 
 internal readonly struct TestKey: IKey<TestKey>
 {

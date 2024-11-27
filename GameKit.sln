@@ -24,7 +24,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.EntityComponent", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples.Sprites", "Samples.Sprites\Samples.Sprites.csproj", "{B931A42E-A5C5-4BC6-8D78-BE28739A21DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Utils.Tests", "GameKit.Utils.Tests\GameKit.Utils.Tests.csproj", "{EC3F094F-0D9A-45B9-AAD8-B3D43DF22913}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Collections.Tests", "GameKit.Collections.Tests\GameKit.Collections.Tests.csproj", "{EC3F094F-0D9A-45B9-AAD8-B3D43DF22913}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Collections", "GameKit.Collections\GameKit.Collections.csproj", "{80FA369F-CEE8-4B88-B52C-51F0814D717E}"
 EndProject
