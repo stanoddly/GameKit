@@ -1,7 +1,7 @@
 // Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
 namespace GameKit.Collections;
 {% for type in [("class", ""), ("struct", "Struct")] -%}
-{% for n in range(3, 9) -%}
+{% for n in range(1, 9) -%}
 
 public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> where TKey: IKey<TKey>
 {
@@ -35,21 +35,29 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
             return denseIndex;
         }
 
-        // already exists with correct version
+        // exists, but needs to change the version
         if (keyVersion == denseKey.Version)
         {
-            return denseKey.Index;
+            denseKey = denseKey.WithVersion(keyVersion);
         }
-        
-        // exists, but needs to change the version
-        denseKey = denseKey.WithVersion(keyVersion);
-        denseIndex = denseKey.Index;
 
+        denseIndex = denseKey.Index;
         _dense.Set(denseIndex, key{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
 
         return denseIndex;
     }
-    
+
+    public bool TryGet(TKey key{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (!Contains(key, out int index))
+        {
+            return false;
+        }
+
+        _dense.GetButFirst(index{% for i in range(1, n + 1) %}, out value{{i}}{% endfor %});
+        return true;
+    }
+
     public bool Remove(TKey key)
     {
         int index = key.Index;
@@ -139,7 +147,7 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
     }
 
     public Span<TKey> Keys => _dense.Values1;
-    {% for i in range(1, n) %}
+    {% for i in range(1, n+1) %}
     public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
     {%- endfor %}
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using GameKit.Collections;
 using GameKit.Utilities;
 
 namespace GameKit.ComponentSystem;
