@@ -46,13 +46,16 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
 
     public bool TryGet(TKey key, out TValue1 value1)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1);
+
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1);
-        return true;
+        value1 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -76,7 +79,7 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -194,13 +197,18 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -224,7 +232,7 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -343,13 +351,19 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -373,7 +387,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -493,13 +507,20 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -523,7 +544,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -644,13 +665,21 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -674,7 +703,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -796,13 +825,22 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -826,7 +864,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -949,13 +987,23 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+        value7 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -979,7 +1027,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1103,13 +1151,24 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+        value7 = default;
+        value8 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1133,7 +1192,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1259,13 +1318,17 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
 
     public bool TryGet(TKey key, out TValue1 value1)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1);
-        return true;
+        
+        value1 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1289,7 +1352,7 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1407,13 +1470,18 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1437,7 +1505,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1556,13 +1624,19 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1586,7 +1660,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1706,13 +1780,20 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1736,7 +1817,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -1857,13 +1938,21 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -1887,7 +1976,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -2009,13 +2098,22 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -2039,7 +2137,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -2162,13 +2260,23 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+        value7 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -2192,7 +2300,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -2316,13 +2424,24 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
+        
+            return true;
         }
 
-        _dense.GetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
-        return true;
+        
+        value1 = default;
+        value2 = default;
+        value3 = default;
+        value4 = default;
+        value5 = default;
+        value6 = default;
+        value7 = default;
+        value8 = default;
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -2346,7 +2465,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);

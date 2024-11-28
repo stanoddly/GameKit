@@ -103,7 +103,7 @@ public class MultiArray<TValue1, TValue2>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2)
+    public bool TryGetButFirst(int index, out TValue2 value2)
     {
         if (index < _count)
         {
@@ -118,7 +118,7 @@ public class MultiArray<TValue1, TValue2>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -268,7 +268,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
     {
         if (index < _count)
         {
@@ -285,7 +285,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -450,7 +450,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
         if (index < _count)
         {
@@ -469,7 +469,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -649,7 +649,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
         if (index < _count)
         {
@@ -670,7 +670,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -865,7 +865,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
         if (index < _count)
         {
@@ -888,7 +888,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -1098,7 +1098,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
         if (index < _count)
         {
@@ -1123,7 +1123,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -1348,7 +1348,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
         if (index < _count)
         {
@@ -1375,7 +1375,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -1615,7 +1615,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
         if (index < _count)
         {
@@ -1644,7 +1644,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -1899,7 +1899,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9, out TValue10 value10)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9, out TValue10 value10)
     {
         if (index < _count)
         {
@@ -1930,7 +1930,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -2093,7 +2093,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2)
+    public bool TryGetButFirst(int index, out TValue2 value2)
     {
         if (index < _count)
         {
@@ -2108,7 +2108,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -2258,7 +2258,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
     {
         if (index < _count)
         {
@@ -2275,7 +2275,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -2440,7 +2440,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
         if (index < _count)
         {
@@ -2459,7 +2459,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -2639,7 +2639,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
         if (index < _count)
         {
@@ -2660,7 +2660,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -2855,7 +2855,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
         if (index < _count)
         {
@@ -2878,7 +2878,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -3088,7 +3088,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
         if (index < _count)
         {
@@ -3113,7 +3113,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -3338,7 +3338,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
         if (index < _count)
         {
@@ -3365,7 +3365,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -3605,7 +3605,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
         if (index < _count)
         {
@@ -3634,7 +3634,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
@@ -3889,7 +3889,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
     
-    internal bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9, out TValue10 value10)
+    public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9, out TValue10 value10)
     {
         if (index < _count)
         {
@@ -3920,7 +3920,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         return false;
     }
 
-    internal bool InternalSwapRemove(int index, out TValue1 value1)
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)

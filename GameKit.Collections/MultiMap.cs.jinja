@@ -49,13 +49,18 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
 
     public bool TryGet(TKey key{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
     {
-        if (!Contains(key, out int index))
+        if (Contains(key, out int index))
         {
-            return false;
+            _dense.TryGetButFirst(index{% for i in range(1, n + 1) %}, out value{{i}}{% endfor %});
+        
+            return true;
         }
 
-        _dense.GetButFirst(index{% for i in range(1, n + 1) %}, out value{{i}}{% endfor %});
-        return true;
+        {% for i in range(1, n + 1) %}
+        value{{i}} = default;
+        {%- endfor %}
+
+        return false;
     }
 
     public bool Remove(TKey key)
@@ -79,7 +84,7 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
             return false;
         }
         
-        if (_dense.InternalSwapRemove(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
         {
             ref var swappedSparseKey = ref _sparse[swappedKey.Index];
             swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
@@ -145,6 +150,13 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
 
         return denseKey.Index;
     }
+    
+    {% for i in range(2, n + 1) %}
+    public bool TryGetValue{{i}}(TKey key, out TValue{{i}} value)
+    {
+        throw
+    }
+    {%- endfor %}
 
     public Span<TKey> Keys => _dense.Values1;
     {% for i in range(1, n+1) %}
