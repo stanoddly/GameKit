@@ -49,10 +49,11 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         if (Contains(key, out int index))
         {
             _dense.TryGetButFirst(index, out value1);
-
+        
             return true;
         }
 
+        
         value1 = default;
 
         return false;
@@ -144,6 +145,18 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -297,6 +310,28 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -452,6 +487,38 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -609,6 +676,48 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -768,6 +877,58 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -929,6 +1090,68 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1092,6 +1315,78 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
+    }
+    public bool TryGetValue7(TKey key, out TValue7 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue8(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1258,6 +1553,88 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 
         return denseKey.Index;
     }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
+    }
+    public bool TryGetValue7(TKey key, out TValue7 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue8(index, out value);
+    }
+    public bool TryGetValue8(TKey key, out TValue8 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue9(index, out value);
+    }
 
     public Span<TKey> Keys => _dense.Values1;
     
@@ -1418,6 +1795,18 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
 
         return denseKey.Index;
     }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
 
     public Span<TKey> Keys => _dense.Values1;
     
@@ -1570,6 +1959,28 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1725,6 +2136,38 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1882,6 +2325,48 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2041,6 +2526,58 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2202,6 +2739,68 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2365,6 +2964,78 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
+    }
+    public bool TryGetValue7(TKey key, out TValue7 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue8(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2530,6 +3201,88 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
 
         return denseKey.Index;
+    }
+    
+    
+    public bool TryGetValue1(TKey key, out TValue1 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue2(index, out value);
+    }
+    public bool TryGetValue2(TKey key, out TValue2 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue3(index, out value);
+    }
+    public bool TryGetValue3(TKey key, out TValue3 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue4(index, out value);
+    }
+    public bool TryGetValue4(TKey key, out TValue4 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue5(index, out value);
+    }
+    public bool TryGetValue5(TKey key, out TValue5 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue6(index, out value);
+    }
+    public bool TryGetValue6(TKey key, out TValue6 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue7(index, out value);
+    }
+    public bool TryGetValue7(TKey key, out TValue7 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue8(index, out value);
+    }
+    public bool TryGetValue8(TKey key, out TValue8 value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue9(index, out value);
     }
 
     public Span<TKey> Keys => _dense.Values1;

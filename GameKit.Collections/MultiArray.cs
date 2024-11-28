@@ -117,20 +117,48 @@ public class MultiArray<TValue1, TValue2>
         value2 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -284,13 +312,54 @@ public class MultiArray<TValue1, TValue2, TValue3>
         value3 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -298,7 +367,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -468,13 +537,67 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         value4 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -483,7 +606,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -669,13 +792,80 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         value5 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -685,7 +875,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -887,13 +1077,93 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value6 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -904,7 +1174,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -1122,13 +1392,106 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         value7 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -1140,7 +1503,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -1374,13 +1737,119 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         value8 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -1393,7 +1862,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -1643,13 +2112,132 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         value9 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue9(int index, out TValue9 value)
+    {
+        if (index < _count)
+        {
+            value = _values9[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -1663,7 +2251,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -1929,13 +2517,145 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         value10 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue9(int index, out TValue9 value)
+    {
+        if (index < _count)
+        {
+            value = _values9[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue10(int index, out TValue10 value)
+    {
+        if (index < _count)
+        {
+            value = _values10[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -1950,7 +2670,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -2107,20 +2827,48 @@ public struct MultiArrayStruct<TValue1, TValue2>
         value2 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -2274,13 +3022,54 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         value3 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -2288,7 +3077,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -2458,13 +3247,67 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         value4 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -2473,7 +3316,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -2659,13 +3502,80 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         value5 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -2675,7 +3585,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -2877,13 +3787,93 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         value6 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -2894,7 +3884,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -3112,13 +4102,106 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         value7 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -3130,7 +4213,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -3364,13 +4447,119 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         value8 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -3383,7 +4572,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -3633,13 +4822,132 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         value9 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue9(int index, out TValue9 value)
+    {
+        if (index < _count)
+        {
+            value = _values9[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -3653,7 +4961,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
@@ -3919,13 +5227,145 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         value10 = default;
         return false;
     }
+        
+    
+    public bool TryGetValue1(int index, out TValue1 value)
+    {
+        if (index < _count)
+        {
+            value = _values1[index];
 
-    public bool SwapRemoveReturnFirst(int index, out TValue1 value1)
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue2(int index, out TValue2 value)
+    {
+        if (index < _count)
+        {
+            value = _values2[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue3(int index, out TValue3 value)
+    {
+        if (index < _count)
+        {
+            value = _values3[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue4(int index, out TValue4 value)
+    {
+        if (index < _count)
+        {
+            value = _values4[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue5(int index, out TValue5 value)
+    {
+        if (index < _count)
+        {
+            value = _values5[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue6(int index, out TValue6 value)
+    {
+        if (index < _count)
+        {
+            value = _values6[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue7(int index, out TValue7 value)
+    {
+        if (index < _count)
+        {
+            value = _values7[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue8(int index, out TValue8 value)
+    {
+        if (index < _count)
+        {
+            value = _values8[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue9(int index, out TValue9 value)
+    {
+        if (index < _count)
+        {
+            value = _values9[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+    public bool TryGetValue10(int index, out TValue10 value)
+    {
+        if (index < _count)
+        {
+            value = _values10[index];
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
         int swappedIndex = _count - 1;
         if (index != swappedIndex)
         {
-            value1 = _values1[index];
+            value = _values1[index];
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
@@ -3940,7 +5380,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return true;
         }
 
-        value1 = default!;
+        value = default!;
         _count--;
         return false;
     }
