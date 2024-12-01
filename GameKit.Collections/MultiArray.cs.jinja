@@ -1,5 +1,6 @@
 // Generated using jinja2-cli: jinja2 MultiArray.cs.jinja > MultiArray.cs
-using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace GameKit.Collections;
 
@@ -119,17 +120,39 @@ public {{type[0]}} MultiArray{{type[1]}}<{% for i in range(1, n + 1) %}TValue{{i
     }
         
     {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} GetValue{{i}}Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public TValue{{i}} GetValue{{i}}(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values{{i}}[index];
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
     public bool TryGetValue{{i}}(int index, out TValue{{i}} value)
     {
         if (index < _count)
         {
             value = _values{{i}}[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     {%- endfor %}

@@ -1,5 +1,6 @@
 // Generated using jinja2-cli: jinja2 MultiArray.cs.jinja > MultiArray.cs
-using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace GameKit.Collections;
 
@@ -119,17 +120,55 @@ public class MultiArray<TValue1, TValue2>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -137,12 +176,10 @@ public class MultiArray<TValue1, TValue2>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -314,17 +351,73 @@ public class MultiArray<TValue1, TValue2, TValue3>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -332,12 +425,10 @@ public class MultiArray<TValue1, TValue2, TValue3>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -345,12 +436,10 @@ public class MultiArray<TValue1, TValue2, TValue3>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -539,17 +628,91 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -557,12 +720,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -570,12 +731,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -583,12 +742,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -794,17 +951,109 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -812,12 +1061,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -825,12 +1072,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -838,12 +1083,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -851,12 +1094,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -1079,17 +1320,127 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -1097,12 +1448,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -1110,12 +1459,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -1123,12 +1470,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -1136,12 +1481,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -1149,12 +1492,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -1394,17 +1735,145 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -1412,12 +1881,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -1425,12 +1892,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -1438,12 +1903,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -1451,12 +1914,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -1464,12 +1925,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -1477,12 +1936,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -1739,17 +2196,163 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -1757,12 +2360,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -1770,12 +2371,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -1783,12 +2382,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -1796,12 +2393,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -1809,12 +2404,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -1822,12 +2415,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -1835,12 +2426,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -2114,17 +2703,181 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    public ref TValue9 GetValue9Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    public TValue9 GetValue9(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values9[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -2132,12 +2885,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -2145,12 +2896,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -2158,12 +2907,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -2171,12 +2918,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -2184,12 +2929,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -2197,12 +2940,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -2210,12 +2951,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue9(int index, out TValue9 value)
@@ -2223,12 +2962,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values9[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -2519,17 +3256,199 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    public ref TValue9 GetValue9Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
+    }
+    public ref TValue10 GetValue10Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values10), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    public TValue9 GetValue9(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values9[index];
+    }
+    public TValue10 GetValue10(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values10[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -2537,12 +3456,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -2550,12 +3467,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -2563,12 +3478,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -2576,12 +3489,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -2589,12 +3500,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -2602,12 +3511,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -2615,12 +3522,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue9(int index, out TValue9 value)
@@ -2628,12 +3533,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values9[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue10(int index, out TValue10 value)
@@ -2641,12 +3544,10 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         if (index < _count)
         {
             value = _values10[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -2829,17 +3730,55 @@ public struct MultiArrayStruct<TValue1, TValue2>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -2847,12 +3786,10 @@ public struct MultiArrayStruct<TValue1, TValue2>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -3024,17 +3961,73 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -3042,12 +4035,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -3055,12 +4046,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -3249,17 +4238,91 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -3267,12 +4330,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -3280,12 +4341,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -3293,12 +4352,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -3504,17 +4561,109 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -3522,12 +4671,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -3535,12 +4682,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -3548,12 +4693,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -3561,12 +4704,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -3789,17 +4930,127 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -3807,12 +5058,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -3820,12 +5069,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -3833,12 +5080,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -3846,12 +5091,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -3859,12 +5102,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -4104,17 +5345,145 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -4122,12 +5491,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -4135,12 +5502,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -4148,12 +5513,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -4161,12 +5524,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -4174,12 +5535,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -4187,12 +5546,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -4449,17 +5806,163 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -4467,12 +5970,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -4480,12 +5981,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -4493,12 +5992,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -4506,12 +6003,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -4519,12 +6014,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -4532,12 +6025,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -4545,12 +6036,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -4824,17 +6313,181 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    public ref TValue9 GetValue9Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    public TValue9 GetValue9(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values9[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -4842,12 +6495,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -4855,12 +6506,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -4868,12 +6517,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -4881,12 +6528,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -4894,12 +6539,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -4907,12 +6550,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -4920,12 +6561,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue9(int index, out TValue9 value)
@@ -4933,12 +6572,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values9[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 
@@ -5229,17 +6866,199 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
+    public ref TValue1 GetValue1Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
+    }
+    public ref TValue2 GetValue2Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
+    }
+    public ref TValue3 GetValue3Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
+    }
+    public ref TValue4 GetValue4Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
+    }
+    public ref TValue5 GetValue5Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
+    }
+    public ref TValue6 GetValue6Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
+    }
+    public ref TValue7 GetValue7Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
+    }
+    public ref TValue8 GetValue8Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
+    }
+    public ref TValue9 GetValue9Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
+    }
+    public ref TValue10 GetValue10Ref(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values10), index);
+    }
+    
+    
+    public TValue1 GetValue1(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values1[index];
+    }
+    public TValue2 GetValue2(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values2[index];
+    }
+    public TValue3 GetValue3(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values3[index];
+    }
+    public TValue4 GetValue4(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values4[index];
+    }
+    public TValue5 GetValue5(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values5[index];
+    }
+    public TValue6 GetValue6(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values6[index];
+    }
+    public TValue7 GetValue7(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values7[index];
+    }
+    public TValue8 GetValue8(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values8[index];
+    }
+    public TValue9 GetValue9(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values9[index];
+    }
+    public TValue10 GetValue10(int index)
+    {
+        if (index < _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values10[index];
+    }
+    
+    
     public bool TryGetValue1(int index, out TValue1 value)
     {
         if (index < _count)
         {
             value = _values1[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue2(int index, out TValue2 value)
@@ -5247,12 +7066,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values2[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue3(int index, out TValue3 value)
@@ -5260,12 +7077,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values3[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue4(int index, out TValue4 value)
@@ -5273,12 +7088,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values4[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue5(int index, out TValue5 value)
@@ -5286,12 +7099,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values5[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue6(int index, out TValue6 value)
@@ -5299,12 +7110,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values6[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue7(int index, out TValue7 value)
@@ -5312,12 +7121,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values7[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue8(int index, out TValue8 value)
@@ -5325,12 +7132,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values8[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue9(int index, out TValue9 value)
@@ -5338,12 +7143,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values9[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
     public bool TryGetValue10(int index, out TValue10 value)
@@ -5351,12 +7154,10 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         if (index < _count)
         {
             value = _values10[index];
-
             return true;
         }
 
         value = default;
-
         return false;
     }
 

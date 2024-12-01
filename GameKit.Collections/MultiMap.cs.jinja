@@ -127,7 +127,7 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -161,6 +161,40 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         }
         
         return _dense.TryGetValue{{i+1}}(index, out value);
+    }
+    {%- endfor %}
+
+    {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} GetValue{{i}}Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue{{i+1}}Ref(index);
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public void GetValues{{i}}OrDefault(Span<TKey> keys, Span<TValue{{i}}> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue{{i + 1}}(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
     {%- endfor %}
 

@@ -123,7 +123,7 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -157,6 +157,38 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         }
         
         return _dense.TryGetValue2(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -288,7 +320,7 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -332,6 +364,66 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
         
         return _dense.TryGetValue3(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -465,7 +557,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -519,6 +611,94 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         }
         
         return _dense.TryGetValue4(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -654,7 +834,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -718,6 +898,122 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         }
         
         return _dense.TryGetValue5(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -855,7 +1151,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -929,6 +1225,150 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         }
         
         return _dense.TryGetValue6(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1068,7 +1508,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -1152,6 +1592,178 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
         
         return _dense.TryGetValue7(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1293,7 +1905,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -1387,6 +1999,206 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
         
         return _dense.TryGetValue8(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    public ref TValue7 GetValue7Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue8Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue8(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1530,7 +2342,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -1634,6 +2446,234 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
         
         return _dense.TryGetValue9(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    public ref TValue7 GetValue7Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue8Ref(index);
+    }
+    public ref TValue8 GetValue8Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue9Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue8(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues8OrDefault(Span<TKey> keys, Span<TValue8> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue9(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1772,7 +2812,7 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -1806,6 +2846,38 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
         }
         
         return _dense.TryGetValue2(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -1937,7 +3009,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -1981,6 +3053,66 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
         
         return _dense.TryGetValue3(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2114,7 +3246,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -2168,6 +3300,94 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         }
         
         return _dense.TryGetValue4(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2303,7 +3523,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -2367,6 +3587,122 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         }
         
         return _dense.TryGetValue5(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2504,7 +3840,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -2578,6 +3914,150 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         }
         
         return _dense.TryGetValue6(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2717,7 +4197,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -2801,6 +4281,178 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
         
         return _dense.TryGetValue7(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -2942,7 +4594,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -3036,6 +4688,206 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
         
         return _dense.TryGetValue8(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    public ref TValue7 GetValue7Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue8Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue8(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
@@ -3179,7 +5031,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         keyIndex = default;
         return true;
     }
-    
+
     public int GetKeysIndex(TKey key)
     {
         int index = key.Index;
@@ -3283,6 +5135,234 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
         
         return _dense.TryGetValue9(index, out value);
+    }
+
+    
+    public ref TValue1 GetValue1Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue2Ref(index);
+    }
+    public ref TValue2 GetValue2Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue3Ref(index);
+    }
+    public ref TValue3 GetValue3Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue4Ref(index);
+    }
+    public ref TValue4 GetValue4Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue5Ref(index);
+    }
+    public ref TValue5 GetValue5Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue6Ref(index);
+    }
+    public ref TValue6 GetValue6Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue7Ref(index);
+    }
+    public ref TValue7 GetValue7Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue8Ref(index);
+    }
+    public ref TValue8 GetValue8Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue9Ref(index);
+    }
+    
+    
+    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue2(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue3(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue4(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue5(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue6(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue7(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue8(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    public void GetValues8OrDefault(Span<TKey> keys, Span<TValue8> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue9(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
     }
 
     public Span<TKey> Keys => _dense.Values1;
