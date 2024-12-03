@@ -8,4 +8,5 @@ public interface IKey<TSelf> where TSelf : IKey<TSelf>
     bool IsTombStone();
     TSelf WithIndex(int index);
     TSelf WithVersion(int version);
+    TSelf IncrementVersion();
 }

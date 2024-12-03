@@ -6,4 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -55,6 +55,31 @@ public class FastList<TValue>
         Length = length;
     }
     
+    public void ResizeFill(int length, Func<TValue> factory)
+    {
+        if (length <= Length)
+        {
+            Length = length;
+            return;
+        }
+
+        int arrayLength = _items.Length;
+        while (arrayLength < length)
+        {
+            arrayLength += arrayLength / 2;
+        }
+
+        Array.Resize(ref _items, arrayLength);
+        
+        int loopLength = length - Length;
+        for (int i = Length; i < loopLength; i++)
+        {
+            _items[i] = factory();
+        }
+
+        Length = length;
+    }
+    
     public bool SwapRemove(int index, out TValue swappedValue)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
@@ -104,7 +129,14 @@ public class FastList<TValue>
 
         return true;
     }
-    
+
+    // TODO: check bounds properly
+    public TValue this[nuint i]
+    {
+        get => _items[i];
+        set => _items[i] = value;
+    }
+
     public int LastIndex => Length - 1;
     public int NextIndex => Length;
 
@@ -171,6 +203,31 @@ public struct FastListStruct<TValue>
         Length = length;
     }
     
+    public void ResizeFill(int length, Func<TValue> factory)
+    {
+        if (length <= Length)
+        {
+            Length = length;
+            return;
+        }
+
+        int arrayLength = _items.Length;
+        while (arrayLength < length)
+        {
+            arrayLength += arrayLength / 2;
+        }
+
+        Array.Resize(ref _items, arrayLength);
+        
+        int loopLength = length - Length;
+        for (int i = Length; i < loopLength; i++)
+        {
+            _items[i] = factory();
+        }
+
+        Length = length;
+    }
+    
     public bool SwapRemove(int index, out TValue swappedValue)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
@@ -220,7 +277,14 @@ public struct FastListStruct<TValue>
 
         return true;
     }
-    
+
+    // TODO: check bounds properly
+    public TValue this[nuint i]
+    {
+        get => _items[i];
+        set => _items[i] = value;
+    }
+
     public int LastIndex => Length - 1;
     public int NextIndex => Length;
 
