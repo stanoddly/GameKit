@@ -4,12 +4,19 @@ using GameKit.Collections;
 namespace GameKit.ComponentSystem;
 
 // TODO: empty constructor
-public readonly record struct Entity<TEntityKey>(World<TEntityKey> World, TEntityKey Key) where TEntityKey : IKey<TEntityKey>;
+public readonly record struct Entity<TEntityKey>(World<TEntityKey> World, TEntityKey Key)
+    where TEntityKey : IKey<TEntityKey>
+{
+    public void AddComponent<TComponent>(TComponent component)
+    {
+        World.AddComponent<TComponent>(Key, component);
+    }
+}
 
 public abstract class World<TEntityKey> where TEntityKey : IKey<TEntityKey>
 {
     private Dictionary<Type, object> _systems = new();
-    private Dictionary<TEntityKey, BitArray> _entities = new();
+    //private Dictionary<TEntityKey, BitArray> _entities = new();
 
     public World(Dictionary<Type, object> systems)
     {
@@ -26,7 +33,7 @@ public abstract class World<TEntityKey> where TEntityKey : IKey<TEntityKey>
 
     public abstract TEntityKey CreateEntityKey();
 
-    public void AddComponent<TComponent>(Type componentType, object component)
+    public void AddComponent<TComponent>(TEntityKey key, TComponent component)
     {
         
     }
