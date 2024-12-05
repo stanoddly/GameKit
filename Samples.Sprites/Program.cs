@@ -1,5 +1,4 @@
 ﻿using GameKit;
-using GameKit.ComponentSystem;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.ImageLoader.StbImageSharp;
