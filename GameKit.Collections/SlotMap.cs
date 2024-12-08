@@ -4,9 +4,9 @@ public class SlotMap<THandle, TValue>
     where THandle : unmanaged, IHandle<THandle>
     where TValue: struct
 {
+    private readonly FastListStruct<TValue> _values = new();
     private readonly Dictionary<uint, int> _handleToIndexLookup = new();
     private readonly Dictionary<int, uint> _indexToHandleLookup = new();
-    private readonly FastList<TValue> _values = new();
     private uint _handleCounter = 0;
 
     public THandle Add(in TValue value)
@@ -37,6 +37,18 @@ public class SlotMap<THandle, TValue>
         {
             _indexToHandleLookup.Remove(index);
         }
+    }
+
+    public bool TryGetValue(THandle handle, out TValue value)
+    {
+        if (!_handleToIndexLookup.TryGetValue(handle, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        value = _values[index];
+        return true;
     }
 
     public Span<TValue> Values => _values.AsSpan();

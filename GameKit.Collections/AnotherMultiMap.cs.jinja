@@ -1,0 +1,164 @@
+// Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
+namespace GameKit.Collections;
+{% for type in [("class", ""), ("struct", "Struct")] -%}
+{% for n in range(1, 9) -%}
+
+public {{type[0]}} DenseSlotMap{{type[1]}}<TType, {% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>
+{
+    private FastListStruct<VersionedHandle<TType>> _handles;
+    private MultiArrayStruct<VersionedHandle<TType>{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+    private uint _freeIndex = uint.Max;
+    private uint _lastFreeIndex = uint.Max;
+
+    public DenseSlotMap{{type[1]}}()
+    {
+        _handles = new FastListStruct<TKey>();
+        _dense = new MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
+    }
+
+    public VersionedHandle<TType> Add({% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (_freeIndex != uint.Max)
+        {
+            var handleIndex = _freeIndex;
+            ref VersionedHandle<TType> handle = ref _handles[handleIndex];
+            _freeIndex = handle.Index;
+            
+            var version = handle.Version + 1;
+            
+            var denseIndex = _dense.Add(new VersionedHandle<TType>(handleIndex, version){% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+            handle = handle with { Index = denseIndex, Version = handle.Version + 1 };
+            
+            return handle;
+        }
+        else
+        {
+            VersionedHandle<TType> handle = new VersionedHandle<TType> { Index = _dense.NextIndex, Version = 0 };
+            var handleIndex = _handles.Add(handle);
+
+            var denseIndex = _dense.Add(new VersionedHandle<TType>(handleIndex, 0){% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+
+            return handle;
+        }
+    }
+
+    public bool TryGet(VersionedHandle<TType> handle{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
+    {
+        var loadedHandle = _handles[handleIndex];
+
+        if (loadedHandle.Version == handle.Version)
+        {
+            _dense.TryGetButFirst(index{% for i in range(1, n + 1) %}, out value{{i}}{% endfor %});
+            return true;
+        }
+
+        {% for i in range(1, n + 1) %}
+        value{{i}} = default;
+        {%- endfor %}
+
+        return false;
+    }
+
+    public bool Remove(VersionedHandle<TType> handle)
+    {
+        ref var loadedHandle = ref _handles[handleIndex];
+
+        if (loadedHandle.Version != handle.Version)
+        {
+            return false;
+        }
+        
+        loadedHandle = loadedHandle with { Version = loadedHandle.Version + 1 };
+        
+        if ()
+        
+        if (_dense.SwapRemoveReturnFirst(loadedHandle.Index, out VersionedHandle<TType> swappedKey))
+        {
+            ref var swappedSparseKey = ref _handles[swappedKey.Index];
+            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+
+            return true;
+        }
+
+        denseKey = TKey.TombStone;
+        return true;
+    }
+
+    public int GetKeysIndex(TKey key)
+    {
+        int index = key.Index;
+        if (index > _sparse.LastIndex)
+        {
+            return -1;
+        }
+        
+        TKey denseKey = _sparse[index];
+
+        if (denseKey.IsTombStone())
+        {
+            return -1;
+        }
+        
+        if (denseKey.Version != key.Version)
+        {
+            return -1;
+        }
+
+        return denseKey.Index;
+    }
+    
+    {% for i in range(1, n + 1) %}
+    public bool TryGetValue{{i}}(TKey key, out TValue{{i}} value)
+    {
+        if (!Contains(key, out int index))
+        {
+            value = default;
+            return false;
+        }
+        
+        return _dense.TryGetValue{{i+1}}(index, out value);
+    }
+    {%- endfor %}
+
+    {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} GetValue{{i}}Ref(TKey key)
+    {
+        if (!Contains(key, out int index))
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref _dense.GetValue{{i+1}}Ref(index);
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public void GetValues{{i}}OrDefault(Span<TKey> keys, Span<TValue{{i}}> values)
+    {
+        if (keys.Length > values.Length)
+        {
+            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+        }
+        
+        for (int i = 0; i < keys.Length; i++)
+        {
+            if (Contains(keys[i], out int index))
+            {
+                values[index] = _dense.GetValue{{i + 1}}(index);
+            }
+            else
+            {
+                values[index] = default;
+            }
+        }
+    }
+    {%- endfor %}
+
+    public Span<TKey> Keys => _dense.Values1;
+    {% for i in range(1, n+1) %}
+    public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
+    {%- endfor %}
+}
+
+{% endfor %}
+{% endfor %}

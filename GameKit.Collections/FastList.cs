@@ -277,13 +277,9 @@ public struct FastListStruct<TValue>
 
         return true;
     }
-
+    
     // TODO: check bounds properly
-    public TValue this[nuint i]
-    {
-        get => _items[i];
-        set => _items[i] = value;
-    }
+    public ref TValue this[nuint i] => ref _items[i];
 
     public int LastIndex => Length - 1;
     public int NextIndex => Length;
