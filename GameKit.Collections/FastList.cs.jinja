@@ -130,33 +130,9 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
 
         return true;
     }
-    
-    public bool TryPopLast()
-    {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
-
-        --Length;
-        
-        // either empty or last one, no need for replacement
-        if (Length == 0 || index == Length)
-        {
-            _items[Length] = default!;
-            return false;
-        }
-
-        ref TValue item = ref _items[Length];
-        _items[index] = _items[Length];
-        item = default!;
-
-        return true;
-    }
 
     // TODO: check bounds properly
-    public TValue this[nuint i]
-    {
-        get => _items[i];
-        set => _items[i] = value;
-    }
+    public ref TValue this[nuint i] => ref _items[i];
 
     public int LastIndex => Length - 1;
     public int NextIndex => Length;

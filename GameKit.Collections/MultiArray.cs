@@ -199,7 +199,7 @@ public class MultiArray<TValue1, TValue2>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -465,7 +465,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -777,7 +777,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -1135,7 +1135,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -1539,7 +1539,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -1989,7 +1989,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -2485,7 +2485,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -3027,7 +3027,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -3615,7 +3615,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -3863,7 +3863,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -4129,7 +4129,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -4441,7 +4441,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -4799,7 +4799,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -5203,7 +5203,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -5653,7 +5653,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -6149,7 +6149,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -6691,7 +6691,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
@@ -7279,7 +7279,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        value = _values1[index];
+        value = _values1[potentiallySwappedIndex];
         
         _values1[index] = _values1[potentiallySwappedIndex];
         _values2[index] = _values2[potentiallySwappedIndex];
