@@ -185,19 +185,25 @@ public class MultiArray<TValue1, TValue2>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -445,20 +451,26 @@ public class MultiArray<TValue1, TValue2, TValue3>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -751,21 +763,27 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -1103,22 +1121,28 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -1501,23 +1525,29 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -1945,24 +1975,30 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -2435,25 +2471,31 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -2971,26 +3013,32 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            _values9[index] = _values9[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        _values9[index] = _values9[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -3553,27 +3601,33 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            _values9[index] = _values9[swappedIndex];
-            _values10[index] = _values10[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        _values9[index] = _values9[potentiallySwappedIndex];
+        _values10[index] = _values10[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -3795,19 +3849,25 @@ public struct MultiArrayStruct<TValue1, TValue2>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -4055,20 +4115,26 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -4361,21 +4427,27 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -4713,22 +4785,28 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -5111,23 +5189,29 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -5555,24 +5639,30 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -6045,25 +6135,31 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -6581,26 +6677,32 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            _values9[index] = _values9[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        _values9[index] = _values9[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
@@ -7163,27 +7265,33 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
     public bool SwapRemoveReturnFirst(int index, out TValue1 value)
     {
-        int swappedIndex = _count - 1;
-        if (index != swappedIndex)
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
         {
-            value = _values1[index];
-            
-            _values1[index] = _values1[swappedIndex];
-            _values2[index] = _values2[swappedIndex];
-            _values3[index] = _values3[swappedIndex];
-            _values4[index] = _values4[swappedIndex];
-            _values5[index] = _values5[swappedIndex];
-            _values6[index] = _values6[swappedIndex];
-            _values7[index] = _values7[swappedIndex];
-            _values8[index] = _values8[swappedIndex];
-            _values9[index] = _values9[swappedIndex];
-            _values10[index] = _values10[swappedIndex];
-            return true;
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
         }
 
-        value = default!;
         _count--;
-        return false;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default!;
+            return false;
+        }
+
+        value = _values1[index];
+        
+        _values1[index] = _values1[potentiallySwappedIndex];
+        _values2[index] = _values2[potentiallySwappedIndex];
+        _values3[index] = _values3[potentiallySwappedIndex];
+        _values4[index] = _values4[potentiallySwappedIndex];
+        _values5[index] = _values5[potentiallySwappedIndex];
+        _values6[index] = _values6[potentiallySwappedIndex];
+        _values7[index] = _values7[potentiallySwappedIndex];
+        _values8[index] = _values8[potentiallySwappedIndex];
+        _values9[index] = _values9[potentiallySwappedIndex];
+        _values10[index] = _values10[potentiallySwappedIndex];
+        return true;
     }
 
     public void Clear()
