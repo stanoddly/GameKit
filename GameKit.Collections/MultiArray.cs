@@ -11,6 +11,8 @@ public class MultiArray<TValue1, TValue2>
     
     private TValue1[] _values1;
     private TValue2[] _values2;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -27,8 +29,6 @@ public class MultiArray<TValue1, TValue2>
         _values2 = new TValue2[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -235,6 +235,8 @@ public class MultiArray<TValue1, TValue2, TValue3>
     private TValue1[] _values1;
     private TValue2[] _values2;
     private TValue3[] _values3;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -253,8 +255,6 @@ public class MultiArray<TValue1, TValue2, TValue3>
         _values3 = new TValue3[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -505,6 +505,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
     private TValue2[] _values2;
     private TValue3[] _values3;
     private TValue4[] _values4;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -525,8 +527,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
         _values4 = new TValue4[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -821,6 +821,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
     private TValue3[] _values3;
     private TValue4[] _values4;
     private TValue5[] _values5;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -843,8 +845,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
         _values5 = new TValue5[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -1183,6 +1183,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     private TValue4[] _values4;
     private TValue5[] _values5;
     private TValue6[] _values6;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -1207,8 +1209,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         _values6 = new TValue6[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -1591,6 +1591,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     private TValue5[] _values5;
     private TValue6[] _values6;
     private TValue7[] _values7;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -1617,8 +1619,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values7 = new TValue7[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -2045,6 +2045,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     private TValue6[] _values6;
     private TValue7[] _values7;
     private TValue8[] _values8;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -2073,8 +2075,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values8 = new TValue8[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -2545,6 +2545,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     private TValue7[] _values7;
     private TValue8[] _values8;
     private TValue9[] _values9;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -2575,8 +2577,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values9 = new TValue9[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -3091,6 +3091,8 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     private TValue8[] _values8;
     private TValue9[] _values9;
     private TValue10[] _values10;
+    
+    public int Length => _count;
 
     public MultiArray(int initialCapacity)
     {
@@ -3123,8 +3125,6 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
         _values10 = new TValue10[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -3675,6 +3675,8 @@ public struct MultiArrayStruct<TValue1, TValue2>
     
     private TValue1[] _values1;
     private TValue2[] _values2;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -3691,8 +3693,6 @@ public struct MultiArrayStruct<TValue1, TValue2>
         _values2 = new TValue2[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -3899,6 +3899,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
     private TValue1[] _values1;
     private TValue2[] _values2;
     private TValue3[] _values3;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -3917,8 +3919,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
         _values3 = new TValue3[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -4169,6 +4169,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
     private TValue2[] _values2;
     private TValue3[] _values3;
     private TValue4[] _values4;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -4189,8 +4191,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
         _values4 = new TValue4[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -4485,6 +4485,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     private TValue3[] _values3;
     private TValue4[] _values4;
     private TValue5[] _values5;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -4507,8 +4509,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         _values5 = new TValue5[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -4847,6 +4847,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     private TValue4[] _values4;
     private TValue5[] _values5;
     private TValue6[] _values6;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -4871,8 +4873,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values6 = new TValue6[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -5255,6 +5255,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     private TValue5[] _values5;
     private TValue6[] _values6;
     private TValue7[] _values7;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -5281,8 +5283,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values7 = new TValue7[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -5709,6 +5709,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     private TValue6[] _values6;
     private TValue7[] _values7;
     private TValue8[] _values8;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -5737,8 +5739,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values8 = new TValue8[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -6209,6 +6209,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     private TValue7[] _values7;
     private TValue8[] _values8;
     private TValue9[] _values9;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -6239,8 +6241,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values9 = new TValue9[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {
@@ -6755,6 +6755,8 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     private TValue8[] _values8;
     private TValue9[] _values9;
     private TValue10[] _values10;
+    
+    public int Length => _count;
 
     public MultiArrayStruct(int initialCapacity)
     {
@@ -6787,8 +6789,6 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
         _values10 = new TValue10[DefaultCapacity];
         
     }
-
-    public int Count => _count;
 
     private void EnsureCapacity(int minCapacity)
     {

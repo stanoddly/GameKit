@@ -2,32 +2,33 @@ namespace GameKit.Collections;
 {% for type in [("class", ""), ("struct", "Struct")] -%}
 {% for n in range(1, 9) -%}
 
-public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}>
+public {{type[0]}} DenseSlotMap{{type[1]}}<THandle, {% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap{{type[1]}}()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add({% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}} value{{i}}{% endfor %})
+    public THandle Add({% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}} value{{i}}{% endfor %})
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0){% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
 
             return handle;
         }
@@ -35,7 +36,7 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -49,7 +50,7 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -58,8 +59,13 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -67,16 +73,16 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -100,7 +106,7 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
     }
 
     {% for i in range(1, n + 1) %}
-    public bool TryGetValue{{i}}(Handle handle, out TValue{{i}} value)
+    public bool TryGetValue{{i}}(THandle handle, out TValue{{i}} value)
     {
         if (!Contains(handle))
         {
@@ -113,18 +119,20 @@ public {{type[0]}} DenseSlotMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if n
     }
     {%- endfor %}
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     {% for i in range(1, n+1) %}
     public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
     {%- endfor %}

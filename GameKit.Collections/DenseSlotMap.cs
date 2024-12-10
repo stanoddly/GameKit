@@ -1,30 +1,31 @@
 namespace GameKit.Collections;
-public class DenseSlotMap<TValue1>
+public class DenseSlotMap<THandle, TValue1>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1)
+    public THandle Add(TValue1 value1)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1);
 
             return handle;
         }
@@ -32,7 +33,7 @@ public class DenseSlotMap<TValue1>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -46,7 +47,7 @@ public class DenseSlotMap<TValue1>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -55,8 +56,13 @@ public class DenseSlotMap<TValue1>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -64,16 +70,16 @@ public class DenseSlotMap<TValue1>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -97,7 +103,7 @@ public class DenseSlotMap<TValue1>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -109,47 +115,50 @@ public class DenseSlotMap<TValue1>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
-public class DenseSlotMap<TValue1, TValue2>
+public class DenseSlotMap<THandle, TValue1, TValue2>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2)
+    public THandle Add(TValue1 value1, TValue2 value2)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2);
 
             return handle;
         }
@@ -157,7 +166,7 @@ public class DenseSlotMap<TValue1, TValue2>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -171,7 +180,7 @@ public class DenseSlotMap<TValue1, TValue2>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -180,8 +189,13 @@ public class DenseSlotMap<TValue1, TValue2>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -189,16 +203,16 @@ public class DenseSlotMap<TValue1, TValue2>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -222,7 +236,7 @@ public class DenseSlotMap<TValue1, TValue2>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -233,7 +247,7 @@ public class DenseSlotMap<TValue1, TValue2>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -245,48 +259,51 @@ public class DenseSlotMap<TValue1, TValue2>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3);
 
             return handle;
         }
@@ -294,7 +311,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -308,7 +325,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -317,8 +334,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -326,16 +348,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -359,7 +381,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -370,7 +392,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -381,7 +403,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -393,49 +415,52 @@ public class DenseSlotMap<TValue1, TValue2, TValue3>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4);
 
             return handle;
         }
@@ -443,7 +468,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -457,7 +482,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -466,8 +491,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -475,16 +505,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -508,7 +538,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -519,7 +549,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -530,7 +560,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -541,7 +571,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -553,50 +583,53 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
     public Span<TValue4> Values4 => _dense.Values5;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5);
 
             return handle;
         }
@@ -604,7 +637,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -618,7 +651,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -627,8 +660,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -636,16 +674,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -669,7 +707,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -680,7 +718,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -691,7 +729,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -702,7 +740,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -713,7 +751,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -725,18 +763,20 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -744,32 +784,33 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5>
     public Span<TValue4> Values4 => _dense.Values5;
     public Span<TValue5> Values5 => _dense.Values6;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6);
 
             return handle;
         }
@@ -777,7 +818,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -791,7 +832,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -800,8 +841,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -809,16 +855,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -842,7 +888,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -853,7 +899,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -864,7 +910,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -875,7 +921,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -886,7 +932,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -897,7 +943,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -909,18 +955,20 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -929,32 +977,33 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     public Span<TValue5> Values5 => _dense.Values6;
     public Span<TValue6> Values6 => _dense.Values7;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6, value7);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6, value7);
 
             return handle;
         }
@@ -962,7 +1011,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -976,7 +1025,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6, value7);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -985,8 +1034,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -994,16 +1048,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1027,7 +1081,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1038,7 +1092,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -1049,7 +1103,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -1060,7 +1114,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -1071,7 +1125,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -1082,7 +1136,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -1093,7 +1147,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue7((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue7(Handle handle, out TValue7 value)
+    public bool TryGetValue7(THandle handle, out TValue7 value)
     {
         if (!Contains(handle))
         {
@@ -1105,18 +1159,20 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1126,32 +1182,33 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
     public Span<TValue6> Values6 => _dense.Values7;
     public Span<TValue7> Values7 => _dense.Values8;
 }
-public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
+public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6, value7, value8);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6, value7, value8);
 
             return handle;
         }
@@ -1159,7 +1216,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1173,7 +1230,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6, value7, value8);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1182,8 +1239,13 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1191,16 +1253,16 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1224,7 +1286,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1235,7 +1297,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -1246,7 +1308,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -1257,7 +1319,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -1268,7 +1330,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -1279,7 +1341,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -1290,7 +1352,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue7((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue7(Handle handle, out TValue7 value)
+    public bool TryGetValue7(THandle handle, out TValue7 value)
     {
         if (!Contains(handle))
         {
@@ -1301,7 +1363,7 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         value = _dense.GetValue8((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue8(Handle handle, out TValue8 value)
+    public bool TryGetValue8(THandle handle, out TValue8 value)
     {
         if (!Contains(handle))
         {
@@ -1313,18 +1375,20 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1336,32 +1400,33 @@ public class DenseSlotMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, 
     public Span<TValue8> Values8 => _dense.Values9;
 }
 
-public struct DenseSlotMapStruct<TValue1>
+public struct DenseSlotMapStruct<THandle, TValue1>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1)
+    public THandle Add(TValue1 value1)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1);
 
             return handle;
         }
@@ -1369,7 +1434,7 @@ public struct DenseSlotMapStruct<TValue1>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1383,7 +1448,7 @@ public struct DenseSlotMapStruct<TValue1>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1392,8 +1457,13 @@ public struct DenseSlotMapStruct<TValue1>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1401,16 +1471,16 @@ public struct DenseSlotMapStruct<TValue1>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1434,7 +1504,7 @@ public struct DenseSlotMapStruct<TValue1>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1446,47 +1516,50 @@ public struct DenseSlotMapStruct<TValue1>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2)
+    public THandle Add(TValue1 value1, TValue2 value2)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2);
 
             return handle;
         }
@@ -1494,7 +1567,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1508,7 +1581,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1517,8 +1590,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1526,16 +1604,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1559,7 +1637,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1570,7 +1648,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -1582,48 +1660,51 @@ public struct DenseSlotMapStruct<TValue1, TValue2>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3);
 
             return handle;
         }
@@ -1631,7 +1712,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1645,7 +1726,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1654,8 +1735,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1663,16 +1749,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1696,7 +1782,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1707,7 +1793,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -1718,7 +1804,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -1730,49 +1816,52 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4);
 
             return handle;
         }
@@ -1780,7 +1869,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1794,7 +1883,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1803,8 +1892,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1812,16 +1906,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -1845,7 +1939,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -1856,7 +1950,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -1867,7 +1961,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -1878,7 +1972,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -1890,50 +1984,53 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
     public Span<TValue4> Values4 => _dense.Values5;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5);
 
             return handle;
         }
@@ -1941,7 +2038,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -1955,7 +2052,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -1964,8 +2061,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -1973,16 +2075,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -2006,7 +2108,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -2017,7 +2119,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -2028,7 +2130,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -2039,7 +2141,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -2050,7 +2152,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -2062,18 +2164,20 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2081,32 +2185,33 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     public Span<TValue4> Values4 => _dense.Values5;
     public Span<TValue5> Values5 => _dense.Values6;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6);
 
             return handle;
         }
@@ -2114,7 +2219,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -2128,7 +2233,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -2137,8 +2242,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -2146,16 +2256,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -2179,7 +2289,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -2190,7 +2300,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -2201,7 +2311,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -2212,7 +2322,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -2223,7 +2333,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -2234,7 +2344,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -2246,18 +2356,20 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2266,32 +2378,33 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
     public Span<TValue5> Values5 => _dense.Values6;
     public Span<TValue6> Values6 => _dense.Values7;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6, value7);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6, value7);
 
             return handle;
         }
@@ -2299,7 +2412,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -2313,7 +2426,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6, value7);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -2322,8 +2435,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -2331,16 +2449,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -2364,7 +2482,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -2375,7 +2493,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -2386,7 +2504,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -2397,7 +2515,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -2408,7 +2526,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -2419,7 +2537,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -2430,7 +2548,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue7((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue7(Handle handle, out TValue7 value)
+    public bool TryGetValue7(THandle handle, out TValue7 value)
     {
         if (!Contains(handle))
         {
@@ -2442,18 +2560,20 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2463,32 +2583,33 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
     public Span<TValue6> Values6 => _dense.Values7;
     public Span<TValue7> Values7 => _dense.Values8;
 }
-public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
+public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
+    where THandle: struct, IHandle<THandle>
 {
     private const uint Tombstone = uint.MaxValue;
-    private FastListStruct<Handle> _handles;
-    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private FastListStruct<THandle> _handles;
+    private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private uint _freeIndex;
     private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
-        _handles = new FastListStruct<Handle>();
-        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _handles = new FastListStruct<THandle>();
+        _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
         _freeIndex = Tombstone;
         _lastFreeIndex = Tombstone;
     }
 
-    public Handle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         // If there is nothing to recycle create new
         if (_freeIndex == Tombstone)
         {
-            uint index = (uint)_dense.Count;
-            Handle handle = new Handle { Index = index, Version = 0 };
+            uint index = (uint)_dense.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
             uint handleIndex = (uint)_handles.Add(handle);
 
-            _dense.Add(new Handle(handleIndex, 0), value1, value2, value3, value4, value5, value6, value7, value8);
+            _dense.Add(new THandle{ Index = handleIndex, Version = 0 }, value1, value2, value3, value4, value5, value6, value7, value8);
 
             return handle;
         }
@@ -2496,7 +2617,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         else
         {
             var handleIndex = _freeIndex;
-            ref Handle handleToRecycle = ref _handles[handleIndex];
+            ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
             if (isItTheOnlyFreeIndex)
@@ -2510,7 +2631,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
             }
             
             // Note the version has been incremented on removal too, so it's free to use already
-            Handle finalHandle = new Handle(handleIndex, handleToRecycle.Version);
+            THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
             uint denseIndex = (uint)_dense.Add(finalHandle, value1, value2, value3, value4, value5, value6, value7, value8);
 
             handleToRecycle = handleToRecycle with { Index = denseIndex};
@@ -2519,8 +2640,13 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
     }
 
-    public bool Remove(Handle handle)
+    public bool Remove(THandle handle)
     {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
         // Validate the handle points to a valid slot
         if (handle.Index >= _handles.Length)
         {
@@ -2528,16 +2654,16 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         }
 
         // Check if handle is current (not stale)
-        ref Handle handleToBeDeleted = ref _handles[handle.Index];
+        ref THandle handleToBeDeleted = ref _handles[handle.Index];
         if (handleToBeDeleted.Version != handle.Version)
         {
             return false;
         }
 
         // Remove from dense storage, swapping with last element if needed
-        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out Handle handleThatGotMoved))
+        if (_dense.SwapRemoveReturnFirst((int)handleToBeDeleted.Index, out THandle handleThatGotMoved))
         {
-            ref Handle swappedHandle = ref _handles[handleThatGotMoved.Index];
+            ref THandle swappedHandle = ref _handles[handleThatGotMoved.Index];
             swappedHandle = swappedHandle with { Index = handleToBeDeleted.Index };
         }
 
@@ -2561,7 +2687,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
     }
 
     
-    public bool TryGetValue1(Handle handle, out TValue1 value)
+    public bool TryGetValue1(THandle handle, out TValue1 value)
     {
         if (!Contains(handle))
         {
@@ -2572,7 +2698,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue2((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue2(Handle handle, out TValue2 value)
+    public bool TryGetValue2(THandle handle, out TValue2 value)
     {
         if (!Contains(handle))
         {
@@ -2583,7 +2709,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue3((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue3(Handle handle, out TValue3 value)
+    public bool TryGetValue3(THandle handle, out TValue3 value)
     {
         if (!Contains(handle))
         {
@@ -2594,7 +2720,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue4((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue4(Handle handle, out TValue4 value)
+    public bool TryGetValue4(THandle handle, out TValue4 value)
     {
         if (!Contains(handle))
         {
@@ -2605,7 +2731,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue5((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue5(Handle handle, out TValue5 value)
+    public bool TryGetValue5(THandle handle, out TValue5 value)
     {
         if (!Contains(handle))
         {
@@ -2616,7 +2742,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue6((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue6(Handle handle, out TValue6 value)
+    public bool TryGetValue6(THandle handle, out TValue6 value)
     {
         if (!Contains(handle))
         {
@@ -2627,7 +2753,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue7((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue7(Handle handle, out TValue7 value)
+    public bool TryGetValue7(THandle handle, out TValue7 value)
     {
         if (!Contains(handle))
         {
@@ -2638,7 +2764,7 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         value = _dense.GetValue8((int)_handles[handle.Index].Index);
         return true;
     }
-    public bool TryGetValue8(Handle handle, out TValue8 value)
+    public bool TryGetValue8(THandle handle, out TValue8 value)
     {
         if (!Contains(handle))
         {
@@ -2650,18 +2776,20 @@ public struct DenseSlotMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TV
         return true;
     }
 
-    public bool Contains(Handle handle)
+    public bool Contains(THandle handle)
     {
         if (handle.Index >= _handles.Length)
         {
             return false;
         }
         
-        ref Handle storedHandle = ref _handles[handle.Index];
+        ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
+    
+    public int Length => _dense.Length;
 
-    public Span<Handle> Handles => _dense.Values1;
+    public Span<THandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
