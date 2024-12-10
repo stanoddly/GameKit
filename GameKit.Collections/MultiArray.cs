@@ -120,7 +120,7 @@ public class MultiArray<TValue1, TValue2>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -129,7 +129,7 @@ public class MultiArray<TValue1, TValue2>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -357,7 +357,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -366,7 +366,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -375,7 +375,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -640,7 +640,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -649,7 +649,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -658,7 +658,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -667,7 +667,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -969,7 +969,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -978,7 +978,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -987,7 +987,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -996,7 +996,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -1005,7 +1005,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -1344,7 +1344,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -1353,7 +1353,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -1362,7 +1362,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -1371,7 +1371,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -1380,7 +1380,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -1389,7 +1389,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -1765,7 +1765,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -1774,7 +1774,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -1783,7 +1783,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -1792,7 +1792,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -1801,7 +1801,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -1810,7 +1810,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -1819,7 +1819,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -2232,7 +2232,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -2241,7 +2241,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -2250,7 +2250,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -2259,7 +2259,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -2268,7 +2268,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -2277,7 +2277,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -2286,7 +2286,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -2295,7 +2295,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -2745,7 +2745,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -2754,7 +2754,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -2763,7 +2763,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -2772,7 +2772,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -2781,7 +2781,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -2790,7 +2790,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -2799,7 +2799,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -2808,7 +2808,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -2817,7 +2817,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
     }
-    public ref TValue9 GetValue9Ref(int index)
+    public ref TValue9 GetRefValue9(int index)
     {
         if (index >= _count)
         {
@@ -3304,7 +3304,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -3313,7 +3313,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -3322,7 +3322,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -3331,7 +3331,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -3340,7 +3340,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -3349,7 +3349,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -3358,7 +3358,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -3367,7 +3367,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -3376,7 +3376,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
     }
-    public ref TValue9 GetValue9Ref(int index)
+    public ref TValue9 GetRefValue9(int index)
     {
         if (index >= _count)
         {
@@ -3385,7 +3385,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
     }
-    public ref TValue10 GetValue10Ref(int index)
+    public ref TValue10 GetRefValue10(int index)
     {
         if (index >= _count)
         {
@@ -3784,7 +3784,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -3793,7 +3793,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -4021,7 +4021,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -4030,7 +4030,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -4039,7 +4039,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -4304,7 +4304,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -4313,7 +4313,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -4322,7 +4322,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -4331,7 +4331,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -4633,7 +4633,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -4642,7 +4642,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -4651,7 +4651,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -4660,7 +4660,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -4669,7 +4669,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -5008,7 +5008,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -5017,7 +5017,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -5026,7 +5026,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -5035,7 +5035,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -5044,7 +5044,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -5053,7 +5053,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -5429,7 +5429,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -5438,7 +5438,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -5447,7 +5447,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -5456,7 +5456,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -5465,7 +5465,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -5474,7 +5474,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -5483,7 +5483,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -5896,7 +5896,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -5905,7 +5905,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -5914,7 +5914,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -5923,7 +5923,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -5932,7 +5932,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -5941,7 +5941,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -5950,7 +5950,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -5959,7 +5959,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -6409,7 +6409,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -6418,7 +6418,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -6427,7 +6427,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -6436,7 +6436,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -6445,7 +6445,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -6454,7 +6454,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -6463,7 +6463,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -6472,7 +6472,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -6481,7 +6481,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
     }
-    public ref TValue9 GetValue9Ref(int index)
+    public ref TValue9 GetRefValue9(int index)
     {
         if (index >= _count)
         {
@@ -6968,7 +6968,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     }
         
     
-    public ref TValue1 GetValue1Ref(int index)
+    public ref TValue1 GetRefValue1(int index)
     {
         if (index >= _count)
         {
@@ -6977,7 +6977,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index);
     }
-    public ref TValue2 GetValue2Ref(int index)
+    public ref TValue2 GetRefValue2(int index)
     {
         if (index >= _count)
         {
@@ -6986,7 +6986,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index);
     }
-    public ref TValue3 GetValue3Ref(int index)
+    public ref TValue3 GetRefValue3(int index)
     {
         if (index >= _count)
         {
@@ -6995,7 +6995,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index);
     }
-    public ref TValue4 GetValue4Ref(int index)
+    public ref TValue4 GetRefValue4(int index)
     {
         if (index >= _count)
         {
@@ -7004,7 +7004,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index);
     }
-    public ref TValue5 GetValue5Ref(int index)
+    public ref TValue5 GetRefValue5(int index)
     {
         if (index >= _count)
         {
@@ -7013,7 +7013,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index);
     }
-    public ref TValue6 GetValue6Ref(int index)
+    public ref TValue6 GetRefValue6(int index)
     {
         if (index >= _count)
         {
@@ -7022,7 +7022,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index);
     }
-    public ref TValue7 GetValue7Ref(int index)
+    public ref TValue7 GetRefValue7(int index)
     {
         if (index >= _count)
         {
@@ -7031,7 +7031,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index);
     }
-    public ref TValue8 GetValue8Ref(int index)
+    public ref TValue8 GetRefValue8(int index)
     {
         if (index >= _count)
         {
@@ -7040,7 +7040,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index);
     }
-    public ref TValue9 GetValue9Ref(int index)
+    public ref TValue9 GetRefValue9(int index)
     {
         if (index >= _count)
         {
@@ -7049,7 +7049,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
 
         return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index);
     }
-    public ref TValue10 GetValue10Ref(int index)
+    public ref TValue10 GetRefValue10(int index)
     {
         if (index >= _count)
         {

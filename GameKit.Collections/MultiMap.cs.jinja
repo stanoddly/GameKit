@@ -165,14 +165,14 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
     {%- endfor %}
 
     {% for i in range(1, n + 1) %}
-    public ref TValue{{i}} GetValue{{i}}Ref(TKey key)
+    public ref TValue{{i}} GetRefValue{{i}}(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue{{i+1}}Ref(index);
+        return ref _dense.GetRefValue{{i+1}}(index);
     }
     {%- endfor %}
     

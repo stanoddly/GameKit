@@ -160,14 +160,14 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
     
     
@@ -367,23 +367,23 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
     
     
@@ -614,32 +614,32 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
     
     
@@ -901,41 +901,41 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
     
     
@@ -1228,50 +1228,50 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
     
     
@@ -1595,59 +1595,59 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
     
     
@@ -2002,68 +2002,68 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetValue7Ref(TKey key)
+    public ref TValue7 GetRefValue7(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue8Ref(index);
+        return ref _dense.GetRefValue8(index);
     }
     
     
@@ -2449,77 +2449,77 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetValue7Ref(TKey key)
+    public ref TValue7 GetRefValue7(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue8Ref(index);
+        return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetValue8Ref(TKey key)
+    public ref TValue8 GetRefValue8(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue9Ref(index);
+        return ref _dense.GetRefValue9(index);
     }
     
     
@@ -2849,14 +2849,14 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
     
     
@@ -3056,23 +3056,23 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
     
     
@@ -3303,32 +3303,32 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
     
     
@@ -3590,41 +3590,41 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
     
     
@@ -3917,50 +3917,50 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
     
     
@@ -4284,59 +4284,59 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
     
     
@@ -4691,68 +4691,68 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetValue7Ref(TKey key)
+    public ref TValue7 GetRefValue7(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue8Ref(index);
+        return ref _dense.GetRefValue8(index);
     }
     
     
@@ -5138,77 +5138,77 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetValue1Ref(TKey key)
+    public ref TValue1 GetRefValue1(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue2Ref(index);
+        return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetValue2Ref(TKey key)
+    public ref TValue2 GetRefValue2(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue3Ref(index);
+        return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetValue3Ref(TKey key)
+    public ref TValue3 GetRefValue3(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue4Ref(index);
+        return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetValue4Ref(TKey key)
+    public ref TValue4 GetRefValue4(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue5Ref(index);
+        return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetValue5Ref(TKey key)
+    public ref TValue5 GetRefValue5(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue6Ref(index);
+        return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetValue6Ref(TKey key)
+    public ref TValue6 GetRefValue6(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue7Ref(index);
+        return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetValue7Ref(TKey key)
+    public ref TValue7 GetRefValue7(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue8Ref(index);
+        return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetValue8Ref(TKey key)
+    public ref TValue8 GetRefValue8(TKey key)
     {
         if (!Contains(key, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        return ref _dense.GetValue9Ref(index);
+        return ref _dense.GetRefValue9(index);
     }
     
     

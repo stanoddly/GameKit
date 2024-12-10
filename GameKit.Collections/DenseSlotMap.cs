@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace GameKit.Collections;
 public class DenseSlotMap<THandle, TValue1>
     where THandle: struct, IHandle<THandle>
@@ -105,14 +107,38 @@ public class DenseSlotMap<THandle, TValue1>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -125,7 +151,20 @@ public class DenseSlotMap<THandle, TValue1>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -238,25 +277,69 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -269,7 +352,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -383,36 +479,100 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -425,7 +585,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -540,47 +713,131 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -593,7 +850,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -709,58 +979,162 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -773,7 +1147,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -890,69 +1277,193 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -965,7 +1476,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1083,80 +1607,224 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
     }
     public bool TryGetValue7(THandle handle, out TValue7 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue8((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue8((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+    public TValue7 GetValue7(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue8((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
+    }
+    public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue7>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue8((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1169,7 +1837,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1288,91 +1969,255 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
     }
     public bool TryGetValue7(THandle handle, out TValue7 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue8((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue8((int)index);
         return true;
     }
     public bool TryGetValue8(THandle handle, out TValue8 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue9((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue9((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+    public TValue7 GetValue7(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue8((int)index);
+    }
+    public TValue8 GetValue8(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue9((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
+    }
+    public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue7>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue8((int)index);
+    }
+    public ref TValue8 UnsafeTryGetRefValue8(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue8>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue9((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1385,7 +2230,20 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1506,14 +2364,38 @@ public struct DenseSlotMapStruct<THandle, TValue1>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1526,7 +2408,20 @@ public struct DenseSlotMapStruct<THandle, TValue1>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1639,25 +2534,69 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1670,7 +2609,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1784,36 +2736,100 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1826,7 +2842,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -1941,47 +2970,131 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -1994,7 +3107,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -2110,58 +3236,162 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -2174,7 +3404,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -2291,69 +3534,193 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -2366,7 +3733,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -2484,80 +3864,224 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
     }
     public bool TryGetValue7(THandle handle, out TValue7 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue8((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue8((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+    public TValue7 GetValue7(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue8((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
+    }
+    public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue7>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue8((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -2570,7 +4094,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;
@@ -2689,91 +4226,255 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     
     public bool TryGetValue1(THandle handle, out TValue1 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue2((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue2((int)index);
         return true;
     }
     public bool TryGetValue2(THandle handle, out TValue2 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue3((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue3((int)index);
         return true;
     }
     public bool TryGetValue3(THandle handle, out TValue3 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue4((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue4((int)index);
         return true;
     }
     public bool TryGetValue4(THandle handle, out TValue4 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue5((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue5((int)index);
         return true;
     }
     public bool TryGetValue5(THandle handle, out TValue5 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue6((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue6((int)index);
         return true;
     }
     public bool TryGetValue6(THandle handle, out TValue6 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue7((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue7((int)index);
         return true;
     }
     public bool TryGetValue7(THandle handle, out TValue7 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue8((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue8((int)index);
         return true;
     }
     public bool TryGetValue8(THandle handle, out TValue8 value)
     {
-        if (!Contains(handle))
+        if (!Contains(handle, out uint index))
         {
             value = default;
             return false;
         }
-        
-        value = _dense.GetValue9((int)_handles[handle.Index].Index);
+
+        value = _dense.GetValue9((int)index);
         return true;
+    }
+    
+    
+    public TValue1 GetValue1(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue2((int)index);
+    }
+    public TValue2 GetValue2(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue3((int)index);
+    }
+    public TValue3 GetValue3(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue4((int)index);
+    }
+    public TValue4 GetValue4(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue5((int)index);
+    }
+    public TValue5 GetValue5(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue6((int)index);
+    }
+    public TValue6 GetValue6(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue7((int)index);
+    }
+    public TValue7 GetValue7(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue8((int)index);
+    }
+    public TValue8 GetValue8(THandle handle)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            throw new HandleNotFoundException(handle.ToString());
+        }
+
+        return _dense.GetValue9((int)index);
+    }
+
+    
+    public ref TValue1 UnsafeTryGetRefValue1(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue1>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue2((int)index);
+    }
+    public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue2>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue3((int)index);
+    }
+    public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue3>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue4((int)index);
+    }
+    public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue4>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue5((int)index);
+    }
+    public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue5>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue6((int)index);
+    }
+    public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue6>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue7((int)index);
+    }
+    public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue7>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue8((int)index);
+    }
+    public ref TValue8 UnsafeTryGetRefValue8(THandle handle, out bool value)
+    {
+        if (!Contains(handle, out uint index))
+        {
+            value = false;
+            return ref Unsafe.NullRef<TValue8>();
+        }
+        
+        value = false;
+        return ref _dense.GetRefValue9((int)index);
     }
 
     public bool Contains(THandle handle)
@@ -2786,7 +4487,20 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         ref THandle storedHandle = ref _handles[handle.Index];
         return storedHandle.Version == handle.Version;
     }
-    
+
+    public bool Contains(THandle handle, out uint index)
+    {
+        if (handle.Index >= _handles.Length)
+        {
+            index = default;
+            return false;
+        }
+        
+        ref THandle storedHandle = ref _handles[handle.Index];
+        index = storedHandle.Index; 
+        return storedHandle.Version == handle.Version;
+    }
+
     public int Length => _dense.Length;
 
     public Span<THandle> Handles => _dense.Values1;

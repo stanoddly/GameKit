@@ -49,8 +49,8 @@ public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<
     }
     
     public override string ToString() => IsNull() 
-        ? "Handle.Null" 
-        : $"Handle{{Index={Index}, Version={Version}}}";
+        ? $"Handle<{typeof(TType).Name}>.Null" 
+        : $"Handle<{typeof(TType).Name}>{{ Index={Index}, Version={Version} }}";
 }
 
 public class HandleNullException : Exception
@@ -64,6 +64,21 @@ public class HandleNullException : Exception
     }
 
     public HandleNullException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+}
+
+public class HandleNotFoundException : Exception
+{
+    public HandleNotFoundException()
+    {
+    }
+
+    public HandleNotFoundException(string? message) : base(message)
+    {
+    }
+
+    public HandleNotFoundException(string? message, Exception? innerException) : base(message, innerException)
     {
     }
 }
