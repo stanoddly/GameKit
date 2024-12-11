@@ -1,52 +1,46 @@
 // Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
 namespace GameKit.Collections;
-public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
+public class MultiMap<TValue1>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1>();
     }
 
-    public int Set(TKey key, TValue1 value1)
+    public void Set(EntityHandle handle, TValue1 value1)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1)
+    public bool TryGet(EntityHandle handle, out TValue1 value1)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1);
         
@@ -59,98 +53,63 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -160,9 +119,9 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -171,16 +130,16 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -191,58 +150,52 @@ public class MultiMap<TKey, TValue1> where TKey: IKey<TKey>
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
 
-public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2);
         
@@ -256,98 +209,63 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -355,9 +273,9 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -367,18 +285,18 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -387,16 +305,16 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -406,16 +324,16 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -426,59 +344,53 @@ public class MultiMap<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3);
         
@@ -493,98 +405,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -592,9 +469,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -602,9 +479,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -614,27 +491,27 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -643,16 +520,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -662,16 +539,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -681,16 +558,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -701,60 +578,54 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3, TValue4>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4);
         
@@ -770,98 +641,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -869,9 +705,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -879,9 +715,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -889,9 +725,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -901,36 +737,36 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -939,16 +775,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -958,16 +794,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -977,16 +813,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -996,16 +832,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -1016,7 +852,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1024,53 +860,47 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey
     public Span<TValue4> Values4 => _dense.Values5;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5);
         
@@ -1087,98 +917,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1186,9 +981,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1196,9 +991,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1206,9 +1001,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1216,9 +1011,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1228,45 +1023,45 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -1275,16 +1070,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -1294,16 +1089,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -1313,16 +1108,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -1332,16 +1127,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -1351,16 +1146,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -1371,7 +1166,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1380,53 +1175,47 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where T
     public Span<TValue5> Values5 => _dense.Values6;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
         
@@ -1444,98 +1233,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1543,9 +1297,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1553,9 +1307,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1563,9 +1317,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1573,9 +1327,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1583,9 +1337,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1595,54 +1349,54 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -1651,16 +1405,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -1670,16 +1424,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -1689,16 +1443,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -1708,16 +1462,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -1727,16 +1481,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -1746,16 +1500,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -1766,7 +1520,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1776,53 +1530,47 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     public Span<TValue6> Values6 => _dense.Values7;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6, value7);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6, value7);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
         
@@ -1841,98 +1589,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1940,9 +1653,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1950,9 +1663,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1960,9 +1673,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1970,9 +1683,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1980,9 +1693,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -1990,9 +1703,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(TKey key, out TValue7 value)
+    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2002,63 +1715,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(TKey key)
+    public ref TValue7 GetRefValue7(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -2067,16 +1780,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -2086,16 +1799,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -2105,16 +1818,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -2124,16 +1837,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -2143,16 +1856,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -2162,16 +1875,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -2181,16 +1894,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue8(index);
             }
@@ -2201,7 +1914,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2212,53 +1925,47 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     public Span<TValue7> Values7 => _dense.Values8;
 }
 
-public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> where TKey: IKey<TKey>
+public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6, value7, value8);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6, value7, value8);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
         
@@ -2278,98 +1985,63 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2377,9 +2049,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2387,9 +2059,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2397,9 +2069,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2407,9 +2079,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2417,9 +2089,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2427,9 +2099,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(TKey key, out TValue7 value)
+    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2437,9 +2109,9 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         
         return _dense.TryGetValue8(index, out value);
     }
-    public bool TryGetValue8(TKey key, out TValue8 value)
+    public bool TryGetValue8(EntityHandle handle, out TValue8 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2449,72 +2121,72 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(TKey key)
+    public ref TValue7 GetRefValue7(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetRefValue8(TKey key)
+    public ref TValue8 GetRefValue8(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -2523,16 +2195,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -2542,16 +2214,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -2561,16 +2233,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -2580,16 +2252,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -2599,16 +2271,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -2618,16 +2290,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -2637,16 +2309,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue8(index);
             }
@@ -2656,16 +2328,16 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
             }
         }
     }
-    public void GetValues8OrDefault(Span<TKey> keys, Span<TValue8> values)
+    public void GetValues8OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue8> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue9(index);
             }
@@ -2676,7 +2348,7 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2689,53 +2361,47 @@ public class MultiMap<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6
 }
 
 
-public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1>();
     }
 
-    public int Set(TKey key, TValue1 value1)
+    public void Set(EntityHandle handle, TValue1 value1)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1)
+    public bool TryGet(EntityHandle handle, out TValue1 value1)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1);
         
@@ -2748,98 +2414,63 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -2849,9 +2480,9 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -2860,16 +2491,16 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -2880,58 +2511,52 @@ public struct MultiMapStruct<TKey, TValue1> where TKey: IKey<TKey>
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2);
         
@@ -2945,98 +2570,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3044,9 +2634,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3056,18 +2646,18 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -3076,16 +2666,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -3095,16 +2685,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -3115,59 +2705,53 @@ public struct MultiMapStruct<TKey, TValue1, TValue2> where TKey: IKey<TKey>
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3);
         
@@ -3182,98 +2766,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3281,9 +2830,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3291,9 +2840,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3303,27 +2852,27 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -3332,16 +2881,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -3351,16 +2900,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -3370,16 +2919,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -3390,60 +2939,54 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3> where TKey: IKey<T
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
     public Span<TValue3> Values3 => _dense.Values4;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4);
         
@@ -3459,98 +3002,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3558,9 +3066,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3568,9 +3076,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3578,9 +3086,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3590,36 +3098,36 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -3628,16 +3136,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -3647,16 +3155,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -3666,16 +3174,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -3685,16 +3193,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -3705,7 +3213,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -3713,53 +3221,47 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4> where TKe
     public Span<TValue4> Values4 => _dense.Values5;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5);
         
@@ -3776,98 +3278,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3875,9 +3342,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3885,9 +3352,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3895,9 +3362,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3905,9 +3372,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -3917,45 +3384,45 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -3964,16 +3431,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -3983,16 +3450,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -4002,16 +3469,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -4021,16 +3488,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -4040,16 +3507,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -4060,7 +3527,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -4069,53 +3536,47 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5> 
     public Span<TValue5> Values5 => _dense.Values6;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6);
         
@@ -4133,98 +3594,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4232,9 +3658,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4242,9 +3668,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4252,9 +3678,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4262,9 +3688,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4272,9 +3698,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4284,54 +3710,54 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -4340,16 +3766,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -4359,16 +3785,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -4378,16 +3804,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -4397,16 +3823,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -4416,16 +3842,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -4435,16 +3861,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -4455,7 +3881,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -4465,53 +3891,47 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     public Span<TValue6> Values6 => _dense.Values7;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6, value7);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6, value7);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7);
         
@@ -4530,98 +3950,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4629,9 +4014,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4639,9 +4024,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4649,9 +4034,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4659,9 +4044,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4669,9 +4054,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4679,9 +4064,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(TKey key, out TValue7 value)
+    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -4691,63 +4076,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(TKey key)
+    public ref TValue7 GetRefValue7(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -4756,16 +4141,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -4775,16 +4160,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -4794,16 +4179,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -4813,16 +4198,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -4832,16 +4217,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -4851,16 +4236,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -4870,16 +4255,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue8(index);
             }
@@ -4890,7 +4275,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -4901,53 +4286,47 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     public Span<TValue7> Values7 => _dense.Values8;
 }
 
-public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> where TKey: IKey<TKey>
+public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 
-    public int Set(TKey key, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key, value1, value2, value3, value4, value5, value6, value7, value8);
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key, value1, value2, value3, value4, value5, value6, value7, value8);
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
     }
 
-    public bool TryGet(TKey key, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out value1, out value2, out value3, out value4, out value5, out value6, out value7, out value8);
         
@@ -4967,98 +4346,63 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
     }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
-    }
     
     
-    public bool TryGetValue1(TKey key, out TValue1 value)
+    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5066,9 +4410,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(TKey key, out TValue2 value)
+    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5076,9 +4420,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(TKey key, out TValue3 value)
+    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5086,9 +4430,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(TKey key, out TValue4 value)
+    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5096,9 +4440,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(TKey key, out TValue5 value)
+    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5106,9 +4450,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(TKey key, out TValue6 value)
+    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5116,9 +4460,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(TKey key, out TValue7 value)
+    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5126,9 +4470,9 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         
         return _dense.TryGetValue8(index, out value);
     }
-    public bool TryGetValue8(TKey key, out TValue8 value)
+    public bool TryGetValue8(EntityHandle handle, out TValue8 value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -5138,72 +4482,72 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
 
     
-    public ref TValue1 GetRefValue1(TKey key)
+    public ref TValue1 GetRefValue1(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(TKey key)
+    public ref TValue2 GetRefValue2(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(TKey key)
+    public ref TValue3 GetRefValue3(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(TKey key)
+    public ref TValue4 GetRefValue4(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(TKey key)
+    public ref TValue5 GetRefValue5(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(TKey key)
+    public ref TValue6 GetRefValue6(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(TKey key)
+    public ref TValue7 GetRefValue7(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
 
         return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetRefValue8(TKey key)
+    public ref TValue8 GetRefValue8(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -5212,16 +4556,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
     }
     
     
-    public void GetValues1OrDefault(Span<TKey> keys, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue2(index);
             }
@@ -5231,16 +4575,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues2OrDefault(Span<TKey> keys, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue3(index);
             }
@@ -5250,16 +4594,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues3OrDefault(Span<TKey> keys, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue4(index);
             }
@@ -5269,16 +4613,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues4OrDefault(Span<TKey> keys, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue5(index);
             }
@@ -5288,16 +4632,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues5OrDefault(Span<TKey> keys, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue6(index);
             }
@@ -5307,16 +4651,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues6OrDefault(Span<TKey> keys, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue7(index);
             }
@@ -5326,16 +4670,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues7OrDefault(Span<TKey> keys, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue8(index);
             }
@@ -5345,16 +4689,16 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
             }
         }
     }
-    public void GetValues8OrDefault(Span<TKey> keys, Span<TValue8> values)
+    public void GetValues8OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue8> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue9(index);
             }
@@ -5365,7 +4709,7 @@ public struct MultiMapStruct<TKey, TValue1, TValue2, TValue3, TValue4, TValue5, 
         }
     }
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;

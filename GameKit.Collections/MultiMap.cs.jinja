@@ -3,53 +3,47 @@ namespace GameKit.Collections;
 {% for type in [("class", ""), ("struct", "Struct")] -%}
 {% for n in range(1, 9) -%}
 
-public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> where TKey: IKey<TKey>
+public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}>
 {
-    private FastListStruct<TKey> _sparse;
-    private MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+    private FastListStruct<int> _sparse;
+    private MultiArrayStruct<EntityHandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+    private const int TombStone = int.MaxValue;  
 
     public MultiMap{{type[1]}}()
     {
-        _sparse = new FastListStruct<TKey>();
-        _dense = new MultiArrayStruct<TKey{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
+        _sparse = new FastListStruct<int>();
+        _dense = new MultiArrayStruct<EntityHandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
     }
 
-    public int Set(TKey key{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    public void Set(EntityHandle handle{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
     {
-        int sparseIndex = key.Index;
-        int keyVersion = key.Version;
-        int denseIndex;
+        if (handle.IsNull())
+        {
+            return;
+        }
+
+        int sparseIndex = handle;
 
         if (sparseIndex > _sparse.LastIndex)
         {
-            _sparse.ResizeFill(sparseIndex + 1, TKey.TombStone);
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
         }
 
-        ref TKey denseKey = ref _sparse[sparseIndex];
+        ref int denseIndex = ref _sparse[sparseIndex];
 
         // nonexistent
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            denseIndex = _dense.Add(key{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
-            denseKey = key.WithIndex(denseIndex);
-            return denseIndex;
+            denseIndex = _dense.Add(handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+            return;
         }
 
-        // exists, but needs to change the version
-        if (keyVersion == denseKey.Version)
-        {
-            denseKey = denseKey.WithVersion(keyVersion);
-        }
-
-        denseIndex = denseKey.Index;
-        _dense.Set(denseIndex, key{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
-
-        return denseIndex;
+        _dense.Set(denseIndex, handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
     }
 
-    public bool TryGet(TKey key{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
+    public bool TryGet(EntityHandle handle{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
     {
-        if (Contains(key, out int index))
+        if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index{% for i in range(1, n + 1) %}, out value{{i}}{% endfor %});
         
@@ -63,98 +57,63 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
         return false;
     }
 
-    public bool Remove(TKey key)
+    public bool Remove(EntityHandle handle)
     {
-        int index = key.Index;
+        int index = handle;
         if (index > (_sparse.Length - 1))
         {
             return false;
         }
 
-        ref TKey denseKey = ref _sparse[index];
+        ref int denseIndex = ref _sparse[index];
 
-        if (denseKey.IsTombStone())
-        {
-            return false;
-        }
-
-        // The key isn't here actually, incompatible versions 
-        if (key.Version != denseKey.Version)
+        if (denseIndex == TombStone)
         {
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseKey.Index, out TKey? swappedKey))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
         {
-            ref var swappedSparseKey = ref _sparse[swappedKey.Index];
-            swappedSparseKey = denseKey.WithVersion(swappedSparseKey.Version);
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
 
             return true;
         }
 
-        denseKey = TKey.TombStone;
+        denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(TKey key)
+    public bool Contains(EntityHandle handle)
     {
-        return Contains(key, out _);
+        return Contains(handle, out _);
     }
     
-    public bool Contains(TKey key, out int keyIndex) 
+    public bool Contains(EntityHandle handle, out int handleIndex) 
     {
-        int index = key.Index;
+        int index = handle;
         if (index > _sparse.LastIndex)
         {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
         
-        var denseKey = _sparse[index];
+        int denseIndex = _sparse[index];
 
-        if (denseKey.IsTombStone())
+        if (denseIndex == TombStone)
         {
-            keyIndex = default;
-            return false;
-        }
-        
-        if (key.Version != denseKey.Version)
-        {
-            keyIndex = default;
+            handleIndex = default;
             return false;
         }
 
-        keyIndex = default;
+        handleIndex = default;
         return true;
-    }
-
-    public int GetKeysIndex(TKey key)
-    {
-        int index = key.Index;
-        if (index > _sparse.LastIndex)
-        {
-            return -1;
-        }
-        
-        TKey denseKey = _sparse[index];
-
-        if (denseKey.IsTombStone())
-        {
-            return -1;
-        }
-        
-        if (denseKey.Version != key.Version)
-        {
-            return -1;
-        }
-
-        return denseKey.Index;
     }
     
     {% for i in range(1, n + 1) %}
-    public bool TryGetValue{{i}}(TKey key, out TValue{{i}} value)
+    public bool TryGetValue{{i}}(EntityHandle handle, out TValue{{i}} value)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             value = default;
             return false;
@@ -165,9 +124,9 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
     {%- endfor %}
 
     {% for i in range(1, n + 1) %}
-    public ref TValue{{i}} GetRefValue{{i}}(TKey key)
+    public ref TValue{{i}} GetRefValue{{i}}(EntityHandle handle)
     {
-        if (!Contains(key, out int index))
+        if (!Contains(handle, out int index))
         {
             throw new ArgumentOutOfRangeException();
         }
@@ -177,16 +136,16 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
     {%- endfor %}
     
     {% for i in range(1, n + 1) %}
-    public void GetValues{{i}}OrDefault(Span<TKey> keys, Span<TValue{{i}}> values)
+    public void GetValues{{i}}OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue{{i}}> values)
     {
-        if (keys.Length > values.Length)
+        if (handles.Length > values.Length)
         {
-            throw new ArgumentException("Length of values span must be greater than or equal to length of keys span.", nameof(values));
+            throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
         
-        for (int i = 0; i < keys.Length; i++)
+        for (int i = 0; i < handles.Length; i++)
         {
-            if (Contains(keys[i], out int index))
+            if (Contains(handles[i], out int index))
             {
                 values[index] = _dense.GetValue{{i + 1}}(index);
             }
@@ -198,7 +157,7 @@ public {{type[0]}} MultiMap{{type[1]}}<TKey{% for i in range(1, n + 1) %}, TValu
     }
     {%- endfor %}
 
-    public Span<TKey> Keys => _dense.Values1;
+    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
     {% for i in range(1, n+1) %}
     public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
     {%- endfor %}
