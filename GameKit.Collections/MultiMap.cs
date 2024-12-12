@@ -1,18 +1,20 @@
+using System.Runtime.CompilerServices;
+
 // Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
 namespace GameKit.Collections;
 public class MultiMap<TValue1>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1> _dense;
+    private MultiArrayStruct<Handle, TValue1> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1>();
+        _dense = new MultiArrayStruct<Handle, TValue1>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1)
+    public void Set(Handle handle, TValue1 value1)
     {
         if (handle.IsNull())
         {
@@ -38,7 +40,7 @@ public class MultiMap<TValue1>
         _dense.Set(denseIndex, handle, value1);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1)
+    public bool TryGet(Handle handle, out TValue1 value1)
     {
         if (Contains(handle, out int index))
         {
@@ -53,7 +55,7 @@ public class MultiMap<TValue1>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -68,24 +70,22 @@ public class MultiMap<TValue1>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -94,20 +94,13 @@ public class MultiMap<TValue1>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -119,18 +112,20 @@ public class MultiMap<TValue1>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -150,7 +145,7 @@ public class MultiMap<TValue1>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
@@ -158,16 +153,16 @@ public class MultiMap<TValue1>
 public class MultiMap<TValue1, TValue2>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2)
     {
         if (handle.IsNull())
         {
@@ -193,7 +188,7 @@ public class MultiMap<TValue1, TValue2>
         _dense.Set(denseIndex, handle, value1, value2);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2)
     {
         if (Contains(handle, out int index))
         {
@@ -209,7 +204,7 @@ public class MultiMap<TValue1, TValue2>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -224,24 +219,22 @@ public class MultiMap<TValue1, TValue2>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -250,20 +243,13 @@ public class MultiMap<TValue1, TValue2>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -273,7 +259,7 @@ public class MultiMap<TValue1, TValue2>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -285,27 +271,31 @@ public class MultiMap<TValue1, TValue2>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -324,7 +314,7 @@ public class MultiMap<TValue1, TValue2>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -344,7 +334,7 @@ public class MultiMap<TValue1, TValue2>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -353,16 +343,16 @@ public class MultiMap<TValue1, TValue2>
 public class MultiMap<TValue1, TValue2, TValue3>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
     {
         if (handle.IsNull())
         {
@@ -388,7 +378,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
         _dense.Set(denseIndex, handle, value1, value2, value3);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
         if (Contains(handle, out int index))
         {
@@ -405,7 +395,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -420,24 +410,22 @@ public class MultiMap<TValue1, TValue2, TValue3>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -446,20 +434,13 @@ public class MultiMap<TValue1, TValue2, TValue3>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -469,7 +450,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -479,7 +460,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -491,36 +472,42 @@ public class MultiMap<TValue1, TValue2, TValue3>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -539,7 +526,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -558,7 +545,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -578,7 +565,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -588,16 +575,16 @@ public class MultiMap<TValue1, TValue2, TValue3>
 public class MultiMap<TValue1, TValue2, TValue3, TValue4>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         if (handle.IsNull())
         {
@@ -623,7 +610,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
         if (Contains(handle, out int index))
         {
@@ -641,7 +628,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -656,24 +643,22 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -682,20 +667,13 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -705,7 +683,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -715,7 +693,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -725,7 +703,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -737,45 +715,53 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -794,7 +780,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -813,7 +799,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -832,7 +818,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -852,7 +838,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -863,16 +849,16 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
 public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         if (handle.IsNull())
         {
@@ -898,7 +884,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
         if (Contains(handle, out int index))
         {
@@ -917,7 +903,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -932,24 +918,22 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -958,20 +942,13 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -981,7 +958,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -991,7 +968,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1001,7 +978,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1011,7 +988,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1023,54 +1000,64 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1089,7 +1076,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1108,7 +1095,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1127,7 +1114,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1146,7 +1133,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1166,7 +1153,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1178,16 +1165,16 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
 public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         if (handle.IsNull())
         {
@@ -1213,7 +1200,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
         if (Contains(handle, out int index))
         {
@@ -1233,7 +1220,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -1248,24 +1235,22 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -1274,20 +1259,13 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1297,7 +1275,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1307,7 +1285,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1317,7 +1295,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1327,7 +1305,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1337,7 +1315,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1349,63 +1327,75 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1424,7 +1414,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1443,7 +1433,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1462,7 +1452,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1481,7 +1471,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1500,7 +1490,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1520,7 +1510,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1533,16 +1523,16 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         if (handle.IsNull())
         {
@@ -1568,7 +1558,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
         if (Contains(handle, out int index))
         {
@@ -1589,7 +1579,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -1604,24 +1594,22 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -1630,20 +1618,13 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1653,7 +1634,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1663,7 +1644,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1673,7 +1654,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1683,7 +1664,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1693,7 +1674,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1703,7 +1684,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
+    public bool TryGetValue7(Handle handle, out TValue7 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -1715,72 +1696,86 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(EntityHandle handle)
+    public ref TValue7 UnsafeGetRefValue7(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue7>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue8(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1799,7 +1794,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1818,7 +1813,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1837,7 +1832,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1856,7 +1851,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1875,7 +1870,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1894,7 +1889,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<Handle> handles, Span<TValue7> values)
     {
         if (handles.Length > values.Length)
         {
@@ -1914,7 +1909,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -1928,16 +1923,16 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
 public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         if (handle.IsNull())
         {
@@ -1963,7 +1958,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
         if (Contains(handle, out int index))
         {
@@ -1985,7 +1980,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -2000,24 +1995,22 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -2026,20 +2019,13 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2049,7 +2035,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2059,7 +2045,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2069,7 +2055,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2079,7 +2065,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2089,7 +2075,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2099,7 +2085,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
+    public bool TryGetValue7(Handle handle, out TValue7 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2109,7 +2095,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         
         return _dense.TryGetValue8(index, out value);
     }
-    public bool TryGetValue8(EntityHandle handle, out TValue8 value)
+    public bool TryGetValue8(Handle handle, out TValue8 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2121,81 +2107,97 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(EntityHandle handle)
+    public ref TValue7 UnsafeGetRefValue7(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue7>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetRefValue8(EntityHandle handle)
+    public ref TValue8 UnsafeGetRefValue8(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue8>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue9(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2214,7 +2216,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2233,7 +2235,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2252,7 +2254,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2271,7 +2273,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2290,7 +2292,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2309,7 +2311,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<Handle> handles, Span<TValue7> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2328,7 +2330,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
-    public void GetValues8OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue8> values)
+    public void GetValues8OrDefault(ReadOnlySpan<Handle> handles, Span<TValue8> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2348,7 +2350,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2364,16 +2366,16 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
 public struct MultiMapStruct<TValue1>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1> _dense;
+    private MultiArrayStruct<Handle, TValue1> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1>();
+        _dense = new MultiArrayStruct<Handle, TValue1>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1)
+    public void Set(Handle handle, TValue1 value1)
     {
         if (handle.IsNull())
         {
@@ -2399,7 +2401,7 @@ public struct MultiMapStruct<TValue1>
         _dense.Set(denseIndex, handle, value1);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1)
+    public bool TryGet(Handle handle, out TValue1 value1)
     {
         if (Contains(handle, out int index))
         {
@@ -2414,7 +2416,7 @@ public struct MultiMapStruct<TValue1>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -2429,24 +2431,22 @@ public struct MultiMapStruct<TValue1>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -2455,20 +2455,13 @@ public struct MultiMapStruct<TValue1>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2480,18 +2473,20 @@ public struct MultiMapStruct<TValue1>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2511,7 +2506,7 @@ public struct MultiMapStruct<TValue1>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
@@ -2519,16 +2514,16 @@ public struct MultiMapStruct<TValue1>
 public struct MultiMapStruct<TValue1, TValue2>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2)
     {
         if (handle.IsNull())
         {
@@ -2554,7 +2549,7 @@ public struct MultiMapStruct<TValue1, TValue2>
         _dense.Set(denseIndex, handle, value1, value2);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2)
     {
         if (Contains(handle, out int index))
         {
@@ -2570,7 +2565,7 @@ public struct MultiMapStruct<TValue1, TValue2>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -2585,24 +2580,22 @@ public struct MultiMapStruct<TValue1, TValue2>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -2611,20 +2604,13 @@ public struct MultiMapStruct<TValue1, TValue2>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2634,7 +2620,7 @@ public struct MultiMapStruct<TValue1, TValue2>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2646,27 +2632,31 @@ public struct MultiMapStruct<TValue1, TValue2>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2685,7 +2675,7 @@ public struct MultiMapStruct<TValue1, TValue2>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2705,7 +2695,7 @@ public struct MultiMapStruct<TValue1, TValue2>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2714,16 +2704,16 @@ public struct MultiMapStruct<TValue1, TValue2>
 public struct MultiMapStruct<TValue1, TValue2, TValue3>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
     {
         if (handle.IsNull())
         {
@@ -2749,7 +2739,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         _dense.Set(denseIndex, handle, value1, value2, value3);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
         if (Contains(handle, out int index))
         {
@@ -2766,7 +2756,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -2781,24 +2771,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -2807,20 +2795,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2830,7 +2811,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2840,7 +2821,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -2852,36 +2833,42 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2900,7 +2887,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2919,7 +2906,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -2939,7 +2926,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -2949,16 +2936,16 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
 public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
     {
         if (handle.IsNull())
         {
@@ -2984,7 +2971,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
         if (Contains(handle, out int index))
         {
@@ -3002,7 +2989,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -3017,24 +3004,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -3043,20 +3028,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3066,7 +3044,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3076,7 +3054,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3086,7 +3064,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3098,45 +3076,53 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3155,7 +3141,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3174,7 +3160,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3193,7 +3179,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3213,7 +3199,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -3224,16 +3210,16 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
 public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
     {
         if (handle.IsNull())
         {
@@ -3259,7 +3245,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
         if (Contains(handle, out int index))
         {
@@ -3278,7 +3264,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -3293,24 +3279,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -3319,20 +3303,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3342,7 +3319,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3352,7 +3329,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3362,7 +3339,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3372,7 +3349,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3384,54 +3361,64 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3450,7 +3437,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3469,7 +3456,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3488,7 +3475,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3507,7 +3494,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3527,7 +3514,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -3539,16 +3526,16 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
     {
         if (handle.IsNull())
         {
@@ -3574,7 +3561,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
         if (Contains(handle, out int index))
         {
@@ -3594,7 +3581,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -3609,24 +3596,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -3635,20 +3620,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3658,7 +3636,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3668,7 +3646,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3678,7 +3656,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3688,7 +3666,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3698,7 +3676,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -3710,63 +3688,75 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3785,7 +3775,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3804,7 +3794,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3823,7 +3813,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3842,7 +3832,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3861,7 +3851,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -3881,7 +3871,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -3894,16 +3884,16 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
 public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
     {
         if (handle.IsNull())
         {
@@ -3929,7 +3919,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
         if (Contains(handle, out int index))
         {
@@ -3950,7 +3940,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -3965,24 +3955,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -3991,20 +3979,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4014,7 +3995,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4024,7 +4005,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4034,7 +4015,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4044,7 +4025,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4054,7 +4035,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4064,7 +4045,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
+    public bool TryGetValue7(Handle handle, out TValue7 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4076,72 +4057,86 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(EntityHandle handle)
+    public ref TValue7 UnsafeGetRefValue7(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue7>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue8(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4160,7 +4155,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4179,7 +4174,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4198,7 +4193,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4217,7 +4212,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4236,7 +4231,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4255,7 +4250,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<Handle> handles, Span<TValue7> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4275,7 +4270,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;
@@ -4289,16 +4284,16 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
 public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
+    private MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMapStruct()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
+        _dense = new MultiArrayStruct<Handle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
     }
 
-    public void Set(EntityHandle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    public void Set(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
     {
         if (handle.IsNull())
         {
@@ -4324,7 +4319,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
     }
 
-    public bool TryGet(EntityHandle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
+    public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
         if (Contains(handle, out int index))
         {
@@ -4346,7 +4341,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -4361,24 +4356,22 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -4387,20 +4380,13 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     
-    public bool TryGetValue1(EntityHandle handle, out TValue1 value)
+    public bool TryGetValue1(Handle handle, out TValue1 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4410,7 +4396,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue2(index, out value);
     }
-    public bool TryGetValue2(EntityHandle handle, out TValue2 value)
+    public bool TryGetValue2(Handle handle, out TValue2 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4420,7 +4406,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue3(index, out value);
     }
-    public bool TryGetValue3(EntityHandle handle, out TValue3 value)
+    public bool TryGetValue3(Handle handle, out TValue3 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4430,7 +4416,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue4(index, out value);
     }
-    public bool TryGetValue4(EntityHandle handle, out TValue4 value)
+    public bool TryGetValue4(Handle handle, out TValue4 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4440,7 +4426,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue5(index, out value);
     }
-    public bool TryGetValue5(EntityHandle handle, out TValue5 value)
+    public bool TryGetValue5(Handle handle, out TValue5 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4450,7 +4436,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue6(index, out value);
     }
-    public bool TryGetValue6(EntityHandle handle, out TValue6 value)
+    public bool TryGetValue6(Handle handle, out TValue6 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4460,7 +4446,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue7(index, out value);
     }
-    public bool TryGetValue7(EntityHandle handle, out TValue7 value)
+    public bool TryGetValue7(Handle handle, out TValue7 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4470,7 +4456,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         
         return _dense.TryGetValue8(index, out value);
     }
-    public bool TryGetValue8(EntityHandle handle, out TValue8 value)
+    public bool TryGetValue8(Handle handle, out TValue8 value)
     {
         if (!Contains(handle, out int index))
         {
@@ -4482,81 +4468,97 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     }
 
     
-    public ref TValue1 GetRefValue1(EntityHandle handle)
+    public ref TValue1 UnsafeGetRefValue1(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue1>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue2(index);
     }
-    public ref TValue2 GetRefValue2(EntityHandle handle)
+    public ref TValue2 UnsafeGetRefValue2(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue2>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue3(index);
     }
-    public ref TValue3 GetRefValue3(EntityHandle handle)
+    public ref TValue3 UnsafeGetRefValue3(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue3>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue4(index);
     }
-    public ref TValue4 GetRefValue4(EntityHandle handle)
+    public ref TValue4 UnsafeGetRefValue4(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue4>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue5(index);
     }
-    public ref TValue5 GetRefValue5(EntityHandle handle)
+    public ref TValue5 UnsafeGetRefValue5(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue5>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue6(index);
     }
-    public ref TValue6 GetRefValue6(EntityHandle handle)
+    public ref TValue6 UnsafeGetRefValue6(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue6>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue7(index);
     }
-    public ref TValue7 GetRefValue7(EntityHandle handle)
+    public ref TValue7 UnsafeGetRefValue7(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue7>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue8(index);
     }
-    public ref TValue8 GetRefValue8(EntityHandle handle)
+    public ref TValue8 UnsafeGetRefValue8(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue8>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue9(index);
     }
     
     
-    public void GetValues1OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue1> values)
+    public void GetValues1OrDefault(ReadOnlySpan<Handle> handles, Span<TValue1> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4575,7 +4577,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues2OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue2> values)
+    public void GetValues2OrDefault(ReadOnlySpan<Handle> handles, Span<TValue2> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4594,7 +4596,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues3OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue3> values)
+    public void GetValues3OrDefault(ReadOnlySpan<Handle> handles, Span<TValue3> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4613,7 +4615,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues4OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue4> values)
+    public void GetValues4OrDefault(ReadOnlySpan<Handle> handles, Span<TValue4> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4632,7 +4634,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues5OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue5> values)
+    public void GetValues5OrDefault(ReadOnlySpan<Handle> handles, Span<TValue5> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4651,7 +4653,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues6OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue6> values)
+    public void GetValues6OrDefault(ReadOnlySpan<Handle> handles, Span<TValue6> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4670,7 +4672,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues7OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue7> values)
+    public void GetValues7OrDefault(ReadOnlySpan<Handle> handles, Span<TValue7> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4689,7 +4691,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
-    public void GetValues8OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue8> values)
+    public void GetValues8OrDefault(ReadOnlySpan<Handle> handles, Span<TValue8> values)
     {
         if (handles.Length > values.Length)
         {
@@ -4709,7 +4711,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
     }
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
     public Span<TValue2> Values2 => _dense.Values3;

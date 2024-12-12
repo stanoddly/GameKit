@@ -53,24 +53,30 @@ public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<
         : $"Handle<{typeof(TType).Name}>{{ Index={Index}, Version={Version} }}";
 }
 
-public readonly struct EntityHandle: IEquatable<EntityHandle>
+public readonly struct Handle: IEquatable<Handle>
 {
     private readonly int _index;
 
-    public static EntityHandle Null { get; } = default;
+    public static Handle Null { get; } = default;
+
+    private Handle(int num)
+    {
+        _index = num;
+    }
+    
     public bool IsNull()
     {
         return _index == 0;
     }
 
-    public bool Equals(EntityHandle other)
+    public bool Equals(Handle other)
     {
         return _index == other._index;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is EntityHandle other && Equals(other);
+        return obj is Handle other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -78,19 +84,24 @@ public readonly struct EntityHandle: IEquatable<EntityHandle>
         return _index.GetHashCode();
     }
 
-    public static implicit operator int(EntityHandle handle)
+    public static implicit operator int(Handle handle)
     {
         return unchecked(handle._index - 1);
     }
     
-    public static implicit operator nuint(EntityHandle handle)
+    public static implicit operator nuint(Handle handle)
     {
         return unchecked((nuint)(handle._index - 1));
     }
     
+    public static explicit operator Handle(int number)
+    {
+        return unchecked(new Handle(number + 1));
+    }
+    
     public override string ToString() => IsNull() 
-        ? $"{nameof(EntityHandle)}.Null" 
-        : $"{nameof(EntityHandle)}({(nuint)this})";
+        ? $"{nameof(Handle)}.Null" 
+        : $"{nameof(Handle)}({(nuint)this})";
 }
 
 public class HandleNullException : Exception

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 // Generated using jinja2-cli: jinja2 MultiMap.cs.jinja > MultiMap.cs
 namespace GameKit.Collections;
 {% for type in [("class", ""), ("struct", "Struct")] -%}
@@ -6,16 +8,16 @@ namespace GameKit.Collections;
 public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}>
 {
     private FastListStruct<int> _sparse;
-    private MultiArrayStruct<EntityHandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
+    private MultiArrayStruct<Handle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}> _dense;
     private const int TombStone = int.MaxValue;  
 
     public MultiMap{{type[1]}}()
     {
         _sparse = new FastListStruct<int>();
-        _dense = new MultiArrayStruct<EntityHandle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
+        _dense = new MultiArrayStruct<Handle{% for i in range(1, n + 1) %}, TValue{{i}}{% endfor %}>();
     }
 
-    public void Set(EntityHandle handle{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    public void Set(Handle handle{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
     {
         if (handle.IsNull())
         {
@@ -41,7 +43,7 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
         _dense.Set(denseIndex, handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
     }
 
-    public bool TryGet(EntityHandle handle{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
+    public bool TryGet(Handle handle{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
     {
         if (Contains(handle, out int index))
         {
@@ -57,7 +59,7 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
         return false;
     }
 
-    public bool Remove(EntityHandle handle)
+    public bool Remove(Handle handle)
     {
         int index = handle;
         if (index > (_sparse.Length - 1))
@@ -72,24 +74,22 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
             return false;
         }
         
-        if (_dense.SwapRemoveReturnFirst(denseIndex, out EntityHandle swappedHandle))
+        if (_dense.SwapRemoveReturnFirst(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
             swappedSparseIndex = denseIndex;
-
-            return true;
         }
 
         denseIndex = TombStone;
         return true;
     }
 
-    public bool Contains(EntityHandle handle)
+    public bool Contains(Handle handle)
     {
         return Contains(handle, out _);
     }
     
-    public bool Contains(EntityHandle handle, out int handleIndex) 
+    public bool Contains(Handle handle, out int handleIndex) 
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -98,20 +98,13 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
             return false;
         }
         
-        int denseIndex = _sparse[index];
+        handleIndex = _sparse[index];
 
-        if (denseIndex == TombStone)
-        {
-            handleIndex = default;
-            return false;
-        }
-
-        handleIndex = default;
-        return true;
+        return handleIndex != TombStone;
     }
     
     {% for i in range(1, n + 1) %}
-    public bool TryGetValue{{i}}(EntityHandle handle, out TValue{{i}} value)
+    public bool TryGetValue{{i}}(Handle handle, out TValue{{i}} value)
     {
         if (!Contains(handle, out int index))
         {
@@ -124,19 +117,21 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
     {%- endfor %}
 
     {% for i in range(1, n + 1) %}
-    public ref TValue{{i}} GetRefValue{{i}}(EntityHandle handle)
+    public ref TValue{{i}} UnsafeGetRefValue{{i}}(Handle handle, out bool exists)
     {
         if (!Contains(handle, out int index))
         {
-            throw new ArgumentOutOfRangeException();
+            exists = false;
+            return ref Unsafe.NullRef<TValue{{i}}>();
         }
 
+        exists = true;
         return ref _dense.GetRefValue{{i+1}}(index);
     }
     {%- endfor %}
     
     {% for i in range(1, n + 1) %}
-    public void GetValues{{i}}OrDefault(ReadOnlySpan<EntityHandle> handles, Span<TValue{{i}}> values)
+    public void GetValues{{i}}OrDefault(ReadOnlySpan<Handle> handles, Span<TValue{{i}}> values)
     {
         if (handles.Length > values.Length)
         {
@@ -157,7 +152,7 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
     }
     {%- endfor %}
 
-    public ReadOnlySpan<EntityHandle> Handles => _dense.Values1;
+    public ReadOnlySpan<Handle> Handles => _dense.Values1;
     {% for i in range(1, n+1) %}
     public Span<TValue{{i}}> Values{{i}} => _dense.Values{{i+1}};
     {%- endfor %}
