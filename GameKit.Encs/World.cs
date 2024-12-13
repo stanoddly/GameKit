@@ -3,14 +3,9 @@ using GameKit.Collections;
 
 namespace GameKit.Encs;
 
-public interface ILifecycleFrameEnd
-{
-    void FrameEnd();
-}
-
 public readonly record struct EntitiesDeletedArg(Handle[] Handles);
 
-public class World: ILifecycleFrameEnd
+public class World
 {
     private readonly EventBus _eventBus;
     private int _entityCounter;
@@ -33,8 +28,7 @@ public class World: ILifecycleFrameEnd
         _handlesToRemove.Clear();
     }
 
-
-    public void FrameEnd()
+    public void ProcessRemovedEntities()
     {
         if (_handlesToRemove.Count > 0)
         {

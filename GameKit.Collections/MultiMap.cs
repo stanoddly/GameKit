@@ -54,6 +54,8 @@ public class MultiMap<TValue1>
 
         return false;
     }
+    
+    
 
     public bool Remove(Handle handle)
     {
@@ -145,6 +147,8 @@ public class MultiMap<TValue1>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -203,6 +207,23 @@ public class MultiMap<TValue1, TValue2>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2);
+            tuple = (value1, value2);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -334,6 +355,8 @@ public class MultiMap<TValue1, TValue2>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -394,6 +417,23 @@ public class MultiMap<TValue1, TValue2, TValue3>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3);
+            tuple = (value1, value2, value3);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -565,6 +605,8 @@ public class MultiMap<TValue1, TValue2, TValue3>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -627,6 +669,23 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4);
+            tuple = (value1, value2, value3, value4);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -838,6 +897,8 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -902,6 +963,23 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5);
+            tuple = (value1, value2, value3, value4, value5);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -1153,6 +1231,8 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -1219,6 +1299,23 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6);
+            tuple = (value1, value2, value3, value4, value5, value6);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -1510,6 +1607,8 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -1578,6 +1677,23 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7);
+            tuple = (value1, value2, value3, value4, value5, value6, value7);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -1908,6 +2024,8 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             }
         }
     }
+
+    public int Length => _dense.Length;
 
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
@@ -1979,6 +2097,23 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8);
+            tuple = (value1, value2, value3, value4, value5, value6, value7, value8);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -2350,6 +2485,8 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -2415,6 +2552,8 @@ public struct MultiMapStruct<TValue1>
 
         return false;
     }
+    
+    
 
     public bool Remove(Handle handle)
     {
@@ -2506,6 +2645,8 @@ public struct MultiMapStruct<TValue1>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -2564,6 +2705,23 @@ public struct MultiMapStruct<TValue1, TValue2>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2);
+            tuple = (value1, value2);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -2695,6 +2853,8 @@ public struct MultiMapStruct<TValue1, TValue2>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -2755,6 +2915,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3);
+            tuple = (value1, value2, value3);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -2926,6 +3103,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -2988,6 +3167,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4);
+            tuple = (value1, value2, value3, value4);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -3199,6 +3395,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -3263,6 +3461,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5);
+            tuple = (value1, value2, value3, value4, value5);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -3514,6 +3729,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -3580,6 +3797,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6);
+            tuple = (value1, value2, value3, value4, value5, value6);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -3871,6 +4105,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
     }
 
+    public int Length => _dense.Length;
+
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
     public Span<TValue1> Values1 => _dense.Values2;
@@ -3939,6 +4175,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7);
+            tuple = (value1, value2, value3, value4, value5, value6, value7);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -4269,6 +4522,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
+
+    public int Length => _dense.Length;
 
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     
@@ -4340,6 +4595,23 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
 
         return false;
     }
+    
+    
+    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8) tuple)
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8);
+            tuple = (value1, value2, value3, value4, value5, value6, value7, value8);
+
+            return true;
+        }
+
+        tuple = default;
+
+        return false;
+    }
+    
 
     public bool Remove(Handle handle)
     {
@@ -4710,6 +4982,8 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             }
         }
     }
+
+    public int Length => _dense.Length;
 
     public ReadOnlySpan<Handle> Handles => _dense.Values1;
     

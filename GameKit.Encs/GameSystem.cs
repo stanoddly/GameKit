@@ -4,8 +4,8 @@ namespace GameKit.Encs;
 
 public abstract class GameSystem<TComponent>
 {
-    public abstract void CreateComponent(Handle handle, in TComponent component);
-    public abstract bool RemoveComponent(Handle handle);
+    public abstract void SetComponent(Handle handle, in TComponent component);
+    public abstract void RemoveComponent(Handle handle);
     public abstract bool TryGetComponent(Handle handle, out TComponent component);
 
     public TComponent GetComponent(Handle handle)
