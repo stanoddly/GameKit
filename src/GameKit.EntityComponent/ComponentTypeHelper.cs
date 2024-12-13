@@ -7,7 +7,7 @@ internal static class ComponentTypeHelper
 {
     private static readonly Type TypeOfIEventHandler = typeof(IEventHandler<>);
     private static readonly Dictionary<Type, List<int>> Cache = new();
-    
+
     // To avoid trimming
     // https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming?pivots=dotnet-8-0#dynamicallyaccessedmembers
     internal static List<int> GetComponentTypeHandledEventArgs<TComponent>(
@@ -23,7 +23,7 @@ internal static class ComponentTypeHelper
         }
 
         items = [];
-        
+
         foreach (var whateverInterface in objectType.GetInterfaces())
         {
             if (!whateverInterface.IsGenericType || whateverInterface.GetGenericTypeDefinition() != TypeOfIEventHandler)
