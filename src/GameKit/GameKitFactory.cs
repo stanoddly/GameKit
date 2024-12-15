@@ -5,6 +5,8 @@ using SDL;
 
 namespace GameKit;
 
+public record WindowConfiguration((int, int)? Size = null, string? Title = null);
+
 public class GameKitFactory: IDisposable
 {
     private static readonly (int, int) DefaultSize = (640, 480);
@@ -25,8 +27,13 @@ public class GameKitFactory: IDisposable
 
         _initialized = true;
     }
+
+    public Window CreateWindow(WindowConfiguration config)
+    {
+        return CreateWindow(config.Size, config.Title);
+    }
     
-    public Window CreateWindow((int, int)? size = null, string? title=null)
+    private Window CreateWindow((int, int)? size = null, string? title=null)
     {
         EnsureSdlInitialized();
 
@@ -89,6 +96,13 @@ public class GameKitFactory: IDisposable
         EnsureSdlInitialized();
 
         return new EventService(inputService, appControl);
+    }
+
+    public TimeService CreateTimeService()
+    {
+        EnsureSdlInitialized();
+
+        return new TimeService();
     }
 
     public void Dispose()

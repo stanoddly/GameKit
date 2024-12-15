@@ -21,7 +21,7 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -42,6 +42,59 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
 
         _dense.Set(denseIndex, handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
     }
+    
+    public bool Update(Handle handle{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+        return true;
+    }
+    
+    public bool Create(Handle handle{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle{% for i in range(1, n + 1) %}, value{{i}}{% endfor %});
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %})
     {
@@ -59,25 +112,28 @@ public {{type[0]}} MultiMap{{type[1]}}<{% for i in range(1, n + 1) %}{% if not l
         return false;
     }
     
-    {% if n != 1 %}
-    public bool TryGet(Handle handle, out ({% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, {% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}TValue{{i}}{% endfor %}>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index{% for i in range(1, n + 1) %}, out TValue{{i}} value{{i}}{% endfor %});
-            tuple = ({% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}value{{i}}{% endfor %});
+            result = TResult.Construct({% for i in range(1, n + 1) %}{% if not loop.first %}, {% endif %}value{{i}}{% endfor %});
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    {% endif %}
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {

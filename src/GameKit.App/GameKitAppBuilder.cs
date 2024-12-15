@@ -3,9 +3,10 @@ using System.Reflection;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.Modules;
 using GameKit.Shaders;
 using SDL;
-/*
+
 namespace GameKit;
 
 public class GameKitAppBuilder
@@ -15,6 +16,7 @@ public class GameKitAppBuilder
     private bool? _debugMode;
     private List<IContentLoader<object>> _contentLoaders = new();
     private FileSystemBuilder _fileSystemBuilder = new();
+    private GameModuleBuilder _gameModuleBuilder;
 
 #if DEBUG
     private const bool DebugBuild = true;
@@ -72,37 +74,41 @@ public class GameKitAppBuilder
         return this;
     }
     
-    public GameKitApp Build()
+    private GameModule Build()
     {
         GameKitFactory gameKitFactory = new GameKitFactory();
-        Window window = gameKitFactory.CreateWindow(_windowSize, _windowTitle);
-        GpuDevice gpuDevice = gameKitFactory.CreateGpuDevice(window);
+        _gameModuleBuilder.RegisterInstance(gameKitFactory);
+        
+        _gameModuleBuilder.RegisterFactory<Window, WindowConfiguration>(gameKitFactory.CreateWindow);
+        _gameModuleBuilder.RegisterFactory<GpuDevice, Window>(gameKitFactory.CreateGpuDevice);
+        _gameModuleBuilder.RegisterFactory<TimeService>(gameKitFactory.CreateTimeService);
+        _gameModuleBuilder.RegisterFactory(gameKitFactory.CreateInput);
 
         _contentLoaders.Add(new ShaderPackLoader());
 
-        VirtualFileSystem fileSystem = _fileSystemBuilder.Create();
-        
-        ContentManager contentManager = new ContentManager(fileSystem, _contentLoaders);
+        _gameModuleBuilder.RegisterFactory(_fileSystemBuilder.Create);
+        _gameModuleBuilder.Register<ContentManager>(Lifetime.Singleton);
 
-        AppControl appControl = new AppControl();
-        InputService inputService = gameKitFactory.CreateInput();
-        EventService eventService = gameKitFactory.CreateEventService(inputService, appControl);
+        _gameModuleBuilder.Register<AppControl>(Lifetime.Singleton);
+        _gameModuleBuilder.RegisterFactory<EventService, InputService, AppControl>(gameKitFactory.CreateEventService, Lifetime.Singleton);
 
-        ImmutableArray<IDisposable> disposables = [contentManager, fileSystem, gpuDevice, window, gameKitFactory];
+        _gameModuleBuilder.Register<ShaderLoader>(Lifetime.Singleton);
+        _gameModuleBuilder.Register<GraphicsPipelineBuilder>(Lifetime.Singleton);
+        _gameModuleBuilder.Register<FrameContext>(Lifetime.Singleton);
 
-        return new GameKitApp
+        return _gameModuleBuilder.Build();
+    }
+
+    public int Run()
+    {
+        using GameModule gameModule = Build();
+
+        while (true)
         {
-            GpuDevice = gpuDevice,
-            Window = window,
-            ShaderLoader = new ShaderLoader(gpuDevice),
-            GraphicsPipelineBuilder = new GraphicsPipelineBuilder(gpuDevice, window),
-            FileSystem = fileSystem,
-            ContentManager = contentManager,
-            Input = inputService,
-            Events = eventService,
-            AppControl = appControl,
-            Disposables = disposables
-        };
+            gameModule.BeginFrame((float)gameTime.ElapsedGameTime.TotalSeconds);
+            gameModule.Update();
+            
+            gameModule.Draw();
+        }
     }
 }
-*/

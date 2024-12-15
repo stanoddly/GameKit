@@ -13,7 +13,7 @@ public class EventService: IEventProcessor
     private readonly InputService _inputService;
     private readonly AppControl _appControl;
 
-    public EventService(InputService inputService, AppControl appControl)
+    internal EventService(InputService inputService, AppControl appControl)
     {
         _inputService = inputService;
         _appControl = appControl;

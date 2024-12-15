@@ -16,6 +16,8 @@ public class InputService
     public event KeyDownEventHandler? KeyDown;
     public event KeyUpEventHandler? KeyUp;
     
+    internal InputService() {}
+    
     internal void OnKeyEvent(in SDL_KeyboardEvent keyboardEvent)
     {
         Scancode scancode = (Scancode)keyboardEvent.scancode;

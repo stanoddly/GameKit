@@ -18,7 +18,7 @@ public class MultiMap<TValue1>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -39,6 +39,59 @@ public class MultiMap<TValue1>
 
         _dense.Set(denseIndex, handle, value1);
     }
+    
+    public bool Update(Handle handle, TValue1 value1)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1)
     {
@@ -55,10 +108,28 @@ public class MultiMap<TValue1>
         return false;
     }
     
-    
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1>
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1);
+            result = TResult.Construct(value1);
+
+            return true;
+        }
+
+        result = default;
+
+        return false;
+    }
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -170,7 +241,7 @@ public class MultiMap<TValue1, TValue2>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -191,6 +262,59 @@ public class MultiMap<TValue1, TValue2>
 
         _dense.Set(denseIndex, handle, value1, value2);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2)
     {
@@ -208,25 +332,28 @@ public class MultiMap<TValue1, TValue2>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2);
-            tuple = (value1, value2);
+            result = TResult.Construct(value1, value2);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -379,7 +506,7 @@ public class MultiMap<TValue1, TValue2, TValue3>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -400,6 +527,59 @@ public class MultiMap<TValue1, TValue2, TValue3>
 
         _dense.Set(denseIndex, handle, value1, value2, value3);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
@@ -418,25 +598,28 @@ public class MultiMap<TValue1, TValue2, TValue3>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3);
-            tuple = (value1, value2, value3);
+            result = TResult.Construct(value1, value2, value3);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -630,7 +813,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -651,6 +834,59 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
@@ -670,25 +906,28 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4);
-            tuple = (value1, value2, value3, value4);
+            result = TResult.Construct(value1, value2, value3, value4);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -923,7 +1162,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -943,6 +1182,59 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
@@ -964,25 +1256,28 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5);
-            tuple = (value1, value2, value3, value4, value5);
+            result = TResult.Construct(value1, value2, value3, value4, value5);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -1258,7 +1553,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -1278,6 +1573,59 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
@@ -1300,25 +1648,28 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6);
-            tuple = (value1, value2, value3, value4, value5, value6);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -1635,7 +1986,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -1655,6 +2006,59 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
@@ -1678,25 +2082,28 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7);
-            tuple = (value1, value2, value3, value4, value5, value6, value7);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6, value7);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -2054,7 +2461,7 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -2074,6 +2481,59 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
@@ -2098,25 +2558,28 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8);
-            tuple = (value1, value2, value3, value4, value5, value6, value7, value8);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6, value7, value8);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -2516,7 +2979,7 @@ public struct MultiMapStruct<TValue1>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -2537,6 +3000,59 @@ public struct MultiMapStruct<TValue1>
 
         _dense.Set(denseIndex, handle, value1);
     }
+    
+    public bool Update(Handle handle, TValue1 value1)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1)
     {
@@ -2553,10 +3069,28 @@ public struct MultiMapStruct<TValue1>
         return false;
     }
     
-    
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1>
+    {
+        if (Contains(handle, out int index))
+        {
+            _dense.TryGetButFirst(index, out TValue1 value1);
+            result = TResult.Construct(value1);
+
+            return true;
+        }
+
+        result = default;
+
+        return false;
+    }
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -2668,7 +3202,7 @@ public struct MultiMapStruct<TValue1, TValue2>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -2689,6 +3223,59 @@ public struct MultiMapStruct<TValue1, TValue2>
 
         _dense.Set(denseIndex, handle, value1, value2);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2)
     {
@@ -2706,25 +3293,28 @@ public struct MultiMapStruct<TValue1, TValue2>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2);
-            tuple = (value1, value2);
+            result = TResult.Construct(value1, value2);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -2877,7 +3467,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -2898,6 +3488,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
 
         _dense.Set(denseIndex, handle, value1, value2, value3);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
@@ -2916,25 +3559,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3);
-            tuple = (value1, value2, value3);
+            result = TResult.Construct(value1, value2, value3);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -3128,7 +3774,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -3149,6 +3795,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4);
     }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4);
+            return true;
+        }
+
+        return false;
+    }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
@@ -3168,25 +3867,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4);
-            tuple = (value1, value2, value3, value4);
+            result = TResult.Construct(value1, value2, value3, value4);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -3421,7 +4123,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -3441,6 +4143,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
@@ -3462,25 +4217,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5);
-            tuple = (value1, value2, value3, value4, value5);
+            result = TResult.Construct(value1, value2, value3, value4, value5);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -3756,7 +4514,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -3776,6 +4534,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
@@ -3798,25 +4609,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6);
-            tuple = (value1, value2, value3, value4, value5, value6);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -4133,7 +4947,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -4153,6 +4967,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
@@ -4176,25 +5043,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7);
-            tuple = (value1, value2, value3, value4, value5, value6, value7);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6, value7);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {
@@ -4552,7 +5422,7 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
     {
         if (handle.IsNull())
         {
-            return;
+            throw new HandleNullException();
         }
 
         int sparseIndex = handle;
@@ -4572,6 +5442,59 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         }
 
         _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
+    }
+    
+    public bool Update(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return false;
+        }
+
+        _dense.Set(denseIndex, handle, value1, value2, value3, value4, value5, value6, value7, value8);
+        return true;
+    }
+    
+    public bool Create(Handle handle, TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        bool nonexistent = denseIndex == TombStone;
+        if (nonexistent)
+        {
+            denseIndex = _dense.Add(handle, value1, value2, value3, value4, value5, value6, value7, value8);
+            return true;
+        }
+
+        return false;
     }
 
     public bool TryGet(Handle handle, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
@@ -4596,25 +5519,28 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
         return false;
     }
     
-    
-    public bool TryGet(Handle handle, out (TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8) tuple)
+    public bool TryGet<TResult>(Handle handle, out TResult result) where TResult: IConstructible<TResult, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>
     {
         if (Contains(handle, out int index))
         {
             _dense.TryGetButFirst(index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8);
-            tuple = (value1, value2, value3, value4, value5, value6, value7, value8);
+            result = TResult.Construct(value1, value2, value3, value4, value5, value6, value7, value8);
 
             return true;
         }
 
-        tuple = default;
+        result = default;
 
         return false;
     }
-    
 
     public bool Remove(Handle handle)
     {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
         int index = handle;
         if (index > (_sparse.Length - 1))
         {

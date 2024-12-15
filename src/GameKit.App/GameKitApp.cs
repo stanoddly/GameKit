@@ -1,13 +1,12 @@
-/*using System.Collections.Immutable;
+using System.Collections.Immutable;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Shaders;
-using SDL;
 
-namespace GameKit;
+namespace GameKit.App;
 
-public sealed class GameKitApp: IDisposable
+public sealed class GameKitModule: IDisposable
 {
     public required Window Window { get; init; }
     public required GpuDevice GpuDevice { get; init; }
@@ -20,8 +19,8 @@ public sealed class GameKitApp: IDisposable
     public required AppControl AppControl { get; init; }
     public required ImmutableArray<IDisposable> Disposables { get; init; }
 
-    private Action<GameKitApp> _update = _ => { };
-    private Action<GameKitApp> _draw = _ => { };
+    private Action<GameKitModule> _update = _ => { };
+    private Action<GameKitModule> _draw = _ => { };
 
     public void Dispose()
     {
@@ -48,12 +47,12 @@ public sealed class GameKitApp: IDisposable
         }
     }
 
-    public void Update(Action<GameKitApp> update)
+    public void Update(Action<GameKitModule> update)
     {
         _update = update;
     }
 
-    public void Draw(Action<GameKitApp> draw)
+    public void Draw(Action<GameKitModule> draw)
     {
         _draw = draw;
     }
@@ -77,9 +76,9 @@ public sealed class GameKitApp: IDisposable
 
 public static class GameKitExtensions
 {
-    public static Shader LoadShader(this GameKitApp gameKitApp, string path)
+    public static Shader LoadShader(this GameKitModule gameKitApp, string path)
     {
         ShaderPack shaderPack = gameKitApp.ContentManager.Load<ShaderPack>(path);
         return gameKitApp.ShaderLoader.Load(shaderPack);
     }
-}*/
+}

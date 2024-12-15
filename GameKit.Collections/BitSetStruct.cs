@@ -12,8 +12,7 @@ public readonly struct BitSetStruct
         nuint arraySize = (capacity + BitsPerElement - 1) / BitsPerElement;
         _bits = new nuint[(int)arraySize];
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    
     public void Set(nuint index, bool value)
     {
         nuint arrayIndex = index / BitsPerElement;
@@ -28,8 +27,7 @@ public readonly struct BitSetStruct
             _bits[(int)arrayIndex] &= ~((nuint)1 << (int)bitIndex);
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    
     public bool Get(nuint index)
     {
         nuint arrayIndex = index / BitsPerElement;
@@ -37,7 +35,6 @@ public readonly struct BitSetStruct
         return (_bits[(int)arrayIndex] & ((nuint)1 << (int)bitIndex)) != 0;
     }
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool GetSet(nuint index, bool value)
     {
         nuint arrayIndex = index / BitsPerElement;
@@ -59,7 +56,6 @@ public readonly struct BitSetStruct
         set => Set(index, value);
     }
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ClearAll()
     {
         Array.Clear(_bits, 0, _bits.Length);
