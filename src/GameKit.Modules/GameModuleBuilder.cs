@@ -36,6 +36,7 @@ internal static class ScopeExtension
 public class GameModuleBuilder
 {
     private readonly AutofacContainerBuilder _builder = new();
+    private HashSet<Type> _registeredTypes = new();
 
     private void RegisterComponentContextFactory<TSourceType, TTargetType>(Func<IComponentContext, TSourceType> factory, Lifetime lifetime = default)
         where TSourceType : notnull
@@ -52,6 +53,9 @@ public class GameModuleBuilder
         {
             registration.As<TSourceType>();
         }
+
+        _registeredTypes.Add(typeof(TSourceType));
+        _registeredTypes.Add(typeof(TTargetType));
     }
 
     private static void OnActivatingHandler<TSourceType>(IActivatingEventArgs<TSourceType> handler)
@@ -86,6 +90,7 @@ public class GameModuleBuilder
         where TType : class
     {
         _builder.RegisterInstance(instance).As<TType>();
+        _registeredTypes.Add(typeof(TType));
         return this;
     }
 
@@ -110,6 +115,9 @@ public class GameModuleBuilder
         {
             registration.As<TSourceType>();
         }
+        
+        _registeredTypes.Add(typeof(TSourceType));
+        _registeredTypes.Add(typeof(TTargetType));
         return this;
     }
     
@@ -125,6 +133,10 @@ public class GameModuleBuilder
             .As<TTargetType2>()
             .OnActivating(OnActivatingHandler)
             .OnRelease(OnReleaseHandler);
+        
+        _registeredTypes.Add(typeof(TSourceType));
+        _registeredTypes.Add(typeof(TTargetType1));
+        _registeredTypes.Add(typeof(TTargetType2));
         return this;
     }
 
@@ -192,7 +204,7 @@ public class GameModuleBuilder
 
     public bool IsRegistered<TType>()
     {
-        return _builder.ComponentRegistryBuilder.IsRegistered(new TypedService(typeof(TType)));
+        return _registeredTypes.Contains(typeof(TType));
     }
 
     public GameModule Build()

@@ -19,9 +19,16 @@ public class StbImage : Image
 
 public class StbImageLoader : IContentLoader<Image>
 {
-    public Image Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+    private VirtualFileSystem _fileSystem;
+
+    public StbImageLoader(VirtualFileSystem fileSystem)
     {
-        using Stream fileStream = fileSystem.GetFile(path).Open();
+        _fileSystem = fileSystem;
+    }
+
+    public Image Load(string path)
+    {
+        using Stream fileStream = _fileSystem.GetFile(path).Open();
         ImageResult imageResult = ImageResult.FromStream(fileStream, ColorComponents.RedGreenBlueAlpha);
 
         return new StbImage(imageResult);
@@ -30,10 +37,9 @@ public class StbImageLoader : IContentLoader<Image>
 
 public static class StbImageGameKitBuilderExtensions
 {
-    public static GameKitAppBuilder UseStbImageLoader(this GameKitAppBuilder builder)
+    public static GameKitApp AddStbImageLoader(this GameKitApp builder)
     {
-        StbImageLoader imageLoader = new StbImageLoader();
-        builder.WithContentLoader(imageLoader);
+        builder.AddScoped<StbImageLoader, IContentLoader<Image>>();
         return builder;
     }
 }

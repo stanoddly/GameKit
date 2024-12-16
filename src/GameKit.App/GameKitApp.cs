@@ -1,85 +1,118 @@
 using System.Collections.Immutable;
+using System.Reflection;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.Modules;
 using GameKit.Shaders;
+using SDL;
 
-namespace GameKit.App;
-/*
-public sealed class GameKitModule: IDisposable
+namespace GameKit;
+
+public class GameKitApp
 {
-    public required Window Window { get; init; }
-    public required GpuDevice GpuDevice { get; init; }
-    public required ShaderLoader ShaderLoader { get; init; }
-    public required GraphicsPipelineBuilder GraphicsPipelineBuilder { get; init; }
-    public required VirtualFileSystem FileSystem { get; init; }
-    public required IContentManager ContentManager { get; init; }
-    public required InputService Input { get; init; }
-    public required EventService Events { get; init; }
-    public required AppControl AppControl { get; init; }
-    public required ImmutableArray<IDisposable> Disposables { get; init; }
+    private readonly FileSystemBuilder _fileSystemBuilder = new();
+    private readonly GameModuleBuilder _gameModuleBuilder = new();
 
-    private Action<GameKitModule> _update = _ => { };
-    private Action<GameKitModule> _draw = _ => { };
+#if DEBUG
+    private const bool DebugBuild = true;
+#else
+    private const bool DebugBuild = false;
+#endif
 
-    public void Dispose()
+    public GameKitApp AddContentFromDirectory(string directory)
     {
-        List<Exception> exceptions = new();
-        foreach (IDisposable disposable in Disposables)
-        {
-            try
-            {
-                disposable.Dispose();
-            }
-            catch (AggregateException e)
-            {
-                exceptions.AddRange(e.InnerExceptions);
-            }
-            catch (Exception e)
-            {
-                exceptions.Add(e);
-            }
-        }
-
-        if (exceptions.Count > 0)
-        {
-            throw new AggregateException(exceptions);
-        }
+        _fileSystemBuilder.AddContentFromDirectory(directory);
+        
+        return this;
+    }
+    
+    public GameKitApp AddContentFromProjectDirectory(string directory)
+    {
+        _fileSystemBuilder.AddContentFromProjectDirectory(directory);
+        return this;
+    }
+    
+    public GameKitApp AddFileSystemCache()
+    {
+        _fileSystemBuilder.WithCache();
+        return this;
     }
 
-    public void Update(Action<GameKitModule> update)
+    public GameKitApp AddScoped<TSourceType, TTargetType>()
+        where TSourceType: TTargetType
+        where TTargetType : notnull
     {
-        _update = update;
+        _gameModuleBuilder.Register<TSourceType, TTargetType>();
+        
+        return this;
     }
 
-    public void Draw(Action<GameKitModule> draw)
+    public GameKitApp AddScoped<TType>() where TType : notnull
     {
-        _draw = draw;
+        _gameModuleBuilder.Register<TType>();
+        
+        return this;
+    }
+    
+    public GameKitApp Add<TType>(TType instance) where TType : class
+    {
+        _gameModuleBuilder.RegisterInstance(instance);
+        
+        return this;
+    }
+
+    private GameModule Build()
+    {
+        GameKitFactory gameKitFactory = new GameKitFactory();
+        _gameModuleBuilder.RegisterInstance(gameKitFactory);
+        
+        _gameModuleBuilder.RegisterFactory<Window, WindowConfiguration>(gameKitFactory.CreateWindow);
+        _gameModuleBuilder.RegisterFactory<GpuDevice, Window>(gameKitFactory.CreateGpuDevice);
+        _gameModuleBuilder.RegisterFactory(gameKitFactory.CreateFrameContext);
+        _gameModuleBuilder.RegisterFactory(gameKitFactory.CreateInput);
+        _gameModuleBuilder.RegisterFactory<EventService, InputService, AppControl>(gameKitFactory.CreateEventService, Lifetime.Singleton);
+
+        _gameModuleBuilder.Register<AppControl>(Lifetime.Singleton);
+        _gameModuleBuilder.Register<ShaderPackLoader, IContentLoader<ShaderPack>>(Lifetime.Singleton);
+
+        _gameModuleBuilder.Register<ShaderLoader, IContentLoader<Shader>>(Lifetime.Singleton);
+        _gameModuleBuilder.Register<GraphicsPipelineBuilder>(Lifetime.Singleton);
+
+        if (!_gameModuleBuilder.IsRegistered<WindowConfiguration>())
+        {
+            _gameModuleBuilder.Register<WindowConfiguration>(Lifetime.Singleton);
+        }
+
+        if (!_gameModuleBuilder.IsRegistered<VirtualFileSystem>())
+        {
+            _gameModuleBuilder.RegisterFactory(_fileSystemBuilder.Create);
+            //_gameModuleBuilder.RegisterInstance<VirtualFileSystem>(DictFileSystem.Empty);
+        }
+
+        return _gameModuleBuilder.Build();
     }
 
     public int Run()
     {
+        using GameModule gameModule = Build();
+
+        FrameContext frameContext = gameModule.GetService<FrameContext>();
+        EventService eventService = gameModule.GetService<EventService>();
+        AppControl appControl = gameModule.GetService<AppControl>();
+        
         while (true)
         {
-            Events.Process();
+            frameContext.StartFrame();
+            eventService.Process();
 
-            if (AppControl.QuitRequested)
+            if (appControl.QuitRequested)
             {
                 return 0;
             }
             
-            _update(this);
-            _draw(this);
+            gameModule.Update();
+            gameModule.Draw();
         }
     }
 }
-
-public static class GameKitExtensions
-{
-    public static Shader LoadShader(this GameKitModule gameKitApp, string path)
-    {
-        ShaderPack shaderPack = gameKitApp.ContentManager.Load<ShaderPack>(path);
-        return gameKitApp.ShaderLoader.Load(shaderPack);
-    }
-}
-*/

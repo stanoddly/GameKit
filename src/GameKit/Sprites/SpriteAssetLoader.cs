@@ -13,6 +13,8 @@ public record AnimatedSpriteAsset(float FrameDuration, Texture Texture, Immutabl
 
 public sealed class SpriteAssetLoader: IContentLoader<SpriteAsset>, IContentLoader<AnimatedSpriteAsset>
 {
+    private VirtualFileSystem _fileSystem;
+    private readonly IContentLoader<Texture> _textureLoader;
     private readonly Dictionary<string, SpriteAsset> _sprites = new();
     private readonly Dictionary<string, AnimatedSpriteAsset> _animatedSprites = [];
     private readonly JsonSerializerOptions _options = new()
@@ -21,27 +23,33 @@ public sealed class SpriteAssetLoader: IContentLoader<SpriteAsset>, IContentLoad
         Converters = {new RectangleJsonConverter()}
     };
 
-    private AnimatedSpriteAsset CreateAnimation(IContentManager contentManager, AnimatedSpriteDto animatedSpriteDto)
+    public SpriteAssetLoader(IContentLoader<Texture> textureLoader, VirtualFileSystem fileSystem)
     {
-        Texture texture = contentManager.Load<Texture>(animatedSpriteDto.Image);
+        _textureLoader = textureLoader;
+        _fileSystem = fileSystem;
+    }
+
+    private AnimatedSpriteAsset CreateAnimation(AnimatedSpriteDto animatedSpriteDto)
+    {
+        Texture texture = _textureLoader.Load(animatedSpriteDto.Image);
         AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, animatedSpriteDto.Frames, animatedSpriteDto.Repeat);
 
         return animatedSpriteAsset;
     }
 
-    SpriteAsset IContentLoader<SpriteAsset>.Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+    SpriteAsset IContentLoader<SpriteAsset>.Load(string path)
     {
         if (_sprites.TryGetValue(path, out SpriteAsset? existingSprite))
         {
             return existingSprite;
         }
 
-        using var spritesJsonStream = contentManager.OpenStream(path);
+        using var spritesJsonStream = _fileSystem.OpenStream(path);
 
         SpriteDto spriteDto = JsonSerializer.Deserialize<SpriteDto>(spritesJsonStream, _options)
                                ?? throw new JsonException("Deserialization returned null for SpriteDto.");
         
-        Texture texture = contentManager.Load<Texture>(spriteDto.Image);
+        Texture texture = _textureLoader.Load(spriteDto.Image);
         SpriteAsset spriteAsset = new SpriteAsset(texture, spriteDto.SourceRectangle);
         
         _sprites[path] = spriteAsset;
@@ -49,18 +57,18 @@ public sealed class SpriteAssetLoader: IContentLoader<SpriteAsset>, IContentLoad
         return spriteAsset;
     }
 
-    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(string path)
     {
         if (_animatedSprites.TryGetValue(path, out AnimatedSpriteAsset? existingAnimation))
         {
             return existingAnimation;
         }
 
-        using var stream = contentManager.OpenStream(path);
+        using var stream = _fileSystem.OpenStream(path);
         AnimatedSpriteDto animatedSpriteDto = JsonSerializer.Deserialize<AnimatedSpriteDto>(stream, _options)
                                     ?? throw new JsonException("Deserialization returned null for AnimatedSpriteDto.");
 
-        AnimatedSpriteAsset animatedSpriteAsset = CreateAnimation(contentManager, animatedSpriteDto);
+        AnimatedSpriteAsset animatedSpriteAsset = CreateAnimation(animatedSpriteDto);
         _animatedSprites[path] = animatedSpriteAsset;
 
         return animatedSpriteAsset;

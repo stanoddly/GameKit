@@ -5,22 +5,24 @@ namespace GameKit.Gpu;
 
 public class TextureLoader: IContentLoader<Texture>
 {
+    private readonly IContentLoader<Image> _imageLoader;
     private readonly GpuDevice _gpuDevice;
     private readonly Dictionary<string, Texture> _textures = new();
 
-    public TextureLoader(GpuDevice gpuDevice)
+    public TextureLoader(IContentLoader<Image> imageLoader, VirtualFileSystem fileSystem, GpuDevice gpuDevice)
     {
+        _imageLoader = imageLoader;
         _gpuDevice = gpuDevice;
     }
 
-    public Texture Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+    public Texture Load(string path)
     {
         if (_textures.TryGetValue(path, out Texture? existingTexture))
         {
             return existingTexture;
         }
 
-        Image image = contentManager.Load<Image>(path);
+        Image image = _imageLoader.Load(path);
 
         Texture texture;
         using (var memory = _gpuDevice.CreateMemoryTransfer())

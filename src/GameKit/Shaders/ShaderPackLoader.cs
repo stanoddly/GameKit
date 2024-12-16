@@ -5,9 +5,16 @@ namespace GameKit.Shaders;
 
 public class ShaderPackLoader: IContentLoader<ShaderPack>
 {
-    public ShaderPack Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+    private VirtualFileSystem _fileSystem;
+
+    public ShaderPackLoader(VirtualFileSystem fileSystem)
     {
-        using Stream stream = fileSystem.GetFile(path).Open();
+        _fileSystem = fileSystem;
+    }
+
+    public ShaderPack Load(string path)
+    {
+        using Stream stream = _fileSystem.GetFile(path).Open();
         // reflection free deserialization
         ShaderPack? shaderPack = JsonSerializer.Deserialize(stream, ShaderMetaJsonContext.Default.ShaderPack);
 

@@ -25,7 +25,7 @@ public class FileSystemBuilder
         if (currentDirParts.Length < 3 || !currentDirParts[^1].StartsWith("net") || currentDirParts[^3] != "bin")
         {
             throw new InvalidOperationException(
-                "Invalid project structure. Expected to be running from 'bin/[configuration]/net*' directory.");
+                "Either you forget to add a filesystem configuration or have an invalid project structure, expected to be running from 'bin/[configuration]/net*' directory.");
         }
 
         string[] parts;

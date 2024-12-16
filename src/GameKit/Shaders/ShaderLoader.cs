@@ -1,16 +1,19 @@
+using GameKit.Content;
 using GameKit.Gpu;
 using SDL;
 
 namespace GameKit.Shaders;
 
-public class ShaderLoader
+public class ShaderLoader: IContentLoader<Shader>
 {
     private readonly GpuDevice _gpuDevice;
+    private readonly IContentLoader<ShaderPack> _shaderPackLoader;
     private readonly ShaderFormats _shaderFormats;
 
-    public ShaderLoader(GpuDevice gpuDevice)
+    public ShaderLoader(GpuDevice gpuDevice, IContentLoader<ShaderPack> shaderPackLoader)
     {
         _gpuDevice = gpuDevice;
+        _shaderPackLoader = shaderPackLoader;
         _shaderFormats = _gpuDevice.GetSupportedShaderFormats();
     }
 
@@ -72,5 +75,11 @@ public class ShaderLoader
                 return shader;
             }
         }
+    }
+
+    public Shader Load(string path)
+    {
+        ShaderPack shaderPack = _shaderPackLoader.Load(path);
+        return Load(shaderPack);
     }
 }
