@@ -98,11 +98,11 @@ public class GameKitFactory: IDisposable
         return new EventService(inputService, appControl);
     }
 
-    public TimeService CreateTimeService()
+    public FrameContext CreateFrameContext()
     {
         EnsureSdlInitialized();
 
-        return new TimeService();
+        return new FrameContext();
     }
 
     public void Dispose()

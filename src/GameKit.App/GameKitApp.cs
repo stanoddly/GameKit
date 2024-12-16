@@ -5,7 +5,7 @@ using GameKit.Input;
 using GameKit.Shaders;
 
 namespace GameKit.App;
-
+/*
 public sealed class GameKitModule: IDisposable
 {
     public required Window Window { get; init; }
@@ -82,3 +82,4 @@ public static class GameKitExtensions
         return gameKitApp.ShaderLoader.Load(shaderPack);
     }
 }
+*/

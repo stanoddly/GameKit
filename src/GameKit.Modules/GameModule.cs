@@ -62,4 +62,9 @@ public class GameModule: IDisposable
             }
         }
     }
+
+    public TType GetService<TType>()
+    {
+        return (TType)_services[typeof(TType)];
+    }
 }

@@ -190,6 +190,11 @@ public class GameModuleBuilder
         return this;
     }
 
+    public bool IsRegistered<TType>()
+    {
+        return _builder.ComponentRegistryBuilder.IsRegistered(new TypedService(typeof(TType)));
+    }
+
     public GameModule Build()
     {
         List<IUpdatable> updatables = new();

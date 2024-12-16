@@ -9,7 +9,7 @@ using SDL;
 
 namespace GameKit;
 
-public class GameKitAppBuilder
+public class GameKitApp
 {
     private (int, int)? _windowSize;
     private string? _windowTitle;
@@ -24,51 +24,51 @@ public class GameKitAppBuilder
     private const bool DebugBuild = false;
 #endif
 
-    public GameKitAppBuilder WithSize((int, int) size)
+    public GameKitApp WithSize((int, int) size)
     {
         _windowSize = size;
         return this;
     }
     
-    public GameKitAppBuilder WithSize(int width, int height)
+    public GameKitApp WithSize(int width, int height)
     {
         _windowSize = (width, height);
         return this;
     }
 
-    public GameKitAppBuilder WithTitle(string title)
+    public GameKitApp WithTitle(string title)
     {
         _windowTitle = title;
         return this;
     }
 
-    public GameKitAppBuilder WithDebugMode()
+    public GameKitApp WithDebugMode()
     {
         _debugMode = true;
         return this;
     }
 
-    public GameKitAppBuilder WithContentLoader<TContent>(IContentLoader<TContent> loaderRegistration) where TContent: class
+    public GameKitApp WithContentLoader<TContent>(IContentLoader<TContent> loaderRegistration) where TContent: class
     {
         _contentLoaders.Add(loaderRegistration);
         
         return this;
     }
     
-    public GameKitAppBuilder AddContentFromDirectory(string directory)
+    public GameKitApp AddContentFromDirectory(string directory)
     {
         _fileSystemBuilder.AddContentFromDirectory(directory);
         return this;
     }
 
-    public GameKitAppBuilder AddContentFromProjectDirectory(string? subdirectory = null)
+    public GameKitApp AddContentFromProjectDirectory(string? subdirectory = null)
     {
         _fileSystemBuilder.AddContentFromProjectDirectory(subdirectory);
         
         return this;
     }
 
-    public GameKitAppBuilder WithCachedFileSystem()
+    public GameKitApp WithCachedFileSystem()
     {
         _fileSystemBuilder.WithCache();
         return this;
@@ -81,7 +81,7 @@ public class GameKitAppBuilder
         
         _gameModuleBuilder.RegisterFactory<Window, WindowConfiguration>(gameKitFactory.CreateWindow);
         _gameModuleBuilder.RegisterFactory<GpuDevice, Window>(gameKitFactory.CreateGpuDevice);
-        _gameModuleBuilder.RegisterFactory<TimeService>(gameKitFactory.CreateTimeService);
+        _gameModuleBuilder.RegisterFactory<FrameContext>(gameKitFactory.CreateFrameContext);
         _gameModuleBuilder.RegisterFactory(gameKitFactory.CreateInput);
 
         _contentLoaders.Add(new ShaderPackLoader());
@@ -96,6 +96,11 @@ public class GameKitAppBuilder
         _gameModuleBuilder.Register<GraphicsPipelineBuilder>(Lifetime.Singleton);
         _gameModuleBuilder.Register<FrameContext>(Lifetime.Singleton);
 
+        if (!_gameModuleBuilder.IsRegistered<WindowConfiguration>())
+        {
+            _gameModuleBuilder.Register<WindowConfiguration>(Lifetime.Singleton);
+        }
+
         return _gameModuleBuilder.Build();
     }
 
@@ -103,11 +108,21 @@ public class GameKitAppBuilder
     {
         using GameModule gameModule = Build();
 
+        FrameContext frameContext = gameModule.GetService<FrameContext>();
+        EventService eventService = gameModule.GetService<EventService>();
+        AppControl appControl = gameModule.GetService<AppControl>();
+        
         while (true)
         {
-            gameModule.BeginFrame((float)gameTime.ElapsedGameTime.TotalSeconds);
-            gameModule.Update();
+            frameContext.StartFrame();
+            eventService.Process();
+
+            if (appControl.QuitRequested)
+            {
+                return 0;
+            }
             
+            gameModule.Update();
             gameModule.Draw();
         }
     }
