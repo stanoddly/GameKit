@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.Collections\GameKit.Collections.csproj" />
     </ItemGroup>
 
 </Project>
