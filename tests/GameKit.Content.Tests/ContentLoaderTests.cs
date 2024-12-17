@@ -6,7 +6,7 @@ public class ContentLoaderTests
     
     private class LoaderA : IContentLoader<ContentA>
     {
-        public ContentA Load(IContentManager contentManager, VirtualFileSystem fileSystem, string path)
+        public ContentA Load(string path)
         {
             return new ContentA();
         }

@@ -87,7 +87,6 @@ public class GameKitApp
         if (!_gameModuleBuilder.IsRegistered<VirtualFileSystem>())
         {
             _gameModuleBuilder.RegisterFactory(_fileSystemBuilder.Create);
-            //_gameModuleBuilder.RegisterInstance<VirtualFileSystem>(DictFileSystem.Empty);
         }
 
         return _gameModuleBuilder.Build();

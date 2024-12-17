@@ -1,8 +1,8 @@
 namespace GameKit.Modules;
 
-public interface IPreparable
+public interface IInitializable
 {
-    void Prepare();
+    void Initialize();
 }
 
 public interface IUpdatable

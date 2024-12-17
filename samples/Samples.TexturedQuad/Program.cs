@@ -4,67 +4,62 @@ using GameKit.Gpu;
 using GameKit.ImageLoader.StbImageSharp;
 using GameKit.Modules;
 
-var gameKitApp = new GameKitApp()
-    .AddContentFromProjectDirectory("Content")
-    .AddStbImageLoader()
-    .Add(new WindowConfiguration{ Size = (512, 512)})
-    .AddScoped<MyService>();
+namespace Samples.TexturedQuad;
 
-return gameKitApp.Run();
-
-
-public class MyService: IPreparable, IDrawable
+public class MyGame(
+    GpuDevice gpuDevice,
+    GraphicsPipelineBuilder graphicsPipelineBuilder,
+    IContentLoader<Shader> shaderLoader,
+    IContentLoader<Image> imageLoader)
+    : IInitializable, IDrawable
 {
-    private readonly IContentLoader<Shader> _contentLoader;
-    private readonly IContentLoader<Image> _imageLoader;
-    private readonly GraphicsPipelineBuilder _graphicsPipelineBuilder;
-    private readonly GpuDevice _gpuDevice;
-
     private GraphicsPipeline _graphicsPipeline;
     private VertexBuffer<PositionTextureVertex> _vertexBuffer;
-    private Texture _texture;
+    private Texture _texture = null!;
     private Sampler _sampler;
 
-    public MyService(IContentLoader<Shader> contentLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuDevice gpuDevice, IContentLoader<Image> imageLoader)
+    public void Initialize()
     {
-        _contentLoader = contentLoader;
-        _graphicsPipelineBuilder = graphicsPipelineBuilder;
-        _gpuDevice = gpuDevice;
-        _imageLoader = imageLoader;
-    }
+        Shader vertexShader = shaderLoader.Load("TexturedQuadVertex.spak.json");
+        Shader fragmentShader  = shaderLoader.Load("TexturedQuadFragment.spak.json");
 
-
-    public void Prepare()
-    {
-        Shader vertexShader = _contentLoader.Load("TexturedQuadVertex.spak.json");
-        Shader fragmentShader  = _contentLoader.Load("TexturedQuadFragment.spak.json");
-
-        _graphicsPipeline = _graphicsPipelineBuilder
+        _graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddColorFormatFromDisplay()
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaders(vertexShader, fragmentShader)
             .Build();
 
-        using (GpuMemoryTransfer memoryTransfer = _gpuDevice.CreateMemoryTransfer())
+        using (GpuMemoryTransfer memoryTransfer = gpuDevice.CreateMemoryTransfer())
         {
             _vertexBuffer = memoryTransfer.AddVertexBuffer(PositionTextureShapes.HorizontalQuad);
     
-            using Image image = _imageLoader.Load("Earth.png");
+            using Image image = imageLoader.Load("Earth.png");
             _texture = memoryTransfer.AddTexture(image);
         }
 
-        _sampler = _gpuDevice.CreatePixelArtSampler();
+        _sampler = gpuDevice.CreatePixelArtSampler();
     }
 
     public void Draw()
     {
-        using FrameRenderContext frameRenderContext = _gpuDevice.CreateFrameRenderContext();
+        using FrameRenderContext frameRenderContext = gpuDevice.CreateFrameRenderContext();
 
         using FrameRenderPass frameRenderPass = frameRenderContext.CreateRenderPass(_graphicsPipeline);
 
         frameRenderPass.BindVertexBuffer(_vertexBuffer);
         frameRenderPass.BindFragmentSampler(_texture, _sampler);
         frameRenderPass.DrawPrimitive();
+    }
+
+    public static int Main()
+    {
+        var gameKitApp = new GameKitApp()
+            .AddContentFromProjectDirectory("Content")
+            .AddStbImageLoader()
+            .Add(new WindowConfiguration{ Size = (512, 512)})
+            .AddScoped<MyGame>();
+
+        return gameKitApp.Run();
     }
 }

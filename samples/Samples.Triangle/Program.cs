@@ -3,13 +3,9 @@ using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Modules;
 
-var gameKitApp = new GameKitApp()
-    .AddContentFromProjectDirectory("Content")
-    .AddScoped<MyService>();
+namespace Samples.Triangle;
 
-return gameKitApp.Run();
-
-public class MyService: IPreparable, IDrawable
+public class MyGame: IInitializable, IDrawable
 {
     private readonly GpuDevice _gpuDevice;
     private readonly IContentLoader<Shader> _shaderLoader;
@@ -17,14 +13,14 @@ public class MyService: IPreparable, IDrawable
     private GraphicsPipeline _graphicsPipeline;
     VertexBuffer<PositionColorVertex> _vertexBuffer;
 
-    public MyService(GpuDevice gpuDevice, IContentLoader<Shader> shaderLoader, GraphicsPipelineBuilder pipelineBuilder)
+    public MyGame(GpuDevice gpuDevice, IContentLoader<Shader> shaderLoader, GraphicsPipelineBuilder pipelineBuilder)
     {
         _gpuDevice = gpuDevice;
         _shaderLoader = shaderLoader;
         _pipelineBuilder = pipelineBuilder;
     }
 
-    public void Prepare()
+    public void Initialize()
     {
         Shader vertexShader = _shaderLoader.Load("PositionColor.spak.json");
         Shader fragmentShader  = _shaderLoader.Load("SolidColor.spak.json");
@@ -57,5 +53,14 @@ public class MyService: IPreparable, IDrawable
 
         frameRenderPass.BindVertexBuffer(_vertexBuffer);
         frameRenderPass.DrawPrimitive();
+    }
+
+    public static int Main()
+    {
+        var gameKitApp = new GameKitApp()
+            .AddContentFromProjectDirectory("Content")
+            .AddScoped<MyGame>();
+
+        return gameKitApp.Run();
     }
 }

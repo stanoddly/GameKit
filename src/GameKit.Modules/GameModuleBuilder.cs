@@ -67,9 +67,9 @@ public class GameModuleBuilder
             throw new Exception();
         }
 
-        if (instance is IPreparable preparable)
+        if (instance is IInitializable preparable)
         {
-            preparable.Prepare();
+            preparable.Initialize();
         }
     }
 

@@ -1,24 +1,31 @@
 ﻿using GameKit;
-using GameKit.Input;using GameKit.Modules;
+using GameKit.Input;
+using GameKit.Modules;
 
-GameKitApp gameKitApp = new GameKitApp()
-    .AddScoped<MyInputHandler>();
+namespace Samples.Keyboard;
 
-return gameKitApp.Run();
-
-
-public class MyInputHandler(InputService inputService) : IPreparable
+public class MyGame(InputService inputService) : IInitializable
 {
-    public void Prepare()
+    public void Initialize()
     {
-        inputService.KeyDown += (Keyboard keyboard, in KeyEventArgs eventArgs) =>
+        inputService.KeyDown += (GameKit.Input.Keyboard keyboard, in KeyEventArgs eventArgs) =>
         {
             Console.WriteLine($"Key down! Scancode {eventArgs.Scancode}, key {eventArgs.Key}!");
+            Console.Out.Flush();
         };
 
-        inputService.KeyUp += (Keyboard keyboard, in KeyEventArgs eventArgs) =>
+        inputService.KeyUp += (GameKit.Input.Keyboard keyboard, in KeyEventArgs eventArgs) =>
         {
             Console.WriteLine($"Key up! Scancode {eventArgs.Scancode}, key {eventArgs.Key}!");
+            Console.Out.Flush();
         };
+    }
+
+    public static int Main()
+    {
+        GameKitApp gameKitApp = new GameKitApp()
+            .AddScoped<MyGame>();
+
+        return gameKitApp.Run();
     }
 }

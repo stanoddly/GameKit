@@ -5,7 +5,7 @@ namespace GameKit.Gpu;
 
 public struct Sampler
 {
-    public Sampler(Pointer<SDL_GPUSampler> pointer)
+    internal Sampler(Pointer<SDL_GPUSampler> pointer)
     {
         Pointer = pointer;
     }
@@ -17,7 +17,7 @@ public enum SamplerAddressMode: byte
 {
     Repeat = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
     MirroredRepeat = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
-    ClampToEdge=SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE
+    ClampToEdge = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE
 }
 
 public readonly struct SamplerAddressModes
