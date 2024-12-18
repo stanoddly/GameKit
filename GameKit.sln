@@ -32,7 +32,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Modules", "src\Game
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.App", "src\GameKit.App\GameKit.App.csproj", "{17F96753-212F-466B-8C65-E0A48CC5C3E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SlangShaderPack", "GameKit.SlangShaderPack\GameKit.SlangShaderPack.csproj", "{DB4F99B8-4459-4AB4-B1C9-66F284826724}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SlangShaderPack", "src\GameKit.SlangShaderPack\GameKit.SlangShaderPack.csproj", "{DB4F99B8-4459-4AB4-B1C9-66F284826724}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

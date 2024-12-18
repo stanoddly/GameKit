@@ -1,13 +1,10 @@
-using System.Collections.Immutable;
-using System.Reflection;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Modules;
 using GameKit.Shaders;
-using SDL;
 
-namespace GameKit;
+namespace GameKit.App;
 
 public class GameKitApp
 {
