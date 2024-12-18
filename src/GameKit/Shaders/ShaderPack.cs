@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using SDL;
 
 namespace GameKit.Shaders;
@@ -68,7 +66,7 @@ public readonly record struct ShaderResources(
 public class ShaderInstance
 {
     public required ShaderFormat Format { get; init; }
-    public required string Content { get; init; }
+    public required byte[] Content { get; init; }
     public required string EntryPoint { get; init; }
 }
 
@@ -78,12 +76,3 @@ public class ShaderPack
     public required ShaderResources Resources { get; init; }
     public required List<ShaderInstance> Shaders { get; init; }
 }
-
-[JsonSourceGenerationOptions(
-    WriteIndented = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    PropertyNameCaseInsensitive = true,
-    ReadCommentHandling = JsonCommentHandling.Skip,
-    UseStringEnumConverter = true)]
-[JsonSerializable(typeof(ShaderPack))]
-public partial class ShaderMetaJsonContext: JsonSerializerContext;

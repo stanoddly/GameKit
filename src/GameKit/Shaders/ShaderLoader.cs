@@ -48,7 +48,7 @@ public class ShaderLoader: IContentLoader<Shader>
     
     private Shader CreateShader(ShaderInstance shaderInstance, ShaderResources shaderResources, ShaderStage shaderStage)
     {
-        byte[] shaderCode = DecodeContent(shaderInstance.Format, shaderInstance.Content);
+        byte[] shaderCode = shaderInstance.Content;
         byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint);
 
         unsafe
