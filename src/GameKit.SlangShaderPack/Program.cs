@@ -27,8 +27,8 @@ class Program
         return await rootCommand.InvokeAsync(args);
     }
 
-    static void ReadFile(FileInfo file, int minimalYear)
+    static void ReadFile(FileInfo fileInfo, int minimalYear)
     {
-        SlangCompiler.CompileIt(file.FullName, minimalYear);
+        SlangCompiler.CompileIt(fileInfo, minimalYear);
     }
 }
