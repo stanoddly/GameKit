@@ -14,8 +14,10 @@ public class ShaderInstanceDtoMsgPack
 {
     [Key("format")]
     public required ShaderFormat Format { get; init; }
+
     [Key("content")]
     public required byte[] Content { get; init; }
+
     [Key("entryPoint")]
     public required string EntryPoint { get; init; }
 }
