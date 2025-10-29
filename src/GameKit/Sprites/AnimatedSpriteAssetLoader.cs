@@ -1,0 +1,48 @@
+using System.Collections.Immutable;
+using System.Text.Json;
+using GameKit.Common;
+using GameKit.Content;
+using GameKit.Gpu;
+using GameKit.Utilities;
+
+namespace GameKit.Sprites;
+
+public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAsset>
+{
+    private readonly VirtualFileSystem _fileSystem;
+    private readonly ITextureLoader _textureLoader;
+    private readonly SpriteAssetStorage _storage;
+
+    public AnimatedSpriteAssetLoader(ITextureLoader textureLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
+    {
+        _textureLoader = textureLoader;
+        _fileSystem = fileSystem;
+        _storage = storage;
+    }
+
+    private AnimatedSpriteAsset CreateAnimation(AnimatedSpriteDto animatedSpriteDto)
+    {
+        Texture texture = _textureLoader.Load(animatedSpriteDto.Texture);
+        var builder = ImmutableArray.CreateBuilder<ShortRectangle>(animatedSpriteDto.Frames.Length);
+        foreach (var frame in animatedSpriteDto.Frames)
+        {
+            builder.Add(frame);
+        }
+        AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, builder.MoveToImmutable(), animatedSpriteDto.Repeat);
+        return animatedSpriteAsset;
+    }
+
+    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(string path)
+    {
+        if (_storage.TryGetAnimatedSprite(path, out AnimatedSpriteAsset? existingAnimation))
+        {
+            return existingAnimation;
+        }
+        using var stream = _fileSystem.OpenStream(path);
+        AnimatedSpriteDto animatedSpriteDto = JsonSerializer.Deserialize(stream, SpriteDtosJsonContext.Default.AnimatedSpriteDto)
+                                        ?? throw new JsonException("Deserialization returned null for AnimatedSpriteDto.");
+        AnimatedSpriteAsset animatedSpriteAsset = CreateAnimation(animatedSpriteDto);
+        _storage.StoreAnimatedSprite(path, animatedSpriteAsset);
+        return animatedSpriteAsset;
+    }
+}

@@ -1,0 +1,190 @@
+using System.Runtime.CompilerServices;
+
+// Generated using jinja2-cli: jinja2 Filename.cs.jinja > Filename.cs
+namespace GameKit.Collections;
+
+public class SlotSet
+{
+    private FastListStruct<int> _sparse;
+    private FastListStruct<Handle> _dense;
+    private const int TombStone = int.MaxValue;  
+
+    public SlotSet()
+    {
+        _sparse = new FastListStruct<int>();
+        _dense = new FastListStruct<Handle>();
+    }
+
+    public void Set(Handle handle)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle);
+            return;
+        }
+
+        _dense[denseIndex] = handle;
+    }
+
+    public bool Remove(Handle handle)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int index = handle;
+        if (index > (_sparse.Length - 1))
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[index];
+
+        if (denseIndex == TombStone)
+        {
+            return false;
+        }
+        
+        if (_dense.SwapRemove(denseIndex, out Handle swappedHandle))
+        {
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
+        }
+
+        denseIndex = TombStone;
+        return true;
+    }
+
+    public bool Contains(Handle handle)
+    {
+        return Contains(handle, out _);
+    }
+    
+    public bool Contains(Handle handle, out int handleIndex) 
+    {
+        int index = handle;
+        if (index > _sparse.LastIndex)
+        {
+            handleIndex = default;
+            return false;
+        }
+        
+        handleIndex = _sparse[index];
+
+        return handleIndex != TombStone;
+    }
+
+    public int Length => _dense.Length;
+
+    public ReadOnlySpan<Handle> Handles => _dense.AsReadOnlySpan();
+}
+
+public struct SlotSetStruct
+{
+    private FastListStruct<int> _sparse;
+    private FastListStruct<Handle> _dense;
+    private const int TombStone = int.MaxValue;  
+
+    public SlotSetStruct()
+    {
+        _sparse = new FastListStruct<int>();
+        _dense = new FastListStruct<Handle>();
+    }
+
+    public void Set(Handle handle)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int sparseIndex = handle;
+
+        if (sparseIndex > _sparse.LastIndex)
+        {
+            _sparse.ResizeFill(sparseIndex + 1, TombStone);
+        }
+
+        ref int denseIndex = ref _sparse[sparseIndex];
+
+        // nonexistent
+        if (denseIndex == TombStone)
+        {
+            denseIndex = _dense.Add(handle);
+            return;
+        }
+
+        _dense[denseIndex] = handle;
+    }
+
+    public bool Remove(Handle handle)
+    {
+        if (handle.IsNull())
+        {
+            throw new HandleNullException();
+        }
+
+        int index = handle;
+        if (index > (_sparse.Length - 1))
+        {
+            return false;
+        }
+
+        ref int denseIndex = ref _sparse[index];
+
+        if (denseIndex == TombStone)
+        {
+            return false;
+        }
+        
+        if (_dense.SwapRemove(denseIndex, out Handle swappedHandle))
+        {
+            ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
+            swappedSparseIndex = denseIndex;
+        }
+
+        denseIndex = TombStone;
+        return true;
+    }
+
+    public bool Contains(Handle handle)
+    {
+        return Contains(handle, out _);
+    }
+    
+    public bool Contains(Handle handle, out int handleIndex) 
+    {
+        int index = handle;
+        if (index > _sparse.LastIndex)
+        {
+            handleIndex = default;
+            return false;
+        }
+        
+        handleIndex = _sparse[index];
+
+        return handleIndex != TombStone;
+    }
+
+    public int Length => _dense.Length;
+
+    public ReadOnlySpan<Handle> Handles => _dense.AsReadOnlySpan();
+}
+
+

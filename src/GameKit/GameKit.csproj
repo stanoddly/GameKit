@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>13</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MessagePack" Version="3.1.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
+      <PackageReference Include="ppy.SDL3-CS" Version="2025.629.0" />
+      <PackageReference Include="ppy.SDL3_ttf-CS" Version="2025.629.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
+      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
+      <ProjectReference Include="..\GameKit.Encs\GameKit.Encs.csproj" />
+    </ItemGroup>
+
+</Project>

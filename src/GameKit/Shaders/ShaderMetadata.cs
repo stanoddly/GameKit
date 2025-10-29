@@ -1,0 +1,92 @@
+using System.Runtime.Serialization;
+using SDL;
+
+namespace GameKit.Shaders;
+
+public enum ShaderStage
+{
+    [EnumMember(Value = "vertex")]
+    Vertex = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
+    
+    [EnumMember(Value = "fragment")]
+    Fragment = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT
+}
+
+
+public enum ShaderFormat: uint
+{
+    [EnumMember(Value = "private")]
+    Private = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_PRIVATE,
+    
+    [EnumMember(Value = "spirv")]
+    SpirV = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV,
+    
+    [EnumMember(Value = "dxbc")]
+    Dxbc = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXBC,
+    
+    [EnumMember(Value = "dxil")]
+    Dxil = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_DXIL,
+    
+    [EnumMember(Value = "msl")]
+    Msl = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_MSL,
+    
+    [EnumMember(Value = "metallib")]
+    MetalLib = SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_METALLIB
+}
+
+public readonly struct ShaderFormats
+{
+    public static readonly ShaderFormats BinaryFormats = new ShaderFormats([ShaderFormat.Private, ShaderFormat.SpirV, ShaderFormat.Dxbc, ShaderFormat.Dxil, ShaderFormat.MetalLib]);
+    public static readonly ShaderFormats TextFormats = new ShaderFormats([ShaderFormat.Msl]);
+
+    private readonly uint _flags;
+
+    public ShaderFormats(uint flags)
+    {
+        _flags = flags;
+    }
+    
+    // TODO: params
+    public ShaderFormats(Span<ShaderFormat> formats)
+    {
+        foreach (var format in formats)
+        {
+            _flags |= (uint)format;
+        }
+    }
+
+    public static ShaderFormats operator &(ShaderFormats a, ShaderFormat b)
+    {
+        return new ShaderFormats(a._flags & (uint)b);
+    }
+    
+    public static ShaderFormats operator |(ShaderFormats a, ShaderFormat b)
+    {
+        return new ShaderFormats(a._flags | (uint)b);
+    }
+
+    public bool Contains(ShaderFormat format)
+    {
+        return (_flags & (uint)format) == (uint)format;
+    }
+}
+
+public readonly record struct ShaderResources(
+    int Samplers = 0,
+    int StorageTextures = 0,
+    int StorageBuffers = 0,
+    int UniformBuffers = 0);
+
+public class ShaderInstance
+{
+    public required ShaderFormat Format { get; init; }
+    public required string Filename { get; init; }
+    public required string EntryPoint { get; init; }
+}
+
+public class ShaderMetadata
+{
+    public required ShaderStage Stage { get; init; }
+    public required ShaderResources Resources { get; init; }
+    public required List<ShaderInstance> Shaders { get; init; }
+}

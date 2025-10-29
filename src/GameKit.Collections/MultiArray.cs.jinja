@@ -1,0 +1,266 @@
+// Generated using jinja2-cli: jinja2 MultiArray.cs.jinja > MultiArray.cs
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace GameKit.Collections;
+
+#nullable disable
+
+{% for type in [("class", ""), ("struct", "Struct")] -%}
+{% for n in range(2, 10) -%}
+public {{type[0]}} MultiArray{{type[1]}}<{% for i in range(1, n + 1) %}TValue{{i}}{% if not loop.last %}, {% endif %}{% endfor %}>
+{
+    private const int DefaultCapacity = 32;
+    private int _count;
+    {% for i in range(1, n + 1) %}
+    private TValue{{i}}[] _values{{i}};
+    {%- endfor %}
+
+    public int Length => _count;
+
+    public MultiArray{{type[1]}}(int initialCapacity)
+    {
+        {% for i in range(1, n + 1) %}
+        _values{{i}} = new TValue{{i}}[initialCapacity];
+        {%- endfor %}
+    }
+
+    public MultiArray{{type[1]}}()
+    {
+        {% for i in range(1, n + 1) -%}
+        _values{{i}} = new TValue{{i}}[DefaultCapacity];
+        {% endfor %}
+    }
+
+    private void EnsureCapacity(int minCapacity)
+    {
+        int capacity = _values1.Length;
+        if (minCapacity > capacity)
+        {
+            int newCapacity = Math.Max(capacity * 2, minCapacity);
+
+            {% for i in range(1, n + 1) %}
+            Array.Resize(ref _values{{i}}, (int)newCapacity);
+            {%- endfor %}
+        }
+    }
+
+    public int Add({% for i in range(1, n + 1) %}TValue{{i}} value{{i}}{% if not loop.last %}, {% endif %}{% endfor %})
+    {
+        EnsureCapacity(_count + 1);
+
+        {% for i in range(1, n + 1) %}
+        _values{{i}}[_count] = value{{i}};
+        {%- endfor %}
+
+        return _count++;
+    }
+
+    public void Set(int index{% for i in range(1, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (index < 0 || index >= _count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+            
+        {% for i in range(1, n + 1) %}
+        _values{{i}}[index] = value{{i}};
+        {% endfor %}
+    }
+    
+    public void SetButFirst(int index{% for i in range(2, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {
+        if (index < 0 || index >= _count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+            
+        {% for i in range(2, n + 1) %}
+        _values{{i}}[index] = value{{i}};
+        {% endfor %}
+    }
+    
+    public void UnsafeSetButFirst(nuint index{% for i in range(2, n + 1) %}, TValue{{i}} value{{i}}{% endfor %})
+    {            
+        {% for i in range(2, n + 1) %}
+        ref TValue{{i}} item{{i}} = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+        item{{i}} = value{{i}};
+        {% endfor %}
+    }
+
+    {% for i in range(1, n + 1) %}
+    public Span<TValue{{i}}> Values{{i}} => new Span<TValue{{i}}>(_values{{i}}, 0, _count);
+    {% endfor %}
+
+    public bool SwapRemove(int index)
+    {
+        int swappedIndex = _count - 1;
+        if (index != swappedIndex)
+        {
+            {% for i in range(1, n + 1) %}
+            _values{{i}}[index] = _values{{i}}[swappedIndex];
+            {%- endfor %}
+            return false;
+        }
+
+        _count--;
+        return true;
+    }
+    
+    public bool TryGet(int index, {% for i in range(1, n + 1) %}out TValue{{i}} value{{i}}{% if not loop.last %}, {% endif %}{% endfor %})
+    {
+        if (index >= _count)
+        {
+            {% for i in range(1, n + 1) %}
+            value{{i}} = _values{{i}}[index];
+            {%- endfor %}
+
+            return true;
+        }
+
+        {% for i in range(1, n + 1) %}
+        value{{i}} = default;
+        {%- endfor %}
+        return false;
+    }
+    
+    public bool TryGetButFirst(int index, {% for i in range(2, n + 1) %}out TValue{{i}} value{{i}}{% if not loop.last %}, {% endif %}{% endfor %})
+    {
+        if (index >= _count)
+        {
+            {% for i in range(2, n + 1) %}
+            value{{i}} = _values{{i}}[index];
+            {%- endfor %}
+
+            return true;
+        }
+
+        {% for i in range(2, n + 1) %}
+        value{{i}} = default;
+        {%- endfor %}
+        return false;
+    }
+        
+    {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} GetRefValue{{i}}(int index)
+    {
+        if (index >= _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} UnsafeGetRefValue{{i}}(int index)
+    {
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+    }
+    {%- endfor %}
+
+    {% for i in range(1, n + 1) %}
+    public NullableRef<TValue{{i}}> TryGetRefValue{{i}}(nuint index)
+    {
+        // count is never negative
+        nuint count = unchecked((nuint)_count);
+        if (index < count)
+        {
+            return new NullableRef<TValue{{i}}>(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index));
+        }
+
+        return NullableRef<TValue{{i}}>.Null;
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public bool UpdateValue{{i}}(nuint index, TValue{{i}} value)
+    {
+        // count is never negative
+        nuint count = unchecked((nuint)_count);
+        if (index < count)
+        {
+            ref TValue{{i}} item = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+            item = value;
+            return true; 
+        }
+        return false;
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public ref TValue{{i}} UnsafeGetRefValue{{i}}(nuint index)
+    {
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{i}}), index);
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public TValue{{i}} GetValue{{i}}(int index)
+    {
+        if (index >= _count)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+        
+        return _values{{i}}[index];
+    }
+    {%- endfor %}
+    
+    {% for i in range(1, n + 1) %}
+    public bool TryGetValue{{i}}(int index, out TValue{{i}} value)
+    {
+        if (index < _count)
+        {
+            value = _values{{i}}[index];
+            return true;
+        }
+
+        value = default;
+        return false;
+    }
+    {%- endfor %}
+
+    public bool SwapRemoveReturnFirst(int index, out TValue1 value)
+    {
+        int potentiallySwappedIndex = _count - 1;
+
+        if (index > potentiallySwappedIndex)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), $"Index is greater than items count.");
+        }
+
+        _count--;
+        if (index == potentiallySwappedIndex)
+        {
+            value = default;
+            return false;
+        }
+
+        value = _values1[potentiallySwappedIndex];
+        {% for i in range(1, n + 1) %}
+        _values{{i}}[index] = _values{{i}}[potentiallySwappedIndex];
+        {%- endfor %}
+        return true;
+    }
+
+    public void Clear()
+    {
+        {% for i in range(1, n + 1) %}
+        Array.Clear(_values{{i}}, 0, _count);
+        {%- endfor %}
+        _count = 0;
+    }
+
+    public void TrimExcess()
+    {
+        int capacity = _values1.Length;
+        if (_count < capacity * 0.9)
+        {
+            int newCapacity = Math.Max(DefaultCapacity, _count);
+            {% for i in range(1, n + 1) %}
+            Array.Resize(ref _values{{i}}, newCapacity);
+            {%- endfor %}
+        }
+    }
+}
+
+{% endfor %}
+{% endfor %}
