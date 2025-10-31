@@ -3,7 +3,7 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorial.WindowCreation;
 
-class Program
+static class Program
 {
     static int Main(string[] args)
     {
