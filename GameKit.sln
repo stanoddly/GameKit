@@ -34,9 +34,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tutorials", "tutorials", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.Tutorial.WindowCreation", "tutorials\GameKit.Tutorial.WindowCreation\GameKit.Tutorial.WindowCreation.csproj", "{80B8CA3B-DBE5-45D8-8E60-57EC92E2361D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.ShaderLib", "src\GameKit.ShaderLib\GameKit.ShaderLib.csproj", "{0B0178CE-3CEB-4246-861F-A93DCF697445}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SdlangCompileLib", "src\GameKit.SdlangCompileLib\GameKit.SdlangCompileLib.csproj", "{0B0178CE-3CEB-4246-861F-A93DCF697445}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SdlangCompileTask", "src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj", "{AB33CE21-EB19-4227-8750-EF7D6CA596EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SdlangCompileTask.Tests", "tests\GameKit.SdlangCompileTask.Tests\GameKit.SdlangCompileTask.Tests.csproj", "{0E3DC622-CAD1-4214-AB41-0079AC63CE09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameKit.SdlangCompilerCli", "src\GameKit.SdlangCompilerCli\GameKit.SdlangCompilerCli.csproj", "{D7E27816-A9A8-4732-9189-390583EAB5E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -108,6 +112,14 @@ Global
 		{AB33CE21-EB19-4227-8750-EF7D6CA596EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB33CE21-EB19-4227-8750-EF7D6CA596EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB33CE21-EB19-4227-8750-EF7D6CA596EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E3DC622-CAD1-4214-AB41-0079AC63CE09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3DC622-CAD1-4214-AB41-0079AC63CE09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E3DC622-CAD1-4214-AB41-0079AC63CE09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E3DC622-CAD1-4214-AB41-0079AC63CE09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7E27816-A9A8-4732-9189-390583EAB5E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7E27816-A9A8-4732-9189-390583EAB5E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7E27816-A9A8-4732-9189-390583EAB5E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7E27816-A9A8-4732-9189-390583EAB5E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5009E7F6-96F4-46F0-B31C-A239C7A295F5} = {B746501B-0998-4AA0-9E56-31404F9926D9}
@@ -126,5 +138,7 @@ Global
 		{80B8CA3B-DBE5-45D8-8E60-57EC92E2361D} = {B2CE3EA9-8E6E-4B87-8E44-3A7382E00959}
 		{0B0178CE-3CEB-4246-861F-A93DCF697445} = {B746501B-0998-4AA0-9E56-31404F9926D9}
 		{AB33CE21-EB19-4227-8750-EF7D6CA596EE} = {B746501B-0998-4AA0-9E56-31404F9926D9}
+		{0E3DC622-CAD1-4214-AB41-0079AC63CE09} = {B99FB85C-85E0-4880-8D4F-BE8D5A7C7C90}
+		{D7E27816-A9A8-4732-9189-390583EAB5E4} = {B746501B-0998-4AA0-9E56-31404F9926D9}
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,9 @@
+<Project>
+  <!-- This file is automatically imported when the package/project is referenced -->
+  <PropertyGroup>
+    <!-- For NuGet package references, the assembly is in lib folder -->
+    <!-- For project references, we need to point to the bin folder -->
+    <SdlangCompileTaskAssembly Condition="'$(SdlangCompileTaskAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\net9.0\GameKit.SdlangCompileTask.dll')">$(MSBuildThisFileDirectory)..\lib\net9.0\GameKit.SdlangCompileTask.dll</SdlangCompileTaskAssembly>
+    <SdlangCompileTaskAssembly Condition="'$(SdlangCompileTaskAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net9.0\GameKit.SdlangCompileTask.dll</SdlangCompileTaskAssembly>
+  </PropertyGroup>
+</Project>

@@ -9,8 +9,22 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Build.Framework" Version="17.11.4" />
-        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.4" />
+        <PackageReference Include="Microsoft.Build.Framework" Version="17.14.28" />
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" />
+    </ItemGroup>
+
+    <!-- Include build files in the NuGet package -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build\" />
+    </ItemGroup>
+
+    <!-- For project references, import the props and targets files directly -->
+    <ItemGroup>
+        <None Include="build\GameKit.SdlangCompileTask.props" Link="GameKit.SdlangCompileTask.props" />
+        <None Include="build\GameKit.SdlangCompileTask.targets" Link="GameKit.SdlangCompileTask.targets" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\GameKit.SdlangCompileLib\GameKit.SdlangCompileLib.csproj" />
     </ItemGroup>
 
 </Project>

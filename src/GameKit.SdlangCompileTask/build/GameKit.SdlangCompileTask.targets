@@ -1,0 +1,4 @@
+<Project>
+  <!-- Register the SdlangCompileTask -->
+  <UsingTask TaskName="GameKit.SdlangCompileTask.SdlangCompileTask" AssemblyFile="$(SdlangCompileTaskAssembly)" />
+</Project>
