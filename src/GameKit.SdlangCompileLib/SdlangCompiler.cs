@@ -45,7 +45,7 @@ public record SpakConfig(
 
 public class SdlangCompiler
 {
-    private const string SlangCompilerPath = "/opt/slang/bin/slangc";
+    private static readonly string SlangCompilerPath = GetSlangCompilerPath();
     
     private static readonly Dictionary<ShaderFormat, string> TargetsWithExtensions = new()
     {
@@ -53,6 +53,19 @@ public class SdlangCompiler
         { ShaderFormat.Dxil, "dxil" },
         { ShaderFormat.Msl, "metal" }
     };
+
+    private static string GetSlangCompilerPath()
+    {
+        var assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        var slangPath = Path.Combine(assemblyDir, "bin", "slangc");
+
+        if (!File.Exists(slangPath))
+        {
+            throw new FileNotFoundException($"slangc compiler not found at {slangPath}");
+        }
+
+        return slangPath;
+    }
 
     public void Compile(string[] filenames, bool onlySpirv, bool force)
     {
