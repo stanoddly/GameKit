@@ -13,7 +13,7 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
     /// The input shader file to compile.
     /// </summary>
     [Required]
-    public string? InputFile { get; set; }
+    public required string InputFile { get; set; }
 
     /// <summary>
     /// Optional output file path. If not specified, output will be in the same directory as the input.

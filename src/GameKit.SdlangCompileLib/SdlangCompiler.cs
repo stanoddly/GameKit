@@ -56,8 +56,12 @@ public class SdlangCompiler
 
     private static string GetSlangCompilerPath()
     {
-        var assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-        var slangPath = Path.Combine(assemblyDir, "bin", "slangc");
+        string? assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        if (string.IsNullOrEmpty(assemblyDir))
+        {
+            throw new InvalidOperationException("Unable to determine assembly directory");
+        }
+        string slangPath = Path.Combine(assemblyDir, "bin", "slangc");
 
         if (!File.Exists(slangPath))
         {
@@ -69,7 +73,7 @@ public class SdlangCompiler
 
     public void Compile(string[] filenames, bool onlySpirv, bool force)
     {
-        var config = LoadConfigDefaults();
+        SpakConfig config = LoadConfigDefaults();
         
         // Apply config defaults if no command line args provided
         filenames = filenames.Length > 0 ? filenames : config.Filenames?.ToArray() ?? [];
@@ -82,24 +86,24 @@ public class SdlangCompiler
             Environment.Exit(1);
         }
 
-        var paths = filenames.Select(f => new FileInfo(f)).ToList();
-        var directories = paths.Where(p => Directory.Exists(p.FullName)).ToList();
-        var files = paths.Where(p => !Directory.Exists(p.FullName)).ToList();
+        List<FileInfo> paths = filenames.Select(f => new FileInfo(f)).ToList();
+        List<FileInfo> directories = paths.Where(p => Directory.Exists(p.FullName)).ToList();
+        List<FileInfo> files = paths.Where(p => !Directory.Exists(p.FullName)).ToList();
 
         if (directories.Count > 0)
         {
             if (files.Count > 0)
             {
                 Console.WriteLine("Warning: Ignoring files on command line because directories are present:");
-                foreach (var file in files)
+                foreach (FileInfo file in files)
                 {
                     Console.WriteLine($"  Ignored: {file.FullName}");
                 }
             }
 
-            foreach (var dir in directories)
+            foreach (FileInfo dir in directories)
             {
-                var shaderFile = new FileInfo(Path.Combine(dir.FullName, "shader.slang"));
+                FileInfo shaderFile = new FileInfo(Path.Combine(dir.FullName, "shader.slang"));
                 if (!shaderFile.Exists)
                 {
                     Console.WriteLine($"Error: File {shaderFile.FullName} does not exist");
@@ -110,7 +114,7 @@ public class SdlangCompiler
         }
         else
         {
-            foreach (var file in files)
+            foreach (FileInfo file in files)
             {
                 if (!file.Exists)
                 {
@@ -124,9 +128,9 @@ public class SdlangCompiler
 
     private static string CalculateFileHash(FileInfo filePath)
     {
-        using var sha256 = SHA256.Create();
-        using var stream = filePath.OpenRead();
-        var hash = sha256.ComputeHash(stream);
+        using SHA256 sha256 = SHA256.Create();
+        using FileStream stream = filePath.OpenRead();
+        byte[] hash = sha256.ComputeHash(stream);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
@@ -138,119 +142,122 @@ public class SdlangCompiler
         _ => throw new ArgumentException($"Unsupported shader format: {format}")
     };
 
-    private static (FileInfo spirvFile, FileInfo reflectionFile) CompileSpirvWithReflection(
-        FileInfo filePath, DirectoryInfo tempDir)
+    private static readonly Dictionary<ShaderFormat, List<string>> CommandLineOptions = new()
     {
-        var filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        var parentDir = filePath.Directory!;
-        var reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
-        var spirvOutputFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.spv"));
+        { ShaderFormat.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl"] },
+        { ShaderFormat.Dxil, ["-profile", "sm_6_3"] },
+        { ShaderFormat.Msl, [] }
+    };
 
-        var args = new List<string>
+    private static (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) CompileTargets(
+        FileInfo filePath, DirectoryInfo tempDir, List<ShaderFormat> targets)
+    {
+        string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
+        DirectoryInfo parentDir = filePath.Directory!;
+        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
+
+        List<string> args = new List<string>
         {
             filePath.FullName,
             "-warnings-disable", "39013,39001",
-            "-reflection-json", reflectionFile.FullName,
-            "-target", "spirv",
-            "-capability", "glsl_spirv_1_0",
-            "-emit-spirv-via-glsl",
-            "-entry", "main",
-            "-o", spirvOutputFile.FullName
+            "-reflection-json", reflectionFile.FullName
         };
 
-        // Add spak.conf options
-        var spakConfOptions = LoadSpakConfOptions();
-        args.AddRange(spakConfOptions);
+        List<ShaderInstance> shaderInstances = new List<ShaderInstance>();
 
-        Console.WriteLine($"Executing SPIRV compilation: {SlangCompilerPath} {string.Join(" ", args)}");
-        
-        var process = new Process
+        // Add all requested targets
+        foreach (ShaderFormat format in targets)
+        {
+            string target = GetTargetString(format);
+            string extension = TargetsWithExtensions[format];
+            FileInfo outputFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.{extension}"));
+
+            args.AddRange(["-target", target]);
+
+            // Add format-specific options
+            List<string> options = CommandLineOptions[format];
+            args.AddRange(options);
+
+            args.AddRange(["-entry", "main"]);
+            args.AddRange(["-o", outputFile.FullName]);
+            shaderInstances.Add(new ShaderInstance(format.ToString(), outputFile.Name, "main"));
+        }
+
+        Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
+
+        Process process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = SlangCompilerPath,
                 Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false
             }
         };
 
         process.Start();
-        var stdout = process.StandardOutput.ReadToEnd();
-        var stderr = process.StandardError.ReadToEnd();
         process.WaitForExit();
 
         if (process.ExitCode != 0)
         {
-            Console.WriteLine($"Error compiling SPIRV shader: {stderr}");
+            Console.WriteLine($"Error compiling shader");
             Environment.Exit(1);
         }
 
-        if (!reflectionFile.Exists)
-        {
-            Console.WriteLine($"Error: Reflection file not generated at {reflectionFile.FullName}");
-            Environment.Exit(1);
-        }
-
-        return (spirvOutputFile, reflectionFile);
+        return (reflectionFile, shaderInstances);
     }
 
     private static (string entryPoint, ShaderStage stage, ShaderResources resources) ParseReflectionData(
         FileInfo reflectionFile)
     {
-        var json = File.ReadAllText(reflectionFile.FullName);
-        using var document = JsonDocument.Parse(json);
-        var root = document.RootElement;
+        string json = File.ReadAllText(reflectionFile.FullName);
+        using JsonDocument document = JsonDocument.Parse(json);
+        JsonElement root = document.RootElement;
 
-        var entryPoint = "main";
-        var stage = ShaderStage.Vertex;
-        
-        if (root.TryGetProperty("entryPoints", out var entryPoints) && entryPoints.GetArrayLength() > 0)
+        string entryPoint = "main";
+        ShaderStage stage = ShaderStage.Vertex;
+
+        if (root.TryGetProperty("entryPoints", out JsonElement entryPoints) && entryPoints.GetArrayLength() > 0)
         {
-            var firstEntry = entryPoints[0];
-            if (firstEntry.TryGetProperty("name", out var nameElement))
+            JsonElement firstEntry = entryPoints[0];
+            if (firstEntry.TryGetProperty("name", out JsonElement nameElement))
             {
                 entryPoint = nameElement.GetString() ?? "main";
             }
-            
-            if (firstEntry.TryGetProperty("stage", out var stageElement))
+
+            if (firstEntry.TryGetProperty("stage", out JsonElement stageElement))
             {
-                var stageStr = stageElement.GetString()?.ToLower();
+                string? stageStr = stageElement.GetString()?.ToLower();
                 stage = stageStr switch
                 {
                     "vertex" => ShaderStage.Vertex,
                     "fragment" or "pixel" => ShaderStage.Fragment,
-                    _ => ShaderStage.Vertex
+                    _ => throw new InvalidOperationException($"Unknown shader stage '{stageStr}'")
                 };
-                
-                if (stageStr != "vertex" && stageStr != "fragment" && stageStr != "pixel")
-                {
-                    Console.WriteLine($"Warning: Unknown shader stage '{stageStr}', defaulting to vertex");
-                }
             }
         }
 
-        var samplers = 0;
-        var storageTextures = 0;
-        var storageBuffers = 0;
-        var uniformBuffers = 0;
+        int samplers = 0;
+        int storageTextures = 0;
+        int storageBuffers = 0;
+        int uniformBuffers = 0;
 
-        if (root.TryGetProperty("parameters", out var parameters))
+        if (root.TryGetProperty("parameters", out JsonElement parameters))
         {
-            foreach (var param in parameters.EnumerateArray())
+            foreach (JsonElement param in parameters.EnumerateArray())
             {
-                if (param.TryGetProperty("type", out var paramType) && 
-                    paramType.TryGetProperty("kind", out var kindElement))
+                if (param.TryGetProperty("type", out JsonElement paramType) &&
+                    paramType.TryGetProperty("kind", out JsonElement kindElement))
                 {
-                    var kind = kindElement.GetString();
+                    string? kind = kindElement.GetString();
                     switch (kind)
                     {
                         case "samplerState":
                             samplers++;
                             break;
                         case "resource":
-                            // TODO: In C# this is currently unhandled (see TODO in original code)
                             // We could potentially check baseShape to determine the resource type
                             break;
                         case "constantBuffer":
@@ -261,105 +268,39 @@ public class SdlangCompiler
             }
         }
 
-        var resources = new ShaderResources(samplers, storageTextures, storageBuffers, uniformBuffers);
+        ShaderResources resources = new ShaderResources(samplers, storageTextures, storageBuffers, uniformBuffers);
         return (entryPoint, stage, resources);
-    }
-
-    private static List<ShaderInstance> CompileOtherTargets(
-        FileInfo filePath, DirectoryInfo tempDir, string entryPoint)
-    {
-        var filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        var parentDir = filePath.Directory!;
-        var shaderInstances = new List<ShaderInstance>();
-
-        foreach (var (format, extension) in TargetsWithExtensions)
-        {
-            if (format == ShaderFormat.SpirV) continue;
-
-            var target = GetTargetString(format);
-            var outputFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.{extension}"));
-            var args = new List<string>
-            {
-                filePath.FullName,
-                "-warnings-disable", "39013,39001",
-                "-target", target
-            };
-
-            if (format == ShaderFormat.Dxil)
-            {
-                args.AddRange(["-profile", "sm_6_3"]);
-            }
-
-            args.AddRange(["-o", outputFile.FullName]);
-
-            // Add spak.conf options
-            var spakConfOptions = LoadSpakConfOptions();
-            args.AddRange(spakConfOptions);
-
-            Console.WriteLine($"Executing {target} compilation: {SlangCompilerPath} {string.Join(" ", args)}");
-
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = SlangCompilerPath,
-                    Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false
-                }
-            };
-
-            process.Start();
-            var stdout = process.StandardOutput.ReadToEnd();
-            var stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                Console.WriteLine($"Error compiling {target} shader: {stderr}");
-                continue;
-            }
-
-            shaderInstances.Add(new ShaderInstance(format.ToString(), outputFile.Name, entryPoint));
-            Console.WriteLine($"Wrote {outputFile.FullName}");
-        }
-
-        return shaderInstances;
     }
 
     private static void WriteMetadata(DirectoryInfo parentDir, string filenameWithoutExt, 
         ShaderStage stage, ShaderResources resources, List<ShaderInstance> shaderInstances, string fileHash)
     {
-        var metadata = new ShaderMetadata(stage.ToString(), resources, shaderInstances, fileHash);
-        var metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
+        ShaderMetadata metadata = new ShaderMetadata(stage.ToString(), resources, shaderInstances, fileHash);
+        FileInfo metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
         
-        var options = new JsonSerializerOptions { WriteIndented = true };
-        var json = JsonSerializer.Serialize(metadata, options);
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        string json = JsonSerializer.Serialize(metadata, options);
         File.WriteAllText(metadataFile.FullName, json);
-
-        Console.WriteLine($"Metadata written to {metadataFile.FullName}");
-        Console.WriteLine($"Stage: {stage}");
     }
 
     private static bool ShouldSkipCompilation(FileInfo filePath, bool force)
     {
         if (force) return false;
 
-        var parentDir = filePath.Directory!;
-        var filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        var metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
+        DirectoryInfo parentDir = filePath.Directory!;
+        string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
+        FileInfo metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
         if (!metadataFile.Exists) return false;
 
         try
         {
-            var json = File.ReadAllText(metadataFile.FullName);
-            var metadata = JsonSerializer.Deserialize<ShaderMetadata>(json);
+            string json = File.ReadAllText(metadataFile.FullName);
+            ShaderMetadata? metadata = JsonSerializer.Deserialize<ShaderMetadata>(json);
             
             if (metadata?.SourceHash == null) return false;
 
-            var currentHash = CalculateFileHash(filePath);
+            string currentHash = CalculateFileHash(filePath);
             return metadata.SourceHash == currentHash;
         }
         catch (JsonException)
@@ -374,9 +315,7 @@ public class SdlangCompiler
 
     private static void CompileShader(FileInfo filePath, bool spirvOnly = false, bool force = false)
     {
-        Console.WriteLine($"Processing file: {filePath.FullName}");
-
-        var currentHash = CalculateFileHash(filePath);
+        string currentHash = CalculateFileHash(filePath);
 
         if (ShouldSkipCompilation(filePath, force))
         {
@@ -384,36 +323,30 @@ public class SdlangCompiler
             return;
         }
 
-        var parentDir = filePath.Directory!;
+        DirectoryInfo parentDir = filePath.Directory!;
         Console.WriteLine($"Result directory: {parentDir.FullName}");
 
-        var filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
+        string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
 
-        var tempDir = Directory.CreateTempSubdirectory("ShaderPack_");
+        DirectoryInfo tempDir = Directory.CreateTempSubdirectory("ShaderPack_");
         try
         {
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
-            // Step 1: Compile SPIRV with reflection information
-            var (spirvOutputFile, reflectionFile) = CompileSpirvWithReflection(filePath, tempDir);
+            // Step 1: Compile all targets in a single slangc invocation
+            List<ShaderFormat> targets = spirvOnly
+                ? [ShaderFormat.SpirV]
+                : [ShaderFormat.SpirV, ShaderFormat.Dxil, ShaderFormat.Msl];
+            (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) = CompileTargets(filePath, tempDir, targets);
 
             // Step 2: Parse reflection data
-            var (entryPoint, stage, resources) = ParseReflectionData(reflectionFile);
+            (string entryPoint, ShaderStage stage, ShaderResources resources) = ParseReflectionData(reflectionFile);
 
-            // Step 3: Add SPIRV to shader instances
-            var shaderInstances = new List<ShaderInstance>
-            {
-                new(ShaderFormat.SpirV.ToString(), spirvOutputFile.Name, entryPoint)
-            };
+            // Step 3: Update shader instances with correct entry point
+            shaderInstances = shaderInstances.Select(instance =>
+                new ShaderInstance(instance.Format, instance.Filename, entryPoint)).ToList();
 
-            // Step 4: Compile other targets and add to shader instances
-            if (!spirvOnly)
-            {
-                var otherInstances = CompileOtherTargets(filePath, tempDir, entryPoint);
-                shaderInstances.AddRange(otherInstances);
-            }
-
-            // Step 5: Write metadata
+            // Step 4: Write metadata
             WriteMetadata(parentDir, filenameWithoutExt, stage, resources, shaderInstances, currentHash);
         }
         finally
@@ -422,61 +355,15 @@ public class SdlangCompiler
         }
     }
 
-    private static FileInfo? FindSpakConf()
-    {
-        var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        
-        while (currentDir != null)
-        {
-            var confFile = new FileInfo(Path.Combine(currentDir.FullName, "spak.conf"));
-            if (confFile.Exists)
-            {
-                return confFile;
-            }
-            currentDir = currentDir.Parent;
-        }
-        
-        return null;
-    }
-
-    private static List<string> LoadSpakConfOptions()
-    {
-        var confFile = FindSpakConf();
-        if (confFile == null) return new List<string>();
-
-        try
-        {
-            var lines = File.ReadAllLines(confFile.FullName);
-            var options = new List<string>();
-            
-            foreach (var line in lines)
-            {
-                var trimmedLine = line.Trim();
-                if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith('#'))
-                    continue;
-                    
-                // Split line into option and value parts
-                var parts = trimmedLine.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-                options.AddRange(parts);
-            }
-            
-            return options;
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"Warning: Could not read spak.conf: {ex.Message}");
-            return new List<string>();
-        }
-    }
 
     private static SpakConfig LoadConfigDefaults()
     {
-        var configFile = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), ".spak.json"));
+        FileInfo configFile = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), ".spak.json"));
         if (!configFile.Exists) return new SpakConfig();
 
         try
         {
-            var json = File.ReadAllText(configFile.FullName);
+            string json = File.ReadAllText(configFile.FullName);
             return JsonSerializer.Deserialize<SpakConfig>(json) ?? new SpakConfig();
         }
         catch (JsonException ex)
