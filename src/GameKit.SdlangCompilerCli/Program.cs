@@ -14,13 +14,6 @@ class Program
             Description = "The shader file(s) or directory to process"
         };
 
-        var onlySpirvOption = new Option<bool>(
-            name: "--only-spirv"
-        )
-        {
-            Description = "Compile only SPIR-V target, skip other targets"
-        };
-
         var forceOption = new Option<bool>(
             name: "--force")
         {
@@ -30,7 +23,6 @@ class Program
         var rootCommand = new RootCommand("Compile Slang shaders to various targets")
         {
             filenamesOption,
-            onlySpirvOption,
             forceOption
         };
 
@@ -38,7 +30,7 @@ class Program
 
         SdlangCompiler sdlangCompiler = new();
         string[] filenames = parseResult.GetValue(filenamesOption) ?? [];
-        sdlangCompiler.Compile(filenames,parseResult.GetValue(onlySpirvOption), parseResult.GetValue(forceOption));
+        sdlangCompiler.Compile(filenames,parseResult.GetValue(forceOption));
 
         return 0;
     }

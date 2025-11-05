@@ -18,7 +18,7 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
     public override bool Execute()
     {
         SdlangCompiler sdlangCompiler = new();
-        sdlangCompiler.Compile([InputFile], true, false);
+        sdlangCompiler.Compile([InputFile], false);
         return true;
     }
 }

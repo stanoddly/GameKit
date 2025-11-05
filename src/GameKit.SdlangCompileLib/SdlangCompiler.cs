@@ -37,12 +37,6 @@ public record ShaderMetadata(
     string SourceHash
 );
 
-public record SpakConfig(
-    List<string>? Filenames = null,
-    bool OnlySpirv = false,
-    bool Force = false
-);
-
 public class SdlangCompiler
 {
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
@@ -71,18 +65,11 @@ public class SdlangCompiler
         return slangPath;
     }
 
-    public void Compile(string[] filenames, bool onlySpirv, bool force)
+    public void Compile(string[] filenames, bool force)
     {
-        SpakConfig config = LoadConfigDefaults();
-        
-        // Apply config defaults if no command line args provided
-        filenames = filenames.Length > 0 ? filenames : config.Filenames?.ToArray() ?? [];
-        onlySpirv = onlySpirv || config.OnlySpirv;
-        force = force || config.Force;
-
         if (filenames.Length == 0)
         {
-            Console.WriteLine("Error: No filenames provided and none found in .spak.json");
+            Console.WriteLine("Error: No filenames provided");
             Environment.Exit(1);
         }
 
@@ -109,7 +96,7 @@ public class SdlangCompiler
                     Console.WriteLine($"Error: File {shaderFile.FullName} does not exist");
                     Environment.Exit(1);
                 }
-                CompileShader(shaderFile, onlySpirv, force);
+                CompileShader(shaderFile, force);
             }
         }
         else
@@ -121,7 +108,7 @@ public class SdlangCompiler
                     Console.WriteLine($"Error: File {file.FullName} does not exist");
                     Environment.Exit(1);
                 }
-                CompileShader(file, onlySpirv, force);
+                CompileShader(file, force);
             }
         }
     }
@@ -311,7 +298,7 @@ public class SdlangCompiler
         }
     }
 
-    private static void CompileShader(FileInfo filePath, bool spirvOnly = false, bool force = false)
+    private static void CompileShader(FileInfo filePath, bool force = false)
     {
         DirectoryInfo parentDir = filePath.Directory!;
         DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, "compiled"));
@@ -337,9 +324,7 @@ public class SdlangCompiler
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
             // Step 1: Compile all targets in a single slangc invocation
-            List<ShaderFormat> targets = spirvOnly
-                ? [ShaderFormat.SpirV]
-                : [ShaderFormat.SpirV, ShaderFormat.Dxil, ShaderFormat.Msl];
+            List<ShaderFormat> targets = [ShaderFormat.SpirV];
             (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
@@ -359,25 +344,4 @@ public class SdlangCompiler
     }
 
 
-    private static SpakConfig LoadConfigDefaults()
-    {
-        FileInfo configFile = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), ".spak.json"));
-        if (!configFile.Exists) return new SpakConfig();
-
-        try
-        {
-            string json = File.ReadAllText(configFile.FullName);
-            return JsonSerializer.Deserialize<SpakConfig>(json) ?? new SpakConfig();
-        }
-        catch (JsonException ex)
-        {
-            Console.WriteLine($"Warning: Could not parse .spak.json: {ex.Message}");
-            return new SpakConfig();
-        }
-        catch (IOException ex)
-        {
-            Console.WriteLine($"Warning: Could not read .spak.json: {ex.Message}");
-            return new SpakConfig();
-        }
-    }
 }

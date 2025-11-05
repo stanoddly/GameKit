@@ -37,7 +37,7 @@ public class SdlangCompilerTests
         SdlangCompiler compiler = new SdlangCompiler();
 
         // Act
-        compiler.Compile([shaderPath], onlySpirv: true, force: true);
+        compiler.Compile([shaderPath], force: true);
 
         // Assert
         string metadataPath = Path.Combine(_testDir, "compiled", "test_shader.metadata.json");
