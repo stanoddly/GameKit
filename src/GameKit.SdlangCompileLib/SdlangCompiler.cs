@@ -150,10 +150,9 @@ public class SdlangCompiler
     };
 
     private static (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) CompileTargets(
-        FileInfo filePath, DirectoryInfo tempDir, List<ShaderFormat> targets)
+        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormat> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        DirectoryInfo parentDir = filePath.Directory!;
         FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
 
         List<string> args = new List<string>
@@ -170,7 +169,7 @@ public class SdlangCompiler
         {
             string target = GetTargetString(format);
             string extension = TargetsWithExtensions[format];
-            FileInfo outputFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.{extension}"));
+            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
 
             args.AddRange(["-target", target]);
 
@@ -272,24 +271,23 @@ public class SdlangCompiler
         return (entryPoint, stage, resources);
     }
 
-    private static void WriteMetadata(DirectoryInfo parentDir, string filenameWithoutExt, 
+    private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
         ShaderStage stage, ShaderResources resources, List<ShaderInstance> shaderInstances, string fileHash)
     {
         ShaderMetadata metadata = new ShaderMetadata(stage.ToString(), resources, shaderInstances, fileHash);
-        FileInfo metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
-        
+        FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
+
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
         string json = JsonSerializer.Serialize(metadata, options);
         File.WriteAllText(metadataFile.FullName, json);
     }
 
-    private static bool ShouldSkipCompilation(FileInfo filePath, bool force)
+    private static bool ShouldSkipCompilation(FileInfo filePath, DirectoryInfo outputDir, bool force)
     {
         if (force) return false;
 
-        DirectoryInfo parentDir = filePath.Directory!;
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        FileInfo metadataFile = new FileInfo(Path.Combine(parentDir.FullName, $"{filenameWithoutExt}.metadata.json"));
+        FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
         if (!metadataFile.Exists) return false;
 
@@ -297,7 +295,7 @@ public class SdlangCompiler
         {
             string json = File.ReadAllText(metadataFile.FullName);
             ShaderMetadata? metadata = JsonSerializer.Deserialize<ShaderMetadata>(json);
-            
+
             if (metadata?.SourceHash == null) return false;
 
             string currentHash = CalculateFileHash(filePath);
@@ -315,18 +313,23 @@ public class SdlangCompiler
 
     private static void CompileShader(FileInfo filePath, bool spirvOnly = false, bool force = false)
     {
+        DirectoryInfo parentDir = filePath.Directory!;
+        DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, "compiled"));
+
         string currentHash = CalculateFileHash(filePath);
 
-        if (ShouldSkipCompilation(filePath, force))
+        if (ShouldSkipCompilation(filePath, outputDir, force))
         {
             Console.WriteLine($"Skipping {filePath.FullName} (unchanged)");
             return;
         }
 
-        DirectoryInfo parentDir = filePath.Directory!;
-        Console.WriteLine($"Result directory: {parentDir.FullName}");
+        Console.WriteLine($"Result directory: {outputDir.FullName}");
 
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
+
+        // Ensure output directory exists
+        outputDir.Create();
 
         DirectoryInfo tempDir = Directory.CreateTempSubdirectory("ShaderPack_");
         try
@@ -337,7 +340,7 @@ public class SdlangCompiler
             List<ShaderFormat> targets = spirvOnly
                 ? [ShaderFormat.SpirV]
                 : [ShaderFormat.SpirV, ShaderFormat.Dxil, ShaderFormat.Msl];
-            (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) = CompileTargets(filePath, tempDir, targets);
+            (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
             (string entryPoint, ShaderStage stage, ShaderResources resources) = ParseReflectionData(reflectionFile);
@@ -347,7 +350,7 @@ public class SdlangCompiler
                 new ShaderInstance(instance.Format, instance.Filename, entryPoint)).ToList();
 
             // Step 4: Write metadata
-            WriteMetadata(parentDir, filenameWithoutExt, stage, resources, shaderInstances, currentHash);
+            WriteMetadata(outputDir, filenameWithoutExt, stage, resources, shaderInstances, currentHash);
         }
         finally
         {

@@ -15,11 +15,6 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
     [Required]
     public required string InputFile { get; set; }
 
-    /// <summary>
-    /// Optional output file path. If not specified, output will be in the same directory as the input.
-    /// </summary>
-    public string? OutputFile { get; set; }
-
     public override bool Execute()
     {
         SdlangCompiler sdlangCompiler = new();

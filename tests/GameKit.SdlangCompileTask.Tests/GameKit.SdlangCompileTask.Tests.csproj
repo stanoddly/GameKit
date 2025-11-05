@@ -22,7 +22,7 @@
 
     <!-- Copy shader files to output directory -->
     <ItemGroup>
-        <Content Include="Shaders\**\*.*">
+        <Content Include="TestShaders\**\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
@@ -37,12 +37,11 @@
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <!-- Define shaders to compile -->
-    <ItemGroup>
-        <SdlangShader Include="Shaders\test.slang" />
-    </ItemGroup>
-
     <Target Name="CompileSdlangShaders" BeforeTargets="Build">
-        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" OutputFile="$(OutputPath)%(SdlangShader.Filename)%(SdlangShader.Extension).out" />
+        <!-- Define shaders to compile -->
+        <ItemGroup>
+            <SdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
     </Target>
 </Project>
