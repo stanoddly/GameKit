@@ -37,7 +37,8 @@ class Program
         var parseResult = rootCommand.Parse(args);
 
         SdlangCompiler sdlangCompiler = new();
-        sdlangCompiler.Compile(parseResult.GetValue(filenamesOption),parseResult.GetValue(onlySpirvOption), parseResult.GetValue(forceOption));
+        string[] filenames = parseResult.GetValue(filenamesOption) ?? [];
+        sdlangCompiler.Compile(filenames,parseResult.GetValue(onlySpirvOption), parseResult.GetValue(forceOption));
 
         return 0;
     }
