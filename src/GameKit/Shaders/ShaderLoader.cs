@@ -6,6 +6,7 @@ namespace GameKit.Shaders;
 
 public class ShaderLoader: IContentLoader<Shader>
 {
+    private const string CompiledShaderDirectory = "compiled";
     private readonly GpuDevice _gpuDevice;
     private readonly IContentLoader<ShaderMetadata> _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
@@ -74,10 +75,23 @@ public class ShaderLoader: IContentLoader<Shader>
 
     public Shader Load(string path)
     {
-        string pathWithExtension = Path.Combine(path, "shader.metadata.json");;
-        
-        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(pathWithExtension);
+        string name = path.Split('/')[^1];
+        string? directoryName = Path.GetDirectoryName(path);
 
-        return Load(path, shaderMetadata);
+        string compiledDirectoryName; 
+        if (directoryName == null)
+        {
+            compiledDirectoryName = CompiledShaderDirectory;
+        }
+        else
+        {
+            compiledDirectoryName = Path.Combine(directoryName, CompiledShaderDirectory);
+        }
+        
+        string metadataFilename = Path.Combine(compiledDirectoryName, $"{name}.metadata.json");
+
+        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
+
+        return Load(compiledDirectoryName, shaderMetadata);
     }
 }
