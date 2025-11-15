@@ -8,6 +8,7 @@ public class RenderPass: IRenderPass
 {
     internal Pointer<SDL_GPURenderPass> NativePointer { get; private set; }
     private uint? _verticesCount = null;
+    
 
     internal RenderPass(Pointer<SDL_GPURenderPass> nativePointer)
     {
@@ -37,6 +38,7 @@ public class RenderPass: IRenderPass
         where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
+        
         _verticesCount = (uint)buffer.Size;
         BindVertexBuffer(0, buffer);
     }
@@ -63,6 +65,7 @@ public class RenderPass: IRenderPass
     public void BindFragmentSampler(Texture texture, Sampler sampler)
     {
         ThrowIfDisposed();
+        
         ReadOnlySpan<Texture> textures = [texture];
         BindFragmentSamplers(textures, sampler, 0);
     }

@@ -4,11 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="../GameKit.Common/GameKit.Common.csproj" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-    </ItemGroup>
 
 </Project>

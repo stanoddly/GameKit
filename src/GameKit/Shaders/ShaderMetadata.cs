@@ -1,4 +1,5 @@
 using System.Runtime.Serialization;
+using GameKit.ShaderCommon;
 using SDL;
 
 namespace GameKit.Shaders;
@@ -71,12 +72,6 @@ public readonly struct ShaderFormats
     }
 }
 
-public readonly record struct ShaderResources(
-    int Samplers = 0,
-    int StorageTextures = 0,
-    int StorageBuffers = 0,
-    int UniformBuffers = 0);
-
 public class ShaderInstance
 {
     public required ShaderFormat Format { get; init; }
@@ -87,6 +82,6 @@ public class ShaderInstance
 public class ShaderMetadata
 {
     public required ShaderStage Stage { get; init; }
-    public required ShaderResources Resources { get; init; }
+    public required ShaderBindingLayout BindingLayout { get; init; }
     public required List<ShaderInstance> Shaders { get; init; }
 }

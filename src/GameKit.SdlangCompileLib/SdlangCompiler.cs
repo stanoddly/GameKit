@@ -1,51 +1,19 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using GameKit.ShaderCommon;
 
 namespace GameKit.SdlangCompileLib;
-
-public enum ShaderStage
-{
-    Vertex,
-    Fragment
-}
-
-public enum ShaderFormat
-{
-    SpirV,
-    Dxil,
-    Msl
-}
-
-public record ShaderResources(
-    int Samplers,
-    int StorageTextures,
-    int StorageBuffers,
-    int UniformBuffers
-);
-
-public record ShaderInstance(
-    string Format,
-    string Filename,
-    string EntryPoint
-);
-
-public record ShaderMetadata(
-    string Stage,
-    ShaderResources Resources,
-    List<ShaderInstance> Shaders,
-    string SourceHash
-);
 
 public class SdlangCompiler
 {
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
     
-    private static readonly Dictionary<ShaderFormat, string> TargetsWithExtensions = new()
+    private static readonly Dictionary<ShaderFormatDto, string> TargetsWithExtensions = new()
     {
-        { ShaderFormat.SpirV, "spv" },
-        { ShaderFormat.Dxil, "dxil" },
-        { ShaderFormat.Msl, "metal" }
+        { ShaderFormatDto.SpirV, "spv" },
+        { ShaderFormatDto.Dxil, "dxil" },
+        { ShaderFormatDto.Msl, "metal" }
     };
 
     private static string GetSlangCompilerPath()
@@ -121,23 +89,23 @@ public class SdlangCompiler
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
-    private static string GetTargetString(ShaderFormat format) => format switch
+    private static string GetTargetString(ShaderFormatDto format) => format switch
     {
-        ShaderFormat.SpirV => "spirv",
-        ShaderFormat.Dxil => "dxil",
-        ShaderFormat.Msl => "metal",
+        ShaderFormatDto.SpirV => "spirv",
+        ShaderFormatDto.Dxil => "dxil",
+        ShaderFormatDto.Msl => "metal",
         _ => throw new ArgumentException($"Unsupported shader format: {format}")
     };
 
-    private static readonly Dictionary<ShaderFormat, List<string>> CommandLineOptions = new()
+    private static readonly Dictionary<ShaderFormatDto, List<string>> CommandLineOptions = new()
     {
-        { ShaderFormat.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl"] },
-        { ShaderFormat.Dxil, ["-profile", "sm_6_3"] },
-        { ShaderFormat.Msl, [] }
+        { ShaderFormatDto.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl"] },
+        { ShaderFormatDto.Dxil, ["-profile", "sm_6_3"] },
+        { ShaderFormatDto.Msl, [] }
     };
 
-    private static (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) CompileTargets(
-        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormat> targets)
+    private static (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
+        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
         FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
@@ -149,10 +117,10 @@ public class SdlangCompiler
             "-reflection-json", reflectionFile.FullName
         };
 
-        List<ShaderInstance> shaderInstances = new List<ShaderInstance>();
+        List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
 
         // Add all requested targets
-        foreach (ShaderFormat format in targets)
+        foreach (ShaderFormatDto format in targets)
         {
             string target = GetTargetString(format);
             string extension = TargetsWithExtensions[format];
@@ -166,7 +134,7 @@ public class SdlangCompiler
 
             args.AddRange(["-entry", "main"]);
             args.AddRange(["-o", outputFile.FullName]);
-            shaderInstances.Add(new ShaderInstance(format.ToString(), outputFile.Name, "main"));
+            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, "main"));
         }
 
         Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
@@ -195,7 +163,7 @@ public class SdlangCompiler
         return (reflectionFile, shaderInstances);
     }
 
-    private static (string entryPoint, ShaderStage stage, ShaderResources resources) ParseReflectionData(
+    private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources) ParseReflectionData(
         FileInfo reflectionFile)
     {
         string json = File.ReadAllText(reflectionFile.FullName);
@@ -203,7 +171,7 @@ public class SdlangCompiler
         JsonElement root = document.RootElement;
 
         string entryPoint = "main";
-        ShaderStage stage = ShaderStage.Vertex;
+        ShaderStageDto stage = ShaderStageDto.Vertex;
 
         if (root.TryGetProperty("entryPoints", out JsonElement entryPoints) && entryPoints.GetArrayLength() > 0)
         {
@@ -218,17 +186,18 @@ public class SdlangCompiler
                 string? stageStr = stageElement.GetString()?.ToLower();
                 stage = stageStr switch
                 {
-                    "vertex" => ShaderStage.Vertex,
-                    "fragment" or "pixel" => ShaderStage.Fragment,
+                    "vertex" => ShaderStageDto.Vertex,
+                    "fragment" or "pixel" => ShaderStageDto.Fragment,
                     _ => throw new InvalidOperationException($"Unknown shader stage '{stageStr}'")
                 };
             }
         }
 
-        int samplers = 0;
-        int storageTextures = 0;
-        int storageBuffers = 0;
-        int uniformBuffers = 0;
+        ShaderUniformSlotSizes shaderUniformSlots = new();
+
+        byte samplers = 0;
+        byte storageTextures = 0;
+        byte storageBuffers = 0;
 
         if (root.TryGetProperty("parameters", out JsonElement parameters))
         {
@@ -247,26 +216,87 @@ public class SdlangCompiler
                             // We could potentially check baseShape to determine the resource type
                             break;
                         case "constantBuffer":
-                            uniformBuffers++;
+                            AdjustUniformBuffers(param, ref shaderUniformSlots);
                             break;
                     }
                 }
             }
         }
 
-        ShaderResources resources = new ShaderResources(samplers, storageTextures, storageBuffers, uniformBuffers);
-        return (entryPoint, stage, resources);
+        ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(new ShaderBindingCounts(samplers, storageTextures, storageBuffers), shaderUniformSlots);
+        return (entryPoint, stage, shaderBindingLayout);
+    }
+
+    private static void AdjustUniformBuffers(JsonElement param, ref ShaderUniformSlotSizes shaderUniformSlots)
+    {
+        // For constant buffers, binding information is required
+        if (!param.TryGetProperty("binding", out JsonElement binding))
+        {
+            throw new InvalidOperationException("constantBuffer parameter missing required 'binding' property");
+        }
+
+        if (!binding.TryGetProperty("index", out JsonElement indexElement))
+        {
+            throw new InvalidOperationException("constantBuffer binding missing required 'index' property");
+        }
+
+        if (!indexElement.TryGetInt32(out int slotIndex))
+        {
+            throw new InvalidOperationException("constantBuffer binding 'index' is not a valid integer");
+        }
+
+        // Extract size information from type.elementVarLayout.binding
+        if (!param.TryGetProperty("type", out JsonElement typeElement))
+        {
+            throw new InvalidOperationException("constantBuffer parameter missing required 'type' property");
+        }
+
+        if (!typeElement.TryGetProperty("elementVarLayout", out JsonElement elementVarLayout))
+        {
+            throw new InvalidOperationException("constantBuffer type missing required 'elementVarLayout' property");
+        }
+
+        if (!elementVarLayout.TryGetProperty("binding", out JsonElement layoutBinding))
+        {
+            throw new InvalidOperationException("constantBuffer elementVarLayout missing required 'binding' property");
+        }
+
+        if (!layoutBinding.TryGetProperty("size", out JsonElement sizeElement))
+        {
+            throw new InvalidOperationException("constantBuffer layout binding missing required 'size' property");
+        }
+
+        if (!sizeElement.TryGetByte(out byte bufferSize))
+        {
+            throw new InvalidOperationException("constantBuffer layout binding 'size' is not a valid integer");
+        }
+
+        // Update the appropriate slot based on the index
+        // Valid indices are 0-3 corresponding to Slot1-Slot4
+        if (slotIndex < 0 || slotIndex > 3)
+        {
+            throw new InvalidOperationException($"constantBuffer slot index {slotIndex} is out of valid range [0-3]");
+        }
+
+        shaderUniformSlots = slotIndex switch
+        {
+            0 => shaderUniformSlots with { Slot0 = bufferSize },
+            1 => shaderUniformSlots with { Slot1 = bufferSize },
+            2 => shaderUniformSlots with { Slot2 = bufferSize },
+            3 => shaderUniformSlots with { Slot3 = bufferSize },
+            // TODO: error message
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
-        ShaderStage stage, ShaderResources resources, List<ShaderInstance> shaderInstances, string fileHash)
+        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash)
     {
-        ShaderMetadata metadata = new ShaderMetadata(stage.ToString(), resources, shaderInstances, fileHash);
+        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash);
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-        string json = JsonSerializer.Serialize(metadata, options);
-        File.WriteAllText(metadataFile.FullName, json);
+        using FileStream stream = metadataFile.Create();
+        JsonSerializer.Serialize(stream, metadata, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
     }
 
     private static bool ShouldSkipCompilation(FileInfo filePath, DirectoryInfo outputDir, bool force)
@@ -281,7 +311,7 @@ public class SdlangCompiler
         try
         {
             string json = File.ReadAllText(metadataFile.FullName);
-            ShaderMetadata? metadata = JsonSerializer.Deserialize<ShaderMetadata>(json);
+            ShaderMetadataDto? metadata = JsonSerializer.Deserialize<ShaderMetadataDto>(json);
 
             if (metadata?.SourceHash == null) return false;
 
@@ -324,18 +354,18 @@ public class SdlangCompiler
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
             // Step 1: Compile all targets in a single slangc invocation
-            List<ShaderFormat> targets = [ShaderFormat.SpirV];
-            (FileInfo reflectionFile, List<ShaderInstance> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
+            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV];
+            (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
-            (string entryPoint, ShaderStage stage, ShaderResources resources) = ParseReflectionData(reflectionFile);
+            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout) = ParseReflectionData(reflectionFile);
 
             // Step 3: Update shader instances with correct entry point
             shaderInstances = shaderInstances.Select(instance =>
-                new ShaderInstance(instance.Format, instance.Filename, entryPoint)).ToList();
+                new ShaderInstanceDto(instance.Format, instance.Filename, entryPoint)).ToList();
 
             // Step 4: Write metadata
-            WriteMetadata(outputDir, filenameWithoutExt, stage, resources, shaderInstances, currentHash);
+            WriteMetadata(outputDir, filenameWithoutExt, stage, bindingLayout, shaderInstances, currentHash);
         }
         finally
         {

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace GameKit.Shaders;
+namespace GameKit.ShaderCommon;
 
 [JsonSourceGenerationOptions(
     WriteIndented = true,
@@ -9,5 +9,8 @@ namespace GameKit.Shaders;
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
     UseStringEnumConverter = true)]
-[JsonSerializable(typeof(ShaderMetadata))]
+[JsonSerializable(typeof(ShaderMetadataDto))]
+[JsonSerializable(typeof(ShaderStageDto))]
+[JsonSerializable(typeof(ShaderFormatDto))]
+[JsonSerializable(typeof(ShaderInstanceDto))]
 public partial class ShaderMetadataJsonContext: JsonSerializerContext;

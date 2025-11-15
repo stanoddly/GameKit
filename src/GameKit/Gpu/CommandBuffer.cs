@@ -93,7 +93,7 @@ public class CommandBuffer: ICommandBuffer
             depthBufferSettings);
     }
 
-    private RenderPass CreateMultipleRenderTargetsPassInternal(
+    private IRenderPass CreateMultipleRenderTargetsPassInternal(
         ReadOnlySpan<SDL_GPUColorTargetInfo> colorTargetInfos,
         Pointer<SDL_GPUTexture> depthBufferPointer,
         DepthBufferSettings depthBufferSettings)
@@ -102,17 +102,16 @@ public class CommandBuffer: ICommandBuffer
         
         unsafe
         {
+            SDL_GPURenderPass* gpuRenderPass;
             fixed (SDL_GPUColorTargetInfo* colorTargetInfosPtr = colorTargetInfos)
             {
                 if (depthBufferPointer.IsNull())
                 {
-                    SDL_GPURenderPass* gpuRenderPass = SDL3.SDL_BeginGPURenderPass(
+                    gpuRenderPass = SDL3.SDL_BeginGPURenderPass(
                         SdlGpuCommandBuffer,
                         colorTargetInfosPtr,
                         (uint)colorTargetInfos.Length,
                         null);
-                    
-                    return new RenderPass(gpuRenderPass);
                 }
                 else
                 {
@@ -127,15 +126,17 @@ public class CommandBuffer: ICommandBuffer
                         clear_stencil = depthBufferSettings.ClearStencilValue
                     };
                     
-                    SDL_GPURenderPass* gpuRenderPass = SDL3.SDL_BeginGPURenderPass(
+                    gpuRenderPass = SDL3.SDL_BeginGPURenderPass(
                         SdlGpuCommandBuffer,
                         colorTargetInfosPtr,
                         (uint)colorTargetInfos.Length,
                         &depthStencilTargetInfo);
-                    
-                    return new RenderPass(gpuRenderPass);
                 }
             }
+            
+            RenderPass renderPass = new RenderPass(gpuRenderPass);
+            
+            return renderPass;
         }
     }
 

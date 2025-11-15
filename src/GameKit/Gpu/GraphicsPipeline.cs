@@ -6,13 +6,16 @@ namespace GameKit.Gpu;
 public class GraphicsPipeline: IDisposable
 {
     private readonly IGpuDevice _gpuDevice;
+    private Type _vertexBufferType;
     internal Pointer<SDL_GPUGraphicsPipeline> Pointer { get; set; }
 
-    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer)
+    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, Type vertexBufferType)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
+        _vertexBufferType = vertexBufferType;
     }
+    
 
     public void Dispose()
     {

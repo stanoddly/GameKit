@@ -92,6 +92,7 @@ internal struct PipelineBuilderInfo
     
     public Shader? VertexShader { get; set; } = null;
     public Shader? FragmentShader { get; set; } = null;
+    public Type? VertexBufferType { get; set; } = null;
 
     public void Reset()
     {
@@ -107,6 +108,7 @@ internal struct PipelineBuilderInfo
         SdlGpuColorTargetBlendState = default;
         // We use left hand coordinates, that's why CLOCKWISE winding order
         RasterizerState = new() { CullMode = CullMode.Back, FrontFace = FrontFace.Clockwise };
+        VertexBufferType = null;
     }
 }
 
@@ -363,6 +365,12 @@ public class GraphicsPipelineBuilder
             CollectionsMarshal.AsSpan(_info.SdlGpuVertexBufferDescriptions);
         Span<SDL_GPUVertexAttribute> sdlGpuVertexAttributes = CollectionsMarshal.AsSpan(_info.SdlGpuVertexAttributes);
 
+        if (_info.VertexBufferType == null)
+        {
+            // TODO: change
+            throw new NotImplementedException();
+        }
+
         if (sdlGpuColorTargetDescriptions.Length == 0)
         {
             // TODO: change
@@ -435,7 +443,7 @@ public class GraphicsPipelineBuilder
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
 
-                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline);
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, _info.VertexBufferType);
                 _info.Reset();
                 
                 _gpuDevice.RegisterGraphicsPipeline(graphicsPipeline);
