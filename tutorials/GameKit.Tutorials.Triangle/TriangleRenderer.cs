@@ -45,7 +45,7 @@ public class TriangleRenderer: IRenderer<DefaultRenderContext>
         Shader vertexShader = shaderLoader.Load("shaders/vertex");
         Shader fragmentShader = shaderLoader.Load("shaders/fragment");
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
-            .SetPrimitiveType(PrimitiveType.TriangleList)
+            .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaders(vertexShader, fragmentShader)
             .AddColorFormatFromDisplay()

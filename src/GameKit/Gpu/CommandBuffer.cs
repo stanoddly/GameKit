@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using GameKit.ShaderCommon;
 using GameKit.Utilities;
 using SDL;
 
@@ -17,14 +18,27 @@ public interface ICommandBuffer: IDisposable
 public class CommandBuffer: ICommandBuffer
 {
     private readonly GpuDevice _gpuDevice;
-    internal Pointer<SDL_GPUCommandBuffer> SdlGpuCommandBuffer { get; private set; }
-    public IRenderPassBuilder RenderPassBuilder { get; }
+    private Pointer<SDL_GPUCommandBuffer> _sdlGpuCommandBuffer;
+    private readonly IRenderPassBuilder _renderPassBuilder;
+    private ShaderUniformSlotSizes _fragmentShaderUniformSlotSizes;
+    private ShaderUniformSlotSizes _vertexShaderUniformSlotSizes;
+
+    internal Pointer<SDL_GPUCommandBuffer> SdlGpuCommandBuffer
+    {
+        get => _sdlGpuCommandBuffer;
+        private set => _sdlGpuCommandBuffer = value;
+    }
+
+    public IRenderPassBuilder RenderPassBuilder => _renderPassBuilder;
+
+    public ShaderUniformSlotSizes FragmentShaderUniformSlotSizes => _fragmentShaderUniformSlotSizes;
+    public ShaderUniformSlotSizes VertexShaderUniformSlotSizes => _vertexShaderUniformSlotSizes;
 
     internal CommandBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUCommandBuffer> sdlCommandBuffer)
     {
         _gpuDevice = gpuDevice;
         SdlGpuCommandBuffer = sdlCommandBuffer;
-        RenderPassBuilder = new RenderPassBuilder(this);
+        _renderPassBuilder = new RenderPassBuilder(this);
     }
 
     internal void Submit()
@@ -41,6 +55,9 @@ public class CommandBuffer: ICommandBuffer
     public void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged
     {
         ThrowIfDisposed();
+        
+        AssignSlot(ref _fragmentShaderUniformSlotSizes, slot, Unsafe.SizeOf<TType>());
+        
         unsafe
         {
             IntPtr data = new IntPtr(Unsafe.AsPointer(ref variable));
@@ -52,6 +69,9 @@ public class CommandBuffer: ICommandBuffer
     public void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged
     {
         ThrowIfDisposed();
+
+        AssignSlot(ref _vertexShaderUniformSlotSizes, slot, Unsafe.SizeOf<TType>());
+        
         unsafe
         {
             IntPtr data = new IntPtr(Unsafe.AsPointer(ref variable));
@@ -134,9 +154,39 @@ public class CommandBuffer: ICommandBuffer
                 }
             }
             
-            RenderPass renderPass = new RenderPass(gpuRenderPass);
+            RenderPass renderPass = new RenderPass(this, gpuRenderPass);
             
             return renderPass;
+        }
+    }
+
+    private void AssignSlot(ref ShaderUniformSlotSizes slotSizes, uint slot, int size)
+    {
+        if (slot > 4)
+        {
+            throw new Exception();
+        }
+
+        byte byteSize = (byte)size;
+
+        if (slot == 0)
+        {
+            slotSizes.Slot0 = byteSize;
+        }
+        
+        if (slot == 1)
+        {
+            slotSizes.Slot1 = byteSize;
+        }
+        
+        if (slot == 2)
+        {
+            slotSizes.Slot2 = byteSize;
+        }
+        
+        if (slot == 3)
+        {
+            slotSizes.Slot3 = byteSize;
         }
     }
 

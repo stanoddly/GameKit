@@ -1,4 +1,5 @@
-﻿using GameKit.ShaderCommon;
+﻿using System.Text.Json;
+using GameKit.ShaderCommon;
 
 namespace GameKit.SdlangCompileLib.Tests;
 
@@ -46,7 +47,8 @@ public class SdlangCompilerTests
         Assert.That(File.Exists(metadataPath), Is.True, "Metadata file should be created");
 
         string json = File.ReadAllText(metadataPath);
-        ShaderMetadataDto? metadata = System.Text.Json.JsonSerializer.Deserialize<ShaderMetadataDto>(json);
+        
+        ShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));

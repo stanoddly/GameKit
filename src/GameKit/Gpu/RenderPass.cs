@@ -1,23 +1,48 @@
 using System.Diagnostics;
+using GameKit.ShaderCommon;
 using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Gpu;
 
+public struct RenderPassValidator
+{
+    private uint _verticesCount = 0;
+    private VertexTypeId _vertexBufferVertexType = VertexTypeId.Null;
+    private GraphicsPipeline? _graphicsPipeline = null;
+
+    private ShaderBindingCounts _fragmentShaderBindingCounts = new();
+    private ShaderBindingCounts _vertexShaderBindingCounts = new();
+
+    public RenderPassValidator()
+    {
+    }
+}
+
 public class RenderPass: IRenderPass
 {
+    private CommandBuffer _commandBuffer;
     internal Pointer<SDL_GPURenderPass> NativePointer { get; private set; }
-    private uint? _verticesCount = null;
-    
 
-    internal RenderPass(Pointer<SDL_GPURenderPass> nativePointer)
+    private uint _verticesCount = 0;
+    private VertexTypeId _vertexBufferVertexType = VertexTypeId.Null;
+    private GraphicsPipeline? _graphicsPipeline = null;
+
+    private ShaderBindingCounts _fragmentShaderBindingCounts = new();
+    private ShaderBindingCounts _vertexShaderBindingCounts = new();
+
+    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
     {
+        _commandBuffer = commandBuffer;
         NativePointer = nativePointer;
     }
 
     public void BindGraphicsPipeline(GraphicsPipeline graphicsPipeline)
     {
         ThrowIfDisposed();
+
+        _graphicsPipeline = graphicsPipeline;
+        
         unsafe
         {
             SDL3.SDL_BindGPUGraphicsPipeline(NativePointer, graphicsPipeline.Pointer);
@@ -27,6 +52,8 @@ public class RenderPass: IRenderPass
     private void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer) where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
+        _vertexBufferVertexType = VertexTypeId<TVertexType>.Value;
+
         unsafe
         {
             SDL_GPUBufferBinding sdlGpuBufferBinding = new SDL_GPUBufferBinding { buffer = buffer.SdlVertexBuffer, offset = 0 };
@@ -47,6 +74,10 @@ public class RenderPass: IRenderPass
     public void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();
+
+        byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + textures.Length);
+
+        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
 
         unsafe {
             SDL_GPUTextureSamplerBinding* sdlGpuBufferBindings =
@@ -73,11 +104,42 @@ public class RenderPass: IRenderPass
     public void DrawPrimitive()
     {
         ThrowIfDisposed();
-        Debug.Assert(_verticesCount != null, nameof(_verticesCount) + " != null");
+
+        ValidateDraw();
+        
         unsafe
         {
-            SDL3.SDL_DrawGPUPrimitives(NativePointer, _verticesCount.Value, 1, 0, 0);
+            SDL3.SDL_DrawGPUPrimitives(NativePointer, _verticesCount, 1, 0, 0);
         }
+    }
+
+    private void ValidateDraw()
+    {
+        if (_graphicsPipeline == null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(GraphicsPipeline)} must be bound.");
+        }
+
+        if (_graphicsPipeline.VertexTypeId != _vertexBufferVertexType)
+        {
+            throw new InvalidOperationException(
+                $"TVertexType of both bound {nameof(GraphicsPipeline)} and VertexBuffer must be the same.");
+        }
+
+        if (_verticesCount == 0)
+        {
+            throw new InvalidOperationException("Bound VertexBuffer is empty.");
+        }
+
+        ShaderBindingLayoutValidator.ValidateBindingCounts(_graphicsPipeline.FragmentShader.BindingLayout.BindingCounts,
+            _fragmentShaderBindingCounts);
+        
+        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.FragmentShader.BindingLayout.UniformSlotSizes,
+            _commandBuffer.FragmentShaderUniformSlotSizes);
+        
+        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.VertexShader.BindingLayout.UniformSlotSizes,
+            _commandBuffer.VertexShaderUniformSlotSizes);
     }
 
     public bool IsDefault()

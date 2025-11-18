@@ -92,7 +92,7 @@ internal struct PipelineBuilderInfo
     
     public Shader? VertexShader { get; set; } = null;
     public Shader? FragmentShader { get; set; } = null;
-    public Type? VertexBufferType { get; set; } = null;
+    public VertexTypeId VertexBufferId { get; set; } = VertexTypeId.Null;
 
     public void Reset()
     {
@@ -108,7 +108,7 @@ internal struct PipelineBuilderInfo
         SdlGpuColorTargetBlendState = default;
         // We use left hand coordinates, that's why CLOCKWISE winding order
         RasterizerState = new() { CullMode = CullMode.Back, FrontFace = FrontFace.Clockwise };
-        VertexBufferType = null;
+        VertexBufferId = VertexTypeId.Null;
     }
 }
 
@@ -170,6 +170,7 @@ public class GraphicsPipelineBuilder
 
     public GraphicsPipelineBuilder AddVertexBufferConfig<TVertexType>(int? instanceStepRate = default) where TVertexType : unmanaged, IVertexType
     {
+        _info.VertexBufferId = VertexTypeId<TVertexType>.Value;
         uint vertexTypeSizeBytes = (uint)Unsafe.SizeOf<TVertexType>();
 
         SDL_GPUVertexInputRate inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX;
@@ -365,7 +366,7 @@ public class GraphicsPipelineBuilder
             CollectionsMarshal.AsSpan(_info.SdlGpuVertexBufferDescriptions);
         Span<SDL_GPUVertexAttribute> sdlGpuVertexAttributes = CollectionsMarshal.AsSpan(_info.SdlGpuVertexAttributes);
 
-        if (_info.VertexBufferType == null)
+        if (_info.VertexBufferId == VertexTypeId.Null)
         {
             // TODO: change
             throw new NotImplementedException();
@@ -442,8 +443,8 @@ public class GraphicsPipelineBuilder
                     throw new GameKitInitializationException(
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
-
-                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, _info.VertexBufferType);
+                
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, _info.VertexBufferId, _info.VertexShader, _info.FragmentShader);
                 _info.Reset();
                 
                 _gpuDevice.RegisterGraphicsPipeline(graphicsPipeline);
