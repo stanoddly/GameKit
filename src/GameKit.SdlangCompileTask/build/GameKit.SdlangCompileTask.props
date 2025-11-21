@@ -1,0 +1,10 @@
+<Project>
+  <!-- This file is automatically imported when the package/project is referenced -->
+  <PropertyGroup>
+    <!-- Use the target framework from the consuming project -->
+    <!-- For NuGet package references, the assembly is in lib folder -->
+    <SdlangCompileTaskAssembly Condition="'$(SdlangCompileTaskAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\GameKit.SdlangCompileTask.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\GameKit.SdlangCompileTask.dll</SdlangCompileTaskAssembly>
+    <!-- For project references, we need to point to the bin folder -->
+    <SdlangCompileTaskAssembly Condition="'$(SdlangCompileTaskAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\GameKit.SdlangCompileTask.dll</SdlangCompileTaskAssembly>
+  </PropertyGroup>
+</Project>

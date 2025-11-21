@@ -1,35 +1,51 @@
 using System.Diagnostics;
+using GameKit.ShaderCommon;
 using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Gpu;
 
-public class RenderPass: IRenderPass
+public class RenderPass<TValidator> : IRenderPass
+    where TValidator : IRenderPassValidator<TValidator>
 {
-    internal Pointer<SDL_GPURenderPass> NativePointer { get; private set; }
-    private uint? _verticesCount = null;
+    private Pointer<SDL_GPURenderPass> _nativePointer;
+    private uint _verticesCount = 0;
+    private TValidator _validator;
+    
+    private ShaderBindingCounts _fragmentShaderBindingCounts;
+    private ShaderBindingCounts _vertexShaderBindingCounts;
+    
+    public ShaderBindingCounts FragmentShaderBindingCounts => _fragmentShaderBindingCounts;
+    public ShaderBindingCounts VertexShaderBindingCounts => _vertexShaderBindingCounts;
 
-    internal RenderPass(Pointer<SDL_GPURenderPass> nativePointer)
+    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
     {
-        NativePointer = nativePointer;
+        _nativePointer = nativePointer;
+        _validator = TValidator.Create(commandBuffer);
     }
 
     public void BindGraphicsPipeline(GraphicsPipeline graphicsPipeline)
     {
         ThrowIfDisposed();
+
+        _validator.OnBindGraphicsPipeline(this, graphicsPipeline);
+
         unsafe
         {
-            SDL3.SDL_BindGPUGraphicsPipeline(NativePointer, graphicsPipeline.Pointer);
+            SDL3.SDL_BindGPUGraphicsPipeline(_nativePointer, graphicsPipeline.Pointer);
         }
     }
     
     private void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer) where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
+
+        _verticesCount = (uint)buffer.BufferSize;
+
         unsafe
         {
             SDL_GPUBufferBinding sdlGpuBufferBinding = new SDL_GPUBufferBinding { buffer = buffer.SdlVertexBuffer, offset = 0 };
-            SDL3.SDL_BindGPUVertexBuffers(NativePointer, slot, &sdlGpuBufferBinding, 1);
+            SDL3.SDL_BindGPUVertexBuffers(_nativePointer, slot, &sdlGpuBufferBinding, 1);
         }
     }
 
@@ -37,7 +53,9 @@ public class RenderPass: IRenderPass
         where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
-        _verticesCount = (uint)buffer.Size;
+
+        _validator.OnBindVertexBuffer(this, buffer);
+
         BindVertexBuffer(0, buffer);
     }
     
@@ -45,6 +63,11 @@ public class RenderPass: IRenderPass
     public void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();
+        
+        byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + textures.Length);
+        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
+
+        _validator.OnBindFragmentSamplers(this, slot, textures.Length);
 
         unsafe {
             SDL_GPUTextureSamplerBinding* sdlGpuBufferBindings =
@@ -56,13 +79,14 @@ public class RenderPass: IRenderPass
                     { texture = textures[i].SdlGpuTexture, sampler = sampler.Pointer };
             }
 
-            SDL3.SDL_BindGPUFragmentSamplers(NativePointer, slot, sdlGpuBufferBindings, (uint)textures.Length);
+            SDL3.SDL_BindGPUFragmentSamplers(_nativePointer, slot, sdlGpuBufferBindings, (uint)textures.Length);
         }
     }
 
     public void BindFragmentSampler(Texture texture, Sampler sampler)
     {
         ThrowIfDisposed();
+        
         ReadOnlySpan<Texture> textures = [texture];
         BindFragmentSamplers(textures, sampler, 0);
     }
@@ -70,33 +94,46 @@ public class RenderPass: IRenderPass
     public void DrawPrimitive()
     {
         ThrowIfDisposed();
-        Debug.Assert(_verticesCount != null, nameof(_verticesCount) + " != null");
+
+        _validator.OnDrawPrimitive(this);
+
         unsafe
         {
-            SDL3.SDL_DrawGPUPrimitives(NativePointer, _verticesCount.Value, 1, 0, 0);
+            SDL3.SDL_DrawGPUPrimitives(_nativePointer, _verticesCount, 1, 0, 0);
         }
     }
 
     public bool IsDefault()
     {
-        return NativePointer.IsNull();
+        return _nativePointer.IsNull();
     }
     
     public void Dispose()
     {
-        if (!NativePointer.IsNull())
+        if (!_nativePointer.IsNull())
         {
             unsafe
             {
-                SDL3.SDL_EndGPURenderPass(NativePointer);
+                SDL3.SDL_EndGPURenderPass(_nativePointer);
             }
-            NativePointer = Pointer<SDL_GPURenderPass>.Null;
+            _nativePointer = Pointer<SDL_GPURenderPass>.Null;
         }
     }
     
     private void ThrowIfDisposed()
     {
-        if (NativePointer.IsNull())
+        if (_nativePointer.IsNull())
             throw new ObjectDisposedException(nameof(RenderPass));
+    }
+}
+
+/// <summary>
+/// Non-generic render pass using the default RenderPassValidator with full validation checks.
+/// </summary>
+public class RenderPass : RenderPass<RenderPassValidator>
+{
+    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
+        : base(commandBuffer, nativePointer)
+    {
     }
 }

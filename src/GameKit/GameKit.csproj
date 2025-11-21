@@ -30,6 +30,7 @@
       <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
       <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
       <ProjectReference Include="..\GameKit.Encs\GameKit.Encs.csproj" />
+      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>
 
 </Project>

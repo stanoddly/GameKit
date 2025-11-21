@@ -1,11 +1,13 @@
 using GameKit.Content;
 using GameKit.Gpu;
+using GameKit.ShaderCommon;
 using SDL;
 
 namespace GameKit.Shaders;
 
 public class ShaderLoader: IContentLoader<Shader>
 {
+    private const string CompiledShaderDirectory = "compiled";
     private readonly GpuDevice _gpuDevice;
     private readonly IContentLoader<ShaderMetadata> _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
@@ -25,7 +27,7 @@ public class ShaderLoader: IContentLoader<Shader>
         {
             if (_shaderFormats.Contains(shaderInstance.Format))
             {
-                return CreateShader(directory, shaderInstance, shaderMetadata.Resources, shaderMetadata.Stage);
+                return CreateShader(directory, shaderInstance, shaderMetadata.BindingLayout, shaderMetadata.Stage);
             }
         }
 
@@ -33,7 +35,7 @@ public class ShaderLoader: IContentLoader<Shader>
         throw new Exception();
     }
 
-    private Shader CreateShader(string directory, ShaderInstance shaderInstance, ShaderResources shaderResources, ShaderStage shaderStage)
+    private Shader CreateShader(string directory, ShaderInstance shaderInstance, ShaderBindingLayout shaderBindingLayout, ShaderStage shaderStage)
     {
         string path = Path.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(path);
@@ -56,16 +58,16 @@ public class ShaderLoader: IContentLoader<Shader>
                     entrypoint = entryPointPointer,
                     format = (SDL_GPUShaderFormat)shaderInstance.Format,
                     stage = (SDL_GPUShaderStage)shaderStage,
-                    num_samplers = (uint)shaderResources.Samplers,
-                    num_uniform_buffers = (uint)shaderResources.UniformBuffers,
-                    num_storage_buffers = (uint)shaderResources.StorageBuffers,
-                    num_storage_textures = (uint)shaderResources.StorageTextures
+                    num_samplers = (uint)shaderBindingLayout.NumSamplers(),
+                    num_uniform_buffers = (uint)shaderBindingLayout.NumUniformBuffers(),
+                    num_storage_buffers = (uint)shaderBindingLayout.NumStorageBuffers(),
+                    num_storage_textures = (uint)shaderBindingLayout.NumStorageTextures()
                 };
 
                 SDL_GPUShader* sdlGpuShader = SDL3.SDL_CreateGPUShader(_gpuDevice.SdlGpuDevice, &sdlGpuShaderCreateInfo);
                 if (sdlGpuShader == null) throw new GameKitInitializationException($"SDL_CreateGPUShader failed: {SDL3.SDL_GetError()}");
 
-                Shader shader = new Shader(_gpuDevice, sdlGpuShader, shaderStage, shaderResources.Samplers, shaderResources.StorageTextures, shaderResources.StorageBuffers, shaderResources.UniformBuffers);
+                Shader shader = new Shader(_gpuDevice, sdlGpuShader, shaderStage, shaderBindingLayout);
                 _gpuDevice.RegisterShader(shader);
                 return shader;
             }
@@ -74,10 +76,23 @@ public class ShaderLoader: IContentLoader<Shader>
 
     public Shader Load(string path)
     {
-        string pathWithExtension = Path.Combine(path, "shader.metadata.json");;
-        
-        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(pathWithExtension);
+        string name = path.Split('/')[^1];
+        string? directoryName = Path.GetDirectoryName(path);
 
-        return Load(path, shaderMetadata);
+        string compiledDirectoryName; 
+        if (directoryName == null)
+        {
+            compiledDirectoryName = CompiledShaderDirectory;
+        }
+        else
+        {
+            compiledDirectoryName = Path.Combine(directoryName, CompiledShaderDirectory);
+        }
+        
+        string metadataFilename = Path.Combine(compiledDirectoryName, $"{name}.metadata.json");
+
+        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
+
+        return Load(compiledDirectoryName, shaderMetadata);
     }
 }

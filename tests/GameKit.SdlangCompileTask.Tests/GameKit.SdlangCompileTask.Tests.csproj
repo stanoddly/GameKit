@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
+        <PackageReference Include="NUnit" Version="4.2.2"/>
+        <PackageReference Include="NUnit.Analyzers" Version="4.3.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
+
+    <!-- Copy shader files to output directory -->
+    <ItemGroup>
+        <Content Include="TestShaders\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <!-- Reference the SdlangCompileTask project -->
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+    </ItemGroup>
+
+    <!-- Import the task's props and targets files -->
+    <!-- This is not required when referencing a file from nuget -->
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
+        <!-- Define shaders to compile -->
+        <ItemGroup>
+            <SdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+    </Target>
+</Project>

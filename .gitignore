@@ -403,3 +403,6 @@ FodyWeavers.xsd
 
 # Python venv
 .python
+
+# Shaders
+compiled/

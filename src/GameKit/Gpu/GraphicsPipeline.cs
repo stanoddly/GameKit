@@ -1,3 +1,4 @@
+using GameKit.ShaderCommon;
 using GameKit.Utilities;
 using SDL;
 
@@ -7,12 +8,20 @@ public class GraphicsPipeline: IDisposable
 {
     private readonly IGpuDevice _gpuDevice;
     internal Pointer<SDL_GPUGraphicsPipeline> Pointer { get; set; }
+    public VertexTypeId VertexTypeId { get; }
+    
+    public Shader VertexShader { get; }
+    public Shader FragmentShader { get; }
 
-    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer)
+    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, VertexTypeId vertexTypeId, Shader vertexShader, Shader fragmentShader)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
+        VertexTypeId = vertexTypeId;
+        VertexShader = vertexShader;
+        FragmentShader = fragmentShader;
     }
+    
 
     public void Dispose()
     {

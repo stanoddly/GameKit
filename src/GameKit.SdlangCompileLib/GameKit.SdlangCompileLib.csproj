@@ -1,0 +1,82 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <!-- Slang configuration -->
+        <!-- Slang is a shader compilation dependency downloaded during the build.
+             It's stored in obj/ (intermediate build artifacts) rather than the project root
+             because it's not source code and will be extracted/regenerated on each build.
+             The final binaries are then copied to the output directory for runtime use. -->
+        <SlangVersion>2025.21</SlangVersion>
+        <SlangPlatform>linux-x86_64</SlangPlatform>
+        <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
+        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
+        <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
+    </PropertyGroup>
+
+    <!-- Download Slang if not already present -->
+    <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
+        <PropertyGroup>
+            <SlangBaseDir>$(BaseIntermediateOutputPath)slang</SlangBaseDir>
+            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
+            <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
+        </PropertyGroup>
+
+        <!-- Create slang directory if it doesn't exist -->
+        <MakeDir Directories="$(SlangBaseDir)" Condition="!Exists('$(SlangBaseDir)')" />
+
+        <!-- Download Slang zip if bin directory doesn't exist -->
+        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangBinDir)')" />
+        <DownloadFile SourceUrl="$(SlangDownloadUrl)"
+                      DestinationFolder="$(BaseIntermediateOutputPath)"
+                      DestinationFileName="$(SlangZipFile)"
+                      Condition="!Exists('$(SlangZipPath)')" />
+        <Message Text="Downloaded Slang to $(SlangZipPath)" Importance="high" Condition="!Exists('$(SlangBinDir)')" />
+    </Target>
+
+    <!-- Extract Slang zip file and clean up unnecessary files -->
+    <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild">
+        <PropertyGroup>
+            <SlangBaseDir>$(BaseIntermediateOutputPath)$(SlangDirName)</SlangBaseDir>
+            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
+            <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
+        </PropertyGroup>
+
+        <!-- Only extract and clean up if bin directory doesn't exist -->
+        <PropertyGroup>
+            <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
+        </PropertyGroup>
+
+        <Message Text="Extracting Slang to $(SlangBaseDir)..." Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
+        <Unzip SourceFiles="$(SlangZipPath)"
+               DestinationFolder="$(SlangBaseDir)"
+               Condition="'$(NeedsExtraction)' == 'true'" />
+
+        <!-- Clean up unnecessary files and directories after extraction -->
+        <RemoveDir Directories="$(SlangBaseDir)/include;$(SlangBaseDir)/share;$(SlangBaseDir)/lib/cmake"
+                   Condition="'$(NeedsExtraction)' == 'true'" />
+        <Delete Files="$(SlangBaseDir)/LICENSE;$(SlangBaseDir)/README.md"
+                Condition="'$(NeedsExtraction)' == 'true'" />
+
+        <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
+    </Target>
+
+    <!-- Mark Slang files as content to be copied to output directory -->
+    <ItemGroup>
+        <Content Include="$(BaseIntermediateOutputPath)$(SlangDirName)/bin/**/*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>bin/%(RecursiveDir)%(Filename)%(Extension)</Link>
+        </Content>
+        <Content Include="$(BaseIntermediateOutputPath)$(SlangDirName)/lib/**/*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib/%(RecursiveDir)%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
+    </ItemGroup>
+
+</Project>
