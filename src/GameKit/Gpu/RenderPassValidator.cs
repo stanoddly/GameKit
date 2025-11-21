@@ -9,25 +9,25 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     /// <summary>
     /// Called when a graphics pipeline is bound to the render pass.
     /// </summary>
-    void OnBindGraphicsPipeline(GraphicsPipeline graphicsPipeline);
+    void OnBindGraphicsPipeline(RenderPass<TSelfValidator> renderPass, GraphicsPipeline graphicsPipeline);
 
     /// <summary>
     /// Called when a vertex buffer is bound to the render pass.
     /// </summary>
-    void OnBindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+    void OnBindVertexBuffer<TVertexType>(RenderPass<TSelfValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType;
 
     /// <summary>
     /// Called when fragment samplers are bound to the render pass.
     /// </summary>
-    void OnBindFragmentSamplers(uint slot, int samplerCount);
+    void OnBindFragmentSamplers(RenderPass<TSelfValidator> renderPass, uint slot, int samplerCount);
 
     /// <summary>
     /// Called when a primitive draw is requested.
     /// Validates that the current render pass state is valid for drawing.
     /// Throws an exception if validation fails.
     /// </summary>
-    void OnDrawPrimitive();
+    void OnDrawPrimitive(RenderPass<TSelfValidator> renderPass);
 }
 
 /// <summary>
@@ -40,9 +40,6 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     private GraphicsPipeline? _graphicsPipeline;
     private readonly CommandBuffer _commandBuffer;
 
-    private ShaderBindingCounts _fragmentShaderBindingCounts;
-    private ShaderBindingCounts _vertexShaderBindingCounts;
-
     private RenderPassValidator(CommandBuffer commandBuffer)
     {
         _commandBuffer = commandBuffer;
@@ -53,25 +50,23 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         return new RenderPassValidator(commandBuffer);
     }
 
-    public void OnBindGraphicsPipeline(GraphicsPipeline graphicsPipeline)
+    public void OnBindGraphicsPipeline(RenderPass<RenderPassValidator> renderPass, GraphicsPipeline graphicsPipeline)
     {
         _graphicsPipeline = graphicsPipeline;
     }
 
-    public void OnBindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+    public void OnBindVertexBuffer<TVertexType>(RenderPass<RenderPassValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType
     {
         _verticesCount = (uint)buffer.Size;
         _vertexBufferVertexType = VertexTypeId<TVertexType>.Value;
     }
 
-    public void OnBindFragmentSamplers(uint slot, int samplerCount)
+    public void OnBindFragmentSamplers(RenderPass<RenderPassValidator> renderPass, uint slot, int samplerCount)
     {
-        byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + samplerCount);
-        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
     }
 
-    public void OnDrawPrimitive()
+    public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass)
     {
         if (_graphicsPipeline == null)
         {
@@ -91,7 +86,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         }
 
         ShaderBindingLayoutValidator.ValidateBindingCounts(_graphicsPipeline.FragmentShader.BindingLayout.BindingCounts,
-            _fragmentShaderBindingCounts);
+            renderPass.FragmentShaderBindingCounts);
 
         ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.FragmentShader.BindingLayout.UniformSlotSizes,
             _commandBuffer.FragmentShaderUniformSlotSizes);
@@ -111,20 +106,20 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
         return new NullRenderPassValidator();
     }
 
-    public void OnBindGraphicsPipeline(GraphicsPipeline graphicsPipeline)
+    public void OnBindGraphicsPipeline(RenderPass<NullRenderPassValidator> renderPass, GraphicsPipeline graphicsPipeline)
     {
     }
 
-    public void OnBindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+    public void OnBindVertexBuffer<TVertexType>(RenderPass<NullRenderPassValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType
     {
     }
 
-    public void OnBindFragmentSamplers(uint slot, int samplerCount)
+    public void OnBindFragmentSamplers(RenderPass<NullRenderPassValidator> renderPass, uint slot, int samplerCount)
     {
     }
 
-    public void OnDrawPrimitive()
+    public void OnDrawPrimitive(RenderPass<NullRenderPassValidator> renderPass)
     {
     }
 }

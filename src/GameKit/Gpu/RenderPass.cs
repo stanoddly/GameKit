@@ -6,11 +6,17 @@ using SDL;
 namespace GameKit.Gpu;
 
 public class RenderPass<TValidator> : IRenderPass
-    where TValidator : struct, IRenderPassValidator<TValidator>
+    where TValidator : IRenderPassValidator<TValidator>
 {
     private Pointer<SDL_GPURenderPass> _nativePointer;
     private uint _verticesCount = 0;
     private TValidator _validator;
+    
+    private ShaderBindingCounts _fragmentShaderBindingCounts;
+    private ShaderBindingCounts _vertexShaderBindingCounts;
+    
+    public ShaderBindingCounts FragmentShaderBindingCounts => _fragmentShaderBindingCounts;
+    public ShaderBindingCounts VertexShaderBindingCounts => _vertexShaderBindingCounts;
 
     internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
     {
@@ -22,7 +28,7 @@ public class RenderPass<TValidator> : IRenderPass
     {
         ThrowIfDisposed();
 
-        _validator.OnBindGraphicsPipeline(graphicsPipeline);
+        _validator.OnBindGraphicsPipeline(this, graphicsPipeline);
 
         unsafe
         {
@@ -47,9 +53,9 @@ public class RenderPass<TValidator> : IRenderPass
         where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
-        
-        _validator.OnBindVertexBuffer(buffer);
-        
+
+        _validator.OnBindVertexBuffer(this, buffer);
+
         BindVertexBuffer(0, buffer);
     }
     
@@ -58,7 +64,10 @@ public class RenderPass<TValidator> : IRenderPass
     {
         ThrowIfDisposed();
         
-        _validator.OnBindFragmentSamplers(slot, textures.Length);
+        byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + textures.Length);
+        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
+
+        _validator.OnBindFragmentSamplers(this, slot, textures.Length);
 
         unsafe {
             SDL_GPUTextureSamplerBinding* sdlGpuBufferBindings =
@@ -85,8 +94,8 @@ public class RenderPass<TValidator> : IRenderPass
     public void DrawPrimitive()
     {
         ThrowIfDisposed();
-        
-        _validator.OnDrawPrimitive();
+
+        _validator.OnDrawPrimitive(this);
 
         unsafe
         {
