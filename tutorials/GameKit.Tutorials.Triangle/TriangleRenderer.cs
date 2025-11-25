@@ -20,8 +20,7 @@ public class TriangleRenderer: IRenderer<DefaultRenderContext>
     public void Render(DefaultRenderContext renderContext)
     {
         renderContext.CommandBuffer.PushFragmentUniformData(0, FColors.Magenta);
-        using IRenderPass renderPass = renderContext
-            .RenderPassBuilder
+        using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)
             .SetSharedColorTargetSettings(ColorTargetSettings.Clear)
             .Build();
@@ -33,21 +32,15 @@ public class TriangleRenderer: IRenderer<DefaultRenderContext>
         
         // renderPass is disposed and rendered
     }
-
-    public static IRenderer<DefaultRenderContext> Create(IServiceProvider serviceProvider)
+    
+    public static IRenderer<DefaultRenderContext> Create(ShaderLoader shaderLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem)
     {
-        ShaderLoader shaderLoader = serviceProvider.GetMandatoryService<ShaderLoader>();
-        GraphicsPipelineBuilder graphicsPipelineBuilder = serviceProvider.GetMandatoryService<GraphicsPipelineBuilder>();
-        GpuMemorySystem gpuMemorySystem = serviceProvider.GetMandatoryService<GpuMemorySystem>();
-
         GpuVertexBuffer<PositionVertex> quadVertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
-        
-        Shader vertexShader = shaderLoader.Load("shaders/vertex");
-        Shader fragmentShader = shaderLoader.Load("shaders/fragment");
+
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
-            .SetShaders(vertexShader, fragmentShader)
+            .SetShaders("shaders/vertex", "shaders/fragment")
             .AddColorFormatFromDisplay()
             .Build();
 

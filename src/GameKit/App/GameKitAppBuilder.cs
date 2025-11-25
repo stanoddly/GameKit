@@ -63,6 +63,12 @@ public class GameKitAppBuilder
     {
         return _moduleBuilder.RegisterFunc(factory);
     }
+    
+    public GameKitAppBuilder RegisterFunc(Delegate factory)
+    {
+        _moduleBuilder.RegisterFunc(factory);
+        return this;
+    }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
     {

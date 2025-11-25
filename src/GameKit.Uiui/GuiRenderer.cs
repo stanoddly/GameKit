@@ -224,7 +224,7 @@ public sealed class GuiRenderer
             return;
         }
 
-        using IRenderPass guiRenderPass = commandBuffer.RenderPassBuilder
+        using IRenderPass guiRenderPass = new RenderPassBuilder(commandBuffer)
             .AddColorTarget(guiTexture, _guiColorTargetSettings)
             .SetDepthBuffer(guiDepthBuffer, DepthBufferSettings.Default)
             .Build();

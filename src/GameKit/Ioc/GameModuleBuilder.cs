@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -101,6 +102,77 @@ public class GameModuleBuilder
         _registeredTypes.Add(typeof(TService));
         _serviceProviderActions.Add(provider => provider.GetRequiredService<TService>());
         return new GameModuleRegistrar<TService>(this);
+    }
+
+    public GameModuleRegistrar<TService> RegisterFunc<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(Delegate factory)
+        where TService : class
+    {
+        if (_registeredTypes.Contains(typeof(TService)))
+        {
+            throw new InvalidOperationException($"Type {typeof(TService)} is already registered.");
+        }
+        
+        MethodInfo method = factory.Method;
+        ParameterInfo[] parameters = method.GetParameters();
+        
+        _services.AddSingleton<TService>(provider => {
+            object[] args = new object[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                args[i] = provider.GetRequiredService(parameters[i].ParameterType);
+            }
+            
+            TService? instance = (TService?)method.Invoke(factory.Target, args);
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException($"Factory method returned null for service type {typeof(TService).Name}.");
+            }
+            
+            InvokeActivationCallbacks(instance);
+            return instance;
+        });
+
+        _registeredTypes.Add(typeof(TService));
+        _serviceProviderActions.Add(provider => provider.GetRequiredService<TService>());
+
+        return new GameModuleRegistrar<TService>(this);
+    }
+    
+    public GameModuleBuilder RegisterFunc<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TDelegate>(TDelegate factory)
+        where TDelegate : Delegate
+    {
+        MethodInfo method = factory.Method;
+        ParameterInfo[] parameters = method.GetParameters();
+        Type serviceType = method.ReturnType;
+        
+        if (_registeredTypes.Contains(serviceType))
+        {
+            throw new InvalidOperationException($"Type {serviceType} is already registered.");
+        }
+        
+        _services.AddSingleton(serviceType, provider => {
+            object[] args = new object[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                args[i] = provider.GetRequiredService(parameters[i].ParameterType);
+            }
+            
+            object? instance = method.Invoke(factory.Target, args);
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException($"Factory method returned null for service type {serviceType.Name}.");
+            }
+            
+            InvokeActivationCallbacks(instance);
+            return instance;
+        });
+
+        _registeredTypes.Add(serviceType);
+        _serviceProviderActions.Add(provider => provider.GetRequiredService(serviceType));
+
+        return this;
     }
 
     internal IServiceProvider BuildServiceProvider()
