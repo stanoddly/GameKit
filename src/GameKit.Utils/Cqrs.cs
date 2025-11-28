@@ -5,7 +5,7 @@ public abstract class CommandHandler<TCommand>
     public abstract void Handle(TCommand command);
 }
 
-public abstract class QueryHandler<TQuery, TResult>
+public abstract class QueryHandler<TQueryArg, TResult>
 {
-    public abstract TResult Handle(TQuery query);
+    public abstract TResult Handle(TQueryArg queryArg);
 }
