@@ -14,7 +14,7 @@ static class Program
 
         gameKitAppBuilder
             .RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-        gameKitAppBuilder.RegisterFunc(TriangleRenderer.Create);
+        gameKitAppBuilder.RegisterFunc<IRenderer<DefaultRenderContext>>(TriangleRenderer.Create);
 
         using IGameKitApp gameKitApp = gameKitAppBuilder.Build();
         return gameKitApp.Run();

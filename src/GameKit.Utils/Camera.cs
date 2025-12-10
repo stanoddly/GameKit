@@ -11,6 +11,7 @@ public abstract class Camera
     
     private Matrix4x4 _viewMatrix;
     private Matrix4x4 _projectionMatrix;
+    private Matrix4x4 _viewProjectionMatrix;
     
     private bool _viewDirty = true;
     private bool _projectionDirty = true;
@@ -94,12 +95,26 @@ public abstract class Camera
             return _projectionMatrix;
         }
     }
+    
+    public Matrix4x4 ViewProjectionMatrix
+    {
+        get
+        {
+            if (_projectionDirty || _viewDirty)
+            {
+                // flags are cleared by the getters
+                _viewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+            }
+
+            return _viewProjectionMatrix;
+        }
+    }
 
     protected void MarkProjectionDirty() => _projectionDirty = true;
 
     private Matrix4x4 ComputeViewMatrix()
     {
-        Vector3 forward = Vector3.Transform(Vector3.UnitZ, _rotation);
+        Vector3 forward = Vector3.Transform(-Vector3.UnitZ, _rotation);
         Vector3 up = Vector3.Transform(Vector3.UnitY, _rotation);
         
         return Matrix4x4.CreateLookAtLeftHanded(_position, _position + forward, up);

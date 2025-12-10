@@ -15,6 +15,11 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
         _renderers = renderers.OrderBy(r => r.Order).ToArray();
+        
+        if (_renderers.Length == 0)
+        {
+            throw new ArgumentException("No instances of Renderer<TRenderContext> were registered");
+        }
     }
 
     public void Execute()
