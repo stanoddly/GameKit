@@ -18,7 +18,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
         
         if (_renderers.Length == 0)
         {
-            throw new ArgumentException("No instances of Renderer<TRenderContext> were registered");
+            throw new ArgumentException($"No instances of {typeof(IRenderer<TRenderContext>).FullName} were registered");
         }
     }
 
