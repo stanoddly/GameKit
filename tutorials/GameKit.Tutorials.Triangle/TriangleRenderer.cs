@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.Triangle;
 
-public class TriangleRenderer: IRenderer<DefaultRenderContext>
+public class TriangleRenderer: IRenderPhase<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
@@ -33,7 +33,7 @@ public class TriangleRenderer: IRenderer<DefaultRenderContext>
         // renderPass is disposed and rendered
     }
     
-    public static IRenderer<DefaultRenderContext> Create(ShaderLoader shaderLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem)
+    public static TriangleRenderer Create(ShaderLoader shaderLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem)
     {
         GpuVertexBuffer<PositionVertex> quadVertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
 

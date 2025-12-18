@@ -13,7 +13,7 @@ static class Program
             .UseDefaultRenderManager();
 
         builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-        builder.RegisterType<NullRenderer<DefaultRenderContext>>().As<IRenderer<DefaultRenderContext>>();
+        builder.RegisterType<NullRenderPhase<DefaultRenderContext>>().As<IRenderPhase<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

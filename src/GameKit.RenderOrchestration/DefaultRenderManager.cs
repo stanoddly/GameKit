@@ -6,11 +6,11 @@ namespace GameKit.RenderOrchestration;
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IDisposable
 {
-    private readonly IRenderer<TRenderContext>[] _renderers;
+    private readonly IRenderPhase<TRenderContext>[] _renderers;
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
 
-    public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, IEnumerable<IRenderer<TRenderContext>> renderers)
+    public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, IEnumerable<IRenderPhase<TRenderContext>> renderers)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
@@ -18,7 +18,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
         
         if (_renderers.Length == 0)
         {
-            throw new ArgumentException($"No instances of {typeof(IRenderer<TRenderContext>).FullName} were registered");
+            throw new ArgumentException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
         }
     }
 
@@ -31,7 +31,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            foreach (IRenderer<TRenderContext> renderer in _renderers)
+            foreach (IRenderPhase<TRenderContext> renderer in _renderers)
             {
                 renderer.Render(renderContext);
             }
