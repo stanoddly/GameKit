@@ -3,6 +3,10 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
+/// <summary>
+/// Manages the overall rendering process by coordinating multiple render phases.
+/// </summary>
+/// <typeparam name="TRenderContext">The type of the render context used by the render phases.</typeparam>
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IDisposable
 {
@@ -22,6 +26,9 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
         }
     }
 
+    /// <summary>
+    /// Executes the rendering pipeline for a single frame.
+    /// </summary>
     public void Execute()
     {
         if (!_renderContextProvider.TryProvide(out TRenderContext? renderContext))
