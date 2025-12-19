@@ -43,9 +43,9 @@ public abstract class Texture: IDisposable
 public class UserTexture: Texture
 {
     private readonly IGpuDevice _gpuDevice;
-    internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
-    public TextureFormat Format { get; }
-    public ShortSize Size { get; }
+    internal new Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
+    public new TextureFormat Format { get; }
+    public new ShortSize Size { get; }
 
     internal UserTexture(IGpuDevice gpuDevice, Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format) : base(sdlGpuTexture, size, format)
     {

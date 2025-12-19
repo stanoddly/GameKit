@@ -126,7 +126,7 @@ public class FastList<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default;
+            swappedValue = default!;
             return false;
         }
 
@@ -307,7 +307,7 @@ public struct FastListStruct<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default;
+            swappedValue = default!;
             return false;
         }
 

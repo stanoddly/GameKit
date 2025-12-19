@@ -12,17 +12,16 @@ internal static class ComponentTypeHelper
     // https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming?pivots=dotnet-8-0#dynamicallyaccessedmembers
     internal static List<int> GetComponentTypeHandledEventArgs<TComponent>(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TComponent obj
-    )
+    ) where TComponent: notnull
     {
         Type objectType = obj.GetType();
-        ref List<int>? items = ref CollectionsMarshal.GetValueRefOrAddDefault(Cache, objectType, out bool exists);
-
-        if (exists)
+        if (Cache.TryGetValue(objectType, out var items))
         {
             return items!;
         }
 
         items = [];
+        Cache[objectType] = items;
 
         foreach (var whateverInterface in objectType.GetInterfaces())
         {
@@ -44,7 +43,7 @@ public class EventBus
     // TODO: this can be a slot map, but a slot map should work with uint first
     private readonly Dictionary<int, List<object>> _eventHandlersPerType = new();
 
-    public void Subscribe<TSubscriber>(TSubscriber obj)
+    public void Subscribe<TSubscriber>(TSubscriber obj) where TSubscriber: notnull
     {
         List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
 
@@ -86,7 +85,7 @@ public class EventBus
         value.Remove(obj);
     }
 
-    public void Unsubscribe<TSubscriber>(TSubscriber obj)
+    public void Unsubscribe<TSubscriber>(TSubscriber obj) where TSubscriber: notnull
     {
         List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
         foreach (var whateverInterface in componentTypeHandledEventArgs)

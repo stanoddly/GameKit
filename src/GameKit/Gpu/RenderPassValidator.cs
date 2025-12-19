@@ -18,6 +18,11 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
         where TVertexType : unmanaged, IVertexType;
 
     /// <summary>
+    /// Called when vertex samplers are bound to the render pass.
+    /// </summary>
+    void OnBindVertexSamplers(RenderPass<TSelfValidator> renderPass, uint slot, int samplerCount);
+
+    /// <summary>
     /// Called when fragment samplers are bound to the render pass.
     /// </summary>
     void OnBindFragmentSamplers(RenderPass<TSelfValidator> renderPass, uint slot, int samplerCount);
@@ -60,6 +65,10 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     {
         _verticesCount = (uint)buffer.Size;
         _vertexBufferVertexType = VertexTypeId<TVertexType>.Value;
+    }
+
+    public void OnBindVertexSamplers(RenderPass<RenderPassValidator> renderPass, uint slot, int samplerCount)
+    {
     }
 
     public void OnBindFragmentSamplers(RenderPass<RenderPassValidator> renderPass, uint slot, int samplerCount)
@@ -112,6 +121,10 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
 
     public void OnBindVertexBuffer<TVertexType>(RenderPass<NullRenderPassValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType
+    {
+    }
+
+    public void OnBindVertexSamplers(RenderPass<NullRenderPassValidator> renderPass, uint slot, int samplerCount)
     {
     }
 

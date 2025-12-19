@@ -17,7 +17,6 @@ public class KeyboardService : IKeyboardService
 
     public event KeyDownEventHandler? KeyDown;
     public event KeyUpEventHandler? KeyUp;
-    public event KeyUpEventHandler? MotionUp;
     
     internal KeyboardService(AppControl appControl)
     {
