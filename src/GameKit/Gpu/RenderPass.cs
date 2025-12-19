@@ -60,6 +60,29 @@ public class RenderPass<TValidator> : IRenderPass
     }
     
 
+    public void BindVertexSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
+    {
+        ThrowIfDisposed();
+        
+        byte numSamplers = (byte)Math.Max(_vertexShaderBindingCounts.NumSamplers, slot + textures.Length);
+        _vertexShaderBindingCounts = _vertexShaderBindingCounts with { NumSamplers = numSamplers };
+
+        _validator.OnBindVertexSamplers(this, slot, textures.Length);
+
+        unsafe {
+            SDL_GPUTextureSamplerBinding* sdlGpuBufferBindings =
+                stackalloc SDL_GPUTextureSamplerBinding[textures.Length];
+
+            for (int i = 0; i < textures.Length; i++)
+            {
+                sdlGpuBufferBindings[i] = new SDL_GPUTextureSamplerBinding
+                    { texture = textures[i].SdlGpuTexture, sampler = sampler.Pointer };
+            }
+
+            SDL3.SDL_BindGPUVertexSamplers(_nativePointer, slot, sdlGpuBufferBindings, (uint)textures.Length);
+        }
+    }
+
     public void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();

@@ -64,7 +64,7 @@ internal class Window : IWindow
 
     public bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
-        swapchainTexture = default;
+        swapchainTexture = default!;
         uint width, height;
 
         unsafe

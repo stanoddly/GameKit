@@ -8,7 +8,6 @@ namespace GameKit.Gpu;
 
 internal class GpuDevice : IGpuDevice
 {
-    private static readonly (float r, float g, float b, float a) DefaultClearColor = (0.3f, 0.4f, 0.5f, 1.0f);
     private readonly List<Texture> _textures = new();
     private readonly List<GpuVertexBuffer> _vertexBuffers = new();
     private readonly List<Sampler> _samplers = new();
