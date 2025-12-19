@@ -23,7 +23,6 @@ internal static class ComponentTypeHelper
         }
 
         items = [];
-        Cache[objectType] = items;
 
         foreach (var whateverInterface in objectType.GetInterfaces())
         {
