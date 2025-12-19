@@ -1,0 +1,29 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GameKit.AStar/GameKit.AStar.csproj" />
+    <Project Path="src/GameKit.Collections/GameKit.Collections.csproj" />
+    <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
+    <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
+    <Project Path="src/GameKit.Encs/GameKit.Encs.csproj" />
+    <Project Path="src/GameKit.ImageLoader.StbImageSharp/GameKit.ImageLoader.StbImageSharp.csproj" />
+    <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />
+    <Project Path="src/GameKit.SdlangCompileLib/GameKit.SdlangCompileLib.csproj" />
+    <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
+    <Project Path="src/GameKit.SdlangCompileTask/GameKit.SdlangCompileTask.csproj" />
+    <Project Path="src/GameKit.ShaderCommon/GameKit.ShaderCommon.csproj" />
+    <Project Path="src/GameKit.Uiui/GameKit.Uiui.csproj" />
+    <Project Path="src/GameKit.Utils/GameKit.Utils.csproj" />
+    <Project Path="src/GameKit/GameKit.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GameKit.Collections.Tests/GameKit.Collections.Tests.csproj" />
+    <Project Path="tests/GameKit.Componentize.Tests/GameKit.Componentize.Tests.csproj" />
+    <Project Path="tests/GameKit.Content.Tests/GameKit.Content.Tests.csproj" />
+    <Project Path="tests/GameKit.SdlangCompileLib.Tests/GameKit.SdlangCompileLib.Tests.csproj" />
+    <Project Path="tests/GameKit.SdlangCompileTask.Tests/GameKit.SdlangCompileTask.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tutorials/">
+    <Project Path="tutorials/GameKit.Tutorial.WindowCreation/GameKit.Tutorial.WindowCreation.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.Triangle/GameKit.Tutorials.Triangle.csproj" />
+  </Folder>
+</Solution>
