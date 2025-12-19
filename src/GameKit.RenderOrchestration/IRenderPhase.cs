@@ -12,7 +12,9 @@ public interface IOrderable
 }
 
 /// <summary>
-/// Represents a distinct phase in the rendering pipeline.
+/// Represents a distinct phase in the rendering pipeline. This could include stages like
+/// culling, shadow map generation, deferred shading (e.g., lighting, ambient occlusion),
+/// post-processing, and UI rendering.
 /// </summary>
 /// <typeparam name="TRenderContext">The type of the render context required by this phase.</typeparam>
 public interface IRenderPhase<in TRenderContext>: IOrderable
