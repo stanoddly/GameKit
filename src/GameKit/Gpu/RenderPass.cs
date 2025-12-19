@@ -109,9 +109,30 @@ public class RenderPass<TValidator> : IRenderPass
     public void BindFragmentSampler(Texture texture, Sampler sampler)
     {
         ThrowIfDisposed();
-        
+
         ReadOnlySpan<Texture> textures = [texture];
         BindFragmentSamplers(textures, sampler, 0);
+    }
+
+    public void BindFragmentSamplerArray(TextureArray textureArray, Sampler sampler, uint slot = 0)
+    {
+        ThrowIfDisposed();
+
+        byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + 1);
+        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
+
+        _validator.OnBindFragmentSamplers(this, slot, 1);
+
+        unsafe
+        {
+            SDL_GPUTextureSamplerBinding sdlGpuBufferBinding = new SDL_GPUTextureSamplerBinding
+            {
+                texture = textureArray.SdlGpuTexture,
+                sampler = sampler.Pointer
+            };
+
+            SDL3.SDL_BindGPUFragmentSamplers(_nativePointer, slot, &sdlGpuBufferBinding, 1);
+        }
     }
     
     public void DrawPrimitive()

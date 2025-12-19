@@ -9,5 +9,6 @@ public interface IRenderPass: IDisposable
 
     void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0);
     void BindFragmentSampler(Texture texture, Sampler sampler);
+    void BindFragmentSamplerArray(TextureArray textureArray, Sampler sampler, uint slot = 0);
     void DrawPrimitive();
 }

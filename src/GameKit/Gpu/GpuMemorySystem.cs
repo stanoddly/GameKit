@@ -43,7 +43,12 @@ public class GpuMemorySystem: ICopyPass
     {
         return GetOrCreateCopyPass().CreateTexture(image);
     }
-    
+
+    public TextureArray CreateTextureArray(ReadOnlySpan<Image> images)
+    {
+        return GetOrCreateCopyPass().CreateTextureArray(images);
+    }
+
     public void Dispose()
     {
         Submit();
