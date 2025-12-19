@@ -15,7 +15,9 @@ internal static class ComponentTypeHelper
     ) where TComponent: notnull
     {
         Type objectType = obj.GetType();
-        if (Cache.TryGetValue(objectType, out var items))
+        ref List<int>? items = ref CollectionsMarshal.GetValueRefOrAddDefault(Cache, objectType, out bool exists);
+
+        if (exists)
         {
             return items!;
         }
