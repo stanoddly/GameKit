@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using GameKit.Common;
 using GameKit.Content;
 using GameKit.Utilities;
 using SDL;
@@ -171,6 +172,92 @@ public class CopyPass: ICopyPass
             Texture texture = new UserTexture(_gpuDevice, sdlGpuTexture, (width, height), TextureFormat.R8G8B8A8Unorm);
             _gpuDevice.RegisterTexture(texture);
             return texture;
+        }
+    }
+
+    public TextureArray CreateTextureArray(ReadOnlySpan<Image> images)
+    {
+        if (images.Length == 0)
+        {
+            throw new ArgumentException("At least one image required", nameof(images));
+        }
+
+        ShortSize size = images[0].Size;
+        for (int i = 1; i < images.Length; i++)
+        {
+            if (images[i].Size != size)
+            {
+                throw new ArgumentException(
+                    $"All images must have same size. Image[0]={size}, Image[{i}]={images[i].Size}",
+                    nameof(images));
+            }
+        }
+
+        SdlError.Clear();
+
+        (ushort width, ushort height) = size;
+        uint layerCount = (uint)images.Length;
+        uint bytesPerPixel = 4; // R8G8B8A8
+        uint bytesPerLayer = (uint)(width * height * bytesPerPixel);
+
+        unsafe
+        {
+            SDL_GPUTextureCreateInfo sdlGpuTextureCreateInfo = new SDL_GPUTextureCreateInfo
+            {
+                type = SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D_ARRAY,
+                format = SDL_GPUTextureFormat.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
+                width = width,
+                height = height,
+                layer_count_or_depth = layerCount,
+                num_levels = 1,
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+                // TODO: this is actually SDL bug
+                props = SDL3.SDL_CreateProperties()
+            };
+            Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
+            SdlError.ThrowOnError();
+
+            for (int layer = 0; layer < images.Length; layer++)
+            {
+                ReadOnlySpan<byte> imageData = images[layer].Data;
+                uint sizeInBytes = (uint)imageData.Length;
+
+                SDL_GPUTransferBuffer* textureTransferBuffer = CreateAndTrackTransferBuffer(bytesPerLayer);
+
+                byte* textureTransfer = (byte*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, false);
+                fixed (byte* textureDataPointer = imageData)
+                {
+                    Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
+                }
+                SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer);
+                SdlError.ThrowOnError();
+
+                SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo
+                {
+                    transfer_buffer = textureTransferBuffer,
+                    offset = 0
+                };
+
+                SDL_GPUTextureRegion sdlGpuTextureRegion = new SDL_GPUTextureRegion
+                {
+                    texture = sdlGpuTexture,
+                    layer = (uint)layer,
+                    w = width,
+                    h = height,
+                    d = 1
+                };
+
+                SDL3.SDL_UploadToGPUTexture(
+                    _sdlCopyPass,
+                    &sdlGpuTextureTransferInfo,
+                    &sdlGpuTextureRegion,
+                    false);
+                SdlError.ThrowOnError();
+            }
+
+            TextureArray textureArray = new TextureArray(_gpuDevice, sdlGpuTexture, size, (ushort)layerCount, TextureFormat.R8G8B8A8Unorm);
+            _gpuDevice.RegisterTexture(textureArray);
+            return textureArray;
         }
     }
 

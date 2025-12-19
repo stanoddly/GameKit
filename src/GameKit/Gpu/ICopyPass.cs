@@ -11,4 +11,5 @@ public interface ICopyPass: IDisposable
 
     void UpdateVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> vertexBuffer, ReadOnlySpan<TVertexType> vertices) where TVertexType: unmanaged, IVertexType;
     Texture CreateTexture(Image image);
+    TextureArray CreateTextureArray(ReadOnlySpan<Image> images);
 }

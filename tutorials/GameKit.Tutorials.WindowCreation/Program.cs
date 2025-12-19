@@ -1,7 +1,7 @@
 ﻿using GameKit.App;
 using GameKit.RenderOrchestration;
 
-namespace GameKit.Tutorial.WindowCreation;
+namespace GameKit.Tutorials.WindowCreation;
 
 static class Program
 {
