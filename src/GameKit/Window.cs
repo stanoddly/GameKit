@@ -43,7 +43,25 @@ internal class Window : IWindow
             }
         }
     }
-    
+
+    public bool WindowRelativeMouseMode
+    {
+        get
+        {
+            unsafe
+            {
+                return SDL3.SDL_GetWindowRelativeMouseMode(SdlWindow);
+            }
+        }
+        set
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowRelativeMouseMode(SdlWindow, value);
+            }
+        }
+    }
+
     public bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
         swapchainTexture = default;

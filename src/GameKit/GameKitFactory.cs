@@ -96,7 +96,18 @@ public class GameKitFactory: IDisposable
 
         unsafe
         {
-            Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, GameKitSettings.IsDebugBuild, (byte*)null);
+            SDL_GPUVulkanOptions vulkanOptions = default;
+            vulkanOptions.vulkan_api_version = (1 << 22) | (3 << 12) | 0;
+
+            SDL_PropertiesID props = SDL3.SDL_CreateProperties();
+            SDL_GPUVulkanOptions* vulkanOptionsPointer = &vulkanOptions;
+            SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+            SDL3.SDL_SetPointerProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, (IntPtr)vulkanOptionsPointer);
+
+            Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDeviceWithProperties(props);
+            SDL3.SDL_DestroyProperties(props);
+            
+            //Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, GameKitSettings.IsDebugBuild, (byte*)null);
             if (device.IsNull())
             {
                 throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");

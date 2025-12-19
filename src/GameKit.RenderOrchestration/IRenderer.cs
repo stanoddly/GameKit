@@ -1,11 +1,8 @@
+using GameKit.Gpu;
+
 namespace GameKit.RenderOrchestration;
 
-public interface IOrderable
+public interface IRenderer
 {
-    int Order => 0;
-}
-
-public interface IRenderer<TRenderContext>: IOrderable
-{
-    void Render(TRenderContext renderContext);
+    void Render(CommandBuffer commandBuffer, IRenderPass screenRenderPass);
 }

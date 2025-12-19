@@ -7,7 +7,6 @@ namespace GameKit.Gpu;
 
 public interface ICommandBuffer: IDisposable
 {
-    IRenderPassBuilder RenderPassBuilder { get; }
     void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void BlitTextures(Texture source, Texture destination);
@@ -19,7 +18,6 @@ public class CommandBuffer: ICommandBuffer
 {
     private readonly GpuDevice _gpuDevice;
     private Pointer<SDL_GPUCommandBuffer> _sdlGpuCommandBuffer;
-    private readonly IRenderPassBuilder _renderPassBuilder;
     private ShaderUniformSlotSizes _fragmentShaderUniformSlotSizes;
     private ShaderUniformSlotSizes _vertexShaderUniformSlotSizes;
 
@@ -29,8 +27,6 @@ public class CommandBuffer: ICommandBuffer
         private set => _sdlGpuCommandBuffer = value;
     }
 
-    public IRenderPassBuilder RenderPassBuilder => _renderPassBuilder;
-
     public ShaderUniformSlotSizes FragmentShaderUniformSlotSizes => _fragmentShaderUniformSlotSizes;
     public ShaderUniformSlotSizes VertexShaderUniformSlotSizes => _vertexShaderUniformSlotSizes;
 
@@ -38,7 +34,6 @@ public class CommandBuffer: ICommandBuffer
     {
         _gpuDevice = gpuDevice;
         SdlGpuCommandBuffer = sdlCommandBuffer;
-        _renderPassBuilder = new RenderPassBuilder(this);
     }
 
     internal void Submit()

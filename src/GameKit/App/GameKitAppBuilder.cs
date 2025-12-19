@@ -56,12 +56,11 @@ public class GameKitAppBuilder
     {
         return _moduleBuilder.RegisterInstance(instance);
     }
-
-
-    public GameModuleRegistrar<TService> RegisterFunc<TService>(Func<IServiceProvider, TService> factory)
+    
+    public GameModuleRegistrar<TService> RegisterFunc<TService>(Delegate factory)
         where TService : class
     {
-        return _moduleBuilder.RegisterFunc(factory);
+        return _moduleBuilder.RegisterFunc<TService>(factory);
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)

@@ -99,7 +99,7 @@ public class SdlangCompiler
 
     private static readonly Dictionary<ShaderFormatDto, List<string>> CommandLineOptions = new()
     {
-        { ShaderFormatDto.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl"] },
+        { ShaderFormatDto.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl", "-profile", "glsl_460"] },
         { ShaderFormatDto.Dxil, ["-profile", "sm_6_3"] },
         { ShaderFormatDto.Msl, [] }
     };

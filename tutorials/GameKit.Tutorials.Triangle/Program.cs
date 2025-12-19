@@ -7,16 +7,16 @@ static class Program
 {
     static int Main(string[] args)
     {
-        var gameKitAppBuilder = new GameKitAppBuilder()
+        var builder = new GameKitAppBuilder()
             //.AddContentFromZipPattern("data*.pak")
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 
-        gameKitAppBuilder
+        builder
             .RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-        gameKitAppBuilder.RegisterFunc(TriangleRenderer.Create);
+        builder.RegisterFunc<TriangleRenderer>(TriangleRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
 
-        using IGameKitApp gameKitApp = gameKitAppBuilder.Build();
+        using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
     }
 }

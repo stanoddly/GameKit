@@ -10,6 +10,7 @@ public interface IWindow : IDisposable
     ShortSize RenderSizeInPixels { get; }
     
     TextureFormat ColorTargetFormat { get; }
-    
+    bool WindowRelativeMouseMode { get; set; }
+
     bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);
 }

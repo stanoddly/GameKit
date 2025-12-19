@@ -6,7 +6,6 @@ public class DefaultRenderContext: IDisposable
 {
     public SwapchainTexture SwapchainTexture { get; }
     public CommandBuffer CommandBuffer { get; }
-    public IRenderPassBuilder RenderPassBuilder => CommandBuffer.RenderPassBuilder;
 
     public DefaultRenderContext(SwapchainTexture swapchainTexture, CommandBuffer commandBuffer)
     {
