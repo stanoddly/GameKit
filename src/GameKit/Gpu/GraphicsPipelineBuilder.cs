@@ -357,7 +357,13 @@ public class GraphicsPipelineBuilder
         _info.RasterizerState.FrontFace = frontFace;
         return this;
     }
-    
+
+    public GraphicsPipelineBuilder SetFillMode(FillMode fillMode)
+    {
+        _info.RasterizerState.FillMode = fillMode;
+        return this;
+    }
+
     public GraphicsPipeline Build()
     {
         Span<SDL_GPUColorTargetDescription> sdlGpuColorTargetDescriptions =
@@ -431,7 +437,7 @@ public class GraphicsPipelineBuilder
                     depth_stencil_state = _info.SdlGpuDepthStencilState,
                     rasterizer_state = new SDL_GPURasterizerState
                     {
-                        fill_mode = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
+                        fill_mode = (SDL_GPUFillMode)_info.RasterizerState.FillMode,
                         cull_mode = (SDL_GPUCullMode)_info.RasterizerState.CullMode,
                         front_face = (SDL_GPUFrontFace)_info.RasterizerState.FrontFace
                     }
