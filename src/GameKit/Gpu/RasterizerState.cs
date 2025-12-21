@@ -11,11 +11,32 @@ public class RasterizerState
     /// Gets or sets the culling mode for polygons.
     /// </summary>
     public CullMode CullMode { get; set; }
-    
+
     /// <summary>
     /// Gets or sets which face is considered the front face for culling.
     /// </summary>
     public FrontFace FrontFace { get; set; }
+
+    /// <summary>
+    /// Gets or sets the polygon fill mode.
+    /// </summary>
+    public FillMode FillMode { get; set; } = FillMode.Fill;
+}
+
+/// <summary>
+/// Defines the polygon fill mode.
+/// </summary>
+public enum FillMode
+{
+    /// <summary>
+    /// Polygons are filled solid.
+    /// </summary>
+    Fill = SDL_GPUFillMode.SDL_GPU_FILLMODE_FILL,
+
+    /// <summary>
+    /// Polygons are rendered as wireframe lines.
+    /// </summary>
+    Line = SDL_GPUFillMode.SDL_GPU_FILLMODE_LINE
 }
 
 /// <summary>
