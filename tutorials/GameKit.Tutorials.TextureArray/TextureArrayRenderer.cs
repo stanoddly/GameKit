@@ -71,7 +71,7 @@ public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
             gpuMemorySystem.CreateVertexBuffer(PositionTextureShapes.VerticalQuad);
 
         // Create sampler
-        Sampler sampler = gpuDevice.CreatePixelArtSampler();
+        Sampler sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
 
         // Build graphics pipeline
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder

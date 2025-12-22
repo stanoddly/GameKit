@@ -9,9 +9,7 @@ public interface IGpuDevice : IDisposable, IInitializable
     
     CommandBuffer AcquireCommandBuffer();
     
-    Sampler CreatePixelArtSampler();
-    
-    Sampler CreateLinearSampler();
+    Sampler CreateSampler(SamplerConfig config);
     
     Texture CreateDepthBufferTexture(ShortSize size, DepthBufferFormat format, bool sampler = false);
     

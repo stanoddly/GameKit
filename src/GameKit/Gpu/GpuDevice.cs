@@ -49,44 +49,25 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
-    public Sampler CreatePixelArtSampler()
+    public Sampler CreateSampler(SamplerConfig config)
     {
         SDL_GPUSamplerCreateInfo sdlGpuSamplerCreateInfo = new SDL_GPUSamplerCreateInfo()
         {
-            min_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-            mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-            mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-            address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            compare_op = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
-            enable_compare = true
+            min_filter = (SDL_GPUFilter)config.MinFilter,
+            mag_filter = (SDL_GPUFilter)config.MagFilter,
+            mipmap_mode = (SDL_GPUSamplerMipmapMode)config.MipmapMode,
+            address_mode_u = (SDL_GPUSamplerAddressMode)config.AddressModeU,
+            address_mode_v = (SDL_GPUSamplerAddressMode)config.AddressModeV,
+            address_mode_w = (SDL_GPUSamplerAddressMode)config.AddressModeW,
+            mip_lod_bias = config.MipLodBias,
+            min_lod = config.MinLod,
+            max_lod = config.MaxLod,
+            max_anisotropy = config.MaxAnisotropy,
+            enable_anisotropy = config.EnableAnisotropy,
+            compare_op = (SDL_GPUCompareOp)config.CompareOp,
+            enable_compare = config.EnableCompare
         };
-        unsafe
-        {
-            Pointer<SDL_GPUSampler> samplerPointer = SDL3.SDL_CreateGPUSampler(SdlGpuDevice, &sdlGpuSamplerCreateInfo);
-            SdlError.ThrowOnNull(samplerPointer);
 
-            var sampler = new Sampler(this, samplerPointer);
-            _samplers.Add(sampler);
-            return sampler;
-        }
-    }
-
-    public Sampler CreateLinearSampler()
-    {
-        SDL_GPUSamplerCreateInfo sdlGpuSamplerCreateInfo = new SDL_GPUSamplerCreateInfo()
-        {
-            min_filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
-            mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_LINEAR,
-            mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-            address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-            compare_op = SDL_GPUCompareOp.SDL_GPU_COMPAREOP_NEVER,
-            enable_compare = false
-        };
-        
         unsafe
         {
             Pointer<SDL_GPUSampler> samplerPointer = SDL3.SDL_CreateGPUSampler(SdlGpuDevice, &sdlGpuSamplerCreateInfo);
