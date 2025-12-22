@@ -64,44 +64,37 @@ public enum SamplerMipmapMode : byte
     Linear=SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_LINEAR
 }
 
-/*public class SamplerFactory
+public record SamplerConfig(
+    TextureFilter MinFilter = default,
+    TextureFilter MagFilter = default,
+    SamplerMipmapMode MipmapMode = default,
+    SamplerAddressMode AddressModeU = default,
+    SamplerAddressMode AddressModeV = default,
+    SamplerAddressMode AddressModeW = default,
+    float MipLodBias = default,
+    float MinLod = default,
+    float MaxLod = default,
+    float MaxAnisotropy = default,
+    bool EnableAnisotropy = default,
+    CompareOperation CompareOp = default,
+    bool EnableCompare = default
+)
 {
-    private GpuDevice _gpuDevice;
+    public static readonly SamplerConfig PixelArt = new(
+        MinFilter: TextureFilter.Nearest,
+        MagFilter: TextureFilter.Nearest,
+        MipmapMode: SamplerMipmapMode.Nearest,
+        AddressModeU: SamplerAddressMode.ClampToEdge,
+        AddressModeV: SamplerAddressMode.ClampToEdge,
+        AddressModeW: SamplerAddressMode.ClampToEdge
+    );
 
-    public SamplerFactory(GpuDevice gpuDevice)
-    {
-        _gpuDevice = gpuDevice;
-    }
-
-    public Sampler CreateSampler(SamplerAddressModes addressModes)
-    {
-        SDL_GPUSamplerCreateInfo sdlGpuSamplerCreateInfo = new SDL_GPUSamplerCreateInfo()
-        {
-            min_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-            mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-            mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-            address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-            address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-            address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-        };
-    }
-    
-        public Sampler CreatePixelArtSampler()
-   {
-       SDL_GPUSamplerCreateInfo sdlGpuSamplerCreateInfo = new SDL_GPUSamplerCreateInfo()
-       {
-           min_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-           mag_filter = SDL_GPUFilter.SDL_GPU_FILTER_NEAREST,
-           mipmap_mode = SDL_GPUSamplerMipmapMode.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-           address_mode_u = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-           address_mode_v = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-           address_mode_w = SDL_GPUSamplerAddressMode.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-       };
-       unsafe
-       {
-           Pointer<SDL_GPUSampler> samplerPointer = SDL3.SDL_CreateGPUSampler(_gpuDevice.SdlGpuDevice, &sdlGpuSamplerCreateInfo);
-
-           return new Sampler(samplerPointer);
-       }
-   }
-}*/
+    public static readonly SamplerConfig Linear = new(
+        MinFilter: TextureFilter.Linear,
+        MagFilter: TextureFilter.Linear,
+        MipmapMode: SamplerMipmapMode.Linear,
+        AddressModeU: SamplerAddressMode.ClampToEdge,
+        AddressModeV: SamplerAddressMode.ClampToEdge,
+        AddressModeW: SamplerAddressMode.ClampToEdge
+    );
+}

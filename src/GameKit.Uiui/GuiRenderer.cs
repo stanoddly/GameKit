@@ -58,7 +58,7 @@ public static class GuiRendererFactory
             .EnableDepthTesting(guiRendererConfig.DepthBufferFormat)
             .Build();
 
-        var sampler = gpuDevice.CreatePixelArtSampler();
+        var sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
 
         return new GuiRenderer(vertexBuffer, texturePipeline, colorPipeline, textureColorPipeline, sampler, guiResolutionProvider);
     }
