@@ -99,7 +99,7 @@ public class SdlangCompiler
 
     private static readonly Dictionary<ShaderFormatDto, List<string>> CommandLineOptions = new()
     {
-        { ShaderFormatDto.SpirV, ["-capability", "glsl_spirv_1_0", "-emit-spirv-via-glsl", "-profile", "glsl_460"] },
+        { ShaderFormatDto.SpirV, [] },
         { ShaderFormatDto.Dxil, ["-profile", "sm_6_3"] },
         { ShaderFormatDto.Msl, [] }
     };
@@ -113,7 +113,7 @@ public class SdlangCompiler
         List<string> args = new List<string>
         {
             filePath.FullName,
-            "-warnings-disable", "39013,39001",
+            "-warnings-disable", "39001,39013,39029",
             "-reflection-json", reflectionFile.FullName
         };
 
