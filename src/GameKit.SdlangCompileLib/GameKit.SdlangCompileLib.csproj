@@ -64,17 +64,53 @@
         <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
     </Target>
 
-    <!-- Mark Slang files as content to be copied to output directory -->
-    <ItemGroup>
-        <Content Include="$(BaseIntermediateOutputPath)$(SlangDirName)/bin/**/*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>bin/%(RecursiveDir)%(Filename)%(Extension)</Link>
-        </Content>
-        <Content Include="$(BaseIntermediateOutputPath)$(SlangDirName)/lib/**/*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>lib/%(RecursiveDir)%(Filename)%(Extension)</Link>
-        </Content>
-    </ItemGroup>
+    <!-- Copy Slang files to output directory after extraction -->
+    <!-- This must run after extraction so the files exist, and before the build completes -->
+    <Target Name="CopySlangToOutput" AfterTargets="ExtractSlang" BeforeTargets="Build">
+        <PropertyGroup>
+            <SlangSourceBinDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin</SlangSourceBinDir>
+            <SlangSourceLibDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib</SlangSourceLibDir>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <SlangBinFiles Include="$(SlangSourceBinDir)/**/*" />
+            <SlangLibFiles Include="$(SlangSourceLibDir)/**/*" />
+        </ItemGroup>
+
+        <Copy SourceFiles="@(SlangBinFiles)"
+              DestinationFiles="@(SlangBinFiles->'$(OutputPath)bin/%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(SlangLibFiles)"
+              DestinationFiles="@(SlangLibFiles->'$(OutputPath)lib/%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+    </Target>
+
+    <!-- Add Slang files to content collection for transitive copying to dependent projects -->
+    <!-- This runs after extraction and before GetCopyToOutputDirectoryItems collects items -->
+    <Target Name="AddSlangContentItems" DependsOnTargets="ExtractSlang" BeforeTargets="GetCopyToOutputDirectoryItems;AssignTargetPaths">
+        <PropertyGroup>
+            <SlangBinSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin/</SlangBinSourceDir>
+            <SlangLibSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib/</SlangLibSourceDir>
+        </PropertyGroup>
+
+        <!-- Collect files first, then add to Content with computed TargetPath -->
+        <ItemGroup>
+            <_SlangBinContent Include="$(SlangBinSourceDir)**/*" />
+            <_SlangLibContent Include="$(SlangLibSourceDir)**/*" />
+        </ItemGroup>
+
+        <!-- Add to ContentWithTargetPath directly for proper copying -->
+        <ItemGroup>
+            <ContentWithTargetPath Include="@(_SlangBinContent)">
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+                <TargetPath>bin/$([MSBuild]::MakeRelative('$(SlangBinSourceDir)', '%(FullPath)'))</TargetPath>
+            </ContentWithTargetPath>
+            <ContentWithTargetPath Include="@(_SlangLibContent)">
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+                <TargetPath>lib/$([MSBuild]::MakeRelative('$(SlangLibSourceDir)', '%(FullPath)'))</TargetPath>
+            </ContentWithTargetPath>
+        </ItemGroup>
+    </Target>
     <ItemGroup>
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>
