@@ -1,10 +1,12 @@
+using System.Reflection;
+
 namespace GameKit.Content;
 
 public class FileSystemBuilder
 {
     private readonly List<VirtualFileSystem> _fileSystems = new();
     private bool _cached = false;
-    
+
     public FileSystemBuilder AddContentFromDirectory(string directory)
     {
         AddSourceFileSystem(new NativeFileSystem(directory));
@@ -19,47 +21,47 @@ public class FileSystemBuilder
 
     public FileSystemBuilder AddContentFromProjectDirectory(string? subdirectory = null)
     {
-        string currentDir = Directory.GetCurrentDirectory();
-        string[] currentDirParts = currentDir.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        string? projectDirectory = GetProjectDirectory();
 
-        if (currentDirParts.Length < 3 || !currentDirParts[^1].StartsWith("net") || currentDirParts[^3] != "bin")
+        if (projectDirectory == null)
         {
             throw new InvalidOperationException(
-                "Either you forget to add a filesystem configuration or have an invalid project structure, expected to be running from 'bin/[configuration]/net*' directory.");
+                "Unable to determine project directory. Ensure you are running from the project directory or from 'bin/[configuration]/net*' directory.");
         }
 
-        string[] parts;
+        string contentDirectory = subdirectory != null
+            ? Path.Combine(projectDirectory, subdirectory)
+            : projectDirectory;
 
-        if (subdirectory != null)
-        {
-            parts = new string[currentDirParts.Length - 2];
-
-            for (int i = 0; i < currentDirParts.Length - 3; i++)
-            {
-                parts[i] = currentDirParts[i];
-            }
-            parts[^1] = subdirectory;
-        }
-        else
-        {
-            parts = new string[currentDirParts.Length - 3];
-
-            for (int i = 0; i < currentDirParts.Length - 3; i++)
-            {
-                parts[i] = currentDirParts[i];
-            }
-        }
-        
-        string directoryName = Path.Combine(parts);
-
-        if (NativeFileSystem.NativeDirSeparatorIsSlash)
-        {
-            directoryName = Path.DirectorySeparatorChar + directoryName;
-        }
-        
-        AddContentFromDirectory(directoryName);
+        AddContentFromDirectory(contentDirectory);
 
         return this;
+    }
+
+    private static string? GetProjectDirectory()
+    {
+        // Get the directory from the entry assembly location
+        string? assemblyLocation = Assembly.GetEntryAssembly()?.Location;
+
+        if (string.IsNullOrEmpty(assemblyLocation))
+        {
+            return null;
+        }
+
+        // Walk up from the assembly directory until we find a .csproj file
+        DirectoryInfo? dir = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
+
+        while (dir != null)
+        {
+            if (dir.GetFiles("*.csproj").Length > 0)
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return null;
     }
 
     public FileSystemBuilder AddContentFromZip(string filename)
