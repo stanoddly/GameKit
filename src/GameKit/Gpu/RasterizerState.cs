@@ -21,6 +21,31 @@ public class RasterizerState
     /// Gets or sets the polygon fill mode.
     /// </summary>
     public FillMode FillMode { get; set; } = FillMode.Fill;
+
+    /// <summary>
+    /// A scalar factor controlling the depth value added to each fragment.
+    /// </summary>
+    public float DepthBiasConstantFactor { get; set; }
+
+    /// <summary>
+    /// The maximum depth bias of a fragment.
+    /// </summary>
+    public float DepthBiasClamp { get; set; }
+
+    /// <summary>
+    /// A scalar factor applied to a fragment's slope in depth calculations.
+    /// </summary>
+    public float DepthBiasSlopeFactor { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to bias fragment depth values.
+    /// </summary>
+    public bool EnableDepthBias { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to enable depth clip (true) or depth clamp (false).
+    /// </summary>
+    public bool EnableDepthClip { get; set; }
 }
 
 /// <summary>
