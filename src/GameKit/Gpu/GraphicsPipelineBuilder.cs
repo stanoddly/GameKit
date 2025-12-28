@@ -364,6 +364,36 @@ public class GraphicsPipelineBuilder
         return this;
     }
 
+    public GraphicsPipelineBuilder SetDepthBiasConstantFactor(float depthBiasConstantFactor)
+    {
+        _info.RasterizerState.DepthBiasConstantFactor = depthBiasConstantFactor;
+        return this;
+    }
+
+    public GraphicsPipelineBuilder SetDepthBiasClamp(float depthBiasClamp)
+    {
+        _info.RasterizerState.DepthBiasClamp = depthBiasClamp;
+        return this;
+    }
+
+    public GraphicsPipelineBuilder SetDepthBiasSlopeFactor(float depthBiasSlopeFactor)
+    {
+        _info.RasterizerState.DepthBiasSlopeFactor = depthBiasSlopeFactor;
+        return this;
+    }
+
+    public GraphicsPipelineBuilder SetEnableDepthBias(bool enableDepthBias)
+    {
+        _info.RasterizerState.EnableDepthBias = enableDepthBias;
+        return this;
+    }
+
+    public GraphicsPipelineBuilder SetEnableDepthClip(bool enableDepthClip)
+    {
+        _info.RasterizerState.EnableDepthClip = enableDepthClip;
+        return this;
+    }
+
     public GraphicsPipeline Build()
     {
         Span<SDL_GPUColorTargetDescription> sdlGpuColorTargetDescriptions =
@@ -439,7 +469,12 @@ public class GraphicsPipelineBuilder
                     {
                         fill_mode = (SDL_GPUFillMode)_info.RasterizerState.FillMode,
                         cull_mode = (SDL_GPUCullMode)_info.RasterizerState.CullMode,
-                        front_face = (SDL_GPUFrontFace)_info.RasterizerState.FrontFace
+                        front_face = (SDL_GPUFrontFace)_info.RasterizerState.FrontFace,
+                        depth_bias_constant_factor = _info.RasterizerState.DepthBiasConstantFactor,
+                        depth_bias_clamp = _info.RasterizerState.DepthBiasClamp,
+                        depth_bias_slope_factor = _info.RasterizerState.DepthBiasSlopeFactor,
+                        enable_depth_bias = _info.RasterizerState.EnableDepthBias,
+                        enable_depth_clip = _info.RasterizerState.EnableDepthClip
                     }
                 };
 
