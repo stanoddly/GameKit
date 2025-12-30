@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GameKit\GameKit.csproj" />
+        <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+    </ItemGroup>
+
+    <!-- Import the task's props and targets files -->
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <!-- Compile shaders before build -->
+    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
+        <ItemGroup>
+            <SdlangShader Include="Content\shaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+    </Target>
+
+    <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
+    <ItemGroup>
+        <EmbeddedResource Include="Content\shaders\compiled\noop.metadata.json" LogicalName="shaders/compiled/noop.metadata.json" />
+        <EmbeddedResource Include="Content\shaders\compiled\noop.spv" LogicalName="shaders/compiled/noop.spv" />
+    </ItemGroup>
+
+</Project>

@@ -119,6 +119,16 @@ public class GraphicsPipelineBuilder
     private readonly IContentLoader<Shader> _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
+    /// <summary>
+    /// Gets the shader loader for loading shaders from the virtual file system.
+    /// </summary>
+    public IContentLoader<Shader> ShaderLoader => _shaderLoader;
+
+    /// <summary>
+    /// Indicates whether the pipeline is configured for vertex-only mode (no color targets, internal fragment shader).
+    /// </summary>
+    public bool IsVertexOnlyMode { get; set; }
+
     internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader)
     {
         _gpuDevice = gpuDevice;
@@ -239,8 +249,36 @@ public class GraphicsPipelineBuilder
     {
         Shader vertexShader = _shaderLoader.Load(vertexShaderPath);
         Shader fragmentShader = _shaderLoader.Load(fragmentShaderPath);
-        
+
         return SetShaders(vertexShader, fragmentShader);
+    }
+
+    /// <summary>
+    /// Sets only the vertex shader. Use with SetFragmentShader for vertex-only pipeline support.
+    /// </summary>
+    public GraphicsPipelineBuilder SetVertexShader(Shader vertexShader)
+    {
+        if (vertexShader.Stage != ShaderStage.Vertex)
+        {
+            throw new ArgumentException("vertexShader.Stage != ShaderStage.Vertex");
+        }
+
+        _info.VertexShader = vertexShader;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets only the fragment shader. Use with SetVertexShader for vertex-only pipeline support.
+    /// </summary>
+    public GraphicsPipelineBuilder SetFragmentShader(Shader fragmentShader)
+    {
+        if (fragmentShader.Stage != ShaderStage.Fragment)
+        {
+            throw new ArgumentException("fragmentShader.Stage != ShaderStage.Fragment");
+        }
+
+        _info.FragmentShader = fragmentShader;
+        return this;
     }
 
     public GraphicsPipelineBuilder SetPrimitiveType(PrimitiveType primitiveType)
@@ -408,7 +446,7 @@ public class GraphicsPipelineBuilder
             throw new NotImplementedException();
         }
 
-        if (sdlGpuColorTargetDescriptions.Length == 0)
+        if (sdlGpuColorTargetDescriptions.Length == 0 && !IsVertexOnlyMode)
         {
             // TODO: change
             throw new NotImplementedException();

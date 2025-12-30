@@ -14,6 +14,7 @@
     <Project Path="src/GameKit.Uiui/GameKit.Uiui.csproj" />
     <Project Path="src/GameKit.Utils/GameKit.Utils.csproj" />
     <Project Path="src/GameKit/GameKit.csproj" />
+    <Project Path="src/GameKit.VertexShaderOnly/GameKit.VertexShaderOnly.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GameKit.Collections.Tests/GameKit.Collections.Tests.csproj" />
