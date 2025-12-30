@@ -38,10 +38,6 @@ public static class GraphicsPipelineBuilderExtensions
                 ex);
         }
 
-        builder.SetVertexShader(vertexShader);
-        builder.SetFragmentShader(fragmentShader);
-        builder.IsVertexOnlyMode = true;
-
-        return builder;
+        return builder.SetShaders(vertexShader, fragmentShader);
     }
 }
