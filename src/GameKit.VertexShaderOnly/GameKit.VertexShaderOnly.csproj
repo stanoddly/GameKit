@@ -26,7 +26,12 @@
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
     <ItemGroup>
-        <EmbeddedResource Include="Content\shaders\compiled\*" LogicalName="shaders/compiled/%(Filename)%(Extension)" />
+        <Content Remove="Content\shaders\compiled\**\*" />
+        <None Remove="Content\shaders\compiled\**\*" />
+        <EmbeddedResource Include="Content\shaders\compiled\**\*">
+            <WithCulture>false</WithCulture>
+            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/compiled/','shaders/compiled/').Replace('\','/'))</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
 </Project>
