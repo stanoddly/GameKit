@@ -25,6 +25,9 @@
     </Target>
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
+    <!-- WithCulture=false is required because .NET SDK interprets "metadata" in filenames like
+         noop.metadata.json as a culture name, placing them in satellite assemblies instead of
+         the main assembly. See: https://github.com/dotnet/sdk/issues/2644 -->
     <ItemGroup>
         <Content Remove="Content\shaders\compiled\**\*" />
         <None Remove="Content\shaders\compiled\**\*" />
