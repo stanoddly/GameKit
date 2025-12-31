@@ -26,8 +26,7 @@
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
     <ItemGroup>
-        <EmbeddedResource Include="Content\shaders\compiled\noop.metadata.json" LogicalName="shaders/compiled/noop.metadata.json" />
-        <EmbeddedResource Include="Content\shaders\compiled\noop.spv" LogicalName="shaders/compiled/noop.spv" />
+        <EmbeddedResource Include="Content\shaders\compiled\*" LogicalName="shaders/compiled/%(Filename)%(Extension)" />
     </ItemGroup>
 
 </Project>
