@@ -13,7 +13,7 @@ public readonly struct GameModuleRegistrar<TService> where TService: class
     {
         if (!typeof(TTarget).IsAssignableFrom(typeof(TService)))
         {
-            throw new Exception();
+            throw new ArgumentException($"{typeof(TService).Name} is not assignable to {typeof(TTarget).Name}.");
         }
         
         _builder.RegisterAs<TService, TTarget>();

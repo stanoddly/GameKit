@@ -20,7 +20,7 @@ public sealed class EmbeddedFile : VirtualFile
 
         if (stream == null)
         {
-            throw new Exception();
+            throw new FileNotFoundException($"Embedded resource not found: {Path}");
         }
 
         return stream;

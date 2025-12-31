@@ -31,8 +31,7 @@ public class ShaderLoader: IContentLoader<Shader>
             }
         }
 
-        // TODO: better exception
-        throw new Exception();
+        throw new NotSupportedException("No compatible shader format found for this GPU.");
     }
 
     private Shader CreateShader(string directory, ShaderInstance shaderInstance, ShaderBindingLayout shaderBindingLayout, ShaderStage shaderStage)

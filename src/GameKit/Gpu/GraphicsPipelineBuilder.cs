@@ -409,32 +409,27 @@ public class GraphicsPipelineBuilder
 
         if (_info.VertexBufferId == VertexTypeId.Null)
         {
-            // TODO: change
-            throw new NotImplementedException();
+            throw new InvalidOperationException("VertexBufferId is not set.");
         }
 
         if (sdlGpuVertexBufferDescription.Length == 0)
         {
-            // TODO: change
-            throw new NotImplementedException();
+            throw new InvalidOperationException("No vertex buffer descriptions configured.");
         }
-        
+
         if (sdlGpuVertexAttributes.Length == 0)
         {
-            // TODO: change
-            throw new NotImplementedException();
+            throw new InvalidOperationException("No vertex attributes configured.");
         }
 
         if (_info.VertexShader?.Pointer.IsNull() ?? false)
         {
-            // TODO: change
-            throw new NotImplementedException();
+            throw new InvalidOperationException("Vertex shader has null pointer.");
         }
 
         if (_info.FragmentShader?.Pointer.IsNull() ?? false)
         {
-            // TODO: change
-            throw new NotImplementedException();
+            throw new InvalidOperationException("Fragment shader has null pointer.");
         }
         
         unsafe

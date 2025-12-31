@@ -159,7 +159,7 @@ public class CommandBuffer: ICommandBuffer
     {
         if (slot > 4)
         {
-            throw new Exception();
+            throw new ArgumentOutOfRangeException(nameof(slot), slot, "Slot must be between 0 and 4.");
         }
 
         byte byteSize = (byte)size;
