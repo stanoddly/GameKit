@@ -83,20 +83,22 @@ public class RenderPassBuilder : IRenderPassBuilder
     {
         bool hasShared = _state.SharedColorTargetSettings != null;
         bool hasPerTarget = _state.ColorTargetSettings.Count > 0;
+        bool hasColorTargets = _state.ColorTargets.Count > 0;
+        bool hasDepthBuffer = _state.DepthBuffer != null;
 
         if (hasShared && hasPerTarget)
         {
             throw new InvalidOperationException("Cannot have both shared and per-target settings set at once.");
         }
 
-        if (!hasShared && !hasPerTarget)
+        if (hasColorTargets && !hasShared && !hasPerTarget)
         {
-            throw new InvalidOperationException("Must have either shared or per-target settings set.");
+            throw new InvalidOperationException("Must have either shared or per-target settings set when using color targets.");
         }
 
-        if (_state.ColorTargets.Count == 0)
+        if (!hasColorTargets && !hasDepthBuffer)
         {
-            throw new InvalidOperationException("At least one color target is required.");
+            throw new InvalidOperationException("At least one color target or a depth buffer is required.");
         }
 
         if (hasShared)

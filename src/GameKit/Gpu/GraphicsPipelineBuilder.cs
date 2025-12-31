@@ -119,6 +119,11 @@ public class GraphicsPipelineBuilder
     private readonly IContentLoader<Shader> _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
+    /// <summary>
+    /// Gets the shader loader for loading shaders from the virtual file system.
+    /// </summary>
+    public IContentLoader<Shader> ShaderLoader => _shaderLoader;
+
     internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader)
     {
         _gpuDevice = gpuDevice;
@@ -239,7 +244,7 @@ public class GraphicsPipelineBuilder
     {
         Shader vertexShader = _shaderLoader.Load(vertexShaderPath);
         Shader fragmentShader = _shaderLoader.Load(fragmentShaderPath);
-        
+
         return SetShaders(vertexShader, fragmentShader);
     }
 
@@ -408,12 +413,6 @@ public class GraphicsPipelineBuilder
             throw new NotImplementedException();
         }
 
-        if (sdlGpuColorTargetDescriptions.Length == 0)
-        {
-            // TODO: change
-            throw new NotImplementedException();
-        }
-        
         if (sdlGpuVertexBufferDescription.Length == 0)
         {
             // TODO: change

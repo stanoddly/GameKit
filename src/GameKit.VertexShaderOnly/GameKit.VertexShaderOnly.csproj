@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GameKit\GameKit.csproj" />
+        <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+    </ItemGroup>
+
+    <!-- Import the task's props and targets files -->
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <!-- Compile shaders before build -->
+    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
+        <ItemGroup>
+            <SdlangShader Include="Content\shaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+    </Target>
+
+    <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
+    <!-- WithCulture=false is required because .NET SDK interprets "metadata" in filenames like
+         noop.metadata.json as a culture name, placing them in satellite assemblies instead of
+         the main assembly. See: https://github.com/dotnet/sdk/issues/2644 -->
+    <ItemGroup>
+        <Content Remove="Content\shaders\compiled\**\*" />
+        <None Remove="Content\shaders\compiled\**\*" />
+        <EmbeddedResource Include="Content\shaders\compiled\**\*">
+            <WithCulture>false</WithCulture>
+            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/compiled/','shaders/compiled/').Replace('\','/'))</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+</Project>
