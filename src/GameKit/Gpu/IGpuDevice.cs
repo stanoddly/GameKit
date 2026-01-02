@@ -30,8 +30,12 @@ public interface IGpuDevice : IDisposable, IInitializable
     void ReleaseShader(Shader shader);
     
     void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer);
-    
+
     void ReleaseSampler(Sampler sampler);
-    
+
+    void RegisterStorageBuffer(GpuStorageBuffer storageBuffer);
+
+    void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer);
+
     GpuVertexBuffer<TVertexType> CreateVertexBuffer<TVertexType>(int length) where TVertexType : unmanaged, IVertexType;
 }

@@ -110,6 +110,77 @@ public class CopyPass: ICopyPass
         vertexBuffer.Size = vertices.Length;
     }
 
+    public GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged
+    {
+        uint sizeBytes = (uint)(Unsafe.SizeOf<T>() * data.Length);
+        unsafe
+        {
+            SDL_GPUBufferCreateInfo sdlGpuBufferCreateInfo = new SDL_GPUBufferCreateInfo()
+            {
+                usage = SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+                size = sizeBytes
+            };
+
+            SDL_GPUBuffer* rawBuffer = SDL3.SDL_CreateGPUBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuBufferCreateInfo);
+
+            SDL_GPUTransferBuffer* transferBuffer = CreateAndTrackTransferBuffer(sizeBytes);
+
+            T* transferBufferPointer = (T*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
+            Span<T> transferBufferSpan = new Span<T>(transferBufferPointer, data.Length);
+
+            data.CopyTo(transferBufferSpan);
+
+            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer);
+
+            SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
+            SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
+                { buffer = rawBuffer, offset = 0, size = sizeBytes };
+
+            SDL3.SDL_UploadToGPUBuffer(_sdlCopyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
+
+            GpuStorageBuffer<T> storageBuffer = new GpuStorageBuffer<T>(_gpuDevice, rawBuffer, data.Length);
+            _gpuDevice.RegisterStorageBuffer(storageBuffer);
+            return storageBuffer;
+        }
+    }
+
+    public void UpdateStorageBuffer<T>(GpuStorageBuffer<T> storageBuffer, ReadOnlySpan<T> data) where T : unmanaged
+    {
+        uint sizeBytes = (uint)(Unsafe.SizeOf<T>() * data.Length);
+
+        if (sizeBytes == 0)
+        {
+            throw new ArgumentException($"{nameof(data.Length)} is 0");
+        }
+
+        uint bufferSizeBytes = (uint)storageBuffer.BufferSizeBytes;
+
+        if (sizeBytes > bufferSizeBytes)
+        {
+            throw new ArgumentException($"{nameof(data)} cannot fit to {nameof(storageBuffer)}");
+        }
+
+        unsafe
+        {
+            SDL_GPUTransferBuffer* transferBuffer = CreateAndTrackTransferBuffer(sizeBytes);
+
+            T* transferBufferPointer = (T*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
+            Span<T> transferBufferSpan = new Span<T>(transferBufferPointer, data.Length);
+
+            data.CopyTo(transferBufferSpan);
+
+            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer);
+
+            SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
+            SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
+                { buffer = storageBuffer.SdlBuffer, offset = 0, size = sizeBytes };
+
+            SDL3.SDL_UploadToGPUBuffer(_sdlCopyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
+        }
+
+        storageBuffer.Size = data.Length;
+    }
+
     public Texture CreateTexture(Image image)
     {
         SdlError.Clear();
