@@ -6,6 +6,17 @@ using GameKit.ShaderCommon;
 
 namespace GameKit.SdlangCompileLib;
 
+internal enum ResourceType
+{
+    SampledTexture,
+    StorageTexture,
+    StorageBuffer,
+    Sampler,
+    UniformBuffer
+}
+
+internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
+
 public class SdlangCompiler
 {
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
@@ -174,6 +185,91 @@ public class SdlangCompiler
         return (reflectionFile, shaderInstances);
     }
 
+    private static void ValidateBindings(ShaderStageDto stage, List<ResourceBinding> bindings)
+    {
+        // Determine expected spaces based on shader stage
+        // SDL GPU requires:
+        // - Vertex: textures/samplers/buffers in space 0, uniforms in space 1
+        // - Fragment: textures/samplers/buffers in space 2, uniforms in space 3
+        int expectedResourceSpace = stage == ShaderStageDto.Vertex ? 0 : 2;
+        int expectedUniformSpace = stage == ShaderStageDto.Vertex ? 1 : 3;
+        string stageName = stage == ShaderStageDto.Vertex ? "vertex" : "fragment";
+
+        // Validate space for each binding
+        foreach (var binding in bindings)
+        {
+            int expectedSpace = binding.Type == ResourceType.UniformBuffer ? expectedUniformSpace : expectedResourceSpace;
+            if (binding.Space != expectedSpace)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Parameter '{binding.Name}' in {stageName} shader uses space {binding.Space}, " +
+                    $"but SDL GPU requires space {expectedSpace} for {GetResourceTypeName(binding.Type)}");
+            }
+        }
+
+        // Validate index ordering within the resource space (sampled textures, then storage textures, then storage buffers)
+        var resourceBindings = bindings
+            .Where(b => b.Type != ResourceType.UniformBuffer && b.Type != ResourceType.Sampler)
+            .OrderBy(b => b.Index)
+            .ToList();
+
+        if (resourceBindings.Count == 0)
+            return;
+
+        // Group by type and verify ordering
+        var sampledTextures = resourceBindings.Where(b => b.Type == ResourceType.SampledTexture).ToList();
+        var storageTextures = resourceBindings.Where(b => b.Type == ResourceType.StorageTexture).ToList();
+        var storageBuffers = resourceBindings.Where(b => b.Type == ResourceType.StorageBuffer).ToList();
+
+        int expectedIndex = 0;
+
+        // Validate sampled textures come first and are contiguous starting at 0
+        foreach (var tex in sampledTextures.OrderBy(t => t.Index))
+        {
+            if (tex.Index != expectedIndex)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Sampled texture '{tex.Name}' has index {tex.Index}, but expected {expectedIndex}. " +
+                    $"SDL GPU requires sampled textures at indices 0..N-1");
+            }
+            expectedIndex++;
+        }
+
+        // Validate storage textures come next
+        foreach (var tex in storageTextures.OrderBy(t => t.Index))
+        {
+            if (tex.Index != expectedIndex)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Storage texture '{tex.Name}' has index {tex.Index}, but expected {expectedIndex}. " +
+                    $"SDL GPU requires storage textures immediately after sampled textures");
+            }
+            expectedIndex++;
+        }
+
+        // Validate storage buffers come last
+        foreach (var buf in storageBuffers.OrderBy(b => b.Index))
+        {
+            if (buf.Index != expectedIndex)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Storage buffer '{buf.Name}' has index {buf.Index}, but expected {expectedIndex}. " +
+                    $"SDL GPU requires storage buffers immediately after storage textures");
+            }
+            expectedIndex++;
+        }
+    }
+
+    private static string GetResourceTypeName(ResourceType type) => type switch
+    {
+        ResourceType.SampledTexture => "sampled textures",
+        ResourceType.StorageTexture => "storage textures",
+        ResourceType.StorageBuffer => "storage buffers",
+        ResourceType.Sampler => "samplers",
+        ResourceType.UniformBuffer => "uniform buffers",
+        _ => type.ToString()
+    };
+
     private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources) ParseReflectionData(
         FileInfo reflectionFile)
     {
@@ -210,6 +306,8 @@ public class SdlangCompiler
         byte storageTextures = 0;
         byte storageBuffers = 0;
 
+        List<ResourceBinding> resourceBindings = new();
+
         if (root.TryGetProperty("parameters", out JsonElement parameters))
         {
             foreach (JsonElement param in parameters.EnumerateArray())
@@ -218,10 +316,16 @@ public class SdlangCompiler
                     paramType.TryGetProperty("kind", out JsonElement kindElement))
                 {
                     string? kind = kindElement.GetString();
+                    string paramName = param.TryGetProperty("name", out JsonElement nameEl)
+                        ? nameEl.GetString() ?? "unknown"
+                        : "unknown";
+                    (int space, int index) = GetBindingInfo(param);
+
                     switch (kind)
                     {
                         case "samplerState":
                             samplers++;
+                            resourceBindings.Add(new ResourceBinding(paramName, ResourceType.Sampler, space, index));
                             break;
                         case "resource":
                             if (paramType.TryGetProperty("baseShape", out JsonElement baseShapeElement))
@@ -230,19 +334,49 @@ public class SdlangCompiler
                                 if (baseShape == "structuredBuffer")
                                 {
                                     storageBuffers++;
+                                    resourceBindings.Add(new ResourceBinding(paramName, ResourceType.StorageBuffer, space, index));
+                                }
+                                else
+                                {
+                                    // texture2D and other texture types are sampled textures
+                                    resourceBindings.Add(new ResourceBinding(paramName, ResourceType.SampledTexture, space, index));
                                 }
                             }
                             break;
                         case "constantBuffer":
                             AdjustUniformBuffers(param, ref shaderUniformSlots);
+                            resourceBindings.Add(new ResourceBinding(paramName, ResourceType.UniformBuffer, space, index));
                             break;
                     }
                 }
             }
         }
 
+        // Validate bindings conform to SDL GPU requirements
+        ValidateBindings(stage, resourceBindings);
+
         ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(new ShaderBindingCounts(samplers, storageTextures, storageBuffers), shaderUniformSlots);
         return (entryPoint, stage, shaderBindingLayout);
+    }
+
+    private static (int space, int index) GetBindingInfo(JsonElement param)
+    {
+        int space = 0;
+        int index = 0;
+
+        if (param.TryGetProperty("binding", out JsonElement binding))
+        {
+            if (binding.TryGetProperty("space", out JsonElement spaceEl))
+            {
+                space = spaceEl.GetInt32();
+            }
+            if (binding.TryGetProperty("index", out JsonElement indexEl))
+            {
+                index = indexEl.GetInt32();
+            }
+        }
+
+        return (space, index);
     }
 
     private static void AdjustUniformBuffers(JsonElement param, ref ShaderUniformSlotSizes shaderUniformSlots)
