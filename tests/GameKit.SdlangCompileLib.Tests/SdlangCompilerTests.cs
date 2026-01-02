@@ -6,13 +6,115 @@ namespace GameKit.SdlangCompileLib.Tests;
 public class SdlangCompilerTests
 {
     private const string ShaderContent = """
+                                         [shader("vertex")]
+                                         float4 main(float3 position : POSITION) : SV_POSITION
+                                         {
+                                             return float4(position, 1.0);
+                                         }
+                                         """;
 
-                                          [shader("vertex")]
-                                          float4 main(float3 position : POSITION) : SV_POSITION
-                                          {
-                                              return float4(position, 1.0);
-                                          }
-                                          """;
+    private const string ValidVertexShaderWithBindings = """
+                                                         struct VertexInput {
+                                                             float3 position : POSITION;
+                                                             float2 texCoord : TEXCOORD0;
+                                                         };
+
+                                                         struct VertexOutput {
+                                                             float4 position : SV_Position;
+                                                             float2 texCoord : TEXCOORD0;
+                                                         };
+
+                                                         cbuffer VertexUniforms : register(b0, space1) {
+                                                             float4x4 transform;
+                                                         };
+
+                                                         Texture2D<float4> myTexture : register(t0, space0);
+                                                         SamplerState mySampler : register(s0, space0);
+
+                                                         [shader("vertex")]
+                                                         VertexOutput main(VertexInput input) {
+                                                             VertexOutput output;
+                                                             output.position = mul(transform, float4(input.position, 1.0));
+                                                             output.texCoord = input.texCoord;
+                                                             return output;
+                                                         }
+                                                         """;
+
+    private const string ValidFragmentShaderWithBindings = """
+                                                           struct FragmentInput {
+                                                               float4 position : SV_Position;
+                                                               float2 texCoord : TEXCOORD0;
+                                                           };
+
+                                                           cbuffer FragmentUniforms : register(b0, space3) {
+                                                               float4 tintColor;
+                                                           };
+
+                                                           Texture2D<float4> albedo : register(t0, space2);
+                                                           SamplerState albedoSampler : register(s0, space2);
+
+                                                           [shader("fragment")]
+                                                           float4 main(FragmentInput input) : SV_Target {
+                                                               return albedo.Sample(albedoSampler, input.texCoord) * tintColor;
+                                                           }
+                                                           """;
+
+    private const string FragmentShaderWrongUniformSpace = """
+                                                           struct FragmentInput {
+                                                               float4 position : SV_Position;
+                                                           };
+
+                                                           cbuffer FragmentUniforms : register(b0, space0) {
+                                                               float4 tintColor;
+                                                           };
+
+                                                           [shader("fragment")]
+                                                           float4 main(FragmentInput input) : SV_Target {
+                                                               return tintColor;
+                                                           }
+                                                           """;
+
+    private const string VertexShaderWrongUniformSpace = """
+                                                         cbuffer VertexUniforms : register(b0, space3) {
+                                                             float4x4 transform;
+                                                         };
+
+                                                         [shader("vertex")]
+                                                         float4 main(float3 position : POSITION) : SV_POSITION {
+                                                             return mul(transform, float4(position, 1.0));
+                                                         }
+                                                         """;
+
+    private const string FragmentShaderWrongTextureSpace = """
+                                                           struct FragmentInput {
+                                                               float4 position : SV_Position;
+                                                               float2 texCoord : TEXCOORD0;
+                                                           };
+
+                                                           Texture2D<float4> albedo : register(t0, space0);
+                                                           SamplerState albedoSampler : register(s0, space0);
+
+                                                           [shader("fragment")]
+                                                           float4 main(FragmentInput input) : SV_Target {
+                                                               return albedo.Sample(albedoSampler, input.texCoord);
+                                                           }
+                                                           """;
+
+    private const string FragmentShaderWrongIndexOrder = """
+                                                         struct FragmentInput {
+                                                             float4 position : SV_Position;
+                                                             float2 texCoord : TEXCOORD0;
+                                                         };
+
+                                                         StructuredBuffer<float4> myData : register(t0, space2);
+                                                         Texture2D<float4> albedo : register(t1, space2);
+                                                         SamplerState albedoSampler : register(s0, space2);
+
+                                                         [shader("fragment")]
+                                                         float4 main(FragmentInput input) : SV_Target {
+                                                             return albedo.Sample(albedoSampler, input.texCoord) + myData[0];
+                                                         }
+                                                         """;
 
     private string _testDir = string.Empty;
 
@@ -54,5 +156,92 @@ public class SdlangCompilerTests
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
         Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
         Assert.That(metadata.SourceHash, Is.Not.Empty);
+    }
+
+    [Test]
+    public void CompileShader_ValidVertexShaderWithBindings_Succeeds()
+    {
+        string shaderPath = Path.Combine(_testDir, "valid_vertex.slang");
+        File.WriteAllText(shaderPath, ValidVertexShaderWithBindings);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.Combine(_testDir, "compiled", "valid_vertex.metadata.json");
+        Assert.That(File.Exists(metadataPath), Is.True);
+    }
+
+    [Test]
+    public void CompileShader_ValidFragmentShaderWithBindings_Succeeds()
+    {
+        string shaderPath = Path.Combine(_testDir, "valid_fragment.slang");
+        File.WriteAllText(shaderPath, ValidFragmentShaderWithBindings);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.Combine(_testDir, "compiled", "valid_fragment.metadata.json");
+        Assert.That(File.Exists(metadataPath), Is.True);
+    }
+
+    [Test]
+    public void CompileShader_FragmentShaderWrongUniformSpace_ThrowsValidationException()
+    {
+        string shaderPath = Path.Combine(_testDir, "invalid_fragment.slang");
+        File.WriteAllText(shaderPath, FragmentShaderWrongUniformSpace);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+
+        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+            compiler.Compile([shaderPath], force: true));
+
+        Assert.That(ex.Message, Does.Contain("space 0"));
+        Assert.That(ex.Message, Does.Contain("space 3"));
+        Assert.That(ex.Message, Does.Contain("uniform buffers"));
+    }
+
+    [Test]
+    public void CompileShader_VertexShaderWrongUniformSpace_ThrowsValidationException()
+    {
+        string shaderPath = Path.Combine(_testDir, "invalid_vertex.slang");
+        File.WriteAllText(shaderPath, VertexShaderWrongUniformSpace);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+
+        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+            compiler.Compile([shaderPath], force: true));
+
+        Assert.That(ex.Message, Does.Contain("space 3"));
+        Assert.That(ex.Message, Does.Contain("space 1"));
+        Assert.That(ex.Message, Does.Contain("uniform buffers"));
+    }
+
+    [Test]
+    public void CompileShader_FragmentShaderWrongTextureSpace_ThrowsValidationException()
+    {
+        string shaderPath = Path.Combine(_testDir, "invalid_texture.slang");
+        File.WriteAllText(shaderPath, FragmentShaderWrongTextureSpace);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+
+        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+            compiler.Compile([shaderPath], force: true));
+
+        Assert.That(ex.Message, Does.Contain("space 0"));
+        Assert.That(ex.Message, Does.Contain("space 2"));
+    }
+
+    [Test]
+    public void CompileShader_FragmentShaderWrongIndexOrder_ThrowsValidationException()
+    {
+        string shaderPath = Path.Combine(_testDir, "invalid_order.slang");
+        File.WriteAllText(shaderPath, FragmentShaderWrongIndexOrder);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+
+        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+            compiler.Compile([shaderPath], force: true));
+
+        Assert.That(ex.Message, Does.Contain("index"));
     }
 }
