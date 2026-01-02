@@ -1,4 +1,4 @@
-StructuredBuffer<float4> colors : register(t0, space1);
+StructuredBuffer<float4> colors : register(t0, space2);
 
 ConstantBuffer<int> colorIndex : register(b0, space3);
 
