@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
 using GameKit.ShaderCommon;
@@ -8,6 +9,7 @@ namespace GameKit.SdlangCompileLib;
 public class SdlangCompiler
 {
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
+    private static readonly string SlangVersion = GetSlangVersion();
     
     private static readonly Dictionary<ShaderFormatDto, string> TargetsWithExtensions = new()
     {
@@ -31,6 +33,15 @@ public class SdlangCompiler
         }
 
         return slangPath;
+    }
+
+    private static string GetSlangVersion()
+    {
+        var attribute = typeof(SdlangCompiler).Assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "SlangVersion");
+
+        return attribute?.Value ?? throw new InvalidOperationException("SlangVersion not found in assembly metadata");
     }
 
     public void Compile(string[] filenames, bool force)
@@ -292,7 +303,7 @@ public class SdlangCompiler
     private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
         ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash)
     {
-        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash);
+        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash, SlangVersion);
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
         using FileStream stream = metadataFile.Create();
@@ -314,6 +325,9 @@ public class SdlangCompiler
             ShaderMetadataDto? metadata = JsonSerializer.Deserialize<ShaderMetadataDto>(json);
 
             if (metadata?.SourceHash == null) return false;
+
+            // Force recompilation if slang version is missing or different
+            if (metadata.SlangVersion == null || metadata.SlangVersion != SlangVersion) return false;
 
             string currentHash = CalculateFileHash(filePath);
             return metadata.SourceHash == currentHash;

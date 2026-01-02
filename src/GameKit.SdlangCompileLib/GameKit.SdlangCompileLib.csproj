@@ -115,4 +115,11 @@
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>SlangVersion</_Parameter1>
+        <_Parameter2>$(SlangVersion)</_Parameter2>
+      </AssemblyAttribute>
+    </ItemGroup>
+
 </Project>

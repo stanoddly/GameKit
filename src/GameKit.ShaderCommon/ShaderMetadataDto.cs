@@ -34,4 +34,4 @@ public enum ShaderFormatDto
 
 public record ShaderInstanceDto(ShaderFormatDto Format, string Filename, string EntryPoint);
 
-public record ShaderMetadataDto(ShaderStageDto Stage, ShaderBindingLayout BindingLayout, List<ShaderInstanceDto> Shaders, string SourceHash);
+public record ShaderMetadataDto(ShaderStageDto Stage, ShaderBindingLayout BindingLayout, List<ShaderInstanceDto> Shaders, string SourceHash, string? SlangVersion);
