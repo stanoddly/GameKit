@@ -17,6 +17,8 @@ internal enum ResourceType
 
 internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
 
+public class ShaderBindingValidationException(string message) : Exception(message);
+
 public class SdlangCompiler
 {
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();

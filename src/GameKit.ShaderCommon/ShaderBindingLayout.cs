@@ -45,11 +45,6 @@ public record struct ShaderUniformSlotSizes(byte Slot0, byte Slot1, byte Slot2, 
 /// </summary>
 public class ShaderBindingLayoutValidationException(string message) : Exception(message);
 
-/// <summary>
-/// Exception thrown when shader bindings don't conform to SDL GPU requirements.
-/// </summary>
-public class ShaderBindingValidationException(string message) : Exception(message);
-
 public static class ShaderBindingLayoutValidator
 {
     /// <summary>
