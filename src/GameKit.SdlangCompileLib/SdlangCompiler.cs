@@ -224,7 +224,14 @@ public class SdlangCompiler
                             samplers++;
                             break;
                         case "resource":
-                            // We could potentially check baseShape to determine the resource type
+                            if (paramType.TryGetProperty("baseShape", out JsonElement baseShapeElement))
+                            {
+                                string? baseShape = baseShapeElement.GetString();
+                                if (baseShape == "structuredBuffer")
+                                {
+                                    storageBuffers++;
+                                }
+                            }
                             break;
                         case "constantBuffer":
                             AdjustUniformBuffers(param, ref shaderUniformSlots);
