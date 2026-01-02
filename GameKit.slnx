@@ -27,6 +27,7 @@
     <Project Path="tutorials/GameKit.Tutorials.DepthOnly/GameKit.Tutorials.DepthOnly.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Triangle/GameKit.Tutorials.Triangle.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.WindowCreation/GameKit.Tutorials.WindowCreation.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.StorageBuffer/GameKit.Tutorials.StorageBuffer.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.TextureArray/GameKit.Tutorials.TextureArray.csproj" />
   </Folder>
 </Solution>
