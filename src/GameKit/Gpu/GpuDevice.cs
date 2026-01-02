@@ -10,6 +10,7 @@ internal class GpuDevice : IGpuDevice
 {
     private readonly List<Texture> _textures = new();
     private readonly List<GpuVertexBuffer> _vertexBuffers = new();
+    private readonly List<GpuStorageBuffer> _storageBuffers = new();
     private readonly List<Sampler> _samplers = new();
     private readonly List<GraphicsPipeline> _graphicsPipelines = new();
     private readonly List<Shader> _shaders = new();
@@ -231,6 +232,25 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
+    public void RegisterStorageBuffer(GpuStorageBuffer storageBuffer)
+    {
+        _storageBuffers.Add(storageBuffer);
+    }
+
+    public void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer)
+    {
+        _storageBuffers.Remove(storageBuffer);
+        if (!storageBuffer.SdlBuffer.IsNull())
+        {
+            unsafe
+            {
+                SDL3.SDL_ReleaseGPUBuffer(SdlGpuDevice, storageBuffer.SdlBuffer);
+            }
+
+            storageBuffer.SdlBuffer = default;
+        }
+    }
+
     public void ReleaseSampler(Sampler sampler)
     {
         _samplers.Remove(sampler);
@@ -287,7 +307,15 @@ internal class GpuDevice : IGpuDevice
         {
             ReleaseVertexBuffer(vertexBuffer);
         }
-        
+
+        Span<GpuStorageBuffer> storageBuffersCopy = _storageBuffers.ToArray();
+        _storageBuffers.Clear();
+
+        foreach (GpuStorageBuffer storageBuffer in storageBuffersCopy)
+        {
+            ReleaseStorageBuffer(storageBuffer);
+        }
+
         Span<Texture> texturesCopy = _textures.ToArray();
         _textures.Clear();
 

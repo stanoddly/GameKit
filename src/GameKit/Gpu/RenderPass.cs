@@ -134,7 +134,63 @@ public class RenderPass<TValidator> : IRenderPass
             SDL3.SDL_BindGPUFragmentSamplers(_nativePointer, slot, &sdlGpuBufferBinding, 1);
         }
     }
-    
+
+    public void BindVertexStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0)
+    {
+        ThrowIfDisposed();
+
+        byte numStorageBuffers = (byte)Math.Max(_vertexShaderBindingCounts.NumStorageBuffers, slot + buffers.Length);
+        _vertexShaderBindingCounts = _vertexShaderBindingCounts with { NumStorageBuffers = numStorageBuffers };
+
+        unsafe
+        {
+            SDL_GPUBuffer** sdlBuffers = stackalloc SDL_GPUBuffer*[buffers.Length];
+
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                sdlBuffers[i] = buffers[i].SdlBuffer;
+            }
+
+            SDL3.SDL_BindGPUVertexStorageBuffers(_nativePointer, slot, sdlBuffers, (uint)buffers.Length);
+        }
+    }
+
+    public void BindVertexStorageBuffer(GpuStorageBuffer buffer, uint slot = 0)
+    {
+        ThrowIfDisposed();
+
+        ReadOnlySpan<GpuStorageBuffer> buffers = [buffer];
+        BindVertexStorageBuffers(buffers, slot);
+    }
+
+    public void BindFragmentStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0)
+    {
+        ThrowIfDisposed();
+
+        byte numStorageBuffers = (byte)Math.Max(_fragmentShaderBindingCounts.NumStorageBuffers, slot + buffers.Length);
+        _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumStorageBuffers = numStorageBuffers };
+
+        unsafe
+        {
+            SDL_GPUBuffer** sdlBuffers = stackalloc SDL_GPUBuffer*[buffers.Length];
+
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                sdlBuffers[i] = buffers[i].SdlBuffer;
+            }
+
+            SDL3.SDL_BindGPUFragmentStorageBuffers(_nativePointer, slot, sdlBuffers, (uint)buffers.Length);
+        }
+    }
+
+    public void BindFragmentStorageBuffer(GpuStorageBuffer buffer, uint slot = 0)
+    {
+        ThrowIfDisposed();
+
+        ReadOnlySpan<GpuStorageBuffer> buffers = [buffer];
+        BindFragmentStorageBuffers(buffers, slot);
+    }
+
     public void DrawPrimitive()
     {
         ThrowIfDisposed();

@@ -39,6 +39,16 @@ public class GpuMemorySystem: ICopyPass
         GetOrCreateCopyPass().UpdateVertexBuffer(vertexBuffer, vertices);
     }
 
+    public GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged
+    {
+        return GetOrCreateCopyPass().CreateStorageBuffer(data);
+    }
+
+    public void UpdateStorageBuffer<T>(GpuStorageBuffer<T> storageBuffer, ReadOnlySpan<T> data) where T : unmanaged
+    {
+        GetOrCreateCopyPass().UpdateStorageBuffer(storageBuffer, data);
+    }
+
     public Texture CreateTexture(Image image)
     {
         return GetOrCreateCopyPass().CreateTexture(image);
