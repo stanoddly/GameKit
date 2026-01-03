@@ -14,15 +14,12 @@ public class GpuFence : IDisposable
         Pointer = pointer;
     }
 
-    public bool IsSignaled
+    public bool IsSignaled()
     {
-        get
+        ThrowIfDisposed();
+        unsafe
         {
-            ThrowIfDisposed();
-            unsafe
-            {
-                return SDL3.SDL_QueryGPUFence(_gpuDevice.SdlGpuDevice, Pointer);
-            }
+            return SDL3.SDL_QueryGPUFence(_gpuDevice.SdlGpuDevice, Pointer);
         }
     }
 
