@@ -273,10 +273,32 @@ internal class GpuDevice : IGpuDevice
                 usage = SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_VERTEX,
                 size = sizeBytes
             };
-            
+
             SDL_GPUBuffer* rawVertexBuffer = SDL3.SDL_CreateGPUBuffer(SdlGpuDevice, &sdlGpuBufferCreateInfo);
 
             return new GpuVertexBuffer<TVertexType>(this, rawVertexBuffer, Pointer<SDL_GPUBuffer>.Null, length);
+        }
+    }
+
+    public void WaitForFences(ReadOnlySpan<GpuFence> fences, bool waitAll = true)
+    {
+        if (fences.Length == 0)
+        {
+            return;
+        }
+
+        Span<Pointer<SDL_GPUFence>> fencePointers = stackalloc Pointer<SDL_GPUFence>[fences.Length];
+        for (int i = 0; i < fences.Length; i++)
+        {
+            fencePointers[i] = fences[i].Pointer;
+        }
+
+        unsafe
+        {
+            fixed (Pointer<SDL_GPUFence>* fencePointersPtr = fencePointers)
+            {
+                SDL3.SDL_WaitForGPUFences(SdlGpuDevice, waitAll, (SDL_GPUFence**)fencePointersPtr, (uint)fences.Length);
+            }
         }
     }
 

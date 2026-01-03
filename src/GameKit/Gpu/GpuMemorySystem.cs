@@ -68,7 +68,7 @@ public class GpuMemorySystem: ICopyPass
     {
         _copyPassImplementation?.Dispose();
         _copyPassImplementation = null;
-        _commandBuffer?.Dispose();
+        _commandBuffer?.Submit();
         _commandBuffer = null;
     }
 }

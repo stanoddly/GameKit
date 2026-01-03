@@ -25,6 +25,6 @@ public class DefaultRenderContext: IDisposable
 
     public virtual void Dispose()
     {
-        CommandBuffer.Dispose();
+        CommandBuffer.Submit();
     }
 }
