@@ -9,6 +9,7 @@ public interface ICommandBuffer: IDisposable
 {
     void Submit();
     GpuFence SubmitAndAcquireFence();
+    void Cancel();
     void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void BlitTextures(Texture source, Texture destination);
@@ -241,7 +242,7 @@ public class CommandBuffer: ICommandBuffer
         }
     }
 
-    public void Dispose()
+    public void Cancel()
     {
         if (!SdlGpuCommandBuffer.IsNull())
         {
@@ -251,6 +252,11 @@ public class CommandBuffer: ICommandBuffer
             }
             SdlGpuCommandBuffer = Pointer<SDL_GPUCommandBuffer>.Null;
         }
+    }
+
+    public void Dispose()
+    {
+        Cancel();
     }
 
     private void ThrowIfDisposed()
