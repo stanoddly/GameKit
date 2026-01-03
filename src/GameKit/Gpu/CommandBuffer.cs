@@ -7,6 +7,9 @@ namespace GameKit.Gpu;
 
 public interface ICommandBuffer: IDisposable
 {
+    void Submit();
+    GpuFence SubmitAndAcquireFence();
+    void Cancel();
     void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void BlitTextures(Texture source, Texture destination);
@@ -36,7 +39,7 @@ public class CommandBuffer: ICommandBuffer
         SdlGpuCommandBuffer = sdlCommandBuffer;
     }
 
-    internal void Submit()
+    public void Submit()
     {
         ThrowIfDisposed();
         unsafe
@@ -44,6 +47,23 @@ public class CommandBuffer: ICommandBuffer
             // TODO: error handling
             SDL3.SDL_SubmitGPUCommandBuffer(SdlGpuCommandBuffer);
             SdlGpuCommandBuffer = Pointer<SDL_GPUCommandBuffer>.Null;
+        }
+    }
+
+    public GpuFence SubmitAndAcquireFence()
+    {
+        ThrowIfDisposed();
+        unsafe
+        {
+            SDL_GPUFence* fence = SDL3.SDL_SubmitGPUCommandBufferAndAcquireFence(SdlGpuCommandBuffer);
+            SdlGpuCommandBuffer = Pointer<SDL_GPUCommandBuffer>.Null;
+
+            if (fence == null)
+            {
+                throw new GameKitException($"SDL_SubmitGPUCommandBufferAndAcquireFence failed: {SDL3.SDL_GetError()}");
+            }
+
+            return new GpuFence(_gpuDevice, fence);
         }
     }
     
@@ -222,13 +242,21 @@ public class CommandBuffer: ICommandBuffer
         }
     }
 
-    public void Dispose()
+    public void Cancel()
     {
         if (!SdlGpuCommandBuffer.IsNull())
         {
-            Submit();
+            unsafe
+            {
+                SDL3.SDL_CancelGPUCommandBuffer(SdlGpuCommandBuffer);
+            }
             SdlGpuCommandBuffer = Pointer<SDL_GPUCommandBuffer>.Null;
         }
+    }
+
+    public void Dispose()
+    {
+        Cancel();
     }
 
     private void ThrowIfDisposed()

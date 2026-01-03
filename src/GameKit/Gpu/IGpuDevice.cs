@@ -38,4 +38,6 @@ public interface IGpuDevice : IDisposable, IInitializable
     void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer);
 
     GpuVertexBuffer<TVertexType> CreateVertexBuffer<TVertexType>(int length) where TVertexType : unmanaged, IVertexType;
+
+    void WaitForFences(ReadOnlySpan<GpuFence> fences, bool waitAll = true);
 }
