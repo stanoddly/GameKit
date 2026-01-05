@@ -8,12 +8,12 @@ namespace GameKit.Gpu;
 
 internal class GpuDevice : IGpuDevice
 {
-    private readonly List<Texture> _textures = new();
-    private readonly List<GpuVertexBuffer> _vertexBuffers = new();
-    private readonly List<GpuStorageBuffer> _storageBuffers = new();
-    private readonly List<Sampler> _samplers = new();
-    private readonly List<GraphicsPipeline> _graphicsPipelines = new();
-    private readonly List<Shader> _shaders = new();
+    private LockedSet<Texture> _textures = new();
+    private LockedSet<GpuVertexBuffer> _vertexBuffers = new();
+    private LockedSet<GpuStorageBuffer> _storageBuffers = new();
+    private LockedSet<Sampler> _samplers = new();
+    private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
+    private LockedSet<Shader> _shaders = new();
     private SDL_PropertiesID _dummyProps;
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
@@ -106,9 +106,8 @@ internal class GpuDevice : IGpuDevice
             
             Pointer<SDL_GPUTexture> rawTexture = SDL3.SDL_CreateGPUTexture(SdlGpuDevice, &info);
             SdlError.ThrowOnNull(rawTexture);
-            
-            Texture texture = new UserTexture(this, rawTexture, size, (TextureFormat)format);
 
+            Texture texture = new UserTexture(this, rawTexture, size, (TextureFormat)format);
             _textures.Add(texture);
 
             return texture;
@@ -134,7 +133,7 @@ internal class GpuDevice : IGpuDevice
             
             Pointer<SDL_GPUTexture> rawTexture = SDL3.SDL_CreateGPUTexture(SdlGpuDevice, &info);
             SdlError.ThrowOnNull(rawTexture);
-            
+
             Texture texture = new UserTexture(this, rawTexture, size, format);
             _textures.Add(texture);
 
@@ -142,25 +141,13 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
-    public void RegisterTexture(Texture texture)
-    {
-        _textures.Add(texture);
-    }
+    public void RegisterTexture(Texture texture) => _textures.Add(texture);
 
-    public void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer)
-    {
-        _vertexBuffers.Add(vertexBuffer);
-    }
-    
-    public void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline)
-    {
-        _graphicsPipelines.Add(graphicsPipeline);
-    }
+    public void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer) => _vertexBuffers.Add(vertexBuffer);
 
-    public void RegisterShader(Shader shader)
-    {
-        _shaders.Add(shader);
-    }
+    public void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline) => _graphicsPipelines.Add(graphicsPipeline);
+
+    public void RegisterShader(Shader shader) => _shaders.Add(shader);
 
     public void ReleaseTexture(Texture texture)
     {
@@ -175,7 +162,7 @@ internal class GpuDevice : IGpuDevice
         {
             SDL3.SDL_ReleaseGPUTexture(SdlGpuDevice, texture.SdlGpuTexture);
         }
-        
+
         texture.SdlGpuTexture = Pointer<SDL_GPUTexture>.Null;
     }
     
@@ -192,7 +179,7 @@ internal class GpuDevice : IGpuDevice
         {
             SDL3.SDL_ReleaseGPUGraphicsPipeline(SdlGpuDevice, pointer);
         }
-        
+
         pipeline.Pointer = default;
     }
 
@@ -232,10 +219,7 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
-    public void RegisterStorageBuffer(GpuStorageBuffer storageBuffer)
-    {
-        _storageBuffers.Add(storageBuffer);
-    }
+    public void RegisterStorageBuffer(GpuStorageBuffer storageBuffer) => _storageBuffers.Add(storageBuffer);
 
     public void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer)
     {
@@ -304,51 +288,34 @@ internal class GpuDevice : IGpuDevice
 
     public void Dispose()
     {
-        // The copy and clear each time is to be able to iterate over each element safely while not having to delete
-        // individual item on each Release (because it's empty).
-        Span<GraphicsPipeline> graphicsPipelineCopy = _graphicsPipelines.ToArray();
-        _graphicsPipelines.Clear();
-
-        foreach (GraphicsPipeline graphicsPipeline in graphicsPipelineCopy)
+        // ClearAndCopy atomically copies and clears under lock.
+        // Release methods will find their collections already cleared, so the Remove is a no-op.
+        foreach (GraphicsPipeline graphicsPipeline in _graphicsPipelines.ClearAndCopy())
         {
             ReleaseGraphicsPipeline(graphicsPipeline);
         }
-        
-        Span<Shader> shadersCopy = _shaders.ToArray();
-        _shaders.Clear();
 
-        foreach (Shader shader in shadersCopy)
+        foreach (Shader shader in _shaders.ClearAndCopy())
         {
             ReleaseShader(shader);
         }
 
-        Span<GpuVertexBuffer> vertexBuffersCopy = _vertexBuffers.ToArray();
-        _vertexBuffers.Clear();
-
-        foreach (GpuVertexBuffer vertexBuffer in vertexBuffersCopy)
+        foreach (GpuVertexBuffer vertexBuffer in _vertexBuffers.ClearAndCopy())
         {
             ReleaseVertexBuffer(vertexBuffer);
         }
 
-        Span<GpuStorageBuffer> storageBuffersCopy = _storageBuffers.ToArray();
-        _storageBuffers.Clear();
-
-        foreach (GpuStorageBuffer storageBuffer in storageBuffersCopy)
+        foreach (GpuStorageBuffer storageBuffer in _storageBuffers.ClearAndCopy())
         {
             ReleaseStorageBuffer(storageBuffer);
         }
 
-        Span<Texture> texturesCopy = _textures.ToArray();
-        _textures.Clear();
-
-        foreach (Texture texture in texturesCopy)
+        foreach (Texture texture in _textures.ClearAndCopy())
         {
             ReleaseTexture(texture);
         }
 
-        Span<Sampler> samplersCopy = _samplers.ToArray();
-        _samplers.Clear();
-        foreach (Sampler sampler in samplersCopy)
+        foreach (Sampler sampler in _samplers.ClearAndCopy())
         {
             ReleaseSampler(sampler);
         }
