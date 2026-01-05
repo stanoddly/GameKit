@@ -8,7 +8,12 @@ namespace GameKit.Gpu;
 
 internal class GpuDevice : IGpuDevice
 {
-    private readonly object _resourceLock = new();
+    private readonly Lock _texturesLock = new();
+    private readonly Lock _vertexBuffersLock = new();
+    private readonly Lock _storageBuffersLock = new();
+    private readonly Lock _samplersLock = new();
+    private readonly Lock _graphicsPipelinesLock = new();
+    private readonly Lock _shadersLock = new();
     private readonly HashSet<Texture> _textures = new();
     private readonly HashSet<GpuVertexBuffer> _vertexBuffers = new();
     private readonly HashSet<GpuStorageBuffer> _storageBuffers = new();
@@ -76,7 +81,7 @@ internal class GpuDevice : IGpuDevice
             SdlError.ThrowOnNull(samplerPointer);
 
             var sampler = new Sampler(this, samplerPointer);
-            lock (_resourceLock)
+            lock (_samplersLock)
             {
                 _samplers.Add(sampler);
             }
@@ -113,7 +118,7 @@ internal class GpuDevice : IGpuDevice
 
             Texture texture = new UserTexture(this, rawTexture, size, (TextureFormat)format);
 
-            lock (_resourceLock)
+            lock (_texturesLock)
             {
                 _textures.Add(texture);
             }
@@ -143,7 +148,7 @@ internal class GpuDevice : IGpuDevice
             SdlError.ThrowOnNull(rawTexture);
 
             Texture texture = new UserTexture(this, rawTexture, size, format);
-            lock (_resourceLock)
+            lock (_texturesLock)
             {
                 _textures.Add(texture);
             }
@@ -154,7 +159,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterTexture(Texture texture)
     {
-        lock (_resourceLock)
+        lock (_texturesLock)
         {
             _textures.Add(texture);
         }
@@ -162,7 +167,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer)
     {
-        lock (_resourceLock)
+        lock (_vertexBuffersLock)
         {
             _vertexBuffers.Add(vertexBuffer);
         }
@@ -170,7 +175,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline)
     {
-        lock (_resourceLock)
+        lock (_graphicsPipelinesLock)
         {
             _graphicsPipelines.Add(graphicsPipeline);
         }
@@ -178,7 +183,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterShader(Shader shader)
     {
-        lock (_resourceLock)
+        lock (_shadersLock)
         {
             _shaders.Add(shader);
         }
@@ -186,7 +191,7 @@ internal class GpuDevice : IGpuDevice
 
     public void ReleaseTexture(Texture texture)
     {
-        lock (_resourceLock)
+        lock (_texturesLock)
         {
             _textures.Remove(texture);
         }
@@ -206,7 +211,7 @@ internal class GpuDevice : IGpuDevice
     
     public void ReleaseGraphicsPipeline(GraphicsPipeline pipeline)
     {
-        lock (_resourceLock)
+        lock (_graphicsPipelinesLock)
         {
             _graphicsPipelines.Remove(pipeline);
         }
@@ -226,7 +231,7 @@ internal class GpuDevice : IGpuDevice
 
     public void ReleaseShader(Shader shader)
     {
-        lock (_resourceLock)
+        lock (_shadersLock)
         {
             _shaders.Remove(shader);
         }
@@ -241,7 +246,7 @@ internal class GpuDevice : IGpuDevice
 
     public void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer)
     {
-        lock (_resourceLock)
+        lock (_vertexBuffersLock)
         {
             _vertexBuffers.Remove(vertexBuffer);
         }
@@ -268,7 +273,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterStorageBuffer(GpuStorageBuffer storageBuffer)
     {
-        lock (_resourceLock)
+        lock (_storageBuffersLock)
         {
             _storageBuffers.Add(storageBuffer);
         }
@@ -276,7 +281,7 @@ internal class GpuDevice : IGpuDevice
 
     public void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer)
     {
-        lock (_resourceLock)
+        lock (_storageBuffersLock)
         {
             _storageBuffers.Remove(storageBuffer);
         }
@@ -293,7 +298,7 @@ internal class GpuDevice : IGpuDevice
 
     public void ReleaseSampler(Sampler sampler)
     {
-        lock (_resourceLock)
+        lock (_samplersLock)
         {
             _samplers.Remove(sampler);
         }
@@ -356,23 +361,38 @@ internal class GpuDevice : IGpuDevice
         Texture[] texturesCopy;
         Sampler[] samplersCopy;
 
-        lock (_resourceLock)
+        lock (_graphicsPipelinesLock)
         {
             graphicsPipelineCopy = _graphicsPipelines.ToArray();
             _graphicsPipelines.Clear();
+        }
 
+        lock (_shadersLock)
+        {
             shadersCopy = _shaders.ToArray();
             _shaders.Clear();
+        }
 
+        lock (_vertexBuffersLock)
+        {
             vertexBuffersCopy = _vertexBuffers.ToArray();
             _vertexBuffers.Clear();
+        }
 
+        lock (_storageBuffersLock)
+        {
             storageBuffersCopy = _storageBuffers.ToArray();
             _storageBuffers.Clear();
+        }
 
+        lock (_texturesLock)
+        {
             texturesCopy = _textures.ToArray();
             _textures.Clear();
+        }
 
+        lock (_samplersLock)
+        {
             samplersCopy = _samplers.ToArray();
             _samplers.Clear();
         }
