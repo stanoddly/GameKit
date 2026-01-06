@@ -9,8 +9,14 @@ public class GameKitFactory: IDisposable
 {
     private static readonly Size<uint> DefaultSize = (640, 480);
 
+    private readonly GameKitConfig _config;
     private bool _initialized;
-    
+
+    public GameKitFactory(GameKitConfig config)
+    {
+        _config = config;
+    }
+
     private void EnsureSdlInitialized()
     {
         if (_initialized)
@@ -21,11 +27,11 @@ public class GameKitFactory: IDisposable
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_EVENT_LOGGING, "2");
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-        if (GameKitSettings.IsDebugBuild)
+        if (_config.DebugLogging)
         {
             SDL3.SDL_SetHint(SDL3.SDL_HINT_LOGGING, "*=debug");
         }
-        
+
         SDL_InitFlags initFlags = SDL_InitFlags.SDL_INIT_EVENTS | SDL_InitFlags.SDL_INIT_VIDEO |
                                   SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
         if (SDL3.SDL_Init(initFlags) == false)
@@ -106,8 +112,7 @@ public class GameKitFactory: IDisposable
 
             Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDeviceWithProperties(props);
             SDL3.SDL_DestroyProperties(props);
-            
-            //Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDevice(SDL_GPUShaderFormat.SDL_GPU_SHADERFORMAT_SPIRV, GameKitSettings.IsDebugBuild, (byte*)null);
+
             if (device.IsNull())
             {
                 throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");

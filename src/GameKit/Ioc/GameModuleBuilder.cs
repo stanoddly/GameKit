@@ -72,7 +72,7 @@ public class GameModuleBuilder
         return this;
     }
 
-    public GameModuleRegistrar<TService> RegisterInstance<TService>(TService instance) 
+    public GameModuleRegistrar<TService> RegisterInstance<TService>(TService instance)
         where TService : class
     {
         if (_registeredTypes.Contains(typeof(TService)))
