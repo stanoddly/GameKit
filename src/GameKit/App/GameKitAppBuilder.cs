@@ -99,27 +99,28 @@ public class GameKitAppBuilder
 
     public IGameKitApp Build()
     {
-        GameKitConfig config = _moduleBuilder.GetRegisteredInstance<GameKitConfig>() ?? new GameKitConfig();
-        _moduleBuilder.RegisterInstance(config);
+        if (!_moduleBuilder.IsRegistered(typeof(GameKitConfig)))
+        {
+            _moduleBuilder.RegisterInstance(new GameKitConfig());
+        }
 
-        GameKitFactory gameKitFactory = new GameKitFactory(config);
-        _moduleBuilder.RegisterInstance(gameKitFactory);
+        _moduleBuilder.RegisterType<GameKitFactory>();
 
-        _moduleBuilder.RegisterFunc<Window>(sp => gameKitFactory.CreateWindow(
+        _moduleBuilder.RegisterFunc<Window>(sp => sp.GetRequiredService<GameKitFactory>().CreateWindow(
             sp.GetRequiredService<GpuDevice>(),
             sp.GetRequiredService<AppConfig>()
         )).As<IWindow>();
 
-        _moduleBuilder.RegisterFunc<GpuDevice>(_ => gameKitFactory.CreateGpuDevice()).As<IGpuDevice>();
+        _moduleBuilder.RegisterFunc<GpuDevice>(sp => sp.GetRequiredService<GameKitFactory>().CreateGpuDevice()).As<IGpuDevice>();
         
         _moduleBuilder.RegisterType<GpuMemorySystem>();
         
-        _moduleBuilder.RegisterFunc<KeyboardService>(sp => gameKitFactory.CreateKeyboardService(
+        _moduleBuilder.RegisterFunc<KeyboardService>(sp => sp.GetRequiredService<GameKitFactory>().CreateKeyboardService(
             sp.GetRequiredService<AppControl>())
         ).As<IKeyboardService>();
-        _moduleBuilder.RegisterFunc<GamepadService>(_ => gameKitFactory.CreateGamepadService()).As<IGamepadService>();
-        _moduleBuilder.RegisterFunc<MouseService>(_ => gameKitFactory.CreateMouseService()).As<IMouseService>();
-        _moduleBuilder.RegisterFunc<EventService>(sp => gameKitFactory.CreateEventService(
+        _moduleBuilder.RegisterFunc<GamepadService>(sp => sp.GetRequiredService<GameKitFactory>().CreateGamepadService()).As<IGamepadService>();
+        _moduleBuilder.RegisterFunc<MouseService>(sp => sp.GetRequiredService<GameKitFactory>().CreateMouseService()).As<IMouseService>();
+        _moduleBuilder.RegisterFunc<EventService>(sp => sp.GetRequiredService<GameKitFactory>().CreateEventService(
             sp.GetRequiredService<KeyboardService>(),
             sp.GetRequiredService<GamepadService>(),
             sp.GetRequiredService<MouseService>(),
@@ -140,7 +141,7 @@ public class GameKitAppBuilder
             sp.GetRequiredService<IWindow>(),
             sp.GetRequiredService<ShaderLoader>()
         ));
-        _moduleBuilder.RegisterFunc<GameKitFrameContext>(_ => gameKitFactory.CreateFrameContext()).As<FrameContext>();
+        _moduleBuilder.RegisterFunc<GameKitFrameContext>(sp => sp.GetRequiredService<GameKitFactory>().CreateFrameContext()).As<FrameContext>();
         
         _moduleBuilder.RegisterFunc<FontSystem>(sp => FontSystem.Create(
             sp.GetMandatoryService<GpuMemorySystem>(),
