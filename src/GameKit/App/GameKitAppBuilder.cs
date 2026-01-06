@@ -108,7 +108,14 @@ public class GameKitAppBuilder
             sp.GetRequiredService<AppConfig>()
         )).As<IWindow>();
         
-        _moduleBuilder.RegisterFunc<GpuDevice>(_ => gameKitFactory.CreateGpuDevice()).As<IGpuDevice>();
+        if (!_moduleBuilder.IsRegistered(typeof(GameKitConfig)))
+        {
+            _moduleBuilder.RegisterInstance(new GameKitConfig());
+        }
+
+        _moduleBuilder.RegisterFunc<GpuDevice>(sp => gameKitFactory.CreateGpuDevice(
+            sp.GetRequiredService<GameKitConfig>()
+        )).As<IGpuDevice>();
         
         _moduleBuilder.RegisterType<GpuMemorySystem>();
         
