@@ -10,6 +10,7 @@ public class GameModuleBuilder
     private readonly ServiceCollection _services = new();
     private readonly List<Action<IServiceProvider>> _serviceProviderActions = new();
     private readonly HashSet<Type> _registeredTypes = new();
+    private readonly Dictionary<Type, object> _registeredInstances = new();
     private readonly List<Action<object>> _activationCallbacks = new();
 
     public GameModuleBuilder OnActivated(Action<object> callback)
@@ -72,7 +73,7 @@ public class GameModuleBuilder
         return this;
     }
 
-    public GameModuleRegistrar<TService> RegisterInstance<TService>(TService instance) 
+    public GameModuleRegistrar<TService> RegisterInstance<TService>(TService instance)
         where TService : class
     {
         if (_registeredTypes.Contains(typeof(TService)))
@@ -82,8 +83,14 @@ public class GameModuleBuilder
         InvokeActivationCallbacks(instance);
         _services.AddSingleton(instance);
         _registeredTypes.Add(typeof(TService));
+        _registeredInstances[typeof(TService)] = instance;
 
         return new GameModuleRegistrar<TService>(this);
+    }
+
+    public TService? GetRegisteredInstance<TService>() where TService : class
+    {
+        return _registeredInstances.TryGetValue(typeof(TService), out var instance) ? (TService)instance : null;
     }
     
     public GameModuleRegistrar<TService> RegisterFunc<TService>(Func<IServiceProvider, TService> factory)

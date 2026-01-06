@@ -99,23 +99,18 @@ public class GameKitAppBuilder
 
     public IGameKitApp Build()
     {
-        GameKitFactory gameKitFactory = new GameKitFactory();
+        GameKitConfig config = _moduleBuilder.GetRegisteredInstance<GameKitConfig>() ?? new GameKitConfig();
+        _moduleBuilder.RegisterInstance(config);
 
+        GameKitFactory gameKitFactory = new GameKitFactory(config);
         _moduleBuilder.RegisterInstance(gameKitFactory);
-        
+
         _moduleBuilder.RegisterFunc<Window>(sp => gameKitFactory.CreateWindow(
             sp.GetRequiredService<GpuDevice>(),
             sp.GetRequiredService<AppConfig>()
         )).As<IWindow>();
-        
-        if (!_moduleBuilder.IsRegistered(typeof(GameKitConfig)))
-        {
-            _moduleBuilder.RegisterInstance(new GameKitConfig());
-        }
 
-        _moduleBuilder.RegisterFunc<GpuDevice>(sp => gameKitFactory.CreateGpuDevice(
-            sp.GetRequiredService<GameKitConfig>()
-        )).As<IGpuDevice>();
+        _moduleBuilder.RegisterFunc<GpuDevice>(_ => gameKitFactory.CreateGpuDevice()).As<IGpuDevice>();
         
         _moduleBuilder.RegisterType<GpuMemorySystem>();
         

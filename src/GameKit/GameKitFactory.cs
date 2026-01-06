@@ -9,22 +9,25 @@ public class GameKitFactory: IDisposable
 {
     private static readonly Size<uint> DefaultSize = (640, 480);
 
+    private readonly GameKitConfig _config;
     private bool _initialized;
-    private GameKitConfig? _config;
 
-    private void EnsureSdlInitialized(GameKitConfig config)
+    public GameKitFactory(GameKitConfig config)
+    {
+        _config = config;
+    }
+
+    private void EnsureSdlInitialized()
     {
         if (_initialized)
         {
             return;
         }
 
-        _config = config;
-
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_EVENT_LOGGING, "2");
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-        if (config.DebugLogging)
+        if (_config.DebugLogging)
         {
             SDL3.SDL_SetHint(SDL3.SDL_HINT_LOGGING, "*=debug");
         }
@@ -46,7 +49,7 @@ public class GameKitFactory: IDisposable
     
     private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title=null, bool fullscreen = false)
     {
-        EnsureSdlInitialized(_config ?? new GameKitConfig());
+        EnsureSdlInitialized();
 
         string windowTitle;
         if (title == null)
@@ -93,9 +96,9 @@ public class GameKitFactory: IDisposable
         return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
-    internal GpuDevice CreateGpuDevice(GameKitConfig config)
+    internal GpuDevice CreateGpuDevice()
     {
-        EnsureSdlInitialized(config);
+        EnsureSdlInitialized();
 
         unsafe
         {
@@ -121,7 +124,7 @@ public class GameKitFactory: IDisposable
 
     internal KeyboardService CreateKeyboardService(AppControl appControl)
     {
-        EnsureSdlInitialized(_config ?? new GameKitConfig());
+        EnsureSdlInitialized();
         
         KeyboardService keyboardService = new(appControl);
 
@@ -130,7 +133,7 @@ public class GameKitFactory: IDisposable
     
     internal GamepadService CreateGamepadService()
     {
-        EnsureSdlInitialized(_config ?? new GameKitConfig());
+        EnsureSdlInitialized();
         
         GamepadService gamepadService = new();
         gamepadService.SetupGamepads();
@@ -140,14 +143,14 @@ public class GameKitFactory: IDisposable
 
     internal MouseService CreateMouseService()
     {
-        EnsureSdlInitialized(_config ?? new GameKitConfig());
+        EnsureSdlInitialized();
         
         return new MouseService();
     }
 
     public EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, AppControl appControl)
     {
-        EnsureSdlInitialized(_config ?? new GameKitConfig());
+        EnsureSdlInitialized();
         
         return new EventService(keyboardService, gamepadService, mouseService, appControl);
     }
