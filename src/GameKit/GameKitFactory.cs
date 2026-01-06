@@ -21,10 +21,9 @@ public class GameKitFactory: IDisposable
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_EVENT_LOGGING, "2");
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-        if (GameKitSettings.IsDebugBuild)
-        {
-            SDL3.SDL_SetHint(SDL3.SDL_HINT_LOGGING, "*=debug");
-        }
+        #if DEBUG
+        SDL3.SDL_SetHint(SDL3.SDL_HINT_LOGGING, "*=debug");
+        #endif
         
         SDL_InitFlags initFlags = SDL_InitFlags.SDL_INIT_EVENTS | SDL_InitFlags.SDL_INIT_VIDEO |
                                   SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_GAMEPAD;
