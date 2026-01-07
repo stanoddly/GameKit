@@ -174,34 +174,7 @@ public class GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder OnStart<T>(Action<T> action) where T : notnull
-    {
-        _moduleBuilder.OnStart(action);
-        return this;
-    }
-
-    public GameKitAppBuilder OnStart<T1, T2>(Action<T1, T2> action)
-        where T1 : notnull
-        where T2 : notnull
-    {
-        _moduleBuilder.OnStart(action);
-        return this;
-    }
-
-    public GameKitAppBuilder OnStart<T1, T2, T3>(Action<T1, T2, T3> action)
-        where T1 : notnull
-        where T2 : notnull
-        where T3 : notnull
-    {
-        _moduleBuilder.OnStart(action);
-        return this;
-    }
-
-    public GameKitAppBuilder OnStart<T1, T2, T3, T4>(Action<T1, T2, T3, T4> action)
-        where T1 : notnull
-        where T2 : notnull
-        where T3 : notnull
-        where T4 : notnull
+    public GameKitAppBuilder OnStart(Delegate action)
     {
         _moduleBuilder.OnStart(action);
         return this;
