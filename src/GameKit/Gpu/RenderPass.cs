@@ -36,27 +36,24 @@ public class RenderPass<TValidator> : IRenderPass
         }
     }
     
-    private void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer) where TVertexType : unmanaged, IVertexType
+    public void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer)
+        where TVertexType : unmanaged, IVertexType
     {
         ThrowIfDisposed();
 
-        _verticesCount = (uint)buffer.BufferSize;
+        _validator.OnBindVertexBuffer(this, slot, buffer);
+
+        // Only update vertex count from slot 0 (the per-vertex buffer)
+        if (slot == 0)
+        {
+            _verticesCount = (uint)buffer.BufferSize;
+        }
 
         unsafe
         {
             SDL_GPUBufferBinding sdlGpuBufferBinding = new SDL_GPUBufferBinding { buffer = buffer.SdlVertexBuffer, offset = 0 };
             SDL3.SDL_BindGPUVertexBuffers(_nativePointer, slot, &sdlGpuBufferBinding, 1);
         }
-    }
-
-    public void BindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
-        where TVertexType : unmanaged, IVertexType
-    {
-        ThrowIfDisposed();
-
-        _validator.OnBindVertexBuffer(this, buffer);
-
-        BindVertexBuffer(0, buffer);
     }
     
 
@@ -193,13 +190,18 @@ public class RenderPass<TValidator> : IRenderPass
 
     public void DrawPrimitive()
     {
+        DrawPrimitiveInstanced(1);
+    }
+
+    public void DrawPrimitiveInstanced(uint instanceCount)
+    {
         ThrowIfDisposed();
 
         _validator.OnDrawPrimitive(this);
 
         unsafe
         {
-            SDL3.SDL_DrawGPUPrimitives(_nativePointer, _verticesCount, 1, 0, 0);
+            SDL3.SDL_DrawGPUPrimitives(_nativePointer, _verticesCount, instanceCount, 0, 0);
         }
     }
 

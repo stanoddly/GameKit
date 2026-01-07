@@ -4,7 +4,7 @@ public interface IRenderPass: IDisposable
 {
     void BindGraphicsPipeline(GraphicsPipeline graphicsPipeline);
 
-    void BindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+    void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType;
 
     void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0);
@@ -17,4 +17,5 @@ public interface IRenderPass: IDisposable
     void BindFragmentStorageBuffer(GpuStorageBuffer buffer, uint slot = 0);
 
     void DrawPrimitive();
+    void DrawPrimitiveInstanced(uint instanceCount);
 }

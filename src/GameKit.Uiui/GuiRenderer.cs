@@ -124,7 +124,7 @@ public sealed class GuiRenderer
 
     private void RenderGui(CommandBuffer commandBuffer, IRenderPass renderPass)
     {
-        renderPass.BindVertexBuffer(_vertexBuffer);
+        renderPass.BindVertexBuffer(0, _vertexBuffer);
 
         ushort scale = _guiResolutionProvider.ResolutionInfo.ScaleFactor;
 

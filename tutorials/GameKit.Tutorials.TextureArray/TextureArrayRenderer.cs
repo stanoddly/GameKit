@@ -42,7 +42,7 @@ public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
             .Build();
 
         renderPass.BindGraphicsPipeline(_graphicsPipeline);
-        renderPass.BindVertexBuffer(_quadVertexBuffer);
+        renderPass.BindVertexBuffer(0, _quadVertexBuffer);
         renderPass.BindFragmentSamplerArray(_textureArray, _sampler);
 
         renderPass.DrawPrimitive();

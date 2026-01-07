@@ -42,7 +42,7 @@ public class StorageBufferRenderer : IRenderPhase<DefaultRenderContext>
             .Build();
 
         renderPass.BindGraphicsPipeline(_graphicsPipeline);
-        renderPass.BindVertexBuffer(_quadVertexBuffer);
+        renderPass.BindVertexBuffer(0, _quadVertexBuffer);
         renderPass.BindFragmentStorageBuffer(_colorBuffer);
 
         renderPass.DrawPrimitive();
