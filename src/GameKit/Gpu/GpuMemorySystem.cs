@@ -13,6 +13,8 @@ public class GpuMemorySystem: ICopyPass
         _gpuDevice = gpuDevice;
     }
 
+    public bool IsEmpty => _copyPassImplementation == null || _copyPassImplementation.IsEmpty;
+
     private ICopyPass GetOrCreateCopyPass()
     {
         if (_copyPassImplementation == null)
