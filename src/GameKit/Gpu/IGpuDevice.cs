@@ -3,7 +3,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Gpu;
 
-public interface IGpuDevice : IDisposable, IInitializable
+public interface IGpuDevice : IDisposable
 {
     ShaderFormats GetSupportedShaderFormats();
     
