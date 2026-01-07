@@ -167,4 +167,16 @@ public class GameKitAppBuilder
         _moduleBuilder.RegisterType<TImplementation>().As<TService>();
         return this;
     }
+
+    public GameKitAppBuilder OnStart(Action<IServiceProvider> action)
+    {
+        _moduleBuilder.OnStart(action);
+        return this;
+    }
+
+    public GameKitAppBuilder OnStart(Delegate action)
+    {
+        _moduleBuilder.OnStart(action);
+        return this;
+    }
 }
