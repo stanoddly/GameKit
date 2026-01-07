@@ -7,6 +7,9 @@ public interface IRenderPass: IDisposable
     void BindVertexBuffer<TVertexType>(uint slot, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType;
 
+    void BindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+        where TVertexType : unmanaged, IVertexType;
+
     void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0);
     void BindFragmentSampler(Texture texture, Sampler sampler);
     void BindFragmentSamplerArray(TextureArray textureArray, Sampler sampler, uint slot = 0);

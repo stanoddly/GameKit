@@ -55,6 +55,12 @@ public class RenderPass<TValidator> : IRenderPass
             SDL3.SDL_BindGPUVertexBuffers(_nativePointer, slot, &sdlGpuBufferBinding, 1);
         }
     }
+
+    public void BindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
+        where TVertexType : unmanaged, IVertexType
+    {
+        BindVertexBuffer(0, buffer);
+    }
     
 
     public void BindVertexSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)

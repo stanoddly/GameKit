@@ -30,7 +30,7 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
             .Build())
         {
             depthPass.BindGraphicsPipeline(_depthOnlyPipeline);
-            depthPass.BindVertexBuffer(0, _vertexBuffer);
+            depthPass.BindVertexBuffer(_vertexBuffer);
             depthPass.DrawPrimitive();
         }
 

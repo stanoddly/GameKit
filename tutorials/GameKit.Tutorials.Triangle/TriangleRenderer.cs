@@ -26,7 +26,7 @@ public class TriangleRenderer: IRenderPhase<DefaultRenderContext>
             .Build();
         
         renderPass.BindGraphicsPipeline(_graphicsPipeline);
-        renderPass.BindVertexBuffer(0, _quadVertexBuffer);
+        renderPass.BindVertexBuffer(_quadVertexBuffer);
         
         renderPass.DrawPrimitive();
         
