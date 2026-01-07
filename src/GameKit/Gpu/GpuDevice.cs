@@ -14,7 +14,6 @@ internal class GpuDevice : IGpuDevice
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
     private LockedSet<Shader> _shaders = new();
-    private SDL_PropertiesID _dummyProps;
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
 
@@ -99,11 +98,9 @@ internal class GpuDevice : IGpuDevice
                 height = size.Height,
                 layer_count_or_depth = 1,
                 num_levels = 1,
-                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-                // TODO: this is actually SDL bug
-                props = _dummyProps
+                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1
             };
-            
+
             Pointer<SDL_GPUTexture> rawTexture = SDL3.SDL_CreateGPUTexture(SdlGpuDevice, &info);
             SdlError.ThrowOnNull(rawTexture);
 
@@ -126,11 +123,9 @@ internal class GpuDevice : IGpuDevice
                 height = size.Height,
                 layer_count_or_depth = 1,
                 num_levels = 1,
-                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1,
-                // TODO: this is actually SDL bug
-                props = _dummyProps
+                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1
             };
-            
+
             Pointer<SDL_GPUTexture> rawTexture = SDL3.SDL_CreateGPUTexture(SdlGpuDevice, &info);
             SdlError.ThrowOnNull(rawTexture);
 
@@ -328,10 +323,4 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
-    public void Initialize()
-    {
-        // TODO: this is actually SDL bug
-        // https://github.com/libsdl-org/SDL/issues/12295
-        _dummyProps = SDL3.SDL_CreateProperties();
-    }
 }

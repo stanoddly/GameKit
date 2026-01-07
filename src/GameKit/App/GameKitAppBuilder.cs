@@ -22,10 +22,6 @@ public class GameKitAppBuilder
         EventBus eventBus = new();
         _moduleBuilder.OnActivated(obj =>
         {
-            if (obj is IInitializable initializable)
-            {
-                initializable.Initialize();
-            }
             if (obj is IUpdatable updatable)
             {
                 _updatables.Add(updatable);
