@@ -9,6 +9,7 @@ public class GameModuleBuilder
 {
     private readonly ServiceCollection _services = new();
     private readonly List<Action<IServiceProvider>> _serviceProviderActions = new();
+    private readonly List<Action<IServiceProvider>> _onStartActions = new();
     private readonly HashSet<Type> _registeredTypes = new();
     private readonly List<Action<object>> _activationCallbacks = new();
 
@@ -151,6 +152,10 @@ public class GameModuleBuilder
         {
             resolution(serviceProvider);
         }
+        foreach (var action in _onStartActions)
+        {
+            action(serviceProvider);
+        }
         return serviceProvider;
     }
 
@@ -166,7 +171,7 @@ public class GameModuleBuilder
 
     public GameModuleBuilder OnStart(Action<IServiceProvider> action)
     {
-        _serviceProviderActions.Add(action);
+        _onStartActions.Add(action);
         return this;
     }
 
@@ -175,7 +180,7 @@ public class GameModuleBuilder
         MethodInfo method = action.Method;
         ParameterInfo[] parameters = method.GetParameters();
 
-        _serviceProviderActions.Add(sp =>
+        _onStartActions.Add(sp =>
         {
             object[] args = new object[parameters.Length];
             for (int i = 0; i < parameters.Length; i++)
