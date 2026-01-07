@@ -4,6 +4,7 @@ namespace GameKit.Gpu;
 
 public interface ICopyPass: IDisposable
 {
+    bool IsEmpty { get; }
     GpuVertexBuffer<TVertexType> CreateVertexBuffer<TVertexType>(ReadOnlySpan<TVertexType> vertices) where TVertexType: unmanaged, IVertexType;
 
     GpuVertexBuffer<TVertexType> CreateVertexBuffer<TVertexType>(Shape<TVertexType> shape)

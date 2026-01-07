@@ -18,6 +18,8 @@ public class CopyPass: ICopyPass
         _gpuDevice = gpuDevice;
     }
 
+    public bool IsEmpty => _transferBuffers == null;
+
     private unsafe SDL_GPUTransferBuffer* CreateAndTrackTransferBuffer(uint sizeBytes)
     {
         SDL_GPUTransferBufferCreateInfo sdlGpuTransferBufferCreateInfo = new SDL_GPUTransferBufferCreateInfo
