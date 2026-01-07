@@ -8,12 +8,14 @@
 src/
 ├── GameKit/                  # Core engine (entry point, GPU, content, input)
 ├── GameKit.Collections/      # High-perf data structures (Jinja2 generated)
-├── GameKit.Common/           # Shared types (IntVector2, Size, IInitializable)
+├── GameKit.Common/           # Shared types (IntVector2, Size)
 ├── GameKit.Componentize/     # ECS: GameObject, GameComponent, GameWorld
 ├── GameKit.Encs/             # EventBus system
 ├── GameKit.RenderOrchestration/  # Multi-stage render pipeline
+├── GameKit.ShaderCommon/     # Shared shader types
 ├── GameKit.SdlangCompileLib/     # Slang shader compiler integration
 ├── GameKit.SdlangCompileTask/    # MSBuild shader compilation task
+├── GameKit.SdlangCompilerCli/    # Slang shader compiler CLI tool
 ├── GameKit.AStar/            # A* pathfinding
 ├── GameKit.Utils/            # Camera utilities
 ├── GameKit.Uiui/             # UI components
@@ -161,8 +163,8 @@ Uniform data binding:
 | `IRenderPass` | Gpu/ | Render pass execution |
 | `IRenderPhase<T>` | RenderOrchestration/ | Render stage |
 | `IVertexType` | Gpu/ | Vertex buffer layout |
-| `IInitializable` | Common/ | Post-DI initialization |
-| `IUpdatable` | Common/ | Frame update callback |
+| `IInitializable` | GameKit/ | Post-DI initialization |
+| `IUpdatable` | GameKit/ | Frame update callback |
 | `VirtualFileSystem` | Content/ | File abstraction |
 
 ## Content System
@@ -203,12 +205,14 @@ Generated from Jinja2 templates in `scripts/`.
 ```csharp
 public class Player : GameComponent
 {
-    public override void Update() { /* per-frame logic */ }
+    protected override void OnAttach() { /* called when attached */ }
+    protected override void OnDetach() { /* called when detached */ }
 }
 
 var world = new GameWorld();
-var obj = world.CreateGameObject();
-obj.AddComponent<Player>();
+var obj = world.CreateGameObject("player");
+obj.Attach<Player>();
+// or: obj.Attach(new Player());
 ```
 
 Key files: `src/GameKit.Componentize/`
@@ -216,11 +220,17 @@ Key files: `src/GameKit.Componentize/`
 ## Event Bus
 
 ```csharp
-// Subscribe (auto via OnActivated)
-public class Handler { public void Handle(MyEvent e) { } }
+// Implement IEventHandler<T> with Process method
+public class Handler : IEventHandler<MyEvent>
+{
+    public void Process(MyEvent args) { /* handle event */ }
+}
 
-// Publish
+// Subscribe and publish
+var handler = new Handler();
+eventBus.Subscribe(handler);
 eventBus.Publish(new MyEvent());
+eventBus.Unsubscribe(handler);
 ```
 
 Key file: `src/GameKit.Encs/EventBus.cs`
