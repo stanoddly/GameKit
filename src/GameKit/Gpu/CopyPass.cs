@@ -37,6 +37,11 @@ public class CopyPass: ICopyPass
 
     public GpuVertexBuffer<TVertexType> CreateVertexBuffer<TVertexType>(ReadOnlySpan<TVertexType> vertices) where TVertexType: unmanaged, IVertexType
     {
+        if (vertices.Length == 0)
+        {
+            throw new ArgumentException("Cannot create an empty vertex buffer", nameof(vertices));
+        }
+
         uint sizeBytes = (uint)(Unsafe.SizeOf<TVertexType>() * vertices.Length);
         unsafe
         {
@@ -114,6 +119,11 @@ public class CopyPass: ICopyPass
 
     public GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Cannot create an empty storage buffer", nameof(data));
+        }
+
         uint sizeBytes = (uint)(Unsafe.SizeOf<T>() * data.Length);
         unsafe
         {
