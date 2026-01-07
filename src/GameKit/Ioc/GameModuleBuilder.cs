@@ -163,4 +163,65 @@ public class GameModuleBuilder
     {
         return BuildServiceProvider();
     }
+
+    public GameModuleBuilder OnStart(Action<IServiceProvider> action)
+    {
+        _serviceProviderActions.Add(action);
+        return this;
+    }
+
+    public GameModuleBuilder OnStart<T>(Action<T> action) where T : notnull
+    {
+        _serviceProviderActions.Add(sp =>
+        {
+            var service = sp.GetRequiredService<T>();
+            action(service);
+        });
+        return this;
+    }
+
+    public GameModuleBuilder OnStart<T1, T2>(Action<T1, T2> action)
+        where T1 : notnull
+        where T2 : notnull
+    {
+        _serviceProviderActions.Add(sp =>
+        {
+            var s1 = sp.GetRequiredService<T1>();
+            var s2 = sp.GetRequiredService<T2>();
+            action(s1, s2);
+        });
+        return this;
+    }
+
+    public GameModuleBuilder OnStart<T1, T2, T3>(Action<T1, T2, T3> action)
+        where T1 : notnull
+        where T2 : notnull
+        where T3 : notnull
+    {
+        _serviceProviderActions.Add(sp =>
+        {
+            var s1 = sp.GetRequiredService<T1>();
+            var s2 = sp.GetRequiredService<T2>();
+            var s3 = sp.GetRequiredService<T3>();
+            action(s1, s2, s3);
+        });
+        return this;
+    }
+
+    public GameModuleBuilder OnStart<T1, T2, T3, T4>(Action<T1, T2, T3, T4> action)
+        where T1 : notnull
+        where T2 : notnull
+        where T3 : notnull
+        where T4 : notnull
+    {
+        _serviceProviderActions.Add(sp =>
+        {
+            var s1 = sp.GetRequiredService<T1>();
+            var s2 = sp.GetRequiredService<T2>();
+            var s3 = sp.GetRequiredService<T3>();
+            var s4 = sp.GetRequiredService<T4>();
+            action(s1, s2, s3, s4);
+        });
+        return this;
+    }
 }
