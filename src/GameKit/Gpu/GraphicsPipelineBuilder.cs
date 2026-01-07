@@ -83,22 +83,23 @@ internal struct PipelineBuilderInfo
     public List<SDL_GPUColorTargetDescription> SdlGpuColorTargetDescriptions { get; } = new();
     public List<SDL_GPUVertexAttribute> SdlGpuVertexAttributes { get; } = new();
     public List<SDL_GPUVertexBufferDescription> SdlGpuVertexBufferDescriptions { get; } = new();
+    public List<VertexTypeId> VertexBufferTypeIds { get; } = new();
     public SDL_GPUMultisampleState SdlGpuMultisampleState { get; set; }
     public SDL_GPUDepthStencilState SdlGpuDepthStencilState = new();
     public SDL_GPUColorTargetBlendState SdlGpuColorTargetBlendState { get; set; }
     public RasterizerState RasterizerState { get; set; } = new() { CullMode = CullMode.Back, FrontFace = FrontFace.Clockwise };
-    
+
     public DepthBufferFormat? DepthBufferFormat { get; set; }
-    
+
     public Shader? VertexShader { get; set; } = null;
     public Shader? FragmentShader { get; set; } = null;
-    public VertexTypeId VertexBufferId { get; set; } = VertexTypeId.Null;
 
     public void Reset()
     {
         SdlGpuColorTargetDescriptions.Clear();
         SdlGpuVertexAttributes.Clear();
         SdlGpuVertexBufferDescriptions.Clear();
+        VertexBufferTypeIds.Clear();
         VertexShader = null;
         FragmentShader = null;
         PrimitiveType = PrimitiveType.TriangleList;
@@ -108,7 +109,6 @@ internal struct PipelineBuilderInfo
         SdlGpuColorTargetBlendState = default;
         // We use left hand coordinates, that's why CLOCKWISE winding order
         RasterizerState = new() { CullMode = CullMode.Back, FrontFace = FrontFace.Clockwise };
-        VertexBufferId = VertexTypeId.Null;
     }
 }
 
@@ -175,7 +175,6 @@ public class GraphicsPipelineBuilder
 
     public GraphicsPipelineBuilder AddVertexBufferConfig<TVertexType>(int? instanceStepRate = default) where TVertexType : unmanaged, IVertexType
     {
-        _info.VertexBufferId = VertexTypeId<TVertexType>.Value;
         uint vertexTypeSizeBytes = (uint)Unsafe.SizeOf<TVertexType>();
 
         SDL_GPUVertexInputRate inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX;
@@ -200,10 +199,12 @@ public class GraphicsPipelineBuilder
             pitch = vertexTypeSizeBytes
         };
         _info.SdlGpuVertexBufferDescriptions.Add(sdlGpuVertexBufferDescription);
+        _info.VertexBufferTypeIds.Add(VertexTypeId<TVertexType>.Value);
 
-        uint location = 0;
+        // Location continues from previous buffers
+        uint location = (uint)_info.SdlGpuVertexAttributes.Count;
         uint offset = 0;
-        
+
         foreach (VertexElementFormat vertexElementFormat in TVertexType.VertexElements)
         {
             _info.SdlGpuVertexAttributes.Add(new SDL_GPUVertexAttribute
@@ -407,9 +408,9 @@ public class GraphicsPipelineBuilder
             CollectionsMarshal.AsSpan(_info.SdlGpuVertexBufferDescriptions);
         Span<SDL_GPUVertexAttribute> sdlGpuVertexAttributes = CollectionsMarshal.AsSpan(_info.SdlGpuVertexAttributes);
 
-        if (_info.VertexBufferId == VertexTypeId.Null)
+        if (_info.VertexBufferTypeIds.Count == 0)
         {
-            throw new InvalidOperationException("VertexBufferId is not set.");
+            throw new InvalidOperationException("No vertex buffer configurations added. Call AddVertexBufferConfig at least once.");
         }
 
         if (sdlGpuVertexBufferDescription.Length == 0)
@@ -449,7 +450,7 @@ public class GraphicsPipelineBuilder
                     },
                     vertex_input_state = new SDL_GPUVertexInputState
                     {
-                        num_vertex_buffers = 1,
+                        num_vertex_buffers = (uint)sdlGpuVertexBufferDescription.Length,
                         vertex_buffer_descriptions = sdlGpuVertexBufferDescriptionPointer,
                         num_vertex_attributes = (uint)sdlGpuVertexAttributes.Length,
                         vertex_attributes = sdlGpuVertexAttributePointer
@@ -478,8 +479,8 @@ public class GraphicsPipelineBuilder
                     throw new GameKitInitializationException(
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
-                
-                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, _info.VertexBufferId, _info.VertexShader, _info.FragmentShader);
+
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, [.. _info.VertexBufferTypeIds], _info.VertexShader, _info.FragmentShader);
                 _info.Reset();
                 
                 _gpuDevice.RegisterGraphicsPipeline(graphicsPipeline);

@@ -14,7 +14,7 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     /// <summary>
     /// Called when a vertex buffer is bound to the render pass.
     /// </summary>
-    void OnBindVertexBuffer<TVertexType>(RenderPass<TSelfValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
+    void OnBindVertexBuffer<TVertexType>(RenderPass<TSelfValidator> renderPass, uint slot, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType;
 
     /// <summary>
@@ -40,10 +40,21 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
 /// </summary>
 public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
 {
+    private const int MaxVertexBufferSlots = 8;
+
     private uint _verticesCount;
-    private VertexTypeId _vertexBufferVertexType;
     private GraphicsPipeline? _graphicsPipeline;
     private readonly CommandBuffer _commandBuffer;
+
+    // Track bound vertex types per slot (up to 8 slots should be plenty)
+    private VertexTypeId _slot0Type;
+    private VertexTypeId _slot1Type;
+    private VertexTypeId _slot2Type;
+    private VertexTypeId _slot3Type;
+    private VertexTypeId _slot4Type;
+    private VertexTypeId _slot5Type;
+    private VertexTypeId _slot6Type;
+    private VertexTypeId _slot7Type;
 
     private RenderPassValidator(CommandBuffer commandBuffer)
     {
@@ -58,13 +69,63 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     public void OnBindGraphicsPipeline(RenderPass<RenderPassValidator> renderPass, GraphicsPipeline graphicsPipeline)
     {
         _graphicsPipeline = graphicsPipeline;
+        // Reset slot bindings when pipeline changes
+        _slot0Type = VertexTypeId.Null;
+        _slot1Type = VertexTypeId.Null;
+        _slot2Type = VertexTypeId.Null;
+        _slot3Type = VertexTypeId.Null;
+        _slot4Type = VertexTypeId.Null;
+        _slot5Type = VertexTypeId.Null;
+        _slot6Type = VertexTypeId.Null;
+        _slot7Type = VertexTypeId.Null;
     }
 
-    public void OnBindVertexBuffer<TVertexType>(RenderPass<RenderPassValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
+    public void OnBindVertexBuffer<TVertexType>(RenderPass<RenderPassValidator> renderPass, uint slot, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType
     {
-        _verticesCount = (uint)buffer.Size;
-        _vertexBufferVertexType = VertexTypeId<TVertexType>.Value;
+        if (slot >= MaxVertexBufferSlots)
+        {
+            throw new ArgumentOutOfRangeException(nameof(slot), $"Slot must be less than {MaxVertexBufferSlots}.");
+        }
+
+        if (slot == 0)
+        {
+            _verticesCount = (uint)buffer.Size;
+        }
+
+        VertexTypeId typeId = VertexTypeId<TVertexType>.Value;
+        SetSlotType(slot, typeId);
+    }
+
+    private void SetSlotType(uint slot, VertexTypeId typeId)
+    {
+        switch (slot)
+        {
+            case 0: _slot0Type = typeId; break;
+            case 1: _slot1Type = typeId; break;
+            case 2: _slot2Type = typeId; break;
+            case 3: _slot3Type = typeId; break;
+            case 4: _slot4Type = typeId; break;
+            case 5: _slot5Type = typeId; break;
+            case 6: _slot6Type = typeId; break;
+            case 7: _slot7Type = typeId; break;
+        }
+    }
+
+    private readonly VertexTypeId GetSlotType(uint slot)
+    {
+        return slot switch
+        {
+            0 => _slot0Type,
+            1 => _slot1Type,
+            2 => _slot2Type,
+            3 => _slot3Type,
+            4 => _slot4Type,
+            5 => _slot5Type,
+            6 => _slot6Type,
+            7 => _slot7Type,
+            _ => VertexTypeId.Null
+        };
     }
 
     public void OnBindVertexSamplers(RenderPass<RenderPassValidator> renderPass, uint slot, int samplerCount)
@@ -83,15 +144,28 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
                 $"{nameof(GraphicsPipeline)} must be bound.");
         }
 
-        if (_graphicsPipeline.VertexTypeId != _vertexBufferVertexType)
+        // Validate all configured slots have matching buffer types
+        for (int i = 0; i < _graphicsPipeline.VertexBufferSlotCount; i++)
         {
-            throw new InvalidOperationException(
-                $"TVertexType of both bound {nameof(GraphicsPipeline)} and VertexBuffer must be the same.");
+            VertexTypeId expectedType = _graphicsPipeline.VertexBufferTypeIds[i];
+            VertexTypeId boundType = GetSlotType((uint)i);
+
+            if (boundType == VertexTypeId.Null)
+            {
+                throw new InvalidOperationException(
+                    $"Vertex buffer slot {i} is not bound. Pipeline expects {_graphicsPipeline.VertexBufferSlotCount} buffer(s).");
+            }
+
+            if (expectedType != boundType)
+            {
+                throw new InvalidOperationException(
+                    $"Vertex buffer type mismatch at slot {i}. Pipeline expects a different vertex type.");
+            }
         }
 
         if (_verticesCount == 0)
         {
-            throw new InvalidOperationException("Bound VertexBuffer is empty.");
+            throw new InvalidOperationException("Bound VertexBuffer at slot 0 is empty.");
         }
 
         ShaderBindingLayoutValidator.ValidateBindingCounts(_graphicsPipeline.FragmentShader.BindingLayout.BindingCounts,
@@ -119,7 +193,7 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     {
     }
 
-    public void OnBindVertexBuffer<TVertexType>(RenderPass<NullRenderPassValidator> renderPass, GpuVertexBuffer<TVertexType> buffer)
+    public void OnBindVertexBuffer<TVertexType>(RenderPass<NullRenderPassValidator> renderPass, uint slot, GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType
     {
     }
