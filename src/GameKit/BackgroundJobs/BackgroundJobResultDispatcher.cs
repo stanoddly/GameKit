@@ -2,6 +2,10 @@ using System.Diagnostics;
 
 namespace GameKit.BackgroundJobs;
 
+/// <summary>
+/// Delivers background job results to handlers on the main thread.
+/// Implements <see cref="IUpdatable"/> and processes results each frame within a time budget.
+/// </summary>
 public class BackgroundJobResultDispatcher : IUpdatable
 {
     private const long FrameBudgetMs = 2;

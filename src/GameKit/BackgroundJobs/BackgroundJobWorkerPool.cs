@@ -3,6 +3,11 @@ using GameKit.Gpu;
 
 namespace GameKit.BackgroundJobs;
 
+/// <summary>
+/// Manages a pool of background worker threads for processing jobs off the main thread.
+/// Each worker has access to an <see cref="Gpu.ICopyPass"/> for GPU memory transfers.
+/// Implements <see cref="IStartable"/> so workers start automatically before the game loop.
+/// </summary>
 public class BackgroundJobWorkerPool : IStartable, IDisposable
 {
     private readonly ConcurrentQueue<BackgroundJob>[] _priorityQueues;
