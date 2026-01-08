@@ -1,3 +1,4 @@
+using GameKit.BackgroundJobs;
 using GameKit.Common;
 using GameKit.Ioc;
 using GameKit.Content;
@@ -17,6 +18,7 @@ public class GameKitAppBuilder
     private readonly List<IStartable> _startables = new();
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
+    private readonly List<Action<IServiceProvider, BackgroundJobWorkerPool>> _processorRegistrations = new();
 
     public GameKitAppBuilder()
     {
@@ -154,10 +156,23 @@ public class GameKitAppBuilder
 
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
+        _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
             _moduleBuilder.RegisterType<NullImageLoader>().As<IContentLoader<Image>>();
+        }
+
+        if (_processorRegistrations.Count > 0)
+        {
+            _moduleBuilder.OnStart(sp =>
+            {
+                BackgroundJobWorkerPool pool = sp.GetRequiredService<BackgroundJobWorkerPool>();
+                foreach (var registration in _processorRegistrations)
+                {
+                    registration(sp, pool);
+                }
+            });
         }
 
         IServiceProvider serviceProvider = _moduleBuilder.Build();
@@ -182,6 +197,22 @@ public class GameKitAppBuilder
     public GameKitAppBuilder OnStart(Delegate action)
     {
         _moduleBuilder.OnStart(action);
+        return this;
+    }
+
+    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TResult, TFactory>()
+        where TTask : class
+        where TResult : class
+        where TFactory : class, IProcessorFactory<TTask, TResult>
+    {
+        _moduleBuilder.RegisterType<TFactory>();
+
+        _processorRegistrations.Add((sp, pool) =>
+        {
+            TFactory factory = sp.GetRequiredService<TFactory>();
+            pool.RegisterProcessor<TTask, TResult>(factory.Create);
+        });
+
         return this;
     }
 }
