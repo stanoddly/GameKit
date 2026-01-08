@@ -6,8 +6,8 @@ namespace GameKit.BackgroundJobs;
 /// Base class for processing background jobs. Implement this to define how a task type is processed.
 /// Each worker thread creates its own instance via the factory registered with <see cref="BackgroundJobWorkerPool"/>.
 /// </summary>
-/// <typeparam name="TTask">The task type this processor handles.</typeparam>
-/// <typeparam name="TResult">The result type produced, or use a marker type if no result is needed.</typeparam>
+/// <typeparam name="TTask">The task type this processor handles. Must be a reference type.</typeparam>
+/// <typeparam name="TResult">The result type produced. Must be a reference type.</typeparam>
 public abstract class BackgroundTaskProcessor<TTask, TResult>
     where TTask : class
     where TResult : class
