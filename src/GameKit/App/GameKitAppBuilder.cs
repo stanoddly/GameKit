@@ -1,3 +1,5 @@
+using System.Reflection;
+using GameKit.BackgroundJobs;
 using GameKit.Common;
 using GameKit.Ioc;
 using GameKit.Content;
@@ -17,6 +19,8 @@ public class GameKitAppBuilder
     private readonly List<IStartable> _startables = new();
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
+    private readonly List<Action<IServiceProvider, BackgroundJobWorkerPool>> _processorRegistrations = new();
+    private bool _backgroundJobWorkerPoolRegistered;
 
     public GameKitAppBuilder()
     {
@@ -160,6 +164,18 @@ public class GameKitAppBuilder
             _moduleBuilder.RegisterType<NullImageLoader>().As<IContentLoader<Image>>();
         }
 
+        if (_processorRegistrations.Count > 0)
+        {
+            _moduleBuilder.OnStart(sp =>
+            {
+                BackgroundJobWorkerPool pool = sp.GetRequiredService<BackgroundJobWorkerPool>();
+                foreach (var registration in _processorRegistrations)
+                {
+                    registration(sp, pool);
+                }
+            });
+        }
+
         IServiceProvider serviceProvider = _moduleBuilder.Build();
 
         return new GameKitApp(serviceProvider, _startables, _updatables, _disposables);
@@ -183,5 +199,51 @@ public class GameKitAppBuilder
     {
         _moduleBuilder.OnStart(action);
         return this;
+    }
+
+    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TResult>(Delegate factory)
+        where TTask : class
+        where TResult : class
+    {
+        EnsureBackgroundJobWorkerPoolRegistered();
+
+        MethodInfo method = factory.Method;
+        ParameterInfo[] parameters = method.GetParameters();
+
+        _processorRegistrations.Add((sp, pool) =>
+        {
+            pool.RegisterProcessor<TTask, TResult>(() =>
+            {
+                object[] args = new object[parameters.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    args[i] = sp.GetRequiredService(parameters[i].ParameterType);
+                }
+
+                object? instance = method.Invoke(factory.Target, args);
+
+                if (instance is not BackgroundTaskProcessor<TTask, TResult> processor)
+                {
+                    throw new InvalidOperationException(
+                        $"Factory must return BackgroundTaskProcessor<{typeof(TTask).Name}, {typeof(TResult).Name}>, " +
+                        $"got {instance?.GetType().Name ?? "null"}");
+                }
+
+                return processor;
+            });
+        });
+
+        return this;
+    }
+
+    private void EnsureBackgroundJobWorkerPoolRegistered()
+    {
+        if (_backgroundJobWorkerPoolRegistered)
+        {
+            return;
+        }
+
+        _backgroundJobWorkerPoolRegistered = true;
+        _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
     }
 }
