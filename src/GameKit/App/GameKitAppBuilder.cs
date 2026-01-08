@@ -1,4 +1,3 @@
-using System.Reflection;
 using GameKit.BackgroundJobs;
 using GameKit.Common;
 using GameKit.Ioc;
@@ -201,36 +200,19 @@ public class GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TResult>(Delegate factory)
+    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TResult, TFactory>()
         where TTask : class
         where TResult : class
+        where TFactory : class, IProcessorFactory<TTask, TResult>
     {
         EnsureBackgroundJobWorkerPoolRegistered();
 
-        MethodInfo method = factory.Method;
-        ParameterInfo[] parameters = method.GetParameters();
+        _moduleBuilder.RegisterType<TFactory>();
 
         _processorRegistrations.Add((sp, pool) =>
         {
-            pool.RegisterProcessor<TTask, TResult>(() =>
-            {
-                object[] args = new object[parameters.Length];
-                for (int i = 0; i < parameters.Length; i++)
-                {
-                    args[i] = sp.GetRequiredService(parameters[i].ParameterType);
-                }
-
-                object? instance = method.Invoke(factory.Target, args);
-
-                if (instance is not BackgroundTaskProcessor<TTask, TResult> processor)
-                {
-                    throw new InvalidOperationException(
-                        $"Factory must return BackgroundTaskProcessor<{typeof(TTask).Name}, {typeof(TResult).Name}>, " +
-                        $"got {instance?.GetType().Name ?? "null"}");
-                }
-
-                return processor;
-            });
+            TFactory factory = sp.GetRequiredService<TFactory>();
+            pool.RegisterProcessor<TTask, TResult>(factory.Create);
         });
 
         return this;
