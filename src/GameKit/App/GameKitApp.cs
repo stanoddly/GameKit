@@ -5,12 +5,14 @@ namespace GameKit.App;
 public class GameKitApp : IGameKitApp
 {
     public IServiceProvider ServiceProvider { get; }
+    private readonly List<IStartable> _startables;
     private readonly List<IUpdatable> _updatables;
     private readonly List<IDisposable> _disposables;
 
-    public GameKitApp(IServiceProvider serviceProvider, List<IUpdatable> updatables, List<IDisposable> disposables)
+    public GameKitApp(IServiceProvider serviceProvider, List<IStartable> startables, List<IUpdatable> updatables, List<IDisposable> disposables)
     {
         ServiceProvider = serviceProvider;
+        _startables = startables;
         _updatables = updatables;
         _disposables = disposables;
     }
@@ -26,6 +28,11 @@ public class GameKitApp : IGameKitApp
         EventService eventService = ServiceProvider.GetMandatoryService<EventService>();
         AppControl appControl = ServiceProvider.GetMandatoryService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetMandatoryService<IRenderManager>();
+
+        for (int i = _startables.Count - 1; i >= 0; i--)
+        {
+            _startables[i].Start();
+        }
 
         while (true)
         {

@@ -14,6 +14,7 @@ public class GameKitAppBuilder
 {
     private readonly GameModuleBuilder _moduleBuilder = new();
     private readonly FileSystemBuilder _fileSystemBuilder = new();
+    private readonly List<IStartable> _startables = new();
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
 
@@ -22,6 +23,10 @@ public class GameKitAppBuilder
         EventBus eventBus = new();
         _moduleBuilder.OnActivated(obj =>
         {
+            if (obj is IStartable startable)
+            {
+                _startables.Add(startable);
+            }
             if (obj is IUpdatable updatable)
             {
                 _updatables.Add(updatable);
@@ -157,7 +162,7 @@ public class GameKitAppBuilder
 
         IServiceProvider serviceProvider = _moduleBuilder.Build();
 
-        return new GameKitApp(serviceProvider, _updatables, _disposables);
+        return new GameKitApp(serviceProvider, _startables, _updatables, _disposables);
     }
 
     public GameKitAppBuilder RegisterAs<TImplementation, TService>()
