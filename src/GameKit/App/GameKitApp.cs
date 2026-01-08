@@ -29,9 +29,9 @@ public class GameKitApp : IGameKitApp
         AppControl appControl = ServiceProvider.GetMandatoryService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetMandatoryService<IRenderManager>();
 
-        foreach (IStartable startable in _startables)
+        for (int i = _startables.Count - 1; i >= 0; i--)
         {
-            startable.Start();
+            _startables[i].Start();
         }
 
         while (true)
