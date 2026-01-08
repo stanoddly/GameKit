@@ -19,7 +19,6 @@ public class GameKitAppBuilder
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
     private readonly List<Action<IServiceProvider, BackgroundJobWorkerPool>> _processorRegistrations = new();
-    private bool _backgroundJobWorkerPoolRegistered;
 
     public GameKitAppBuilder()
     {
@@ -157,6 +156,7 @@ public class GameKitAppBuilder
 
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
+        _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
@@ -205,8 +205,6 @@ public class GameKitAppBuilder
         where TResult : class
         where TFactory : class, IProcessorFactory<TTask, TResult>
     {
-        EnsureBackgroundJobWorkerPoolRegistered();
-
         _moduleBuilder.RegisterType<TFactory>();
 
         _processorRegistrations.Add((sp, pool) =>
@@ -216,16 +214,5 @@ public class GameKitAppBuilder
         });
 
         return this;
-    }
-
-    private void EnsureBackgroundJobWorkerPoolRegistered()
-    {
-        if (_backgroundJobWorkerPoolRegistered)
-        {
-            return;
-        }
-
-        _backgroundJobWorkerPoolRegistered = true;
-        _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
     }
 }
