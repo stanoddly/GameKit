@@ -28,13 +28,13 @@
         <!-- Create slang directory if it doesn't exist -->
         <MakeDir Directories="$(SlangBaseDir)" Condition="!Exists('$(SlangBaseDir)')" />
 
-        <!-- Download Slang zip if bin directory doesn't exist -->
-        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangBinDir)')" />
+        <!-- Download Slang zip if not already present -->
+        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
                       DestinationFolder="$(BaseIntermediateOutputPath)"
                       DestinationFileName="$(SlangZipFile)"
                       Condition="!Exists('$(SlangZipPath)')" />
-        <Message Text="Downloaded Slang to $(SlangZipPath)" Importance="high" Condition="!Exists('$(SlangBinDir)')" />
+        <Message Text="Downloaded Slang to $(SlangZipPath)" Importance="high" Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
     <!-- Extract Slang zip file and clean up unnecessary files -->
