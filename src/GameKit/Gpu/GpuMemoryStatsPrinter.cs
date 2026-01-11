@@ -6,6 +6,7 @@ public class GpuMemoryStatsPrinter : IStartable, IDisposable
     private readonly TimeSpan _interval = TimeSpan.FromSeconds(5);
     private readonly CancellationTokenSource _cts = new();
     private readonly Thread _thread;
+    private bool _disposed;
 
     public GpuMemoryStatsPrinter(IGpuDevice gpuDevice)
     {
@@ -52,6 +53,12 @@ public class GpuMemoryStatsPrinter : IStartable, IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
         _cts.Cancel();
         _thread.Join(TimeSpan.FromSeconds(1));
         _cts.Dispose();
