@@ -7,19 +7,17 @@ namespace GameKit.Gpu;
 
 public abstract class Texture: IDisposable, IGpuMemorySized
 {
-    private readonly long _sizeInBytes;
-
     internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
     public TextureFormat Format { get; }
     public ShortSize Size { get; }
-    public long SizeInBytes => _sizeInBytes;
+    public long SizeInBytes { get; }
 
     internal Texture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format, long sizeInBytes)
     {
         SdlGpuTexture = sdlGpuTexture;
         Size = size;
         Format = format;
-        _sizeInBytes = sizeInBytes;
+        SizeInBytes = sizeInBytes;
     }
 
     public Vector4 CalculateTextureRegionUVs(ShortRectangle sourceRectangle)
