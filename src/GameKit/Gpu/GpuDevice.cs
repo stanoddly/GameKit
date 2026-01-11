@@ -21,9 +21,9 @@ internal class GpuDevice : IGpuDevice
     {
         get
         {
-            var textures = _textures.CountAndTotalBytes;
-            var vertexBuffers = _vertexBuffers.CountAndTotalBytes;
-            var storageBuffers = _storageBuffers.CountAndTotalBytes;
+            (int Count, long TotalBytes) textures = _textures.CountAndTotalBytes;
+            (int Count, long TotalBytes) vertexBuffers = _vertexBuffers.CountAndTotalBytes;
+            (int Count, long TotalBytes) storageBuffers = _storageBuffers.CountAndTotalBytes;
             return new GpuMemoryStats(
                 textures.Count, textures.TotalBytes,
                 vertexBuffers.Count, vertexBuffers.TotalBytes,
