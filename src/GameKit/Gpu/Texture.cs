@@ -5,11 +5,12 @@ using SDL;
 
 namespace GameKit.Gpu;
 
-public abstract class Texture: IDisposable
+public abstract class Texture: IDisposable, IGpuMemorySized
 {
     internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
     public TextureFormat Format { get; }
     public ShortSize Size { get; }
+    public virtual long SizeInBytes => Format.CalculateSizeInBytes(Size.Width, Size.Height);
 
     internal Texture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
     {

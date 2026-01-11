@@ -9,6 +9,7 @@ public class TextureArray : Texture
     private readonly IGpuDevice _gpuDevice;
 
     public ushort LayerCount { get; }
+    public override long SizeInBytes => Format.CalculateSizeInBytes(Size.Width, Size.Height, LayerCount);
 
     internal TextureArray(
         IGpuDevice gpuDevice,

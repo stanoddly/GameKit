@@ -4,7 +4,7 @@ using SDL;
 
 namespace GameKit.Gpu;
 
-public abstract class GpuVertexBuffer: IDisposable
+public abstract class GpuVertexBuffer: IDisposable, IGpuMemorySized
 {
     internal IGpuDevice GpuDevice { get; set; }
 
@@ -12,6 +12,7 @@ public abstract class GpuVertexBuffer: IDisposable
     internal Pointer<SDL_GPUBuffer> SdlIndexBuffer { get; set; }
     public int BufferSize { get; }
     public int Size { get; internal set; }
+    public abstract long SizeInBytes { get; }
     
     protected GpuVertexBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, Pointer<SDL_GPUBuffer> sdlIndexBuffer, int size)
     {
@@ -36,4 +37,5 @@ public class GpuVertexBuffer<TVertexType>: GpuVertexBuffer where TVertexType : u
     }
 
     public int BufferSizeBytes => Unsafe.SizeOf<TVertexType>() * BufferSize;
+    public override long SizeInBytes => BufferSizeBytes;
 }
