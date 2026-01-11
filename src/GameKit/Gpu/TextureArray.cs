@@ -9,14 +9,13 @@ public class TextureArray : Texture
     private readonly IGpuDevice _gpuDevice;
 
     public ushort LayerCount { get; }
-    public override long SizeInBytes => Format.CalculateSizeInBytes(Size.Width, Size.Height, LayerCount);
 
     internal TextureArray(
         IGpuDevice gpuDevice,
         Pointer<SDL_GPUTexture> sdlGpuTexture,
         ShortSize size,
         ushort layerCount,
-        TextureFormat format) : base(sdlGpuTexture, size, format)
+        TextureFormat format) : base(sdlGpuTexture, size, format, format.CalculateSizeInBytes(size.Width, size.Height, layerCount))
     {
         _gpuDevice = gpuDevice;
         LayerCount = layerCount;

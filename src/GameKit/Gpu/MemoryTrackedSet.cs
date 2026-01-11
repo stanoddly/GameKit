@@ -4,6 +4,7 @@ internal class MemoryTrackedSet<T> where T : IGpuMemorySized
 {
     private readonly Lock _lock = new();
     private readonly HashSet<T> _set = new();
+    private int _count;
     private long _totalBytes;
 
     public int Count
@@ -12,7 +13,7 @@ internal class MemoryTrackedSet<T> where T : IGpuMemorySized
         {
             lock (_lock)
             {
-                return _set.Count;
+                return _count;
             }
         }
     }
@@ -28,12 +29,24 @@ internal class MemoryTrackedSet<T> where T : IGpuMemorySized
         }
     }
 
+    public (int Count, long TotalBytes) CountAndTotalBytes
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return (_count, _totalBytes);
+            }
+        }
+    }
+
     public void Add(T item)
     {
         lock (_lock)
         {
             if (_set.Add(item))
             {
+                _count++;
                 _totalBytes += item.SizeInBytes;
             }
         }
@@ -45,6 +58,7 @@ internal class MemoryTrackedSet<T> where T : IGpuMemorySized
         {
             if (_set.Remove(item))
             {
+                _count--;
                 _totalBytes -= item.SizeInBytes;
             }
         }
@@ -56,6 +70,7 @@ internal class MemoryTrackedSet<T> where T : IGpuMemorySized
         {
             T[] copy = _set.ToArray();
             _set.Clear();
+            _count = 0;
             _totalBytes = 0;
             return copy;
         }

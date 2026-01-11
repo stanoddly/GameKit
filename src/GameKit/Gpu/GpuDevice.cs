@@ -17,11 +17,20 @@ internal class GpuDevice : IGpuDevice
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
 
-    public GpuMemoryStats MemoryStats => new GpuMemoryStats(
-        _textures.Count, _textures.TotalBytes,
-        _vertexBuffers.Count, _vertexBuffers.TotalBytes,
-        _storageBuffers.Count, _storageBuffers.TotalBytes
-    );
+    public GpuMemoryStats MemoryStats
+    {
+        get
+        {
+            var textures = _textures.CountAndTotalBytes;
+            var vertexBuffers = _vertexBuffers.CountAndTotalBytes;
+            var storageBuffers = _storageBuffers.CountAndTotalBytes;
+            return new GpuMemoryStats(
+                textures.Count, textures.TotalBytes,
+                vertexBuffers.Count, vertexBuffers.TotalBytes,
+                storageBuffers.Count, storageBuffers.TotalBytes
+            );
+        }
+    }
 
     internal GpuDevice(Pointer<SDL_GPUDevice> sdlGpuDevice)
     {

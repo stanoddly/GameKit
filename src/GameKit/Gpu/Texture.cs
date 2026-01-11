@@ -7,16 +7,19 @@ namespace GameKit.Gpu;
 
 public abstract class Texture: IDisposable, IGpuMemorySized
 {
+    private readonly long _sizeInBytes;
+
     internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
     public TextureFormat Format { get; }
     public ShortSize Size { get; }
-    public virtual long SizeInBytes => Format.CalculateSizeInBytes(Size.Width, Size.Height);
+    public long SizeInBytes => _sizeInBytes;
 
-    internal Texture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
+    internal Texture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format, long sizeInBytes)
     {
         SdlGpuTexture = sdlGpuTexture;
         Size = size;
         Format = format;
+        _sizeInBytes = sizeInBytes;
     }
 
     public Vector4 CalculateTextureRegionUVs(ShortRectangle sourceRectangle)
@@ -45,10 +48,10 @@ public class UserTexture: Texture
 {
     private readonly IGpuDevice _gpuDevice;
 
-    internal UserTexture(IGpuDevice gpuDevice, Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format) : base(sdlGpuTexture, size, format)
+    internal UserTexture(IGpuDevice gpuDevice, Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
+        : base(sdlGpuTexture, size, format, format.CalculateSizeInBytes(size.Width, size.Height))
     {
         _gpuDevice = gpuDevice;
-        SdlGpuTexture = sdlGpuTexture;
     }
 
     public override void Dispose()
@@ -59,7 +62,8 @@ public class UserTexture: Texture
 
 public class SwapchainTexture : Texture
 {
-    internal SwapchainTexture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format) : base(sdlGpuTexture, size, format)
+    internal SwapchainTexture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
+        : base(sdlGpuTexture, size, format, format.CalculateSizeInBytes(size.Width, size.Height))
     {
     }
 
