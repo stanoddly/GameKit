@@ -4,28 +4,27 @@ public class GpuMemoryStatsPrinter : IStartable, IDisposable
 {
     private readonly IGpuDevice _gpuDevice;
     private readonly TimeSpan _interval = TimeSpan.FromSeconds(5);
-    private CancellationTokenSource? _cts;
-    private Thread? _thread;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly Thread _thread;
 
     public GpuMemoryStatsPrinter(IGpuDevice gpuDevice)
     {
         _gpuDevice = gpuDevice;
-    }
-
-    public void Start()
-    {
-        _cts = new CancellationTokenSource();
         _thread = new Thread(Run)
         {
             Name = "GpuMemoryStatsPrinter",
             IsBackground = true
         };
+    }
+
+    public void Start()
+    {
         _thread.Start();
     }
 
     private void Run()
     {
-        CancellationToken token = _cts!.Token;
+        CancellationToken token = _cts.Token;
 
         while (!token.IsCancellationRequested)
         {
@@ -53,14 +52,8 @@ public class GpuMemoryStatsPrinter : IStartable, IDisposable
 
     public void Dispose()
     {
-        if (_cts == null)
-        {
-            return;
-        }
-
         _cts.Cancel();
-        _thread?.Join(TimeSpan.FromSeconds(1));
+        _thread.Join(TimeSpan.FromSeconds(1));
         _cts.Dispose();
-        _cts = null;
     }
 }
