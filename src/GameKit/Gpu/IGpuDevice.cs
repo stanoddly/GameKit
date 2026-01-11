@@ -5,6 +5,8 @@ namespace GameKit.Gpu;
 
 public interface IGpuDevice : IDisposable
 {
+    GpuMemoryStats MemoryStats { get; }
+
     ShaderFormats GetSupportedShaderFormats();
     
     CommandBuffer AcquireCommandBuffer();

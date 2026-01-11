@@ -8,14 +8,29 @@ namespace GameKit.Gpu;
 
 internal class GpuDevice : IGpuDevice
 {
-    private LockedSet<Texture> _textures = new();
-    private LockedSet<GpuVertexBuffer> _vertexBuffers = new();
-    private LockedSet<GpuStorageBuffer> _storageBuffers = new();
+    private MemoryTrackedSet<Texture> _textures = new();
+    private MemoryTrackedSet<GpuVertexBuffer> _vertexBuffers = new();
+    private MemoryTrackedSet<GpuStorageBuffer> _storageBuffers = new();
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
     private LockedSet<Shader> _shaders = new();
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
+
+    public GpuMemoryStats MemoryStats
+    {
+        get
+        {
+            (int Count, long TotalBytes) textures = _textures.CountAndTotalBytes;
+            (int Count, long TotalBytes) vertexBuffers = _vertexBuffers.CountAndTotalBytes;
+            (int Count, long TotalBytes) storageBuffers = _storageBuffers.CountAndTotalBytes;
+            return new GpuMemoryStats(
+                textures.Count, textures.TotalBytes,
+                vertexBuffers.Count, vertexBuffers.TotalBytes,
+                storageBuffers.Count, storageBuffers.TotalBytes
+            );
+        }
+    }
 
     internal GpuDevice(Pointer<SDL_GPUDevice> sdlGpuDevice)
     {

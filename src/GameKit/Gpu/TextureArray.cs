@@ -15,7 +15,7 @@ public class TextureArray : Texture
         Pointer<SDL_GPUTexture> sdlGpuTexture,
         ShortSize size,
         ushort layerCount,
-        TextureFormat format) : base(sdlGpuTexture, size, format)
+        TextureFormat format) : base(sdlGpuTexture, size, format, format.CalculateSizeInBytes(size.Width, size.Height, layerCount))
     {
         _gpuDevice = gpuDevice;
         LayerCount = layerCount;

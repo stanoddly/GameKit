@@ -89,7 +89,7 @@ public class CopyPass: ICopyPass
             throw new ArgumentException($"{nameof(vertices.Length)} is 0");
         }
         
-        uint bufferSizeBytes = (uint)vertexBuffer.BufferSizeBytes;
+        uint bufferSizeBytes = (uint)vertexBuffer.SizeInBytes;
 
         if (sizeBytes > bufferSizeBytes)
         {
@@ -165,7 +165,7 @@ public class CopyPass: ICopyPass
             throw new ArgumentException($"{nameof(data.Length)} is 0");
         }
 
-        uint bufferSizeBytes = (uint)storageBuffer.BufferSizeBytes;
+        uint bufferSizeBytes = (uint)storageBuffer.SizeInBytes;
 
         if (sizeBytes > bufferSizeBytes)
         {
