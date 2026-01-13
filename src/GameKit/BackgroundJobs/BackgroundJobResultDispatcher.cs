@@ -10,13 +10,13 @@ public class BackgroundJobResultDispatcher : IUpdatable
 {
     private const long FrameBudgetMs = 2;
 
-    private readonly BackgroundJobWorkerPool _workerPool;
+    private readonly BackgroundJobQueues _queues;
     private readonly List<ResultHandlerWrapper?> _handlers = [null];
     private readonly Stopwatch _stopwatch = new();
 
-    public BackgroundJobResultDispatcher(BackgroundJobWorkerPool workerPool)
+    internal BackgroundJobResultDispatcher(BackgroundJobQueues queues)
     {
-        _workerPool = workerPool;
+        _queues = queues;
     }
 
     public void RegisterHandler<TResult>(IBackgroundJobResultHandler<TResult> handler) where TResult : class
@@ -46,7 +46,7 @@ public class BackgroundJobResultDispatcher : IUpdatable
         _stopwatch.Restart();
 
         while (_stopwatch.ElapsedMilliseconds < FrameBudgetMs &&
-               _workerPool.TryDequeueResult(out BackgroundJobResult result))
+               _queues.TryDequeueResult(out BackgroundJobResult result))
         {
             ResultHandlerWrapper? handler = result.TypeId < _handlers.Count ? _handlers[result.TypeId] : null;
             handler?.HandleResult(result.Result);

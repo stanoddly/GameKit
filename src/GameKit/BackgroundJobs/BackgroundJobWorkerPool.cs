@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using GameKit.Gpu;
 
 namespace GameKit.BackgroundJobs;
@@ -10,14 +9,15 @@ namespace GameKit.BackgroundJobs;
 /// </summary>
 public class BackgroundJobWorkerPool : IStartable, IDisposable
 {
-    private readonly ConcurrentQueue<BackgroundJob>[] _priorityQueues;
-    private readonly ConcurrentQueue<BackgroundJobResult> _resultQueue = new();
+    private readonly BackgroundJobQueues _queues;
     private readonly List<ProcessorRegistration> _registrations = [];
     private readonly IGpuDevice _gpuDevice;
     private readonly int _workerCount;
     private Thread[]? _workers;
     private CancellationTokenSource? _shutdownCts;
     private bool _disposed;
+
+    internal BackgroundJobQueues Queues => _queues;
 
     public BackgroundJobWorkerPool(IGpuDevice gpuDevice, int priorityLevels = 1)
         : this(gpuDevice, priorityLevels, Math.Max(1, Environment.ProcessorCount - 1))
@@ -28,12 +28,7 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
     {
         _gpuDevice = gpuDevice;
         _workerCount = workerCount;
-
-        _priorityQueues = new ConcurrentQueue<BackgroundJob>[priorityLevels];
-        for (int i = 0; i < priorityLevels; i++)
-        {
-            _priorityQueues[i] = new ConcurrentQueue<BackgroundJob>();
-        }
+        _queues = new BackgroundJobQueues(priorityLevels);
     }
 
     public void RegisterProcessor<TTask>(Func<BackgroundTaskProcessor<TTask>> factory)
@@ -55,8 +50,7 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
         for (int i = 0; i < _workerCount; i++)
         {
             BackgroundJobWorker worker = new BackgroundJobWorker(
-                _priorityQueues,
-                _resultQueue,
+                _queues,
                 _registrations,
                 _shutdownCts.Token,
                 _gpuDevice);
@@ -68,17 +62,6 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
             };
             _workers[i].Start();
         }
-    }
-
-    internal void Enqueue(BackgroundJob job, int priority = 0)
-    {
-        int clampedPriority = Math.Clamp(priority, 0, _priorityQueues.Length - 1);
-        _priorityQueues[clampedPriority].Enqueue(job);
-    }
-
-    internal bool TryDequeueResult(out BackgroundJobResult result)
-    {
-        return _resultQueue.TryDequeue(out result);
     }
 
     public void Dispose()

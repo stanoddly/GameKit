@@ -1,12 +1,10 @@
-using System.Collections.Concurrent;
 using GameKit.Gpu;
 
 namespace GameKit.BackgroundJobs;
 
 internal class BackgroundJobWorker
 {
-    private readonly ConcurrentQueue<BackgroundJob>[] _priorityQueues;
-    private readonly ConcurrentQueue<BackgroundJobResult> _resultQueue;
+    private readonly BackgroundJobQueues _queues;
     private readonly List<ProcessorRegistration> _registrations;
     private readonly CancellationToken _cancellationToken;
     private readonly IGpuDevice _gpuDevice;
@@ -14,14 +12,12 @@ internal class BackgroundJobWorker
     private List<ProcessorWrapper?> _processors = null!;
 
     public BackgroundJobWorker(
-        ConcurrentQueue<BackgroundJob>[] priorityQueues,
-        ConcurrentQueue<BackgroundJobResult> resultQueue,
+        BackgroundJobQueues queues,
         List<ProcessorRegistration> registrations,
         CancellationToken cancellationToken,
         IGpuDevice gpuDevice)
     {
-        _priorityQueues = priorityQueues;
-        _resultQueue = resultQueue;
+        _queues = queues;
         _registrations = registrations;
         _cancellationToken = cancellationToken;
         _gpuDevice = gpuDevice;
@@ -33,7 +29,7 @@ internal class BackgroundJobWorker
 
         while (!_cancellationToken.IsCancellationRequested)
         {
-            if (TryDequeueJob(out BackgroundJob job))
+            if (_queues.TryDequeueJob(out BackgroundJob job))
             {
                 ProcessJob(job);
             }
@@ -73,25 +69,11 @@ internal class BackgroundJobWorker
 
         using (ICopyPass copyPass = commandBuffer.CreateCopyPass())
         {
-            BackgroundJobContext context = new(copyPass, _resultQueue, _priorityQueues);
+            BackgroundJobContext context = new(copyPass, _queues);
             processor.Process(job.Task, context);
         }
 
         using GpuFence fence = commandBuffer.SubmitAndAcquireFence();
         _gpuDevice.WaitForFences([fence]);
-    }
-
-    private bool TryDequeueJob(out BackgroundJob job)
-    {
-        foreach (ConcurrentQueue<BackgroundJob> queue in _priorityQueues)
-        {
-            if (queue.TryDequeue(out job))
-            {
-                return true;
-            }
-        }
-
-        job = default;
-        return false;
     }
 }

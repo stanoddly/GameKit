@@ -157,6 +157,16 @@ public class GameKitAppBuilder
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
         _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
+        _moduleBuilder.RegisterFunc<BackgroundJobDispatcher>(sp =>
+        {
+            BackgroundJobWorkerPool pool = sp.GetRequiredService<BackgroundJobWorkerPool>();
+            return new BackgroundJobDispatcher(pool.Queues);
+        });
+        _moduleBuilder.RegisterFunc<BackgroundJobResultDispatcher>(sp =>
+        {
+            BackgroundJobWorkerPool pool = sp.GetRequiredService<BackgroundJobWorkerPool>();
+            return new BackgroundJobResultDispatcher(pool.Queues);
+        });
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {

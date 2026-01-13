@@ -6,16 +6,16 @@ namespace GameKit.BackgroundJobs;
 /// </summary>
 public class BackgroundJobDispatcher
 {
-    private readonly BackgroundJobWorkerPool _workerPool;
+    private readonly BackgroundJobQueues _queues;
 
-    public BackgroundJobDispatcher(BackgroundJobWorkerPool workerPool)
+    internal BackgroundJobDispatcher(BackgroundJobQueues queues)
     {
-        _workerPool = workerPool;
+        _queues = queues;
     }
 
     public void Dispatch<TTask>(TTask task, int priority = 0) where TTask : class
     {
         int typeId = BackgroundJobTypeId<TTask>.Id;
-        _workerPool.Enqueue(new BackgroundJob(typeId, task), priority);
+        _queues.EnqueueJob(new BackgroundJob(typeId, task), priority);
     }
 }
