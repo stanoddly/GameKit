@@ -36,11 +36,10 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
         }
     }
 
-    public void RegisterProcessor<TTask, TResult>(Func<BackgroundTaskProcessor<TTask, TResult>> factory)
+    public void RegisterProcessor<TTask>(Func<BackgroundTaskProcessor<TTask>> factory)
         where TTask : class
-        where TResult : class
     {
-        _registrations.Add(new ProcessorRegistration<TTask, TResult>(factory));
+        _registrations.Add(new ProcessorRegistration<TTask>(factory));
     }
 
     public void Start()

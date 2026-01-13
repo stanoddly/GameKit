@@ -1,5 +1,3 @@
-using GameKit.Gpu;
-
 namespace GameKit.BackgroundJobs;
 
 /// <summary>
@@ -7,12 +5,10 @@ namespace GameKit.BackgroundJobs;
 /// Implement this to define how processors are created, with dependencies injected via the constructor.
 /// </summary>
 /// <typeparam name="TTask">The task type the processor handles.</typeparam>
-/// <typeparam name="TResult">The result type the processor produces.</typeparam>
-public interface IProcessorFactory<TTask, TResult>
+public interface IProcessorFactory<TTask>
     where TTask : class
-    where TResult : class
 {
-    BackgroundTaskProcessor<TTask, TResult> Create();
+    BackgroundTaskProcessor<TTask> Create();
 }
 
 /// <summary>
@@ -20,10 +16,13 @@ public interface IProcessorFactory<TTask, TResult>
 /// Each worker thread creates its own instance via the factory registered with <see cref="BackgroundJobWorkerPool"/>.
 /// </summary>
 /// <typeparam name="TTask">The task type this processor handles. Must be a reference type.</typeparam>
-/// <typeparam name="TResult">The result type produced. Must be a reference type.</typeparam>
-public abstract class BackgroundTaskProcessor<TTask, TResult>
+public abstract class BackgroundTaskProcessor<TTask>
     where TTask : class
-    where TResult : class
 {
-    public abstract TResult? Process(TTask task, ICopyPass copyPass);
+    /// <summary>
+    /// Processes a task. Use the context to dispatch results and/or new jobs.
+    /// </summary>
+    /// <param name="task">The task to process.</param>
+    /// <param name="context">The context providing GPU access and dispatch capabilities.</param>
+    public abstract void Process(TTask task, IBackgroundJobContext context);
 }

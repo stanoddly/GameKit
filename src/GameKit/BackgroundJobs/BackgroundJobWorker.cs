@@ -71,19 +71,14 @@ internal class BackgroundJobWorker
 
         using CommandBuffer commandBuffer = _gpuDevice.AcquireCommandBuffer();
 
-        object? result;
         using (ICopyPass copyPass = commandBuffer.CreateCopyPass())
         {
-            result = processor.Process(job.Task, copyPass);
+            BackgroundJobContext context = new(copyPass, _resultQueue, _priorityQueues);
+            processor.Process(job.Task, context);
         }
 
         using GpuFence fence = commandBuffer.SubmitAndAcquireFence();
         _gpuDevice.WaitForFences([fence]);
-
-        if (result != null)
-        {
-            _resultQueue.Enqueue(new BackgroundJobResult(processor.ResultTypeId, result));
-        }
     }
 
     private bool TryDequeueJob(out BackgroundJob job)

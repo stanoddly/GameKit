@@ -200,17 +200,16 @@ public class GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TResult, TFactory>()
+    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TFactory>()
         where TTask : class
-        where TResult : class
-        where TFactory : class, IProcessorFactory<TTask, TResult>
+        where TFactory : class, IProcessorFactory<TTask>
     {
         _moduleBuilder.RegisterType<TFactory>();
 
         _processorRegistrations.Add((sp, pool) =>
         {
             TFactory factory = sp.GetRequiredService<TFactory>();
-            pool.RegisterProcessor<TTask, TResult>(factory.Create);
+            pool.RegisterProcessor<TTask>(factory.Create);
         });
 
         return this;
