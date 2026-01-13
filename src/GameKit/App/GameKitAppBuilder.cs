@@ -18,7 +18,7 @@ public class GameKitAppBuilder
     private readonly List<IStartable> _startables = new();
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
-    private readonly List<Action<IServiceProvider, BackgroundJobWorkerPool>> _processorRegistrations = new();
+    private readonly List<Action<IServiceProvider, BackgroundWorkerPool>> _handlerRegistrations = new();
 
     public GameKitAppBuilder()
     {
@@ -156,22 +156,21 @@ public class GameKitAppBuilder
 
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
-        _moduleBuilder.RegisterFunc<BackgroundJobQueues>(_ => new BackgroundJobQueues(priorityLevels: 1));
-        _moduleBuilder.RegisterType<BackgroundJobWorkerPool>();
-        _moduleBuilder.RegisterType<BackgroundJobDispatcher>();
-        _moduleBuilder.RegisterType<BackgroundJobResultDispatcher>();
+        _moduleBuilder.RegisterFunc<BackgroundWorkHub>(_ => new BackgroundWorkHub(priorityLevels: 1));
+        _moduleBuilder.RegisterType<BackgroundWorkerPool>();
+        _moduleBuilder.RegisterType<MainMessageDispatcher>();
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
             _moduleBuilder.RegisterType<NullImageLoader>().As<IContentLoader<Image>>();
         }
 
-        if (_processorRegistrations.Count > 0)
+        if (_handlerRegistrations.Count > 0)
         {
             _moduleBuilder.OnStart(sp =>
             {
-                BackgroundJobWorkerPool pool = sp.GetRequiredService<BackgroundJobWorkerPool>();
-                foreach (var registration in _processorRegistrations)
+                BackgroundWorkerPool pool = sp.GetRequiredService<BackgroundWorkerPool>();
+                foreach (var registration in _handlerRegistrations)
                 {
                     registration(sp, pool);
                 }
@@ -203,16 +202,16 @@ public class GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder RegisterBackgroundJobProcessor<TTask, TFactory>()
-        where TTask : class
-        where TFactory : class, IProcessorFactory<TTask>
+    public GameKitAppBuilder RegisterBackgroundWorkHandler<TMessage, TFactory>()
+        where TMessage : class
+        where TFactory : class, IHandlerFactory<TMessage>
     {
         _moduleBuilder.RegisterType<TFactory>();
 
-        _processorRegistrations.Add((sp, pool) =>
+        _handlerRegistrations.Add((sp, pool) =>
         {
             TFactory factory = sp.GetRequiredService<TFactory>();
-            pool.RegisterProcessor<TTask>(factory.Create);
+            pool.RegisterHandler<TMessage>(factory.Create);
         });
 
         return this;

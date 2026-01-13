@@ -3,36 +3,36 @@ using GameKit.Gpu;
 namespace GameKit.BackgroundJobs;
 
 /// <summary>
-/// Manages a pool of background worker threads for processing jobs off the main thread.
+/// Manages a pool of background worker threads for processing messages off the main thread.
 /// Each worker has access to an <see cref="Gpu.ICopyPass"/> for GPU memory transfers.
 /// Implements <see cref="IStartable"/> so workers start automatically before the game loop.
 /// </summary>
-public class BackgroundJobWorkerPool : IStartable, IDisposable
+public class BackgroundWorkerPool : IStartable, IDisposable
 {
-    private readonly BackgroundJobQueues _queues;
-    private readonly List<ProcessorRegistration> _registrations = [];
+    private readonly BackgroundWorkHub _hub;
+    private readonly List<HandlerRegistration> _registrations = [];
     private readonly IGpuDevice _gpuDevice;
     private readonly int _workerCount;
     private Thread[]? _workers;
     private CancellationTokenSource? _shutdownCts;
     private bool _disposed;
 
-    internal BackgroundJobWorkerPool(BackgroundJobQueues queues, IGpuDevice gpuDevice)
-        : this(queues, gpuDevice, Math.Max(1, Environment.ProcessorCount - 1))
+    internal BackgroundWorkerPool(BackgroundWorkHub hub, IGpuDevice gpuDevice)
+        : this(hub, gpuDevice, Math.Max(1, Environment.ProcessorCount - 1))
     {
     }
 
-    internal BackgroundJobWorkerPool(BackgroundJobQueues queues, IGpuDevice gpuDevice, int workerCount)
+    internal BackgroundWorkerPool(BackgroundWorkHub hub, IGpuDevice gpuDevice, int workerCount)
     {
-        _queues = queues;
+        _hub = hub;
         _gpuDevice = gpuDevice;
         _workerCount = workerCount;
     }
 
-    public void RegisterProcessor<TTask>(Func<BackgroundTaskProcessor<TTask>> factory)
-        where TTask : class
+    public void RegisterHandler<TMessage>(Func<BackgroundWorkHandler<TMessage>> factory)
+        where TMessage : class
     {
-        _registrations.Add(new ProcessorRegistration<TTask>(factory));
+        _registrations.Add(new HandlerRegistration<TMessage>(factory));
     }
 
     public void Start()
@@ -47,15 +47,15 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
 
         for (int i = 0; i < _workerCount; i++)
         {
-            BackgroundJobWorker worker = new BackgroundJobWorker(
-                _queues,
+            BackgroundWorker worker = new BackgroundWorker(
+                _hub,
                 _registrations,
                 _shutdownCts.Token,
                 _gpuDevice);
 
             _workers[i] = new Thread(worker.Run)
             {
-                Name = $"BackgroundJobWorker-{i}",
+                Name = $"BackgroundWorker-{i}",
                 IsBackground = true
             };
             _workers[i].Start();
