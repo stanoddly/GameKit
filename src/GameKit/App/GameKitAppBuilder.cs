@@ -157,8 +157,11 @@ public class GameKitAppBuilder
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
         _moduleBuilder.RegisterFunc<BackgroundWorkHub>(_ => new BackgroundWorkHub(priorityLevels: 1));
-        _moduleBuilder.RegisterType<BackgroundWorkerPool>();
-        _moduleBuilder.RegisterType<MainMessageDispatcher>();
+        _moduleBuilder.RegisterFunc<BackgroundWorkerPool>(sp => new BackgroundWorkerPool(
+            sp.GetRequiredService<BackgroundWorkHub>(),
+            sp.GetRequiredService<IGpuDevice>()));
+        _moduleBuilder.RegisterFunc<MainMessageDispatcher>(sp => new MainMessageDispatcher(
+            sp.GetRequiredService<BackgroundWorkHub>()));
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
