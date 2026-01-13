@@ -17,18 +17,16 @@ public class BackgroundJobWorkerPool : IStartable, IDisposable
     private CancellationTokenSource? _shutdownCts;
     private bool _disposed;
 
-    internal BackgroundJobQueues Queues => _queues;
-
-    public BackgroundJobWorkerPool(IGpuDevice gpuDevice, int priorityLevels = 1)
-        : this(gpuDevice, priorityLevels, Math.Max(1, Environment.ProcessorCount - 1))
+    internal BackgroundJobWorkerPool(BackgroundJobQueues queues, IGpuDevice gpuDevice)
+        : this(queues, gpuDevice, Math.Max(1, Environment.ProcessorCount - 1))
     {
     }
 
-    public BackgroundJobWorkerPool(IGpuDevice gpuDevice, int priorityLevels, int workerCount)
+    internal BackgroundJobWorkerPool(BackgroundJobQueues queues, IGpuDevice gpuDevice, int workerCount)
     {
+        _queues = queues;
         _gpuDevice = gpuDevice;
         _workerCount = workerCount;
-        _queues = new BackgroundJobQueues(priorityLevels);
     }
 
     public void RegisterProcessor<TTask>(Func<BackgroundTaskProcessor<TTask>> factory)
