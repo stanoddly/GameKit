@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace GameKit.BackgroundJobs;
 
-internal static class BackgroundJobTypeId
+internal static class MessageTypeId
 {
     public const int Null = 0;
     private static int _nextId = 0;
@@ -23,12 +23,12 @@ internal static class BackgroundJobTypeId
     }
 }
 
-internal static class BackgroundJobTypeId<T>
+internal static class MessageTypeId<T>
 {
     public static readonly int Id;
 
-    static BackgroundJobTypeId()
+    static MessageTypeId()
     {
-        Id = BackgroundJobTypeId.GetId(typeof(T));
+        Id = MessageTypeId.GetId(typeof(T));
     }
 }
