@@ -10,13 +10,17 @@ namespace GameKit.SdlangCompileTask;
 public class SdlangCompileTask : Microsoft.Build.Utilities.Task
 {
     /// <summary>
-    /// The input shader file to compile.
+    /// The input shader file to compile. If empty or null, the task succeeds without compiling.
     /// </summary>
-    [Required]
-    public required string InputFile { get; set; }
+    public string? InputFile { get; set; }
 
     public override bool Execute()
     {
+        if (string.IsNullOrEmpty(InputFile))
+        {
+            return true;
+        }
+
         SdlangCompiler sdlangCompiler = new();
         sdlangCompiler.Compile([InputFile], false);
         return true;

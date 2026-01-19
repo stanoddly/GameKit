@@ -44,4 +44,12 @@
         </ItemGroup>
         <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
     </Target>
+
+    <!-- Test that builds succeed when no shaders match the glob pattern (issue #71) -->
+    <Target Name="CompileEmptySdlangShaders" BeforeTargets="Build">
+        <ItemGroup>
+            <EmptySdlangShader Include="Content\empty\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(EmptySdlangShader.Identity)" />
+    </Target>
 </Project>
