@@ -68,9 +68,9 @@ public sealed class NativeFileSystem: VirtualFileSystem
         return relativePath.Replace(Path.DirectorySeparatorChar, '/');
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(string path)
+    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
     {
-        string nativePath = FromVirtualToNativePath(path);
+        string nativePath = FromVirtualToNativePath(path.ToString());
 
         string[] filenames = Directory.GetFiles(nativePath);
         VirtualFile[] result = new VirtualFile[filenames.Length];
@@ -85,9 +85,9 @@ public sealed class NativeFileSystem: VirtualFileSystem
         return result;
     }
 
-    public override bool TryGetDirectories(string path, out ReadOnlySpan<string> result)
+    public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
     {
-        string nativePath = FromVirtualToNativePath(path);
+        string nativePath = FromVirtualToNativePath(path.ToString());
 
         if (!Directory.Exists(nativePath))
         {
@@ -108,17 +108,18 @@ public sealed class NativeFileSystem: VirtualFileSystem
         return true;
     }
 
-    public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
+    public override bool TryGetFile(ReadOnlySpan<char> path, [NotNullWhen(true)] out VirtualFile? file)
     {
-        string nativePath = FromVirtualToNativePath(path);
+        string pathString = path.ToString();
+        string nativePath = FromVirtualToNativePath(pathString);
 
         if (!File.Exists(nativePath))
         {
             file = null;
             return false;
         }
-        
-        file = new NativeFile(path, nativePath);
+
+        file = new NativeFile(pathString, nativePath);
         return true;
     }
 }

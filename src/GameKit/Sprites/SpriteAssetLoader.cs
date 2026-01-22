@@ -20,9 +20,10 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
         _storage = storage;
     }
 
-    SpriteAsset IContentLoader<SpriteAsset>.Load(string path)
+    SpriteAsset IContentLoader<SpriteAsset>.Load(ReadOnlySpan<char> path)
     {
-        if (_storage.TryGetSprite(path, out SpriteAsset? existingSprite))
+        string pathString = path.ToString();
+        if (_storage.TryGetSprite(pathString, out SpriteAsset? existingSprite))
         {
             return existingSprite;
         }
@@ -37,7 +38,7 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
 
         SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion);
 
-        _storage.StoreSprite(path, spriteAsset);
+        _storage.StoreSprite(pathString, spriteAsset);
 
         return spriteAsset;
     }

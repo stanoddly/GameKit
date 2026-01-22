@@ -32,9 +32,10 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
         return animatedSpriteAsset;
     }
 
-    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(string path)
+    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(ReadOnlySpan<char> path)
     {
-        if (_storage.TryGetAnimatedSprite(path, out AnimatedSpriteAsset? existingAnimation))
+        string pathString = path.ToString();
+        if (_storage.TryGetAnimatedSprite(pathString, out AnimatedSpriteAsset? existingAnimation))
         {
             return existingAnimation;
         }
@@ -42,7 +43,7 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
         AnimatedSpriteDto animatedSpriteDto = JsonSerializer.Deserialize(stream, SpriteDtosJsonContext.Default.AnimatedSpriteDto)
                                         ?? throw new JsonException("Deserialization returned null for AnimatedSpriteDto.");
         AnimatedSpriteAsset animatedSpriteAsset = CreateAnimation(animatedSpriteDto);
-        _storage.StoreAnimatedSprite(path, animatedSpriteAsset);
+        _storage.StoreAnimatedSprite(pathString, animatedSpriteAsset);
         return animatedSpriteAsset;
     }
 }
