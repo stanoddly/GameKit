@@ -22,13 +22,12 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
 
     SpriteAsset IContentLoader<SpriteAsset>.Load(ReadOnlySpan<char> path)
     {
-        string pathString = path.ToString();
-        if (_storage.TryGetSprite(pathString, out SpriteAsset? existingSprite))
+        if (_storage.TryGetSprite(path, out SpriteAsset? existingSprite))
         {
             return existingSprite;
         }
 
-        using var spritesJsonStream = _fileSystem.OpenStream(path);
+        using Stream spritesJsonStream = _fileSystem.OpenStream(path);
 
         SpriteDto spriteDto = JsonSerializer.Deserialize(spritesJsonStream, SpriteDtosJsonContext.Default.SpriteDto)
                                ?? throw new JsonException("Deserialization returned null for SpriteDto.");
@@ -38,7 +37,7 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
 
         SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion);
 
-        _storage.StoreSprite(pathString, spriteAsset);
+        _storage.StoreSprite(path.ToString(), spriteAsset);
 
         return spriteAsset;
     }
