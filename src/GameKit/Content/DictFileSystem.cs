@@ -37,12 +37,12 @@ public class DictFileSystem : VirtualFileSystem
     private readonly FrozenDictionary<string, ImmutableArray<string>>.AlternateLookup<ReadOnlySpan<char>> _directoriesLookup;
     private readonly FrozenDictionary<string, VirtualFile>.AlternateLookup<ReadOnlySpan<char>> _directFilesSpanLookup;
 
-    public DictFileSystem(IReadOnlyDictionary<string, ImmutableArray<VirtualFile>> files,
-        IReadOnlyDictionary<string, ImmutableArray<string>> directories)
+    public DictFileSystem(FrozenDictionary<string, ImmutableArray<VirtualFile>> files,
+        FrozenDictionary<string, ImmutableArray<string>> directories)
     {
-        _files = files.ToFrozenDictionary();
-        _directories = directories.ToFrozenDictionary();
-        _directFilesLookup = files.Values.SelectMany(item => item).ToFrozenDictionary(item => item.Path);
+        _files = files;
+        _directories = directories;
+        _directFilesLookup = _files.Values.SelectMany(item => item).ToFrozenDictionary(item => item.Path);
         _filesLookup = _files.GetAlternateLookup<ReadOnlySpan<char>>();
         _directoriesLookup = _directories.GetAlternateLookup<ReadOnlySpan<char>>();
         _directFilesSpanLookup = _directFilesLookup.GetAlternateLookup<ReadOnlySpan<char>>();
