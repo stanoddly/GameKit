@@ -4,7 +4,7 @@ namespace GameKit;
 
 public class NullImageLoader: IContentLoader<Image>
 {
-    public Image Load(string path)
+    public Image Load(ReadOnlySpan<char> path)
     {
         throw new InvalidOperationException("For image loading reference for example GameKit.ImageLoader.StbImageSharp package.");
     }

@@ -125,12 +125,12 @@ public class ZipFileSystem : VirtualFileSystem
         return new ZipFileSystem(archive);
     }
     
-    public override ReadOnlySpan<VirtualFile> GetFiles(string path)
+    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
     {
         ThrowIfDisposed();
-        
+
         string normalizedPath = NormalizePath(path);
-        
+
         if (_filesByDirectory.TryGetValue(normalizedPath, out var files))
         {
             // Create an array of VirtualFile and return it as a span
@@ -141,26 +141,26 @@ public class ZipFileSystem : VirtualFileSystem
             }
             return result;
         }
-        
+
         return Array.Empty<VirtualFile>();
     }
 
-    public override bool TryGetDirectories(string path, out ReadOnlySpan<string> result)
+    public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
     {
         ThrowIfDisposed();
-        
+
         string normalizedPath = NormalizePath(path);
-        
+
         if (_directoriesByParent.TryGetValue(normalizedPath, out var directories))
         {
             // Extract just the directory names (not full paths)
             string[] foundDirectories = new string[directories.Count];
-            
+
             for (int i = 0; i < directories.Count; i++)
             {
                 string fullPath = directories[i];
                 int lastSlash = fullPath.LastIndexOf('/');
-                
+
                 if (lastSlash >= 0)
                 {
                     // Return just the last segment of the path
@@ -176,17 +176,17 @@ public class ZipFileSystem : VirtualFileSystem
             result = foundDirectories;
             return true;
         }
-        
+
         result = Array.Empty<string>();
         return false;
     }
-    
-    public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
+
+    public override bool TryGetFile(ReadOnlySpan<char> path, [NotNullWhen(true)] out VirtualFile? file)
     {
         ThrowIfDisposed();
-        
+
         string normalizedPath = NormalizePath(path);
-        
+
         // Look for the file directly in the archive
         ZipArchiveEntry? entry = _archive.GetEntry(normalizedPath);
         if (entry != null && !string.IsNullOrEmpty(entry.Name))
@@ -194,7 +194,7 @@ public class ZipFileSystem : VirtualFileSystem
             file = new ZipFile(entry);
             return true;
         }
-        
+
         file = null;
         return false;
     }
@@ -228,13 +228,13 @@ public class ZipFileSystem : VirtualFileSystem
         }
     }
     
-    private static string NormalizePath(string path)
+    private static string NormalizePath(ReadOnlySpan<char> path)
     {
-        if (string.IsNullOrEmpty(path))
+        if (path.IsEmpty)
             return string.Empty;
-            
+
         // Replace backslashes with forward slashes and trim leading/trailing slashes
-        return path.Replace('\\', '/').Trim('/');
+        return path.ToString().Replace('\\', '/').Trim('/');
     }
     
     private static string GetDirectoryPath(string path)

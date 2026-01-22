@@ -30,7 +30,7 @@ public class StbImageLoader : IContentLoader<Image>
         _fileSystem = fileSystem;
     }
 
-    public Image Load(string path)
+    public Image Load(ReadOnlySpan<char> path)
     {
         using Stream fileStream = _fileSystem.GetFile(path).Open();
         ImageResult imageResult = ImageResult.FromStream(fileStream, ColorComponents.RedGreenBlueAlpha);

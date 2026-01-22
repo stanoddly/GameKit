@@ -73,12 +73,13 @@ public class ShaderLoader: IContentLoader<Shader>
         }
     }
 
-    public Shader Load(string path)
+    public Shader Load(ReadOnlySpan<char> path)
     {
-        string name = path.Split('/')[^1];
-        string? directoryName = Path.GetDirectoryName(path);
+        string pathString = path.ToString();
+        string name = pathString.Split('/')[^1];
+        string? directoryName = Path.GetDirectoryName(pathString);
 
-        string compiledDirectoryName; 
+        string compiledDirectoryName;
         if (directoryName == null)
         {
             compiledDirectoryName = CompiledShaderDirectory;
@@ -87,7 +88,7 @@ public class ShaderLoader: IContentLoader<Shader>
         {
             compiledDirectoryName = Path.Combine(directoryName, CompiledShaderDirectory);
         }
-        
+
         string metadataFilename = Path.Combine(compiledDirectoryName, $"{name}.metadata.json");
 
         ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);

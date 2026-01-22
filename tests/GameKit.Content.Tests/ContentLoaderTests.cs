@@ -6,7 +6,7 @@ public class ContentLoaderTests
     
     private class LoaderA : IContentLoader<ContentA>
     {
-        public ContentA Load(string path)
+        public ContentA Load(ReadOnlySpan<char> path)
         {
             return new ContentA();
         }

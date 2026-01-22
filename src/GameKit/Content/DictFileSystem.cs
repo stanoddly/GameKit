@@ -14,13 +14,13 @@ public class ByteVirtualFile: VirtualFile
         Path = path;
         _content = content;
     }
-    
+
     public ByteVirtualFile(string path, ReadOnlySpan<byte> content)
     {
         Path = path;
         _content = content.ToArray();
     }
-    
+
     public virtual long Length => _content.Length;
     public override Stream Open()
     {
@@ -30,31 +30,37 @@ public class ByteVirtualFile: VirtualFile
 
 public class DictFileSystem : VirtualFileSystem
 {
-    private readonly IReadOnlyDictionary<string, ImmutableArray<VirtualFile>> _files;
-    private readonly IReadOnlyDictionary<string, ImmutableArray<string>> _directories;
+    private readonly FrozenDictionary<string, ImmutableArray<VirtualFile>> _files;
+    private readonly FrozenDictionary<string, ImmutableArray<string>> _directories;
     private readonly FrozenDictionary<string, VirtualFile> _directFilesLookup;
+    private readonly FrozenDictionary<string, ImmutableArray<VirtualFile>>.AlternateLookup<ReadOnlySpan<char>> _filesLookup;
+    private readonly FrozenDictionary<string, ImmutableArray<string>>.AlternateLookup<ReadOnlySpan<char>> _directoriesLookup;
+    private readonly FrozenDictionary<string, VirtualFile>.AlternateLookup<ReadOnlySpan<char>> _directFilesSpanLookup;
 
-    public DictFileSystem(IReadOnlyDictionary<string, ImmutableArray<VirtualFile>> files,
-        IReadOnlyDictionary<string, ImmutableArray<string>> directories)
+    public DictFileSystem(FrozenDictionary<string, ImmutableArray<VirtualFile>> files,
+        FrozenDictionary<string, ImmutableArray<string>> directories)
     {
         _files = files;
         _directories = directories;
-        _directFilesLookup = files.Values.SelectMany(item => item).ToFrozenDictionary(item => item.Path);
+        _directFilesLookup = _files.Values.SelectMany(item => item).ToFrozenDictionary(item => item.Path);
+        _filesLookup = _files.GetAlternateLookup<ReadOnlySpan<char>>();
+        _directoriesLookup = _directories.GetAlternateLookup<ReadOnlySpan<char>>();
+        _directFilesSpanLookup = _directFilesLookup.GetAlternateLookup<ReadOnlySpan<char>>();
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(string path)
+    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
     {
-        if (!_files.TryGetValue(path, out var files))
+        if (!_filesLookup.TryGetValue(path, out var files))
         {
-            throw new DirectoryNotFoundException(path);
+            throw new DirectoryNotFoundException(path.ToString());
         }
-        
+
         return files.AsSpan();
     }
-    
-    public override bool TryGetDirectories(string path, out ReadOnlySpan<string> result)
+
+    public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
     {
-        if (_directories.TryGetValue(path, out var directories))
+        if (_directoriesLookup.TryGetValue(path, out var directories))
         {
             result = directories.AsSpan();
             return true;
@@ -64,9 +70,9 @@ public class DictFileSystem : VirtualFileSystem
         return false;
     }
 
-    public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
+    public override bool TryGetFile(ReadOnlySpan<char> path, [NotNullWhen(true)] out VirtualFile? file)
     {
-        return _directFilesLookup.TryGetValue(path, out file);
+        return _directFilesSpanLookup.TryGetValue(path, out file);
     }
 
     public static readonly DictFileSystem Empty = new(

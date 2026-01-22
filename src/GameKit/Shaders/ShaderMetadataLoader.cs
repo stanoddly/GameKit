@@ -13,7 +13,7 @@ public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
         _fileSystem = fileSystem;
     }
 
-    public ShaderMetadata Load(string path)
+    public ShaderMetadata Load(ReadOnlySpan<char> path)
     {
         using Stream stream = _fileSystem.GetFile(path).Open();
         // reflection free deserialization using DTO
@@ -21,7 +21,7 @@ public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
 
         if (dtoMetadata == null)
         {
-            throw new InvalidOperationException($"Failed to deserialize shader metadata from path: {path}");
+            throw new InvalidOperationException($"Failed to deserialize shader metadata from path: {path.ToString()}");
         }
 
         return ConvertDtoToMetadata(dtoMetadata);

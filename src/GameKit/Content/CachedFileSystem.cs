@@ -15,17 +15,17 @@ public sealed class CachedFileSystem: VirtualFileSystem
         _sourceVirtualFileSystem = sourceVirtualFileSystem;
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(string path)
+    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
     {
         return _dictFileSystem.GetFiles(path);
     }
 
-    public override bool TryGetDirectories(string path, out ReadOnlySpan<string> result)
+    public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
     {
         return _dictFileSystem.TryGetDirectories(path, out result);
     }
 
-    public override bool TryGetFile(string path, [NotNullWhen(true)] out VirtualFile? file)
+    public override bool TryGetFile(ReadOnlySpan<char> path, [NotNullWhen(true)] out VirtualFile? file)
     {
         return _dictFileSystem.TryGetFile(path, out file);
     }
