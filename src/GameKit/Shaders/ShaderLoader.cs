@@ -75,57 +75,24 @@ public class ShaderLoader: IContentLoader<Shader>
 
     public Shader Load(ReadOnlySpan<char> path)
     {
-        const string metadataSuffix = ".metadata.json";
+        string pathString = path.ToString();
+        string name = pathString.Split('/')[^1];
+        string? directoryName = Path.GetDirectoryName(pathString);
 
-        int lastSlashIndex = path.LastIndexOf('/');
-
-        ReadOnlySpan<char> name;
-        ReadOnlySpan<char> directoryName;
-
-        if (lastSlashIndex < 0)
+        string compiledDirectoryName;
+        if (directoryName == null)
         {
-            name = path;
-            directoryName = ReadOnlySpan<char>.Empty;
+            compiledDirectoryName = CompiledShaderDirectory;
         }
         else
         {
-            name = path.Slice(lastSlashIndex + 1);
-            directoryName = path.Slice(0, lastSlashIndex);
+            compiledDirectoryName = Path.Combine(directoryName, CompiledShaderDirectory);
         }
 
-        // Build compiledDirectoryName: directoryName + "/" + "compiled" (or just "compiled" if no directory)
-        int compiledDirLen = directoryName.IsEmpty
-            ? CompiledShaderDirectory.Length
-            : directoryName.Length + 1 + CompiledShaderDirectory.Length;
-
-        Span<char> compiledDirectoryBuffer = stackalloc char[compiledDirLen];
-        int pos = 0;
-
-        if (!directoryName.IsEmpty)
-        {
-            directoryName.CopyTo(compiledDirectoryBuffer);
-            pos = directoryName.Length;
-            compiledDirectoryBuffer[pos++] = '/';
-        }
-        CompiledShaderDirectory.AsSpan().CopyTo(compiledDirectoryBuffer.Slice(pos));
-
-        ReadOnlySpan<char> compiledDirectoryName = compiledDirectoryBuffer;
-
-        // Build metadataFilename: compiledDirectoryName + "/" + name + ".metadata.json"
-        int metadataLen = compiledDirLen + 1 + name.Length + metadataSuffix.Length;
-        Span<char> metadataBuffer = stackalloc char[metadataLen];
-
-        compiledDirectoryName.CopyTo(metadataBuffer);
-        pos = compiledDirLen;
-        metadataBuffer[pos++] = '/';
-        name.CopyTo(metadataBuffer.Slice(pos));
-        pos += name.Length;
-        metadataSuffix.AsSpan().CopyTo(metadataBuffer.Slice(pos));
-
-        ReadOnlySpan<char> metadataFilename = metadataBuffer;
+        string metadataFilename = Path.Combine(compiledDirectoryName, $"{name}.metadata.json");
 
         ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
 
-        return Load(compiledDirectoryName.ToString(), shaderMetadata);
+        return Load(compiledDirectoryName, shaderMetadata);
     }
 }
