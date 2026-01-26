@@ -9,7 +9,8 @@ public record AnimatedSpriteAsset(
     float FrameDuration,
     Texture Texture,
     ImmutableArray<ShortRectangle> Frames,
-    bool Repeat)
+    bool Repeat,
+    Vector2 AnchorOffset)
 {
     public Vector4 CalculateTextureRegionUVs(int frameIndex)
     {

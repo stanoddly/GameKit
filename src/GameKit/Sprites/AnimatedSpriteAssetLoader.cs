@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Numerics;
 using System.Text.Json;
 using GameKit.Common;
 using GameKit.Content;
@@ -28,7 +29,10 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
         {
             builder.Add(frame);
         }
-        AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, builder.MoveToImmutable(), animatedSpriteDto.Repeat);
+        Vector2 anchorOffset = animatedSpriteDto.AnchorOffset is { Length: 2 } offset
+            ? new Vector2(offset[0], offset[1])
+            : Vector2.Zero;
+        AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, builder.MoveToImmutable(), animatedSpriteDto.Repeat, anchorOffset);
         return animatedSpriteAsset;
     }
 
