@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text.Json;
 using GameKit.Common;
 using GameKit.Content;
@@ -145,7 +146,7 @@ public sealed class SpriteAtlasBuilder
             var (frameDuration, repeat, frameIndices) = kv.Value;
             var frames = animationFramesByPath[animationPath];
             var immutableFrames = System.Collections.Immutable.ImmutableArray.CreateRange(frames);
-            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, repeat);
+            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, repeat, Vector2.Zero);
             _storage.StoreAnimatedSprite(animationPath, animatedSpriteAsset);
         }
         atlasImage.Dispose();

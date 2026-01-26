@@ -15,4 +15,5 @@ internal record AnimatedSpriteDto
     public required string Texture { get; init; }
     public required ImmutableArray<ShortRectangle> Frames { get; init; }
     public bool Repeat { get; init; } = false;
+    public float[]? AnchorOffset { get; init; }
 }
