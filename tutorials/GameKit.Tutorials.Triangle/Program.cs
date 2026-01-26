@@ -16,7 +16,13 @@ static class Program
             .RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
         builder.RegisterFunc<TriangleRenderer>(TriangleRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
 
-        using IGameKitApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        int result;
+        using (IGameKitApp gameKitApp = builder.Build())
+        {
+            result = gameKitApp.Run();
+        }
+
+        Console.WriteLine("Goodbye!");
+        return result;
     }
 }
