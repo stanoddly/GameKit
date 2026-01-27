@@ -62,7 +62,5 @@ public class GameKitApp : IGameKitApp
         {
             _disposables[i].Dispose();
         }
-
-        Console.WriteLine("GameKit shutdown complete.");
     }
 }

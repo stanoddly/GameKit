@@ -332,8 +332,8 @@ internal class GpuDevice : IGpuDevice
         
         unsafe
         {
-            // TODO: crashes silently - needs investigation
-            // SDL3.SDL_DestroyGPUDevice(SdlGpuDevice);
+            // TODO: this is silently crashing since probably not all resources are cleaned appropriately (?)
+            //SDL3.SDL_DestroyGPUDevice(SdlGpuDevice);
             SdlGpuDevice = null;
         }
     }
