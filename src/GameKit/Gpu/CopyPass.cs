@@ -213,9 +213,7 @@ public class CopyPass: ICopyPass
                 height = (uint)height,
                 layer_count_or_depth = 1,
                 num_levels = 1,
-                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
-                // TODO: this is actually SDL bug
-                props = SDL3.SDL_CreateProperties()
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
             };
             Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
             SdlError.ThrowOnError();
@@ -293,9 +291,7 @@ public class CopyPass: ICopyPass
                 height = height,
                 layer_count_or_depth = layerCount,
                 num_levels = 1,
-                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
-                // TODO: this is actually SDL bug
-                props = SDL3.SDL_CreateProperties()
+                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
             };
             Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
             SdlError.ThrowOnError();
