@@ -10,7 +10,7 @@
              It's stored in obj/ (intermediate build artifacts) rather than the project root
              because it's not source code and will be extracted/regenerated on each build.
              The final binaries are then copied to the output directory for runtime use. -->
-        <SlangVersion>2025.21</SlangVersion>
+        <SlangVersion>2026.1.1</SlangVersion>
         <SlangPlatform>linux-x86_64</SlangPlatform>
         <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
         <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
