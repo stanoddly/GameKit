@@ -41,26 +41,12 @@ static class Program
             for (int x = 0; x < width; x++)
             {
                 int i = (y * width + x) * 4;
+                bool isWhite = (x / 4 + y / 4) % 2 == 0;
 
-                // Create a simple gradient icon with a border
-                bool isBorder = x == 0 || y == 0 || x == width - 1 || y == height - 1;
-
-                if (isBorder)
-                {
-                    // White border
-                    pixels[i + 0] = 255; // R
-                    pixels[i + 1] = 255; // G
-                    pixels[i + 2] = 255; // B
-                    pixels[i + 3] = 255; // A
-                }
-                else
-                {
-                    // Blue to purple gradient
-                    pixels[i + 0] = (byte)(x * 255 / width);  // R
-                    pixels[i + 1] = 100;                       // G
-                    pixels[i + 2] = 200;                       // B
-                    pixels[i + 3] = 255;                       // A
-                }
+                pixels[i + 0] = isWhite ? (byte)255 : (byte)100; // R
+                pixels[i + 1] = isWhite ? (byte)255 : (byte)100; // G
+                pixels[i + 2] = isWhite ? (byte)255 : (byte)200; // B
+                pixels[i + 3] = 255;                              // A
             }
         }
 
