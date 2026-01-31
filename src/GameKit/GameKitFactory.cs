@@ -94,51 +94,15 @@ public class GameKitFactory: IDisposable
             }
         }
 
+        Window window = new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
+
         if (iconPath != null && imageLoader != null)
         {
-            SetWindowIcon(sdlWindow, iconPath, imageLoader);
+            using Image icon = imageLoader.Load(iconPath);
+            window.SetIcon(icon);
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
-    }
-
-    private void SetWindowIcon(Pointer<SDL_Window> sdlWindow, string iconPath, IContentLoader<Image> imageLoader)
-    {
-        using Image icon = imageLoader.Load(iconPath);
-        ReadOnlySpan<byte> pixelData = icon.Data;
-        int width = icon.Size.Width;
-        int height = icon.Size.Height;
-        int pitch = width * 4;
-
-        unsafe
-        {
-            fixed (byte* pixels = pixelData)
-            {
-                Pointer<SDL_Surface> surface = SDL3.SDL_CreateSurfaceFrom(
-                    width,
-                    height,
-                    (SDL_PixelFormat)icon.PixelFormat,
-                    (IntPtr)pixels,
-                    pitch);
-
-                if (surface.IsNull())
-                {
-                    throw new GameKitInitializationException($"SDL_CreateSurfaceFrom failed: {SDL3.SDL_GetError()}");
-                }
-
-                try
-                {
-                    if (!SDL3.SDL_SetWindowIcon(sdlWindow, surface))
-                    {
-                        throw new GameKitInitializationException($"SDL_SetWindowIcon failed: {SDL3.SDL_GetError()}");
-                    }
-                }
-                finally
-                {
-                    SDL3.SDL_DestroySurface(surface);
-                }
-            }
-        }
+        return window;
     }
 
     internal GpuDevice CreateGpuDevice()

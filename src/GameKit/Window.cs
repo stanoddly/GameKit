@@ -1,4 +1,5 @@
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Utilities;
 using SDL;
@@ -93,6 +94,44 @@ internal class Window : IWindow
         unsafe
         {
             SDL3.SDL_SetWindowFullscreen(SdlWindow, fullscreen);
+        }
+    }
+
+    public void SetIcon(Image icon)
+    {
+        ReadOnlySpan<byte> pixelData = icon.Data;
+        int width = icon.Size.Width;
+        int height = icon.Size.Height;
+        int pitch = width * 4;
+
+        unsafe
+        {
+            fixed (byte* pixels = pixelData)
+            {
+                Pointer<SDL_Surface> surface = SDL3.SDL_CreateSurfaceFrom(
+                    width,
+                    height,
+                    (SDL_PixelFormat)icon.PixelFormat,
+                    (IntPtr)pixels,
+                    pitch);
+
+                if (surface.IsNull())
+                {
+                    throw new GameKitException($"SDL_CreateSurfaceFrom failed: {SDL3.SDL_GetError()}");
+                }
+
+                try
+                {
+                    if (!SDL3.SDL_SetWindowIcon(SdlWindow, surface))
+                    {
+                        throw new GameKitException($"SDL_SetWindowIcon failed: {SDL3.SDL_GetError()}");
+                    }
+                }
+                finally
+                {
+                    SDL3.SDL_DestroySurface(surface);
+                }
+            }
         }
     }
 
