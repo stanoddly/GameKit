@@ -1,3 +1,4 @@
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Utilities;
@@ -42,12 +43,12 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
+    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config, IContentLoader<Image> imageLoader)
     {
-        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
+        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen, config.IconPath, imageLoader);
     }
     
-    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title=null, bool fullscreen = false)
+    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false, string? iconPath = null, IContentLoader<Image>? imageLoader = null)
     {
         EnsureSdlInitialized();
 
@@ -61,7 +62,7 @@ public class GameKitFactory: IDisposable
         {
             windowTitle = title;
         }
-        
+
         (uint width, uint height) = fullscreen ? (0, 0) : size ?? DefaultSize;
         Pointer<SDL_Window> sdlWindow;
         unsafe
@@ -86,14 +87,58 @@ public class GameKitFactory: IDisposable
         unsafe
         {
             sdlWindowId = (uint)SDL3.SDL_GetWindowID(sdlWindow);
-            
+
             if (sdlWindowId == 0)
             {
                 throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
             }
         }
-        
+
+        if (iconPath != null && imageLoader != null)
+        {
+            SetWindowIcon(sdlWindow, iconPath, imageLoader);
+        }
+
         return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
+    }
+
+    private void SetWindowIcon(Pointer<SDL_Window> sdlWindow, string iconPath, IContentLoader<Image> imageLoader)
+    {
+        using Image icon = imageLoader.Load(iconPath);
+        ReadOnlySpan<byte> pixelData = icon.Data;
+        int width = icon.Size.Width;
+        int height = icon.Size.Height;
+        int pitch = width * 4;
+
+        unsafe
+        {
+            fixed (byte* pixels = pixelData)
+            {
+                Pointer<SDL_Surface> surface = SDL3.SDL_CreateSurfaceFrom(
+                    width,
+                    height,
+                    (SDL_PixelFormat)icon.PixelFormat,
+                    (IntPtr)pixels,
+                    pitch);
+
+                if (surface.IsNull())
+                {
+                    throw new GameKitInitializationException($"SDL_CreateSurfaceFrom failed: {SDL3.SDL_GetError()}");
+                }
+
+                try
+                {
+                    if (!SDL3.SDL_SetWindowIcon(sdlWindow, surface))
+                    {
+                        throw new GameKitInitializationException($"SDL_SetWindowIcon failed: {SDL3.SDL_GetError()}");
+                    }
+                }
+                finally
+                {
+                    SDL3.SDL_DestroySurface(surface);
+                }
+            }
+        }
     }
 
     internal GpuDevice CreateGpuDevice()

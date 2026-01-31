@@ -111,7 +111,8 @@ public class GameKitAppBuilder
 
         _moduleBuilder.RegisterFunc<Window>(sp => sp.GetRequiredService<GameKitFactory>().CreateWindow(
             sp.GetRequiredService<GpuDevice>(),
-            sp.GetRequiredService<AppConfig>()
+            sp.GetRequiredService<AppConfig>(),
+            sp.GetRequiredService<IContentLoader<Image>>()
         )).As<IWindow>();
 
         _moduleBuilder.RegisterFunc<GpuDevice>(sp => sp.GetRequiredService<GameKitFactory>().CreateGpuDevice()).As<IGpuDevice>();
