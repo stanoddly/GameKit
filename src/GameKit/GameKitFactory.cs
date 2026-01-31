@@ -1,4 +1,3 @@
-using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Utilities;
@@ -43,12 +42,12 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config, IContentLoader<Image> imageLoader)
+    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
     {
-        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen, config.IconPath, imageLoader);
+        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
     }
-    
-    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false, string? iconPath = null, IContentLoader<Image>? imageLoader = null)
+
+    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false)
     {
         EnsureSdlInitialized();
 
@@ -94,15 +93,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        Window window = new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
-
-        if (iconPath != null && imageLoader != null)
-        {
-            using Image icon = imageLoader.Load(iconPath);
-            window.SetIcon(icon);
-        }
-
-        return window;
+        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
     internal GpuDevice CreateGpuDevice()

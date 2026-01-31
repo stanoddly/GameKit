@@ -2,4 +2,4 @@ using GameKit.Gpu;
 
 namespace GameKit;
 
-public sealed record AppConfig(Size<uint>? Size = null, string? Title = null, FColor? ClearColor = null, bool Fullscreen = false, string? IconPath = null);
+public sealed record AppConfig(Size<uint>? Size = null, string? Title = null, FColor? ClearColor = null, bool Fullscreen = false);
