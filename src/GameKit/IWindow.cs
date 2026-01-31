@@ -13,4 +13,6 @@ public interface IWindow : IDisposable
     bool WindowRelativeMouseMode { get; set; }
 
     bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);
+
+    void SetFullscreenBorderless(bool fullscreen);
 }

@@ -88,6 +88,14 @@ internal class Window : IWindow
         return true;
     }
 
+    public void SetFullscreenBorderless(bool fullscreen)
+    {
+        unsafe
+        {
+            SDL3.SDL_SetWindowFullscreen(SdlWindow, fullscreen);
+        }
+    }
+
     public override int GetHashCode()
     {
         return Id.GetHashCode();
