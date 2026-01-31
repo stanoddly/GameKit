@@ -46,8 +46,8 @@ public class GameKitFactory: IDisposable
     {
         return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
     }
-    
-    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title=null, bool fullscreen = false)
+
+    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false)
     {
         EnsureSdlInitialized();
 
@@ -61,7 +61,7 @@ public class GameKitFactory: IDisposable
         {
             windowTitle = title;
         }
-        
+
         (uint width, uint height) = fullscreen ? (0, 0) : size ?? DefaultSize;
         Pointer<SDL_Window> sdlWindow;
         unsafe
@@ -86,13 +86,13 @@ public class GameKitFactory: IDisposable
         unsafe
         {
             sdlWindowId = (uint)SDL3.SDL_GetWindowID(sdlWindow);
-            
+
             if (sdlWindowId == 0)
             {
                 throw new GameKitInitializationException($"GPUClaimWindow failed: {SDL3.SDL_GetError()}");
             }
         }
-        
+
         return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
