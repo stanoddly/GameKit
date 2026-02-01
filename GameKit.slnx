@@ -5,7 +5,7 @@
     <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
     <Project Path="src/GameKit.Encs/GameKit.Encs.csproj" />
-    <Project Path="src/GameKit.ImageLoader.StbImageSharp/GameKit.ImageLoader.StbImageSharp.csproj" />
+    <Project Path="src/GameKit.ImageLoader.SdlImage/GameKit.ImageLoader.SdlImage.csproj" />
     <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />
     <Project Path="src/GameKit.SdlangCompileLib/GameKit.SdlangCompileLib.csproj" />
     <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
