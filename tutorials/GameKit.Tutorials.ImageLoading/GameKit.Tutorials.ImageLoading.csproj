@@ -9,7 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\GameKit.ImageLoader.SdlImage\GameKit.ImageLoader.SdlImage.csproj" />
       <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
     </ItemGroup>

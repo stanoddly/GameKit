@@ -1,5 +1,4 @@
 using GameKit.App;
-using GameKit.ImageLoader.SdlImage;
 using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.ImageLoading;
@@ -10,7 +9,6 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .AddSdlImageLoader()
             .UseDefaultRenderManager();
 
         builder

@@ -1,13 +1,11 @@
-using GameKit.App;
 using GameKit.Common;
-using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Utilities;
 using SDL;
 
-namespace GameKit.ImageLoader.SdlImage;
+namespace GameKit.Content;
 
-public class SdlImage : Image
+internal class SdlImage : Image
 {
     private readonly Pointer<SDL_Surface> _surface;
 
@@ -50,7 +48,7 @@ public class SdlImage : Image
     }
 }
 
-public class SdlImageLoader : IContentLoader<Image>
+internal class SdlImageLoader : IContentLoader<Image>
 {
     private readonly VirtualFileSystem _fileSystem;
 
@@ -105,14 +103,5 @@ public class SdlImageLoader : IContentLoader<Image>
         }
 
         return new SdlImage(convertedSurface);
-    }
-}
-
-public static class SdlImageGameKitBuilderExtensions
-{
-    public static GameKitAppBuilder AddSdlImageLoader(this GameKitAppBuilder builder)
-    {
-        builder.RegisterType<SdlImageLoader>().As<IContentLoader<Image>>();
-        return builder;
     }
 }
