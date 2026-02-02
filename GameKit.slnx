@@ -5,7 +5,6 @@
     <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
     <Project Path="src/GameKit.Encs/GameKit.Encs.csproj" />
-    <Project Path="src/GameKit.ImageLoader.SdlImage/GameKit.ImageLoader.SdlImage.csproj" />
     <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />
     <Project Path="src/GameKit.SdlangCompileLib/GameKit.SdlangCompileLib.csproj" />
     <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
@@ -29,5 +28,6 @@
     <Project Path="tutorials/GameKit.Tutorials.WindowCreation/GameKit.Tutorials.WindowCreation.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StorageBuffer/GameKit.Tutorials.StorageBuffer.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.TextureArray/GameKit.Tutorials.TextureArray.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.ImageLoading/GameKit.Tutorials.ImageLoading.csproj" />
   </Folder>
 </Solution>
