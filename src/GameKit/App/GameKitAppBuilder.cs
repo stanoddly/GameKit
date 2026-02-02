@@ -165,7 +165,7 @@ public class GameKitAppBuilder
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
-            _moduleBuilder.RegisterType<NullImageLoader>().As<IContentLoader<Image>>();
+            _moduleBuilder.RegisterType<SdlImageLoader>().As<IContentLoader<Image>>();
         }
 
         if (_handlerRegistrations.Count > 0)
