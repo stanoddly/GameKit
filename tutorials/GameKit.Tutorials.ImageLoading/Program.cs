@@ -12,7 +12,7 @@ static class Program
             .UseDefaultRenderManager();
 
         builder
-            .RegisterInstance(new AppConfig { Size = (800, 600), Title = "Image Loading Demo" });
+            .RegisterInstance(new AppConfig { Size = (443, 410), Title = "Image Loading Demo" });
         builder.RegisterFunc<ImageLoadingRenderer>(ImageLoadingRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
