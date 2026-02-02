@@ -9,5 +9,7 @@ struct Input
 [shader("fragment")]
 float4 main(Input input) : SV_Target0
 {
-    return texture.Sample(textureSampler, input.TexCoord);
+    float4 color = texture.Sample(textureSampler, input.TexCoord);
+    // Premultiply RGB by alpha to handle "dirty" transparent pixels
+    return float4(color.rgb * color.a, color.a);
 }

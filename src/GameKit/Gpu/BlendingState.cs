@@ -34,4 +34,18 @@ public readonly record struct BlendingState(
         DestinationAlphaBlendFactor: BlendFactor.One,
         AlphaBlendOp: BlendOp.Add
     );
+
+    /// <summary>
+    /// Premultiplied alpha blending. Use when source RGB is already multiplied by alpha,
+    /// or when the shader outputs premultiplied alpha. This handles "dirty" transparent
+    /// pixels correctly by not multiplying source color by alpha again.
+    /// </summary>
+    public static readonly BlendingState PremultipliedAlpha = new(
+        SourceColorBlendFactor: BlendFactor.One,
+        DestinationColorBlendFactor: BlendFactor.OneMinusSrcAlpha,
+        ColorBlendOp: BlendOp.Add,
+        SourceAlphaBlendFactor: BlendFactor.One,
+        DestinationAlphaBlendFactor: BlendFactor.OneMinusSrcAlpha,
+        AlphaBlendOp: BlendOp.Add
+    );
 }

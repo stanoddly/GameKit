@@ -55,12 +55,12 @@ public class ImageLoadingRenderer : IRenderPhase<DefaultRenderContext>
         // Create sampler for texture filtering
         Sampler sampler = gpuDevice.CreateSampler(SamplerConfig.Linear);
 
-        // Build graphics pipeline
+        // Build graphics pipeline with premultiplied alpha blending
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaders("shaders/vertex", "shaders/fragment")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay(BlendingState.PremultipliedAlpha)
             .Build();
 
         return new ImageLoadingRenderer(graphicsPipeline, quadVertexBuffer, texture, sampler);
