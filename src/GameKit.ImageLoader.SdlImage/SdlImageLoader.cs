@@ -72,113 +72,47 @@ public class SdlImageLoader : IContentLoader<Image>
     private static unsafe Image CreateImageFromSurface(Pointer<SDL_Surface> surface)
     {
         SDL_Surface* sdlSurface = surface;
+        var pixelFormat = (PixelFormat)sdlSurface->format;
+
+        // Convert all formats to ABGR8888 - on little-endian systems this gives us
+        // [R, G, B, A] byte order in memory, which is what we need for RGBA8888 output
+        if (pixelFormat != PixelFormat.Abgr8888)
+        {
+            Pointer<SDL_Surface> convertedSurface = SDL3.SDL_ConvertSurface(surface, SDL_PixelFormat.SDL_PIXELFORMAT_ABGR8888);
+            if (convertedSurface.IsNull())
+            {
+                throw new InvalidOperationException($"SDL_ConvertSurface failed for format {pixelFormat}: {SDL3.SDL_GetError()}");
+            }
+
+            try
+            {
+                return CreateImageFromSurface(convertedSurface);
+            }
+            finally
+            {
+                SDL3.SDL_DestroySurface(convertedSurface);
+            }
+        }
+
         var size = new ShortSize((ushort)sdlSurface->w, (ushort)sdlSurface->h);
         var pitch = sdlSurface->pitch;
         var pixelData = (byte*)sdlSurface->pixels;
-        var pixelFormat = (PixelFormat)sdlSurface->format;
 
-        byte[] data;
-        PixelFormat targetFormat;
+        int width = sdlSurface->w;
+        int height = sdlSurface->h;
+        byte[] data = new byte[width * height * 4];
 
-        if (pixelFormat == PixelFormat.Argb8888)
+        fixed (byte* dataPtr = data)
         {
-            int width = sdlSurface->w;
-            int height = sdlSurface->h;
-            data = new byte[width * height * 4];
-
-            fixed (byte* dataPtr = data)
+            for (int y = 0; y < height; y++)
             {
-                byte* dst = dataPtr;
-
-                for (int y = 0; y < height; y++)
-                {
-                    byte* src = pixelData + (y * pitch);
-
-                    for (int x = 0; x < width; x++)
-                    {
-                        byte b = src[0];
-                        byte g = src[1];
-                        byte r = src[2];
-                        byte a = src[3];
-
-                        dst[0] = r;
-                        dst[1] = g;
-                        dst[2] = b;
-                        dst[3] = a;
-
-                        src += 4;
-                        dst += 4;
-                    }
-                }
+                byte* src = pixelData + (y * pitch);
+                byte* dst = dataPtr + (y * width * 4);
+                Buffer.MemoryCopy(src, dst, width * 4, width * 4);
             }
-
-            targetFormat = PixelFormat.Rgba8888;
-        }
-        else if (pixelFormat == PixelFormat.Abgr8888)
-        {
-            int width = sdlSurface->w;
-            int height = sdlSurface->h;
-            data = new byte[width * height * 4];
-
-            fixed (byte* dataPtr = data)
-            {
-                byte* dst = dataPtr;
-
-                for (int y = 0; y < height; y++)
-                {
-                    byte* src = pixelData + (y * pitch);
-
-                    for (int x = 0; x < width; x++)
-                    {
-                        byte r = src[0];
-                        byte g = src[1];
-                        byte b = src[2];
-                        byte a = src[3];
-
-                        dst[0] = r;
-                        dst[1] = g;
-                        dst[2] = b;
-                        dst[3] = a;
-
-                        src += 4;
-                        dst += 4;
-                    }
-                }
-            }
-
-            targetFormat = PixelFormat.Rgba8888;
-        }
-        else if (pixelFormat == PixelFormat.Rgba8888)
-        {
-            int width = sdlSurface->w;
-            int height = sdlSurface->h;
-            int totalBytes = width * height * 4;
-            data = new byte[totalBytes];
-
-            fixed (byte* dataPtr = data)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    byte* src = pixelData + (y * pitch);
-                    byte* dst = dataPtr + (y * width * 4);
-                    Buffer.MemoryCopy(src, dst, width * 4, width * 4);
-                }
-            }
-
-            targetFormat = PixelFormat.Rgba8888;
-        }
-        else
-        {
-            int totalBytes = pitch * sdlSurface->h;
-            data = new byte[totalBytes];
-            fixed (byte* dataPtr = data)
-            {
-                Buffer.MemoryCopy(pixelData, dataPtr, totalBytes, totalBytes);
-            }
-            targetFormat = pixelFormat;
         }
 
-        return new SdlImage(data, size, targetFormat);
+        return new SdlImage(data, size, PixelFormat.Rgba8888);
     }
 }
 
