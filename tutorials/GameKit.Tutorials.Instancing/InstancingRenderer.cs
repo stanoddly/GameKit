@@ -4,16 +4,16 @@ using GameKit.Gpu;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
 
-namespace GameKit.Tutorials.DrawParameters;
+namespace GameKit.Tutorials.Instancing;
 
-public class DrawParametersRenderer : IRenderPhase<DefaultRenderContext>
+public class InstancingRenderer : IRenderPhase<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
     private readonly GpuStorageBuffer<Vector4> _offsetBuffer;
     private readonly GpuStorageBuffer<Vector4> _colorBuffer;
 
-    public DrawParametersRenderer(
+    public InstancingRenderer(
         GraphicsPipeline graphicsPipeline,
         GpuVertexBuffer<PositionVertex> quadVertexBuffer,
         GpuStorageBuffer<Vector4> offsetBuffer,
@@ -37,13 +37,10 @@ public class DrawParametersRenderer : IRenderPhase<DefaultRenderContext>
         renderPass.BindVertexStorageBuffer(_offsetBuffer);
         renderPass.BindFragmentStorageBuffer(_colorBuffer);
 
-        for (uint i = 0; i < 4; i++)
-        {
-            renderPass.DrawPrimitiveInstanced(1, i);
-        }
+        renderPass.DrawPrimitiveInstanced(4);
     }
 
-    public static DrawParametersRenderer Create(
+    public static InstancingRenderer Create(
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
@@ -58,7 +55,7 @@ public class DrawParametersRenderer : IRenderPhase<DefaultRenderContext>
             new Vector4( 0.5f, -0.5f, 0.0f, 0.0f), // Bottom-right
         ];
 
-        // Colors for each quad
+        // Colors for each instance
         Vector4[] colors =
         [
             new Vector4(1.0f, 0.0f, 0.0f, 1.0f), // Red
@@ -80,6 +77,6 @@ public class DrawParametersRenderer : IRenderPhase<DefaultRenderContext>
             .AddColorFormatFromDisplay()
             .Build();
 
-        return new DrawParametersRenderer(graphicsPipeline, quadVertexBuffer, offsetBuffer, colorBuffer);
+        return new InstancingRenderer(graphicsPipeline, quadVertexBuffer, offsetBuffer, colorBuffer);
     }
 }
