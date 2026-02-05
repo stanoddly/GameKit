@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Utilities;
@@ -103,13 +102,8 @@ public class GameKitFactory: IDisposable
 
         unsafe
         {
-            VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
-            shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;
-            shaderDrawParamsFeatures.shaderDrawParameters = 1;
-
             SDL_GPUVulkanOptions vulkanOptions = default;
             vulkanOptions.vulkan_api_version = (1 << 22) | (3 << 12) | 0;
-            vulkanOptions.feature_list = (IntPtr)(&shaderDrawParamsFeatures);
 
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
             SDL_GPUVulkanOptions* vulkanOptionsPointer = &vulkanOptions;
@@ -176,14 +170,4 @@ public class GameKitFactory: IDisposable
         SDL3.SDL_Quit();
         _initialized = false;
     }
-}
-
-[StructLayout(LayoutKind.Sequential)]
-internal struct VkPhysicalDeviceShaderDrawParametersFeatures
-{
-    public const uint StructureType = 1000063000;
-
-    public uint sType;
-    public IntPtr pNext;
-    public uint shaderDrawParameters;
 }

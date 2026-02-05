@@ -1,7 +1,7 @@
 using GameKit.App;
 using GameKit.RenderOrchestration;
 
-namespace GameKit.Tutorials.DrawParameters;
+namespace GameKit.Tutorials.Instancing;
 
 static class Program
 {
@@ -12,8 +12,8 @@ static class Program
             .UseDefaultRenderManager();
 
         builder
-            .RegisterInstance(new AppConfig { Size = (800, 600), Title = "Draw Parameters Demo" });
-        builder.RegisterFunc<DrawParametersRenderer>(DrawParametersRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
+            .RegisterInstance(new AppConfig { Size = (800, 600), Title = "Instancing Demo" });
+        builder.RegisterFunc<InstancingRenderer>(InstancingRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
