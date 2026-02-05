@@ -201,13 +201,18 @@ public class RenderPass<TValidator> : IRenderPass
 
     public void DrawPrimitiveInstanced(uint instanceCount)
     {
+        DrawPrimitiveInstanced(instanceCount, 0);
+    }
+
+    public void DrawPrimitiveInstanced(uint instanceCount, uint firstInstance)
+    {
         ThrowIfDisposed();
 
         _validator.OnDrawPrimitive(this);
 
         unsafe
         {
-            SDL3.SDL_DrawGPUPrimitives(_nativePointer, _verticesCount, instanceCount, 0, 0);
+            SDL3.SDL_DrawGPUPrimitives(_nativePointer, _verticesCount, instanceCount, 0, firstInstance);
         }
     }
 

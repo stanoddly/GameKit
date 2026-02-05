@@ -1,0 +1,85 @@
+using System.Numerics;
+using GameKit.Content;
+using GameKit.Gpu;
+using GameKit.RenderOrchestration;
+using GameKit.Shaders;
+
+namespace GameKit.Tutorials.DrawParameters;
+
+public class DrawParametersRenderer : IRenderPhase<DefaultRenderContext>
+{
+    private readonly GraphicsPipeline _graphicsPipeline;
+    private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
+    private readonly GpuStorageBuffer<Vector4> _offsetBuffer;
+    private readonly GpuStorageBuffer<Vector4> _colorBuffer;
+
+    public DrawParametersRenderer(
+        GraphicsPipeline graphicsPipeline,
+        GpuVertexBuffer<PositionVertex> quadVertexBuffer,
+        GpuStorageBuffer<Vector4> offsetBuffer,
+        GpuStorageBuffer<Vector4> colorBuffer)
+    {
+        _graphicsPipeline = graphicsPipeline;
+        _quadVertexBuffer = quadVertexBuffer;
+        _offsetBuffer = offsetBuffer;
+        _colorBuffer = colorBuffer;
+    }
+
+    public void Render(DefaultRenderContext renderContext)
+    {
+        using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
+            .AddColorTarget(renderContext.SwapchainTexture)
+            .SetSharedColorTargetSettings(ColorTargetSettings.Clear)
+            .Build();
+
+        renderPass.BindGraphicsPipeline(_graphicsPipeline);
+        renderPass.BindVertexBuffer(_quadVertexBuffer);
+        renderPass.BindVertexStorageBuffer(_offsetBuffer);
+        renderPass.BindFragmentStorageBuffer(_colorBuffer);
+
+        for (uint i = 0; i < 4; i++)
+        {
+            renderPass.DrawPrimitiveInstanced(1, i);
+        }
+    }
+
+    public static DrawParametersRenderer Create(
+        ShaderLoader shaderLoader,
+        GraphicsPipelineBuilder graphicsPipelineBuilder,
+        GpuMemorySystem gpuMemorySystem,
+        IGpuDevice gpuDevice)
+    {
+        // Position offsets for 2x2 grid (xy = offset, zw = padding)
+        Vector4[] offsets =
+        [
+            new Vector4(-0.5f,  0.5f, 0.0f, 0.0f), // Top-left
+            new Vector4( 0.5f,  0.5f, 0.0f, 0.0f), // Top-right
+            new Vector4(-0.5f, -0.5f, 0.0f, 0.0f), // Bottom-left
+            new Vector4( 0.5f, -0.5f, 0.0f, 0.0f), // Bottom-right
+        ];
+
+        // Colors for each quad
+        Vector4[] colors =
+        [
+            new Vector4(1.0f, 0.0f, 0.0f, 1.0f), // Red
+            new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // Green
+            new Vector4(0.0f, 0.0f, 1.0f, 1.0f), // Blue
+            new Vector4(1.0f, 1.0f, 0.0f, 1.0f), // Yellow
+        ];
+
+        GpuStorageBuffer<Vector4> offsetBuffer = gpuMemorySystem.CreateStorageBuffer<Vector4>(offsets);
+        GpuStorageBuffer<Vector4> colorBuffer = gpuMemorySystem.CreateStorageBuffer<Vector4>(colors);
+
+        GpuVertexBuffer<PositionVertex> quadVertexBuffer =
+            gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
+
+        GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
+            .SetPrimitiveType(PrimitiveType.TriangleStrip)
+            .AddVertexBufferConfig<PositionVertex>()
+            .SetShaders("shaders/vertex", "shaders/fragment")
+            .AddColorFormatFromDisplay()
+            .Build();
+
+        return new DrawParametersRenderer(graphicsPipeline, quadVertexBuffer, offsetBuffer, colorBuffer);
+    }
+}

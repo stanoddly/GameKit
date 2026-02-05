@@ -21,4 +21,5 @@ public interface IRenderPass: IDisposable
 
     void DrawPrimitive();
     void DrawPrimitiveInstanced(uint instanceCount);
+    void DrawPrimitiveInstanced(uint instanceCount, uint firstInstance);
 }
