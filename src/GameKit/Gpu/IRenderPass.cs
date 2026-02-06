@@ -19,6 +19,8 @@ public interface IRenderPass: IDisposable
     void BindFragmentStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0);
     void BindFragmentStorageBuffer(GpuStorageBuffer buffer, uint slot = 0);
 
+    void SetStencilReference(byte reference);
+
     void DrawPrimitive();
     void DrawPrimitiveInstanced(uint instanceCount);
     void DrawPrimitiveInstanced(uint instanceCount, uint firstInstance);

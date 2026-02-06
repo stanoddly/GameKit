@@ -321,15 +321,7 @@ public class GraphicsPipelineBuilder
 
     public GraphicsPipelineBuilder EnableStencilTesting(in StencilOperationState frontFacing, CompareOperation compareOperation, byte compareMask=0xFF, byte writeMask=0xFF)
     {
-        _info.SdlGpuDepthStencilState = _info.SdlGpuDepthStencilState with
-        {
-            enable_stencil_test = true,
-            compare_op = (SDL_GPUCompareOp)compareOperation,
-            front_stencil_state = frontFacing,
-            compare_mask = compareMask,
-            write_mask = writeMask
-        };
-        return this;
+        return EnableStencilTesting(frontFacing, frontFacing, compareOperation, compareMask, writeMask);
     }
     
     public GraphicsPipelineBuilder EnableStencilTesting(in StencilOperationState frontFacing, in StencilOperationState backFacing, CompareOperation compareOperation, byte compareMask=0xFF, byte writeMask=0xFF)

@@ -194,6 +194,12 @@ public class RenderPass<TValidator> : IRenderPass
         BindFragmentStorageBuffers(buffers, slot);
     }
 
+    public void SetStencilReference(byte reference)
+    {
+        ThrowIfDisposed();
+        unsafe { SDL3.SDL_SetGPUStencilReference(_nativePointer, reference); }
+    }
+
     public void DrawPrimitive()
     {
         DrawPrimitiveInstanced(1);
