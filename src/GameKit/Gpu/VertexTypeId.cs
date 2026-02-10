@@ -1,3 +1,5 @@
+using GameKit.Common;
+
 namespace GameKit.Gpu;
 
 public readonly struct VertexTypeId : IEquatable<VertexTypeId>
@@ -8,7 +10,7 @@ public readonly struct VertexTypeId : IEquatable<VertexTypeId>
     {
         _id = id;
     }
-    
+
     public bool Equals(VertexTypeId other)
     {
         return _id == other._id;
@@ -34,19 +36,12 @@ public readonly struct VertexTypeId : IEquatable<VertexTypeId>
         return !left.Equals(right);
     }
 
-    internal static int NextId = 0;
     public static readonly VertexTypeId Null = default;
 }
 
-public static class VertexTypeId<T> where T: IVertexType
+public class VertexTypeIdMap : TypeIdMap<VertexTypeIdMap>;
+
+public class VertexTypeId<T> : TypeIdMap<VertexTypeIdMap, T> where T : IVertexType
 {
-    public static readonly VertexTypeId Value;
-    public static readonly string Name;
-
-    static VertexTypeId()
-    {
-        Value = new VertexTypeId(++VertexTypeId.NextId);
-
-        Name = typeof(T).Name;
-    }
+    public static readonly VertexTypeId Value = new(Id);
 }
