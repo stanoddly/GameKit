@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
+      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
     </ItemGroup>
 
 </Project>

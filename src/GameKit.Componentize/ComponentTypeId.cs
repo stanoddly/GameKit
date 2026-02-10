@@ -1,19 +1,7 @@
-﻿namespace GameKit.Componentize;
+using GameKit.Common;
 
-internal static class ComponentTypeId
-{
-    public static int NextId = 0;
-}
+namespace GameKit.Componentize;
 
-public static class ComponentTypeId<T> where T: GameComponent
-{
-    public static readonly int Id;
-    public static readonly string Name;
+internal class ComponentTypeId : TypeIdMap<ComponentTypeId>;
 
-    static ComponentTypeId()
-    {
-        Id = ++ComponentTypeId.NextId;
-
-        Name = typeof(T).Name;
-    }
-}
+internal class ComponentTypeId<T> : TypeIdMap<ComponentTypeId, T> where T : GameComponent;
