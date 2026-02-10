@@ -5,6 +5,8 @@ namespace GameKit.Common;
 
 public class TypeIdMap<TDomain> where TDomain : TypeIdMap<TDomain>
 {
+    protected TypeIdMap() { }
+
     private static int _nextId;
     private static readonly Dictionary<Type, int> Lookup = new();
 
@@ -26,6 +28,8 @@ public class TypeIdMap<TDomain, T> : TypeIdMap<TDomain>
     where TDomain : TypeIdMap<TDomain>
     where T : allows ref struct
 {
+    protected TypeIdMap() { }
+
     public static readonly int Id = GetId(typeof(T));
     public static readonly string Name = typeof(T).Name;
 }
