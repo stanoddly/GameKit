@@ -16,9 +16,9 @@ public class HotbarRenderer : IRenderPhase<DefaultRenderContext>
     private readonly GuiContext _guiContext;
     private int _selectedSlot = 0;
 
-    public HotbarRenderer()
+    public HotbarRenderer(GuiContext guiContext)
     {
-        _guiContext = new GuiContext(new StubGuiPlatform(), GuiStyles.Style);
+        _guiContext = guiContext;
     }
 
     public void Render(DefaultRenderContext renderContext)
