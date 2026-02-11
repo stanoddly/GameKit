@@ -10,6 +10,7 @@
     <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
     <Project Path="src/GameKit.SdlangCompileTask/GameKit.SdlangCompileTask.csproj" />
     <Project Path="src/GameKit.ShaderCommon/GameKit.ShaderCommon.csproj" />
+    <Project Path="src/GameKit.Pencuil/GameKit.Pencuil.csproj" />
     <Project Path="src/GameKit.Uiui/GameKit.Uiui.csproj" />
     <Project Path="src/GameKit.Utils/GameKit.Utils.csproj" />
     <Project Path="src/GameKit/GameKit.csproj" />
