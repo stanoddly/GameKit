@@ -9,6 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
       <ProjectReference Include="..\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
     </ItemGroup>
 
 </Project>
