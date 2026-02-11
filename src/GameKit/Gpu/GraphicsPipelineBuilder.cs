@@ -472,7 +472,7 @@ public class GraphicsPipelineBuilder
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
 
-                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, [.. _info.VertexBufferTypeIds], _info.VertexShader, _info.FragmentShader);
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, [.. _info.VertexBufferTypeIds], _info.VertexShader, _info.FragmentShader, _info.DepthBufferFormat ?? DepthBufferFormat.None);
                 _info.Reset();
                 
                 _gpuDevice.RegisterGraphicsPipeline(graphicsPipeline);

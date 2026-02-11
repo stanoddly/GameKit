@@ -122,16 +122,22 @@ public class CommandBuffer: ICommandBuffer
             depthBufferPointer = depthBuffer.SdlGpuTexture;
         }
         
+        DepthBufferFormat depthBufferFormat = depthBuffer != null
+            ? (DepthBufferFormat)depthBuffer.Format
+            : DepthBufferFormat.None;
+
         return CreateMultipleRenderTargetsPassInternal(
             colorTargetInfos,
             depthBufferPointer,
-            depthBufferSettings);
+            depthBufferSettings,
+            depthBufferFormat);
     }
 
     private IRenderPass CreateMultipleRenderTargetsPassInternal(
         ReadOnlySpan<SDL_GPUColorTargetInfo> colorTargetInfos,
         Pointer<SDL_GPUTexture> depthBufferPointer,
-        DepthBufferSettings depthBufferSettings)
+        DepthBufferSettings depthBufferSettings,
+        DepthBufferFormat depthBufferFormat)
     {
         ThrowIfDisposed();
         
@@ -169,8 +175,8 @@ public class CommandBuffer: ICommandBuffer
                 }
             }
             
-            RenderPass renderPass = new RenderPass(this, gpuRenderPass);
-            
+            RenderPass renderPass = new RenderPass(this, gpuRenderPass, depthBufferFormat);
+
             return renderPass;
         }
     }

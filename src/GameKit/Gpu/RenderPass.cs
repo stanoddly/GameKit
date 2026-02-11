@@ -11,16 +11,18 @@ public class RenderPass<TValidator> : IRenderPass
     private Pointer<SDL_GPURenderPass> _nativePointer;
     private uint _verticesCount = 0;
     private TValidator _validator;
-    
+
     private ShaderBindingCounts _fragmentShaderBindingCounts;
     private ShaderBindingCounts _vertexShaderBindingCounts;
-    
+
     public ShaderBindingCounts FragmentShaderBindingCounts => _fragmentShaderBindingCounts;
     public ShaderBindingCounts VertexShaderBindingCounts => _vertexShaderBindingCounts;
+    public DepthBufferFormat DepthBufferFormat { get; }
 
-    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
+    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer, DepthBufferFormat depthBufferFormat)
     {
         _nativePointer = nativePointer;
+        DepthBufferFormat = depthBufferFormat;
         _validator = TValidator.Create(commandBuffer);
     }
 
@@ -251,8 +253,8 @@ public class RenderPass<TValidator> : IRenderPass
 /// </summary>
 public class RenderPass : RenderPass<RenderPassValidator>
 {
-    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer)
-        : base(commandBuffer, nativePointer)
+    internal RenderPass(CommandBuffer commandBuffer, Pointer<SDL_GPURenderPass> nativePointer, DepthBufferFormat depthBufferFormat)
+        : base(commandBuffer, nativePointer, depthBufferFormat)
     {
     }
 }

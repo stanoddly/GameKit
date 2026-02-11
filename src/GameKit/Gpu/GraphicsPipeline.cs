@@ -23,14 +23,16 @@ public class GraphicsPipeline: IDisposable
 
     public Shader VertexShader { get; }
     public Shader FragmentShader { get; }
+    public DepthBufferFormat DepthBufferFormat { get; }
 
-    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, ImmutableArray<VertexTypeId> vertexBufferTypeIds, Shader vertexShader, Shader fragmentShader)
+    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, ImmutableArray<VertexTypeId> vertexBufferTypeIds, Shader vertexShader, Shader fragmentShader, DepthBufferFormat depthBufferFormat)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
         VertexBufferTypeIds = vertexBufferTypeIds;
         VertexShader = vertexShader;
         FragmentShader = fragmentShader;
+        DepthBufferFormat = depthBufferFormat;
     }
 
 

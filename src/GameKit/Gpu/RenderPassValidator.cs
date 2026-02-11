@@ -69,6 +69,17 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     public void OnBindGraphicsPipeline(RenderPass<RenderPassValidator> renderPass, GraphicsPipeline graphicsPipeline)
     {
         _graphicsPipeline = graphicsPipeline;
+
+        DepthBufferFormat renderPassFormat = renderPass.DepthBufferFormat;
+        DepthBufferFormat pipelineFormat = graphicsPipeline.DepthBufferFormat;
+
+        if (renderPassFormat != pipelineFormat)
+        {
+            throw new InvalidOperationException(
+                $"Depth/stencil format mismatch: the render pass uses {renderPassFormat} but the pipeline was created with {pipelineFormat}. " +
+                $"Ensure the depth buffer format passed to EnableDepthTesting matches the format of the depth buffer texture used in the render pass.");
+        }
+
         // Reset slot bindings when pipeline changes
         _slot0Type = VertexTypeId.Null;
         _slot1Type = VertexTypeId.Null;
