@@ -1,3 +1,5 @@
+using GameKit.Gpu;
+
 namespace GameKit.Pencuil;
 
 public record GuiStyle(

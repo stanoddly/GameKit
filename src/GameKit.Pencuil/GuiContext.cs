@@ -127,10 +127,32 @@ public class GuiContext
     }
 
     public ShortVector2 MeasureString(string text, ushort fontSize) => _guiPlatform.MeasureString(text, fontSize);
+
+    public void Draw()
+    {
+        foreach (var instruction in _coloredRectangleInstructions)
+            _guiPlatform.DrawRectangle(instruction.Area, instruction.Color);
+
+        foreach (var instruction in _textureRegionInstructions)
+            _guiPlatform.DrawTexture(instruction.Texture, instruction.Area);
+
+        _coloredRectangleInstructions.Clear();
+        _textureRegionInstructions.Clear();
+        _depth = 0;
+    }
 }
 
 public static class GuiContextExtensions
 {
+
+    public static void Panel(this GuiContext guiContext, short width, short height, Color color)
+    {
+        ShortVector2 size = new ShortVector2(width, height);
+        ShortVector2 position = guiContext.DetermineNextPosition(size);
+        guiContext.AddRectangle(new ShortRectangle(position, size), color);
+        guiContext.CurrentPosition = position;
+        guiContext.CurrentSize = size;
+    }
 
     public static bool Button(this GuiContext guiContext, string text)
     {
