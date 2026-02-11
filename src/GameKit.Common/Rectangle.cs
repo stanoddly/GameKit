@@ -24,4 +24,7 @@ public readonly record struct ShortRectangle(short X, short Y, short Width, shor
     public ShortVector2 Size => new ShortVector2(Width, Height);
 
     public bool Intersects(ShortVector2 point) => point.X >= X && point.X <= X + Width && point.Y >= Y && point.Y <= Y + Height;
+
+    public ShortRectangle Offset(ShortVector2 offset) =>
+        new((short)(X + offset.X), (short)(Y + offset.Y), Width, Height);
 }

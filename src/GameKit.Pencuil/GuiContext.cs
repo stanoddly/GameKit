@@ -24,13 +24,55 @@ public enum LayoutDirection
     None, Bottom, Top, Left, Right
 }
 
-public readonly struct GroupDisposer(GuiContext _context, ShortVector2 _previousPosition, LayoutDirection _previousLayoutDirection): IDisposable
+public enum HAlign : byte { None, Start, Center, End }
+public enum VAlign : byte { None, Start, Center, End }
+
+public readonly struct GroupDisposer : IDisposable
 {
+    private readonly GuiContext _context;
+    private readonly ShortVector2 _previousPosition;
+    private readonly ShortVector2 _previousSize;
+    private readonly LayoutDirection _previousLayoutDirection;
+    private readonly short _previousGap;
+    private readonly int _colorStartIndex;
+    private readonly int _textureStartIndex;
+    private readonly HAlign _hAlign;
+    private readonly VAlign _vAlign;
+    private readonly short _padding;
+
+    internal GroupDisposer(
+        GuiContext context,
+        ShortVector2 previousPosition,
+        ShortVector2 previousSize,
+        LayoutDirection previousLayoutDirection,
+        short previousGap,
+        int colorStartIndex,
+        int textureStartIndex,
+        HAlign hAlign,
+        VAlign vAlign,
+        short padding)
+    {
+        _context = context;
+        _previousPosition = previousPosition;
+        _previousSize = previousSize;
+        _previousLayoutDirection = previousLayoutDirection;
+        _previousGap = previousGap;
+        _colorStartIndex = colorStartIndex;
+        _textureStartIndex = textureStartIndex;
+        _hAlign = hAlign;
+        _vAlign = vAlign;
+        _padding = padding;
+    }
+
     public void Dispose()
     {
+        if (_hAlign != HAlign.None || _vAlign != VAlign.None)
+            _context.PatchGroupAlignment(_colorStartIndex, _textureStartIndex, _hAlign, _vAlign, _padding);
+
         _context.Direction = _previousLayoutDirection;
         _context.CurrentPosition = _previousPosition;
-        // TODO: handle area too
+        _context.CurrentSize = _previousSize;
+        _context.CurrentGap = _previousGap;
     }
 }
 
@@ -40,13 +82,16 @@ public class GuiContext
     public GuiStyle Style { get; }
     private int _depth = 0;
 
-    private List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
-    private List<TextureRegionInstruction> _textureRegionInstructions = new();
+    internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
+    internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
 
     private readonly List<ShortRectangle> _hoverTests = new();
     private readonly List<ShortRectangle> _hoverInTests = new();
     private readonly List<ShortRectangle> _hoverOutTests = new();
     private readonly List<ShortRectangle> _clickTests = new();
+
+    internal readonly short _viewportWidth;
+    internal readonly short _viewportHeight;
 
     public bool NeedsUpdate { get; private set; } = true;
     public void Invalidate() => NeedsUpdate = true;
@@ -60,6 +105,7 @@ public class GuiContext
     public ShortVector2 CurrentPosition { get; set; }
     public ShortVector2 CurrentSize { get; set; }
     public ShortVector2 CursorPosition { get; set; }
+    public short CurrentGap { get; set; }
 
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
@@ -68,6 +114,15 @@ public class GuiContext
     {
         _guiPlatform = guiPlatform;
         Style = guiStyle;
+    }
+
+    public GuiContext(IGuiPlatform guiPlatform, GuiStyle guiStyle, AppConfig appConfig) : this(guiPlatform, guiStyle)
+    {
+        if (appConfig.Size is { } size)
+        {
+            _viewportWidth = (short)size.Width;
+            _viewportHeight = (short)size.Height;
+        }
     }
 
     public void AddHoverTest(ShortRectangle test)
@@ -102,36 +157,133 @@ public class GuiContext
 
     public ShortVector2 DetermineNextPosition(ShortVector2 size)
     {
+        short gap = CurrentSize != default ? CurrentGap : (short)0;
+
         if (Direction == LayoutDirection.Bottom)
         {
-            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y + CurrentSize.Y));
+            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y + CurrentSize.Y + gap));
         }
 
         if (Direction == LayoutDirection.Top)
         {
-            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y - size.Y));
+            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y - size.Y - gap));
         }
 
         if (Direction == LayoutDirection.Left)
         {
-            return new ShortVector2((short)(CurrentPosition.X - size.X), CurrentPosition.Y);
+            return new ShortVector2((short)(CurrentPosition.X - size.X - gap), CurrentPosition.Y);
         }
 
         if (Direction == LayoutDirection.Right)
         {
-            return new ShortVector2((short)(CurrentPosition.X + size.X + CurrentSize.X), CurrentPosition.Y);
+            return new ShortVector2((short)(CurrentPosition.X + CurrentSize.X + gap), CurrentPosition.Y);
         }
 
         return new ShortVector2(CurrentPosition.X, CurrentPosition.Y);
     }
 
-    public GroupDisposer Group(LayoutDirection layoutDirection = LayoutDirection.Bottom)
+    public GroupDisposer Group(
+        LayoutDirection layoutDirection = LayoutDirection.Bottom,
+        HAlign hAlign = HAlign.None, VAlign vAlign = VAlign.None,
+        short gap = 0, short padding = 0)
     {
-        var groupDisposer = new GroupDisposer(this, CurrentPosition, layoutDirection);
+        var groupDisposer = new GroupDisposer(
+            this,
+            CurrentPosition,
+            CurrentSize,
+            Direction,
+            CurrentGap,
+            _coloredRectangleInstructions.Count,
+            _textureRegionInstructions.Count,
+            hAlign,
+            vAlign,
+            padding);
 
         Direction = layoutDirection;
+        CurrentSize = default;
+        CurrentGap = gap;
 
         return groupDisposer;
+    }
+
+    internal void PatchGroupAlignment(int colorStart, int textureStart, HAlign hAlign, VAlign vAlign, short padding)
+    {
+        int colorEnd = _coloredRectangleInstructions.Count;
+        int textureEnd = _textureRegionInstructions.Count;
+
+        if (colorStart == colorEnd && textureStart == textureEnd)
+            return;
+
+        short minX = short.MaxValue, minY = short.MaxValue;
+        short maxX = short.MinValue, maxY = short.MinValue;
+
+        for (int i = colorStart; i < colorEnd; i++)
+        {
+            var area = _coloredRectangleInstructions[i].Area;
+            if (area.X < minX) minX = area.X;
+            if (area.Y < minY) minY = area.Y;
+            short right = (short)(area.X + area.Width);
+            short bottom = (short)(area.Y + area.Height);
+            if (right > maxX) maxX = right;
+            if (bottom > maxY) maxY = bottom;
+        }
+
+        for (int i = textureStart; i < textureEnd; i++)
+        {
+            var area = _textureRegionInstructions[i].Area;
+            if (area.X < minX) minX = area.X;
+            if (area.Y < minY) minY = area.Y;
+            short right = (short)(area.X + area.Width);
+            short bottom = (short)(area.Y + area.Height);
+            if (right > maxX) maxX = right;
+            if (bottom > maxY) maxY = bottom;
+        }
+
+        short groupWidth = (short)(maxX - minX);
+        short groupHeight = (short)(maxY - minY);
+
+        short offsetX = 0;
+        short offsetY = 0;
+
+        switch (hAlign)
+        {
+            case HAlign.Start:
+                offsetX = (short)(padding - minX);
+                break;
+            case HAlign.Center:
+                offsetX = (short)((_viewportWidth - groupWidth) / 2 - minX);
+                break;
+            case HAlign.End:
+                offsetX = (short)(_viewportWidth - groupWidth - padding - minX);
+                break;
+        }
+
+        switch (vAlign)
+        {
+            case VAlign.Start:
+                offsetY = (short)(padding - minY);
+                break;
+            case VAlign.Center:
+                offsetY = (short)((_viewportHeight - groupHeight) / 2 - minY);
+                break;
+            case VAlign.End:
+                offsetY = (short)(_viewportHeight - groupHeight - padding - minY);
+                break;
+        }
+
+        ShortVector2 offset = new(offsetX, offsetY);
+
+        for (int i = colorStart; i < colorEnd; i++)
+        {
+            var inst = _coloredRectangleInstructions[i];
+            _coloredRectangleInstructions[i] = new ColoredRectangleInstruction(inst.Depth, inst.Area.Offset(offset), inst.Color);
+        }
+
+        for (int i = textureStart; i < textureEnd; i++)
+        {
+            var inst = _textureRegionInstructions[i];
+            _textureRegionInstructions[i] = new TextureRegionInstruction(inst.Depth, inst.Texture, inst.Area.Offset(offset));
+        }
     }
 
     public ShortVector2 MeasureString(string text, ushort fontSize) => _guiPlatform.MeasureString(text, fontSize);
