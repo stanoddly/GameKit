@@ -1,4 +1,5 @@
 using GameKit.Gpu;
+using GameKit.Input;
 using GameKit.Pencuil;
 
 namespace GameKit.Tutorials.Hotbar;
@@ -13,6 +14,16 @@ public class Hotbar : GuiCanvas
     private static readonly Color SelectedColor = new(200, 200, 200, 255);
 
     private int _selectedSlot = 0;
+
+    public Hotbar(IKeyboardService keyboardService)
+    {
+        keyboardService.KeyDown += (_, args) =>
+        {
+            int index = args.Scancode - Scancode.Number1;
+            if (index >= 0 && index < SlotCount)
+                _selectedSlot = index;
+        };
+    }
 
     public override void Build(GuiContext guiContext)
     {
