@@ -36,6 +36,10 @@ public readonly struct GroupDisposer : IDisposable
     private readonly short _previousGap;
     private readonly int _colorStartIndex;
     private readonly int _textureStartIndex;
+    private readonly int _hoverStartIndex;
+    private readonly int _hoverInStartIndex;
+    private readonly int _hoverOutStartIndex;
+    private readonly int _clickStartIndex;
     private readonly HAlign _hAlign;
     private readonly VAlign _vAlign;
     private readonly short _padding;
@@ -48,6 +52,10 @@ public readonly struct GroupDisposer : IDisposable
         short previousGap,
         int colorStartIndex,
         int textureStartIndex,
+        int hoverStartIndex,
+        int hoverInStartIndex,
+        int hoverOutStartIndex,
+        int clickStartIndex,
         HAlign hAlign,
         VAlign vAlign,
         short padding)
@@ -59,6 +67,10 @@ public readonly struct GroupDisposer : IDisposable
         _previousGap = previousGap;
         _colorStartIndex = colorStartIndex;
         _textureStartIndex = textureStartIndex;
+        _hoverStartIndex = hoverStartIndex;
+        _hoverInStartIndex = hoverInStartIndex;
+        _hoverOutStartIndex = hoverOutStartIndex;
+        _clickStartIndex = clickStartIndex;
         _hAlign = hAlign;
         _vAlign = vAlign;
         _padding = padding;
@@ -67,7 +79,10 @@ public readonly struct GroupDisposer : IDisposable
     public void Dispose()
     {
         if (_hAlign != HAlign.None || _vAlign != VAlign.None)
-            _context.PatchGroupAlignment(_colorStartIndex, _textureStartIndex, _hAlign, _vAlign, _padding);
+            _context.PatchGroupAlignment(
+                _colorStartIndex, _textureStartIndex,
+                _hoverStartIndex, _hoverInStartIndex, _hoverOutStartIndex, _clickStartIndex,
+                _hAlign, _vAlign, _padding);
 
         _context.Direction = _previousLayoutDirection;
         _context.CurrentPosition = _previousPosition;
@@ -195,6 +210,10 @@ public class GuiContext
             CurrentGap,
             _coloredRectangleInstructions.Count,
             _textureRegionInstructions.Count,
+            _hoverTests.Count,
+            _hoverInTests.Count,
+            _hoverOutTests.Count,
+            _clickTests.Count,
             hAlign,
             vAlign,
             padding);
@@ -206,7 +225,10 @@ public class GuiContext
         return groupDisposer;
     }
 
-    internal void PatchGroupAlignment(int colorStart, int textureStart, HAlign hAlign, VAlign vAlign, short padding)
+    internal void PatchGroupAlignment(
+        int colorStart, int textureStart,
+        int hoverStart, int hoverInStart, int hoverOutStart, int clickStart,
+        HAlign hAlign, VAlign vAlign, short padding)
     {
         int colorEnd = _coloredRectangleInstructions.Count;
         int textureEnd = _textureRegionInstructions.Count;
@@ -283,6 +305,19 @@ public class GuiContext
         {
             var inst = _textureRegionInstructions[i];
             _textureRegionInstructions[i] = new TextureRegionInstruction(inst.Depth, inst.Texture, inst.Area.Offset(offset));
+        }
+
+        PatchInputTests(_hoverTests, hoverStart, offset);
+        PatchInputTests(_hoverInTests, hoverInStart, offset);
+        PatchInputTests(_hoverOutTests, hoverOutStart, offset);
+        PatchInputTests(_clickTests, clickStart, offset);
+    }
+
+    private static void PatchInputTests(List<ShortRectangle> tests, int start, ShortVector2 offset)
+    {
+        for (int i = start; i < tests.Count; i++)
+        {
+            tests[i] = tests[i].Offset(offset);
         }
     }
 
