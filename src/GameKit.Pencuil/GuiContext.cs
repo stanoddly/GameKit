@@ -95,7 +95,7 @@ public class GuiContext
 {
     private readonly IGuiPlatform _guiPlatform;
     public GuiStyle Style { get; }
-    private int _depth = 0;
+    internal int _depth = 0;
 
     internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
     internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
@@ -323,14 +323,8 @@ public class GuiContext
 
     public ShortVector2 MeasureString(string text, ushort fontSize) => _guiPlatform.MeasureString(text, fontSize);
 
-    public void Draw()
+    internal void ClearInstructions()
     {
-        foreach (var instruction in _coloredRectangleInstructions)
-            _guiPlatform.DrawRectangle(instruction.Area, instruction.Color);
-
-        foreach (var instruction in _textureRegionInstructions)
-            _guiPlatform.DrawTexture(instruction.Texture, instruction.Area);
-
         _coloredRectangleInstructions.Clear();
         _textureRegionInstructions.Clear();
         _depth = 0;
