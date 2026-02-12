@@ -8,18 +8,16 @@ public class WidgetService : IUpdatable
 {
     private readonly FrameContext _frameContext;
     private readonly GuiRenderer _guiRenderer;
-    private readonly IGuiRendererConfig _guiRendererConfig;
     private readonly GuiResolutionProvider _guiResolutionProvider;
     private readonly KeyboardService _keyboardService;
     private readonly GamepadService _gamepadService;
     private readonly List<Widget> _widgets = new();
     private readonly GuiContext _guiContext = new();
 
-    public WidgetService(FrameContext frameContext, GuiRenderer guiRenderer, IGuiRendererConfig guiRendererConfig, GuiResolutionProvider guiResolutionProvider, KeyboardService keyboardService, GamepadService gamepadService)
+    public WidgetService(FrameContext frameContext, GuiRenderer guiRenderer, GuiResolutionProvider guiResolutionProvider, KeyboardService keyboardService, GamepadService gamepadService)
     {
         _frameContext = frameContext;
         _guiRenderer = guiRenderer;
-        _guiRendererConfig = guiRendererConfig;
         _guiResolutionProvider = guiResolutionProvider;
         _keyboardService = keyboardService;
         _gamepadService = gamepadService;
@@ -45,7 +43,7 @@ public class WidgetService : IUpdatable
     public void Update()
     {
         bool hasInvalidWidget = false;
-    
+
         foreach (Widget widget in _widgets)
         {
             if (widget.Update(_frameContext))
@@ -53,10 +51,9 @@ public class WidgetService : IUpdatable
                 hasInvalidWidget = true;
             }
         }
-    
+
         if (hasInvalidWidget)
         {
-            _guiRenderer.Touch();
             ArrangeAllWidgets();
             RenderAllWidgets();
         }

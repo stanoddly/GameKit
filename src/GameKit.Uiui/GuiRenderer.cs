@@ -18,6 +18,7 @@ public static class GuiRendererFactory
         IGuiRendererConfig guiRendererConfig = serviceProvider.GetRequiredService<IGuiRendererConfig>();
         GuiResolutionProvider guiResolutionProvider = serviceProvider.GetRequiredService<GuiResolutionProvider>();
         GpuMemorySystem gpuMemorySystem = serviceProvider.GetRequiredService<GpuMemorySystem>();
+        IWindow window = serviceProvider.GetRequiredService<IWindow>();
 
         ReadOnlySpan<PositionTextureVertex> verticalQuad =
         [
@@ -58,45 +59,69 @@ public static class GuiRendererFactory
             .EnableDepthTesting(guiRendererConfig.DepthBufferFormat)
             .Build();
 
+        var presentPipeline = graphicsPipelineBuilder
+            .SetPrimitiveType(PrimitiveType.TriangleStrip)
+            .AddVertexBufferConfigBasedOnBuffer(vertexBuffer)
+            .SetShaders(vertexShader, textureFragmentShader)
+            .AddColorTarget(guiRendererConfig.ColorTargetFormat, BlendingState.Standard)
+            .Build();
+
         var sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
 
-        return new GuiRenderer(vertexBuffer, texturePipeline, colorPipeline, textureColorPipeline, sampler, guiResolutionProvider);
+        var renderSize = window.RenderSizeInPixels;
+        var retainedTexture = gpuDevice.CreateColorTargetTexture(renderSize, guiRendererConfig.ColorTargetFormat);
+        var depthBuffer = gpuDevice.CreateDepthBufferTexture(renderSize, guiRendererConfig.DepthBufferFormat);
+        var projection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
+
+        return new GuiRenderer(vertexBuffer, texturePipeline, colorPipeline, textureColorPipeline, presentPipeline,
+            sampler, guiResolutionProvider, retainedTexture, depthBuffer, projection);
     }
 }
 
 public sealed class GuiRenderer
 {
-    private static ColorTargetSettings _guiColorTargetSettings = new()
+    private static readonly ColorTargetSettings _guiColorTargetSettings = new()
     {
         ClearColorValue = FColors.Transparent
     };
+
+    private static readonly Matrix4x4 _presentViewProjection =
+        Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, 1, 1, 0, 0, 1);
+
+    private static readonly Vector4 _fullTextureUvs = new(0, 0, 1, 1);
+
     private readonly GpuVertexBuffer<PositionTextureVertex> _vertexBuffer;
     private readonly GraphicsPipeline _texturePipeline;
     private readonly GraphicsPipeline _colorPipeline;
     private readonly GraphicsPipeline _textureColorPipeline;
+    private readonly GraphicsPipeline _presentPipeline;
     private readonly Sampler _sampler;
     private readonly GuiResolutionProvider _guiResolutionProvider;
+    private readonly Texture _retainedTexture;
+    private readonly Texture _depthBuffer;
+    private readonly Matrix4x4 _projection;
 
     private readonly List<FilledRectangleInfo> _filledRectangles = new();
     private readonly List<SpritePositionInfo> _sprites = new();
     private readonly List<ColoredSpritePositionInfo> _coloredSprites = new();
-    
+
     private int _maxDepthValue;
 
-    internal GuiRenderer(GpuVertexBuffer<PositionTextureVertex> vertexBuffer, 
-        GraphicsPipeline texturePipeline, GraphicsPipeline colorPipeline, GraphicsPipeline textureColorPipeline, Sampler sampler, GuiResolutionProvider guiResolutionProvider)
+    internal GuiRenderer(GpuVertexBuffer<PositionTextureVertex> vertexBuffer,
+        GraphicsPipeline texturePipeline, GraphicsPipeline colorPipeline, GraphicsPipeline textureColorPipeline,
+        GraphicsPipeline presentPipeline, Sampler sampler, GuiResolutionProvider guiResolutionProvider,
+        Texture retainedTexture, Texture depthBuffer, Matrix4x4 projection)
     {
         _vertexBuffer = vertexBuffer;
         _texturePipeline = texturePipeline;
         _colorPipeline = colorPipeline;
         _textureColorPipeline = textureColorPipeline;
+        _presentPipeline = presentPipeline;
         _sampler = sampler;
         _guiResolutionProvider = guiResolutionProvider;
-    }
-
-    internal void Touch()
-    {
-        _maxDepthValue++;
+        _retainedTexture = retainedTexture;
+        _depthBuffer = depthBuffer;
+        _projection = projection;
     }
 
     public bool NeedsRender => _maxDepthValue != 0;
@@ -122,36 +147,74 @@ public sealed class GuiRenderer
         DrawText(destination, textSprite, color);
     }
 
+    /// <summary>
+    /// Flushes queued draw commands to the retained texture. Only renders when there are pending draw commands.
+    /// </summary>
+    public void Render(CommandBuffer commandBuffer)
+    {
+        if (!NeedsRender)
+        {
+            return;
+        }
+
+        using IRenderPass guiRenderPass = new RenderPassBuilder(commandBuffer)
+            .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
+            .SetDepthBuffer(_depthBuffer, DepthBufferSettings.Default)
+            .Build();
+
+        commandBuffer.PushVertexUniformData(0, _projection);
+
+        RenderGui(commandBuffer, guiRenderPass);
+    }
+
+    /// <summary>
+    /// Draws the retained texture as a fullscreen quad onto the target texture.
+    /// </summary>
+    public void Present(CommandBuffer commandBuffer, Texture target)
+    {
+        using IRenderPass presentPass = new RenderPassBuilder(commandBuffer)
+            .AddColorTarget(target, ColorTargetSettings.Clear)
+            .Build();
+
+        commandBuffer.PushVertexUniformData(0, _presentViewProjection);
+        commandBuffer.PushVertexUniformData(1, Matrix4x4.Identity);
+        commandBuffer.PushFragmentUniformData(0, _fullTextureUvs);
+
+        presentPass.BindGraphicsPipeline(_presentPipeline);
+        presentPass.BindVertexBuffer(_vertexBuffer);
+        presentPass.BindFragmentSampler(_retainedTexture, _sampler);
+        presentPass.DrawPrimitive();
+    }
+
     private void RenderGui(CommandBuffer commandBuffer, IRenderPass renderPass)
     {
-        renderPass.BindVertexBuffer(_vertexBuffer);
-
         ushort scale = _guiResolutionProvider.ResolutionInfo.ScaleFactor;
 
         if (_filledRectangles.Count > 0)
         {
             renderPass.BindGraphicsPipeline(_colorPipeline);
+            renderPass.BindVertexBuffer(_vertexBuffer);
 
             FColor color = default;
             foreach (var rect in _filledRectangles)
             {
                 Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
-                    rect.Rectangle.Width * scale, 
-                    rect.Rectangle.Height * scale, 
+                    rect.Rectangle.Width * scale,
+                    rect.Rectangle.Height * scale,
                     1.0f);
-                
+
                 Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                     rect.Rectangle.X * scale,
                     rect.Rectangle.Y * scale,
                     CalculateZCoordinate(rect.Depth));
-                
+
                 Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
 
                 if (color != rect.Color)
                 {
                     commandBuffer.PushFragmentUniformData(0, rect.Color);
                 }
-                
+
                 commandBuffer.PushVertexUniformData(1, worldMatrix);
 
                 renderPass.DrawPrimitive();
@@ -161,25 +224,26 @@ public sealed class GuiRenderer
         if (_sprites.Count > 0)
         {
             renderPass.BindGraphicsPipeline(_texturePipeline);
-            
+            renderPass.BindVertexBuffer(_vertexBuffer);
+
             foreach (var sprite in _sprites)
             {
                 Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
                     sprite.Destination.Width * scale,
                     sprite.Destination.Height * scale,
                     1.0f);
-                
+
                 Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                     sprite.Destination.X * scale,
                     sprite.Destination.Y * scale,
                     CalculateZCoordinate(sprite.Depth));
-                
+
                 Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
-                
+
                 commandBuffer.PushFragmentUniformData(0, sprite.Uvs);
                 commandBuffer.PushVertexUniformData(1, worldMatrix);
                 renderPass.BindFragmentSampler(sprite.Texture, _sampler);
-                
+
                 renderPass.DrawPrimitive();
             }
         }
@@ -187,26 +251,27 @@ public sealed class GuiRenderer
         if (_coloredSprites.Count > 0)
         {
             renderPass.BindGraphicsPipeline(_textureColorPipeline);
-            
+            renderPass.BindVertexBuffer(_vertexBuffer);
+
             foreach (var sprite in _coloredSprites)
             {
                 Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
                     sprite.Destination.Width * scale,
                     sprite.Destination.Height * scale,
                     1.0f);
-                
+
                 Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                     sprite.Destination.X * scale,
                     sprite.Destination.Y * scale,
                     CalculateZCoordinate(sprite.Depth));
-                
+
                 Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
-                
+
                 commandBuffer.PushFragmentUniformData(0, sprite.Uvs);
                 commandBuffer.PushFragmentUniformData(1, sprite.Color);
                 commandBuffer.PushVertexUniformData(1, worldMatrix);
                 renderPass.BindFragmentSampler(sprite.Texture, _sampler);
-                
+
                 renderPass.DrawPrimitive();
             }
         }
@@ -215,24 +280,6 @@ public sealed class GuiRenderer
         _sprites.Clear();
         _coloredSprites.Clear();
         _maxDepthValue = 0;
-    }
-
-    public void Render(CommandBuffer commandBuffer, Texture guiTexture, Texture guiDepthBuffer, Matrix4x4 guiViewMatrix, Matrix4x4 guiProjectionMatrix)
-    {
-        if (!NeedsRender)
-        {
-            return;
-        }
-
-        using IRenderPass guiRenderPass = new RenderPassBuilder(commandBuffer)
-            .AddColorTarget(guiTexture, _guiColorTargetSettings)
-            .SetDepthBuffer(guiDepthBuffer, DepthBufferSettings.Default)
-            .Build();
-
-        Matrix4x4 viewProjection = guiViewMatrix * guiProjectionMatrix;
-        commandBuffer.PushVertexUniformData(0, viewProjection);
-
-        RenderGui(commandBuffer, guiRenderPass);
     }
 
     private float CalculateZCoordinate(int elementDepth)

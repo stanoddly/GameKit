@@ -10,6 +10,29 @@
       <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
       <ProjectReference Include="..\GameKit.Componentize\GameKit.Componentize.csproj" />
       <ProjectReference Include="..\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+    </ItemGroup>
+
+    <!-- Import the task's props and targets files -->
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <!-- Compile shaders before build -->
+    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
+        <ItemGroup>
+            <SdlangShader Include="Content\shaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+    </Target>
+
+    <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
+    <ItemGroup>
+        <Content Remove="Content\shaders\compiled\**\*" />
+        <None Remove="Content\shaders\compiled\**\*" />
+        <EmbeddedResource Include="Content\shaders\compiled\**\*">
+            <WithCulture>false</WithCulture>
+            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/compiled/','shaders/compiled/').Replace('\','/'))</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
 </Project>

@@ -12,8 +12,10 @@ public class Hotbar : GuiCanvas
 
     private static readonly Color SlotColor = new(60, 60, 60, 255);
     private static readonly Color SelectedColor = new(200, 200, 200, 255);
+    private static readonly Color HoverColor = new(100, 100, 100, 255);
 
     private int _selectedSlot = 0;
+    private int _hoveredSlot = -1;
 
     public Hotbar(IKeyboardService keyboardService)
     {
@@ -27,13 +29,25 @@ public class Hotbar : GuiCanvas
 
     public override void Build(GuiContext guiContext)
     {
+        int hoveredSlot = -1;
+
         using (guiContext.Group(LayoutDirection.Right, hAlign: HAlign.Center, vAlign: VAlign.End, gap: SlotGap, padding: 16))
         {
             for (int i = 0; i < SlotCount; i++)
             {
-                Color color = i == _selectedSlot ? SelectedColor : SlotColor;
-                guiContext.Panel(SlotSize, SlotSize, color);
+                Color color = i == _selectedSlot ? SelectedColor
+                    : i == _hoveredSlot ? HoverColor
+                    : SlotColor;
+
+                CursorState state = guiContext.Panel(SlotSize, SlotSize, color);
+
+                if (state == CursorState.Clicked)
+                    _selectedSlot = i;
+                if (state >= CursorState.Hovered)
+                    hoveredSlot = i;
             }
         }
+
+        _hoveredSlot = hoveredSlot;
     }
 }

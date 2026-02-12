@@ -26,6 +26,7 @@ public enum LayoutDirection
 
 public enum HAlign : byte { None, Start, Center, End }
 public enum VAlign : byte { None, Start, Center, End }
+public enum CursorState : byte { None, Hovered, Clicked }
 
 public readonly struct GroupDisposer : IDisposable
 {
@@ -334,20 +335,29 @@ public class GuiContext
 public static class GuiContextExtensions
 {
 
-    public static void Panel(this GuiContext guiContext, short width, short height, Color color)
+    public static CursorState Panel(this GuiContext guiContext, short width, short height, Color color)
     {
         ShortVector2 size = new ShortVector2(width, height);
         ShortVector2 position = guiContext.DetermineNextPosition(size);
-        guiContext.AddRectangle(new ShortRectangle(position, size), color);
+        ShortRectangle area = new ShortRectangle(position, size);
+        guiContext.AddRectangle(area, color);
         guiContext.CurrentPosition = position;
         guiContext.CurrentSize = size;
+
+        guiContext.AddHoverTest(area);
+        guiContext.AddHoverInTest(area);
+        guiContext.AddHoverOutTest(area);
+        guiContext.AddClickTest(area);
+
+        if (!area.Intersects(guiContext.CursorPosition))
+            return CursorState.None;
+
+        return guiContext.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
-    public static bool Button(this GuiContext guiContext, string text)
+    public static CursorState Button(this GuiContext guiContext, string text)
     {
         // add render instructions
-
-        bool isClicked = false;
 
         GuiStyle style = guiContext.Style;
 
@@ -361,18 +371,17 @@ public static class GuiContextExtensions
         Color innerColor = style.Background;
 
         ShortRectangle area = new ShortRectangle(startPosition, fullSize);
-        if (area.Intersects(guiContext.CursorPosition))
-        {
-            innerColor = style.ActiveColor;
 
-            isClicked = guiContext.CursorJustReleased;
-        }
-
-        guiContext.AddClickTest(area);
+        guiContext.AddHoverTest(area);
         guiContext.AddHoverInTest(area);
         guiContext.AddHoverOutTest(area);
+        guiContext.AddClickTest(area);
 
-        return isClicked;
+        if (!area.Intersects(guiContext.CursorPosition))
+            return CursorState.None;
+
+        innerColor = style.ActiveColor;
+        return guiContext.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
     public static GroupDisposer BottomGroup(this GuiContext guiContext)
