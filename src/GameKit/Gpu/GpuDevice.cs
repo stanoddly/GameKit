@@ -42,10 +42,22 @@ internal class GpuDevice : IGpuDevice
         unsafe
         {
             SDL_GPUShaderFormat formats = SDL3.SDL_GetGPUShaderFormats(SdlGpuDevice);
-            
+
             ShaderFormats shaderFormats = new ShaderFormats((uint)formats);
 
             return shaderFormats;
+        }
+    }
+
+    public bool IsTextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage)
+    {
+        unsafe
+        {
+            return SDL3.SDL_GPUTextureSupportsFormat(
+                SdlGpuDevice,
+                (SDL_GPUTextureFormat)format,
+                (SDL_GPUTextureType)type,
+                (SDL_GPUTextureUsageFlags)usage);
         }
     }
 
@@ -105,6 +117,10 @@ internal class GpuDevice : IGpuDevice
 
         unsafe
         {
+            if (SDL3.SDL_GPUTextureSupportsFormat(SdlGpuDevice, (SDL_GPUTextureFormat)format, SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D, usage) == false)
+            {
+                throw new ArgumentException($"Texture format '{format}' is not supported for usage '{(TextureUsage)usage}' on this GPU.", nameof(format));
+            }
             SDL_GPUTextureCreateInfo info = new SDL_GPUTextureCreateInfo
             {
                 usage = usage,
@@ -128,11 +144,18 @@ internal class GpuDevice : IGpuDevice
 
     public Texture CreateColorTargetTexture(ShortSize size, TextureFormat format)
     {
+        const SDL_GPUTextureUsageFlags usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
         unsafe
         {
+            if (SDL3.SDL_GPUTextureSupportsFormat(SdlGpuDevice, (SDL_GPUTextureFormat)format, SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D, usage) == false)
+            {
+                throw new ArgumentException($"Texture format '{format}' is not supported for usage '{(TextureUsage)usage}' on this GPU.", nameof(format));
+            }
+
             SDL_GPUTextureCreateInfo info = new SDL_GPUTextureCreateInfo
             {
-                usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+                usage = usage,
                 format = (SDL_GPUTextureFormat)format,
                 width = size.Width,
                 height = size.Height,

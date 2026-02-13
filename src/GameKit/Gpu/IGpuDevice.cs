@@ -8,7 +8,9 @@ public interface IGpuDevice : IDisposable
     GpuMemoryStats MemoryStats { get; }
 
     ShaderFormats GetSupportedShaderFormats();
-    
+
+    bool IsTextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage);
+
     CommandBuffer AcquireCommandBuffer();
     
     Sampler CreateSampler(SamplerConfig config);
