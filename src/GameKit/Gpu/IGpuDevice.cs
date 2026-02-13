@@ -9,7 +9,7 @@ public interface IGpuDevice : IDisposable
 
     ShaderFormats GetSupportedShaderFormats();
 
-    bool TextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage);
+    bool IsTextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage);
 
     CommandBuffer AcquireCommandBuffer();
     

@@ -49,7 +49,7 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
-    public bool TextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage)
+    public bool IsTextureFormatSupported(TextureFormat format, TextureType type, TextureUsage usage)
     {
         unsafe
         {
