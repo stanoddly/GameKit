@@ -31,6 +31,8 @@
                       Retries="3"
                       RetryDelayMilliseconds="1000"
                       Condition="!Exists('$(SlangZipPath)')" />
+        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
+               Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
     <!-- Extract Slang zip file and clean up unnecessary files -->
@@ -45,9 +47,6 @@
         <PropertyGroup>
             <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
         </PropertyGroup>
-
-        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
-               Condition="'$(NeedsExtraction)' == 'true' And !Exists('$(SlangZipPath)')" />
 
         <Message Text="Extracting Slang to $(SlangBaseDir)..." Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
         <Unzip SourceFiles="$(SlangZipPath)"
