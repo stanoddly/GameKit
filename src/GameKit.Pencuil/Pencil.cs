@@ -28,26 +28,23 @@ public enum HAlign : byte { None, Start, Center, End }
 public enum VAlign : byte { None, Start, Center, End }
 public enum CursorState : byte { None, Hovered, Clicked }
 
-public readonly struct GroupDisposer : IDisposable
+public readonly struct DirectionDisposer : IDisposable
 {
     private readonly Pencil _context;
     private readonly ShortVector2 _previousPosition;
     private readonly ShortVector2 _previousSize;
     private readonly LayoutDirection _previousLayoutDirection;
-    private readonly short _previousGap;
 
-    internal GroupDisposer(
+    internal DirectionDisposer(
         Pencil context,
         ShortVector2 previousPosition,
         ShortVector2 previousSize,
-        LayoutDirection previousLayoutDirection,
-        short previousGap)
+        LayoutDirection previousLayoutDirection)
     {
         _context = context;
         _previousPosition = previousPosition;
         _previousSize = previousSize;
         _previousLayoutDirection = previousLayoutDirection;
-        _previousGap = previousGap;
     }
 
     public void Dispose()
@@ -55,8 +52,21 @@ public readonly struct GroupDisposer : IDisposable
         _context.CurrentDirection = _previousLayoutDirection;
         _context.CurrentPosition = _previousPosition;
         _context.CurrentSize = _previousSize;
-        _context.CurrentGap = _previousGap;
     }
+}
+
+public readonly struct GapDisposer : IDisposable
+{
+    private readonly Pencil _context;
+    private readonly short _previousGap;
+
+    internal GapDisposer(Pencil context, short previousGap)
+    {
+        _context = context;
+        _previousGap = previousGap;
+    }
+
+    public void Dispose() => _context.CurrentGap = _previousGap;
 }
 
 public class Pencil
@@ -175,46 +185,58 @@ public class Pencil
         CurrentPosition = position;
     }
 
-    public ShortVector2 Anchor(int count, short size, short gap, HAlign h, VAlign v, short margin = 0)
+    public void Align(HAlign h, VAlign v, short size, int count = 1, short margin = 0)
     {
-        short totalExtent = (short)(count * size + (count - 1) * gap);
-        return Anchor(totalExtent, size, h, v, margin);
-    }
-
-    public ShortVector2 Anchor(short width, short height, HAlign h, VAlign v, short margin = 0)
-    {
+        short totalExtent = (short)(count * size + (count - 1) * CurrentGap);
         short x = h switch
         {
             HAlign.Start => margin,
-            HAlign.Center => (short)((_viewportWidth - width) / 2),
-            HAlign.End => (short)(_viewportWidth - width - margin),
+            HAlign.Center => (short)((_viewportWidth - totalExtent) / 2),
+            HAlign.End => (short)(_viewportWidth - totalExtent - margin),
             _ => (short)0
         };
 
         short y = v switch
         {
             VAlign.Start => margin,
-            VAlign.Center => (short)((_viewportHeight - height) / 2),
-            VAlign.End => (short)(_viewportHeight - height - margin),
+            VAlign.Center => (short)((_viewportHeight - size) / 2),
+            VAlign.End => (short)(_viewportHeight - size - margin),
             _ => (short)0
         };
 
-        return new ShortVector2(x, y);
+        CurrentPosition = new ShortVector2(x, y);
     }
 
-    public GroupDisposer Direction(LayoutDirection direction, short gap = 0)
+    public void AlignBottomCenter(short size, int count = 1, short margin = 0)
+        => Align(HAlign.Center, VAlign.End, size, count, margin);
+
+    public void AlignTopLeft(short size, int count = 1, short margin = 0)
+        => Align(HAlign.Start, VAlign.Start, size, count, margin);
+
+    public void AlignTopRight(short size, int count = 1, short margin = 0)
+        => Align(HAlign.End, VAlign.Start, size, count, margin);
+
+    public void AlignCenter(short size, int count = 1, short margin = 0)
+        => Align(HAlign.Center, VAlign.Center, size, count, margin);
+
+    public DirectionDisposer WithDirection(LayoutDirection direction)
     {
-        var disposer = new GroupDisposer(
+        var disposer = new DirectionDisposer(
             this,
             CurrentPosition,
             CurrentSize,
-            CurrentDirection,
-            CurrentGap);
+            CurrentDirection);
 
         CurrentDirection = direction;
         CurrentSize = default;
-        CurrentGap = gap;
 
+        return disposer;
+    }
+
+    public GapDisposer WithGap(short gap)
+    {
+        var disposer = new GapDisposer(this, CurrentGap);
+        CurrentGap = gap;
         return disposer;
     }
 

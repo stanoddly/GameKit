@@ -31,10 +31,10 @@ public class Hotbar : GuiCanvas
     {
         int hoveredSlot = -1;
 
-        pencil.MoveTo(pencil.Anchor(SlotCount, SlotSize, SlotGap, HAlign.Center, VAlign.End, margin: 16));
-
-        using (pencil.Direction(LayoutDirection.Right, gap: SlotGap))
+        using (pencil.WithGap(SlotGap))
+        using (pencil.WithDirection(LayoutDirection.Right))
         {
+            pencil.AlignBottomCenter(size: SlotSize, count: SlotCount, margin: 16);
             for (int i = 0; i < SlotCount; i++)
             {
                 Color color = i == _selectedSlot ? SelectedColor
