@@ -30,14 +30,14 @@ public enum CursorState : byte { None, Hovered, Clicked }
 
 public readonly struct GroupDisposer : IDisposable
 {
-    private readonly GuiContext _context;
+    private readonly Pencil _context;
     private readonly ShortVector2 _previousPosition;
     private readonly ShortVector2 _previousSize;
     private readonly LayoutDirection _previousLayoutDirection;
     private readonly short _previousGap;
 
     internal GroupDisposer(
-        GuiContext context,
+        Pencil context,
         ShortVector2 previousPosition,
         ShortVector2 previousSize,
         LayoutDirection previousLayoutDirection,
@@ -52,14 +52,14 @@ public readonly struct GroupDisposer : IDisposable
 
     public void Dispose()
     {
-        _context.Direction = _previousLayoutDirection;
+        _context.CurrentDirection = _previousLayoutDirection;
         _context.CurrentPosition = _previousPosition;
         _context.CurrentSize = _previousSize;
         _context.CurrentGap = _previousGap;
     }
 }
 
-public class GuiContext
+public class Pencil
 {
     private readonly IGuiPlatform _guiPlatform;
     public GuiStyle Style { get; }
@@ -84,7 +84,7 @@ public class GuiContext
 
     }
 
-    public LayoutDirection Direction { get; set; } = LayoutDirection.Bottom;
+    public LayoutDirection CurrentDirection { get; set; } = LayoutDirection.Bottom;
     public ShortVector2 CurrentPosition { get; set; }
     public ShortVector2 CurrentSize { get; set; }
     public ShortVector2 CursorPosition { get; set; }
@@ -93,13 +93,13 @@ public class GuiContext
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
 
-    public GuiContext(IGuiPlatform guiPlatform, GuiStyle guiStyle)
+    public Pencil(IGuiPlatform guiPlatform, GuiStyle guiStyle)
     {
         _guiPlatform = guiPlatform;
         Style = guiStyle;
     }
 
-    public GuiContext(IGuiPlatform guiPlatform, GuiStyle guiStyle, AppConfig appConfig) : this(guiPlatform, guiStyle)
+    public Pencil(IGuiPlatform guiPlatform, GuiStyle guiStyle, AppConfig appConfig) : this(guiPlatform, guiStyle)
     {
         if (appConfig.Size is { } size)
         {
@@ -142,22 +142,22 @@ public class GuiContext
     {
         short gap = CurrentSize != default ? CurrentGap : (short)0;
 
-        if (Direction == LayoutDirection.Bottom)
+        if (CurrentDirection == LayoutDirection.Bottom)
         {
             return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y + CurrentSize.Y + gap));
         }
 
-        if (Direction == LayoutDirection.Top)
+        if (CurrentDirection == LayoutDirection.Top)
         {
             return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y - size.Y - gap));
         }
 
-        if (Direction == LayoutDirection.Left)
+        if (CurrentDirection == LayoutDirection.Left)
         {
             return new ShortVector2((short)(CurrentPosition.X - size.X - gap), CurrentPosition.Y);
         }
 
-        if (Direction == LayoutDirection.Right)
+        if (CurrentDirection == LayoutDirection.Right)
         {
             return new ShortVector2((short)(CurrentPosition.X + CurrentSize.X + gap), CurrentPosition.Y);
         }
@@ -165,23 +165,57 @@ public class GuiContext
         return new ShortVector2(CurrentPosition.X, CurrentPosition.Y);
     }
 
-    public GroupDisposer Group(
-        LayoutDirection layoutDirection = LayoutDirection.Bottom,
-        HAlign hAlign = HAlign.None, VAlign vAlign = VAlign.None,
-        short gap = 0, short padding = 0)
+    public void MoveTo(short x, short y)
     {
-        var groupDisposer = new GroupDisposer(
+        CurrentPosition = new ShortVector2(x, y);
+    }
+
+    public void MoveTo(ShortVector2 position)
+    {
+        CurrentPosition = position;
+    }
+
+    public ShortVector2 Anchor(int count, short size, short gap, HAlign h, VAlign v, short margin = 0)
+    {
+        short totalExtent = (short)(count * size + (count - 1) * gap);
+        return Anchor(totalExtent, size, h, v, margin);
+    }
+
+    public ShortVector2 Anchor(short width, short height, HAlign h, VAlign v, short margin = 0)
+    {
+        short x = h switch
+        {
+            HAlign.Start => margin,
+            HAlign.Center => (short)((_viewportWidth - width) / 2),
+            HAlign.End => (short)(_viewportWidth - width - margin),
+            _ => (short)0
+        };
+
+        short y = v switch
+        {
+            VAlign.Start => margin,
+            VAlign.Center => (short)((_viewportHeight - height) / 2),
+            VAlign.End => (short)(_viewportHeight - height - margin),
+            _ => (short)0
+        };
+
+        return new ShortVector2(x, y);
+    }
+
+    public GroupDisposer Direction(LayoutDirection direction, short gap = 0)
+    {
+        var disposer = new GroupDisposer(
             this,
             CurrentPosition,
             CurrentSize,
-            Direction,
+            CurrentDirection,
             CurrentGap);
 
-        Direction = layoutDirection;
+        CurrentDirection = direction;
         CurrentSize = default;
         CurrentGap = gap;
 
-        return groupDisposer;
+        return disposer;
     }
 
     public ShortVector2 MeasureString(string text, ushort fontSize) => _guiPlatform.MeasureString(text, fontSize);
@@ -194,108 +228,56 @@ public class GuiContext
     }
 }
 
-public static class GuiContextExtensions
+public static class PencilExtensions
 {
 
-    public static CursorState Panel(this GuiContext guiContext, short width, short height, Color color)
+    public static CursorState Panel(this Pencil pencil, short width, short height, Color color)
     {
         ShortVector2 size = new ShortVector2(width, height);
-        ShortVector2 position = guiContext.DetermineNextPosition(size);
+        ShortVector2 position = pencil.CurrentPosition;
         ShortRectangle area = new ShortRectangle(position, size);
-        guiContext.AddRectangle(area, color);
-        guiContext.CurrentPosition = position;
-        guiContext.CurrentSize = size;
+        pencil.AddRectangle(area, color);
+        pencil.CurrentSize = size;
+        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
 
-        guiContext.AddHoverTest(area);
-        guiContext.AddHoverInTest(area);
-        guiContext.AddHoverOutTest(area);
-        guiContext.AddClickTest(area);
+        pencil.AddHoverTest(area);
+        pencil.AddHoverInTest(area);
+        pencil.AddHoverOutTest(area);
+        pencil.AddClickTest(area);
 
-        if (!area.Intersects(guiContext.CursorPosition))
+        if (!area.Intersects(pencil.CursorPosition))
             return CursorState.None;
 
-        return guiContext.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
+        return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
-    public static CursorState Button(this GuiContext guiContext, string text)
+    public static CursorState Button(this Pencil pencil, string text)
     {
         // add render instructions
 
-        GuiStyle style = guiContext.Style;
+        GuiStyle style = pencil.Style;
 
-        var size = guiContext.MeasureString(text, style.TextSize);
-        ShortVector2 padding = new ShortVector2(guiContext.Style.TextPadding);
+        var size = pencil.MeasureString(text, style.TextSize);
+        ShortVector2 padding = new ShortVector2(pencil.Style.TextPadding);
 
         ShortVector2 fullSize = size + padding + padding;
-        ShortVector2 startPosition = guiContext.DetermineNextPosition(fullSize);
+        ShortVector2 startPosition = pencil.DetermineNextPosition(fullSize);
 
         ShortVector2 thickness = new ShortVector2(style.BorderThickness);
         Color innerColor = style.Background;
 
         ShortRectangle area = new ShortRectangle(startPosition, fullSize);
 
-        guiContext.AddHoverTest(area);
-        guiContext.AddHoverInTest(area);
-        guiContext.AddHoverOutTest(area);
-        guiContext.AddClickTest(area);
+        pencil.AddHoverTest(area);
+        pencil.AddHoverInTest(area);
+        pencil.AddHoverOutTest(area);
+        pencil.AddClickTest(area);
 
-        if (!area.Intersects(guiContext.CursorPosition))
+        if (!area.Intersects(pencil.CursorPosition))
             return CursorState.None;
 
         innerColor = style.ActiveColor;
-        return guiContext.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
+        return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
-    public static GroupDisposer BottomGroup(this GuiContext guiContext)
-    {
-        return guiContext.Group(LayoutDirection.Bottom);
-    }
-
-    public static GroupDisposer TopGroup(this GuiContext guiContext)
-    {
-        return guiContext.Group(LayoutDirection.Top);
-    }
-
-    public static void VerticalSpace(this GuiContext guiContext, short size)
-    {
-        ShortVector2 startPosition = guiContext.DetermineNextPosition(new ShortVector2((short)0, size));
-        guiContext.CurrentPosition = startPosition;
-    }
-
-    public static void HorizontalSpace(this GuiContext guiContext, short size)
-    {
-        if (guiContext.Direction == LayoutDirection.Left)
-        {
-            size = (short)-size;
-        }
-        guiContext.CurrentPosition += new ShortVector2(size, (short)0);
-    }
-
-    public static void DirectionSpace(this GuiContext guiContext, short size)
-    {
-        LayoutDirection direction = guiContext.Direction;
-        ShortVector2 vector = default;
-
-        if (direction == LayoutDirection.Bottom)
-        {
-            vector = new ShortVector2(size, (short)0);
-        }
-
-        if (direction == LayoutDirection.Top)
-        {
-            vector = new ShortVector2((short)-size, (short)0);
-        }
-
-        if (direction == LayoutDirection.Left)
-        {
-            vector = new ShortVector2((short)-size, (short)0);
-        }
-
-        if (direction == LayoutDirection.Right)
-        {
-            vector = new ShortVector2(size, (short)0);
-        }
-
-        guiContext.CurrentPosition += vector;
-    }
 }

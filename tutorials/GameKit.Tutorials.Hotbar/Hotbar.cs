@@ -27,11 +27,13 @@ public class Hotbar : GuiCanvas
         };
     }
 
-    public override void Build(GuiContext guiContext)
+    public override void Build(Pencil pencil)
     {
         int hoveredSlot = -1;
 
-        using (guiContext.Group(LayoutDirection.Right, hAlign: HAlign.Center, vAlign: VAlign.End, gap: SlotGap, padding: 16))
+        pencil.MoveTo(pencil.Anchor(SlotCount, SlotSize, SlotGap, HAlign.Center, VAlign.End, margin: 16));
+
+        using (pencil.Direction(LayoutDirection.Right, gap: SlotGap))
         {
             for (int i = 0; i < SlotCount; i++)
             {
@@ -39,7 +41,7 @@ public class Hotbar : GuiCanvas
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
-                CursorState state = guiContext.Panel(SlotSize, SlotSize, color);
+                CursorState state = pencil.Panel(SlotSize, SlotSize, color);
 
                 if (state == CursorState.Clicked)
                     _selectedSlot = i;

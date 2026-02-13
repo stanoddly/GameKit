@@ -2,5 +2,5 @@ namespace GameKit.Pencuil;
 
 public abstract class GuiCanvas
 {
-    public abstract void Build(GuiContext guiContext);
+    public abstract void Build(Pencil pencil);
 }

@@ -11,7 +11,7 @@ public static class PencuilExtensions
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
         builder.RegisterType<NullGuiPlatform>().As<IGuiPlatform>();
         builder.RegisterInstance(GuiStyles.Style);
-        builder.RegisterType<GuiContext>();
+        builder.RegisterType<Pencil>();
         builder.RegisterType<PencuilRenderer>();
         builder.RegisterType<PencuilRenderPhase>().As<IRenderPhase<DefaultRenderContext>>();
         return builder;

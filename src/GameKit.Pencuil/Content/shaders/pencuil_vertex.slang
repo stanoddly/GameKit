@@ -10,6 +10,7 @@ struct Input
 struct Output
 {
     float4 Position : SV_Position;
+    float2 TexCoord : TEXCOORD0;
 };
 
 [shader("vertex")]
@@ -18,5 +19,6 @@ Output main(Input input)
     Output output;
     float4 worldPos = mul(world, float4(input.Position, 1.0));
     output.Position = mul(viewProjection, worldPos);
+    output.TexCoord = input.TexCoord;
     return output;
 }

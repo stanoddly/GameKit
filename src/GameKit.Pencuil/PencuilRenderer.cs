@@ -6,11 +6,32 @@ namespace GameKit.Pencuil;
 
 public class PencuilRenderer
 {
+    private static readonly ColorTargetSettings _guiColorTargetSettings = new()
+    {
+        ClearColorValue = FColors.Transparent
+    };
+
+    private static readonly Matrix4x4 _presentViewProjection =
+        Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, 1, 1, 0, 0, 1);
+
+    private static readonly Vector4 _fullTextureUvs = new(0, 0, 1, 1);
+
     private readonly GpuVertexBuffer<PositionTextureVertex> _vertexBuffer;
     private readonly GraphicsPipeline _colorPipeline;
+    private readonly GraphicsPipeline _presentPipeline;
+    private readonly Sampler _sampler;
+    private readonly Texture _retainedTexture;
+    private readonly Texture _depthBuffer;
     private readonly Matrix4x4 _viewProjection;
 
-    public PencuilRenderer(GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem, ShaderLoader shaderLoader, AppConfig appConfig)
+    private int _maxDepthValue;
+
+    public PencuilRenderer(
+        GraphicsPipelineBuilder graphicsPipelineBuilder,
+        GpuMemorySystem gpuMemorySystem,
+        ShaderLoader shaderLoader,
+        IGpuDevice gpuDevice,
+        IWindow window)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [
@@ -23,39 +44,57 @@ public class PencuilRenderer
         _vertexBuffer = gpuMemorySystem.CreateVertexBuffer(quad);
 
         Shader vertexShader = shaderLoader.Load("shaders/pencuil_vertex");
-        Shader fragmentShader = shaderLoader.Load("shaders/pencuil_color_fragment");
+        Shader colorFragmentShader = shaderLoader.Load("shaders/pencuil_color_fragment");
+        Shader textureFragmentShader = shaderLoader.Load("shaders/pencuil_texture_fragment");
+
+        var colorTargetFormat = window.ColorTargetFormat;
+        var renderSize = window.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
-            .SetShaders(vertexShader, fragmentShader)
-            .AddColorFormatFromDisplay(BlendingState.Standard)
+            .SetShaders(vertexShader, colorFragmentShader)
+            .AddColorTarget(colorTargetFormat, BlendingState.Standard)
+            .EnableDepthTesting(DepthBufferFormat.Depth32)
             .SetCullMode(CullMode.None)
             .Build();
 
-        uint width = appConfig.Size?.Width ?? 1280;
-        uint height = appConfig.Size?.Height ?? 720;
-        _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, width, height, 0, 0, 1);
+        _presentPipeline = graphicsPipelineBuilder
+            .SetPrimitiveType(PrimitiveType.TriangleStrip)
+            .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
+            .SetShaders(vertexShader, textureFragmentShader)
+            .AddColorTarget(colorTargetFormat, BlendingState.Standard)
+            .Build();
+
+        _sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
+        _retainedTexture = gpuDevice.CreateColorTargetTexture(renderSize, colorTargetFormat);
+        _depthBuffer = gpuDevice.CreateDepthBufferTexture(renderSize, DepthBufferFormat.Depth32);
+
+        _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
     }
 
-    public void Render(CommandBuffer commandBuffer, SwapchainTexture swapchainTexture, GuiContext guiContext)
+    public void Render(CommandBuffer commandBuffer, Pencil pencil)
     {
-        if (guiContext._coloredRectangleInstructions.Count == 0 && guiContext._textureRegionInstructions.Count == 0)
+        if (pencil._coloredRectangleInstructions.Count == 0 && pencil._textureRegionInstructions.Count == 0)
         {
-            guiContext.ClearInstructions();
+            pencil.ClearInstructions();
             return;
         }
 
-        commandBuffer.PushVertexUniformData(0, _viewProjection);
+        _maxDepthValue = pencil._coloredRectangleInstructions.Count + pencil._textureRegionInstructions.Count;
 
         using IRenderPass renderPass = new RenderPassBuilder(commandBuffer)
-            .AddColorTarget(swapchainTexture, new ColorTargetSettings { ClearColorValue = FColors.Black })
+            .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
+            .SetDepthBuffer(_depthBuffer, DepthBufferSettings.Default)
             .Build();
+
+        commandBuffer.PushVertexUniformData(0, _viewProjection);
 
         renderPass.BindGraphicsPipeline(_colorPipeline);
         renderPass.BindVertexBuffer(_vertexBuffer);
 
-        foreach (var instruction in guiContext._coloredRectangleInstructions)
+        int depth = 0;
+        foreach (var instruction in pencil._coloredRectangleInstructions)
         {
             Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
                 instruction.Area.Width,
@@ -65,7 +104,7 @@ public class PencuilRenderer
             Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                 instruction.Area.X,
                 instruction.Area.Y,
-                0.0f);
+                CalculateZCoordinate(depth++));
 
             Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
 
@@ -75,6 +114,27 @@ public class PencuilRenderer
             renderPass.DrawPrimitive();
         }
 
-        guiContext.ClearInstructions();
+        pencil.ClearInstructions();
+    }
+
+    public void Present(CommandBuffer commandBuffer, Texture target)
+    {
+        using IRenderPass presentPass = new RenderPassBuilder(commandBuffer)
+            .AddColorTarget(target, ColorTargetSettings.Clear)
+            .Build();
+
+        commandBuffer.PushVertexUniformData(0, _presentViewProjection);
+        commandBuffer.PushVertexUniformData(1, Matrix4x4.Identity);
+        commandBuffer.PushFragmentUniformData(0, _fullTextureUvs);
+
+        presentPass.BindGraphicsPipeline(_presentPipeline);
+        presentPass.BindVertexBuffer(_vertexBuffer);
+        presentPass.BindFragmentSampler(_retainedTexture, _sampler);
+        presentPass.DrawPrimitive();
+    }
+
+    private float CalculateZCoordinate(int elementDepth)
+    {
+        return (elementDepth - _maxDepthValue) / (float)_maxDepthValue;
     }
 }
