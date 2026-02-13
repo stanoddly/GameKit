@@ -20,21 +20,19 @@
     <!-- Download Slang if not already present -->
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
         <PropertyGroup>
-            <SlangBaseDir>$(BaseIntermediateOutputPath)slang</SlangBaseDir>
             <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
-            <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
         </PropertyGroup>
-
-        <!-- Create slang directory if it doesn't exist -->
-        <MakeDir Directories="$(SlangBaseDir)" Condition="!Exists('$(SlangBaseDir)')" />
 
         <!-- Download Slang zip if not already present -->
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
                       DestinationFolder="$(BaseIntermediateOutputPath)"
                       DestinationFileName="$(SlangZipFile)"
+                      Retries="3"
+                      RetryDelayMilliseconds="1000"
                       Condition="!Exists('$(SlangZipPath)')" />
-        <Message Text="Downloaded Slang to $(SlangZipPath)" Importance="high" Condition="!Exists('$(SlangZipPath)')" />
+        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
+               Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
     <!-- Extract Slang zip file and clean up unnecessary files -->
