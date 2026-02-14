@@ -18,7 +18,7 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
 
         mouseService.Motion += (_, args) =>
         {
-            pencil.CursorPosition = new ShortVector2((short)args.Position.X, (short)args.Position.Y);
+            pencil.CursorPosition = (IntVector2)args.Position;
         };
 
         mouseService.ButtonRelease += (_, args) =>

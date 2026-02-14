@@ -9,9 +9,9 @@ namespace GameKit.Tutorials.Hotbar;
 public class Hotbar : GuiCanvas
 {
     private const int SlotCount = 9;
-    private const short SlotSize = 48;
-    private const short SlotGap = 4;
-    private const short LabelGap = 4;
+    private const int SlotSize = 48;
+    private const int SlotGap = 4;
+    private const int LabelGap = 4;
 
     private static readonly Color SlotColor = new(60, 60, 60, 255);
     private static readonly Color SelectedColor = new(200, 200, 200, 255);
@@ -39,15 +39,18 @@ public class Hotbar : GuiCanvas
     public override void Build(Pencil pencil)
     {
         int hoveredSlot = -1;
-        ShortVector2 hoveredPos = default;
+        IntVector2 hoveredPos = default;
 
         using (pencil.WithGap(SlotGap))
         using (pencil.WithDirection(LayoutDirection.Right))
         {
-            pencil.AlignBottomCenter(size: SlotSize, count: SlotCount, margin: 16);
+            int totalExtent = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
+            IntVector2 anchor = pencil.BottomCenter;
+            pencil.MoveTo(anchor.X - totalExtent / 2, anchor.Y - SlotSize - 16);
+
             for (int i = 0; i < SlotCount; i++)
             {
-                ShortVector2 slotPos = pencil.CurrentPosition;
+                IntVector2 slotPos = pencil.CurrentPosition;
 
                 Color color = i == _selectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
@@ -68,10 +71,10 @@ public class Hotbar : GuiCanvas
         if (hoveredSlot >= 0)
         {
             string label = SlotNames[hoveredSlot];
-            ShortVector2 textSize = pencil.MeasureText(label, _font);
+            IntVector2 textSize = pencil.MeasureText(label, _font);
             pencil.MoveTo(
-                (short)(hoveredPos.X + (SlotSize - textSize.X) / 2),
-                (short)(hoveredPos.Y - textSize.Y - LabelGap));
+                hoveredPos.X + (SlotSize - textSize.X) / 2,
+                hoveredPos.Y - textSize.Y - LabelGap);
             pencil.Text(label, _font, Colors.White);
         }
 
