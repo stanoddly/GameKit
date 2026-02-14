@@ -6,7 +6,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public class Hotbar : StatefulGuiCanvas
+public class Hotbar : StatefulGuiCanvas<int>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -21,20 +21,18 @@ public class Hotbar : StatefulGuiCanvas
         ["Sword", "Shield", "Bow", "Potion", "Scroll", "Torch", "Ring", "Gem", "Key"];
 
     private readonly Font _font;
-    private readonly State<int> _selectedSlot;
     private int _hoveredSlot = -1;
 
-    public Hotbar(IKeyboardService keyboardService, IFontSystem fontSystem)
+    public Hotbar(IKeyboardService keyboardService, IFontSystem fontSystem) : base(0)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
-        _selectedSlot = CreateState(0);
 
         keyboardService.KeyDown += (_, args) =>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
             {
-                _selectedSlot.Value = index;
+                State = index;
             }
         };
     }
@@ -55,7 +53,7 @@ public class Hotbar : StatefulGuiCanvas
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == _selectedSlot.Value ? SelectedColor
+                Color color = i == State ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
@@ -63,7 +61,7 @@ public class Hotbar : StatefulGuiCanvas
 
                 if (state == CursorState.Clicked)
                 {
-                    _selectedSlot.Value = i;
+                    State = i;
                 }
                 if (state >= CursorState.Hovered)
                 {

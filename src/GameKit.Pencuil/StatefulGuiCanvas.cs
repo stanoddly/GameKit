@@ -7,9 +7,27 @@ public abstract class StatefulGuiCanvas : GuiCanvas
     public void Invalidate() => IsDirty = true;
 
     internal void ClearDirty() => IsDirty = false;
+}
 
-    protected State<TValue> CreateState<TValue>(TValue initialValue)
+public abstract class StatefulGuiCanvas<TState> : StatefulGuiCanvas
+{
+    private TState _state;
+
+    public TState State
     {
-        return new State<TValue>(initialValue, this);
+        get => _state;
+        set
+        {
+            if (!EqualityComparer<TState>.Default.Equals(_state, value))
+            {
+                _state = value;
+                Invalidate();
+            }
+        }
+    }
+
+    protected StatefulGuiCanvas(TState initialState)
+    {
+        _state = initialState;
     }
 }
