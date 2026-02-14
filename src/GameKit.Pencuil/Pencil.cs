@@ -1,23 +1,9 @@
+using System.Numerics;
 using GameKit.Common;
 using GameKit.Gpu;
+using GameKit.Text;
 
 namespace GameKit.Pencuil;
-
-public interface IGuiPlatform
-{
-    ShortVector2 MeasureString(string text, ushort fontSize);
-    void DrawRectangle(ShortRectangle rectangle, Color color);
-    void DrawText(string text, ushort size, Color color);
-    void DrawTexture(Texture texture, ShortRectangle region);
-}
-
-public class NullGuiPlatform : IGuiPlatform
-{
-    public ShortVector2 MeasureString(string text, ushort fontSize) => default;
-    public void DrawRectangle(ShortRectangle rectangle, Color color) { }
-    public void DrawText(string text, ushort size, Color color) { }
-    public void DrawTexture(Texture texture, ShortRectangle region) { }
-}
 
 public enum LayoutDirection
 {
@@ -71,7 +57,7 @@ public readonly struct GapDisposer : IDisposable
 
 public class Pencil
 {
-    private readonly IGuiPlatform _guiPlatform;
+    private readonly IFontSystem _fontSystem;
     public GuiStyle Style { get; }
     internal int _depth = 0;
 
@@ -103,13 +89,13 @@ public class Pencil
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
 
-    public Pencil(IGuiPlatform guiPlatform, GuiStyle guiStyle)
+    public Pencil(IFontSystem fontSystem, GuiStyle guiStyle)
     {
-        _guiPlatform = guiPlatform;
+        _fontSystem = fontSystem;
         Style = guiStyle;
     }
 
-    public Pencil(IGuiPlatform guiPlatform, GuiStyle guiStyle, AppConfig appConfig) : this(guiPlatform, guiStyle)
+    public Pencil(IFontSystem fontSystem, GuiStyle guiStyle, AppConfig appConfig) : this(fontSystem, guiStyle)
     {
         if (appConfig.Size is { } size)
         {
@@ -143,9 +129,9 @@ public class Pencil
         _coloredRectangleInstructions.Add(new ColoredRectangleInstruction(_depth++, rectangle, color));
     }
 
-    public void AddTexture(Texture texture, ShortRectangle region)
+    public void AddTexture(Texture texture, ShortRectangle area, Vector4 uvs, FColor tint)
     {
-        _textureRegionInstructions.Add(new TextureRegionInstruction(_depth++, texture, region));
+        _textureRegionInstructions.Add(new TextureRegionInstruction(_depth++, texture, area, uvs, tint));
     }
 
     public ShortVector2 DetermineNextPosition(ShortVector2 size)
@@ -240,7 +226,25 @@ public class Pencil
         return disposer;
     }
 
-    public ShortVector2 MeasureString(string text, ushort fontSize) => _guiPlatform.MeasureString(text, fontSize);
+    public void Text(string text, Font font, Color color)
+    {
+        TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
+        Vector4 uvs = sprite.CalculateTextureRegionUVs();
+        ShortVector2 size = sprite.Size;
+        ShortVector2 position = CurrentPosition;
+        ShortRectangle area = new ShortRectangle(position, size);
+
+        AddTexture(sprite.Texture, area, uvs, (FColor)color);
+
+        CurrentSize = size;
+        CurrentPosition = DetermineNextPosition(size);
+    }
+
+    public ShortVector2 MeasureText(string text, Font font)
+    {
+        ShortSize size = _fontSystem.MeasureTextSprite(text, font);
+        return new ShortVector2((short)size.Width, (short)size.Height);
+    }
 
     internal void ClearInstructions()
     {
@@ -273,13 +277,13 @@ public static class PencilExtensions
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
-    public static CursorState Button(this Pencil pencil, string text)
+    public static CursorState Button(this Pencil pencil, string text, Font font)
     {
         // add render instructions
 
         GuiStyle style = pencil.Style;
 
-        var size = pencil.MeasureString(text, style.TextSize);
+        var size = pencil.MeasureText(text, font);
         ShortVector2 padding = new ShortVector2(pencil.Style.TextPadding);
 
         ShortVector2 fullSize = size + padding + padding;

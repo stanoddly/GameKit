@@ -9,7 +9,6 @@ public static class PencuilExtensions
     public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder)
     {
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
-        builder.RegisterType<NullGuiPlatform>().As<IGuiPlatform>();
         builder.RegisterInstance(GuiStyles.Style);
         builder.RegisterType<Pencil>();
         builder.RegisterType<PencuilRenderer>();

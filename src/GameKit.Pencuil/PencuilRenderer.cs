@@ -18,6 +18,7 @@ public class PencuilRenderer
 
     private readonly GpuVertexBuffer<PositionTextureVertex> _vertexBuffer;
     private readonly GraphicsPipeline _colorPipeline;
+    private readonly GraphicsPipeline _tintedTexturePipeline;
     private readonly GraphicsPipeline _presentPipeline;
     private readonly Sampler _sampler;
     private readonly Texture _retainedTexture;
@@ -45,6 +46,7 @@ public class PencuilRenderer
 
         Shader vertexShader = shaderLoader.Load("shaders/pencuil_vertex");
         Shader colorFragmentShader = shaderLoader.Load("shaders/pencuil_color_fragment");
+        Shader tintedTextureFragmentShader = shaderLoader.Load("shaders/pencuil_tinted_texture_fragment");
         Shader textureFragmentShader = shaderLoader.Load("shaders/pencuil_texture_fragment");
 
         var colorTargetFormat = window.ColorTargetFormat;
@@ -54,6 +56,15 @@ public class PencuilRenderer
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
             .SetShaders(vertexShader, colorFragmentShader)
+            .AddColorTarget(colorTargetFormat, BlendingState.Standard)
+            .EnableDepthTesting(DepthBufferFormat.Depth32)
+            .SetCullMode(CullMode.None)
+            .Build();
+
+        _tintedTexturePipeline = graphicsPipelineBuilder
+            .SetPrimitiveType(PrimitiveType.TriangleStrip)
+            .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
+            .SetShaders(vertexShader, tintedTextureFragmentShader)
             .AddColorTarget(colorTargetFormat, BlendingState.Standard)
             .EnableDepthTesting(DepthBufferFormat.Depth32)
             .SetCullMode(CullMode.None)
@@ -112,6 +123,34 @@ public class PencuilRenderer
             commandBuffer.PushFragmentUniformData(0, (FColor)instruction.Color);
 
             renderPass.DrawPrimitive();
+        }
+
+        if (pencil._textureRegionInstructions.Count > 0)
+        {
+            renderPass.BindGraphicsPipeline(_tintedTexturePipeline);
+            renderPass.BindVertexBuffer(_vertexBuffer);
+
+            foreach (var instruction in pencil._textureRegionInstructions)
+            {
+                Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
+                    instruction.Area.Width,
+                    instruction.Area.Height,
+                    1.0f);
+
+                Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
+                    instruction.Area.X,
+                    instruction.Area.Y,
+                    CalculateZCoordinate(depth++));
+
+                Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
+
+                commandBuffer.PushVertexUniformData(1, worldMatrix);
+                commandBuffer.PushFragmentUniformData(0, instruction.Uvs);
+                commandBuffer.PushFragmentUniformData(1, instruction.Tint);
+
+                renderPass.BindFragmentSampler(instruction.Texture, _sampler);
+                renderPass.DrawPrimitive();
+            }
         }
 
         pencil.ClearInstructions();

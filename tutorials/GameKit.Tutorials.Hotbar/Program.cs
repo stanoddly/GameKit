@@ -10,7 +10,8 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .UseDefaultRenderManager()
-            .UsePencuil();
+            .UsePencuil()
+            .AddContentFromProjectDirectory("Content");
 
         builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
         builder.RegisterType<Hotbar>().As<GuiCanvas>();

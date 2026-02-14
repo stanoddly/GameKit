@@ -31,6 +31,5 @@
     <Project Path="tutorials/GameKit.Tutorials.TextureArray/GameKit.Tutorials.TextureArray.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.ImageLoading/GameKit.Tutorials.ImageLoading.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StencilBuffer/GameKit.Tutorials.StencilBuffer.csproj" />
-    <Project Path="tutorials/GameKit.Tutorials.HotbarUiui/GameKit.Tutorials.HotbarUiui.csproj" />
   </Folder>
 </Solution>
