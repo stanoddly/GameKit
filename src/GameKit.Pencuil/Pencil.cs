@@ -70,7 +70,7 @@ public class Pencil
     internal readonly int _viewportWidth;
     internal readonly int _viewportHeight;
 
-    public bool NeedsUpdate { get; private set; } = true;
+    public bool NeedsUpdate { get; internal set; } = true;
     public void Invalidate() => NeedsUpdate = true;
 
     public void UpdateCursor(IntVector2 position, bool pressed)
@@ -246,7 +246,9 @@ public static class PencilExtensions
         pencil.AddClickTest(area);
 
         if (!area.Intersects(pencil.CursorPosition))
+        {
             return CursorState.None;
+        }
 
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
@@ -272,7 +274,9 @@ public static class PencilExtensions
         pencil.AddClickTest(area);
 
         if (!area.Intersects(pencil.CursorPosition))
+        {
             return CursorState.None;
+        }
 
         innerColor = style.ActiveColor;
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
