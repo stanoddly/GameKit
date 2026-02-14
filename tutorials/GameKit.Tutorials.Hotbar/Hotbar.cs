@@ -23,9 +23,15 @@ public class Hotbar : StatefulGuiCanvas<int>
     private readonly Font _font;
     private int _hoveredSlot = -1;
 
-    public Hotbar(IKeyboardService keyboardService, IFontSystem fontSystem) : base(0)
+    public static Hotbar Create(IKeyboardService keyboardService, IFontSystem fontSystem)
     {
-        _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
+        Font font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
+        return new Hotbar(keyboardService, font);
+    }
+
+    public Hotbar(IKeyboardService keyboardService, Font font) : base(0)
+    {
+        _font = font;
 
         keyboardService.KeyDown += (_, args) =>
         {
