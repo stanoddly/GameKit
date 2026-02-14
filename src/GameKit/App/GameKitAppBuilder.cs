@@ -107,6 +107,11 @@ public class GameKitAppBuilder
             _moduleBuilder.RegisterInstance(new GameKitConfig());
         }
 
+        if (!_moduleBuilder.IsRegistered(typeof(AppConfig)))
+        {
+            _moduleBuilder.RegisterInstance(new AppConfig());
+        }
+
         _moduleBuilder.RegisterType<GameKitFactory>();
 
         _moduleBuilder.RegisterFunc<Window>(sp => sp.GetRequiredService<GameKitFactory>().CreateWindow(
