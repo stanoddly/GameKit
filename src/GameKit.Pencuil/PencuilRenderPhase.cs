@@ -38,14 +38,7 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
 
         foreach (GuiCanvas canvas in _canvases)
         {
-            if (canvas is StatefulGuiCanvas stateful)
-            {
-                needsBuild |= stateful.IsDirty;
-            }
-            else
-            {
-                needsBuild = true;
-            }
+            needsBuild |= canvas.IsDirty;
         }
 
         if (needsBuild)
@@ -53,11 +46,7 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
             foreach (GuiCanvas canvas in _canvases)
             {
                 canvas.Build(_pencil);
-
-                if (canvas is StatefulGuiCanvas stateful)
-                {
-                    stateful.ClearDirty();
-                }
+                canvas.ClearDirty();
             }
 
             _pencil.NeedsUpdate = false;

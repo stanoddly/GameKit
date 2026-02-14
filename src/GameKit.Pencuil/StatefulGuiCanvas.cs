@@ -1,33 +1,15 @@
 namespace GameKit.Pencuil;
 
-public abstract class StatefulGuiCanvas : GuiCanvas
+public abstract class StatefulGuiCanvas<TState> : GuiCanvas
 {
-    public bool IsDirty { get; private set; } = true;
+    public State<TState> State { get; }
 
-    public void Invalidate() => IsDirty = true;
+    public override bool IsDirty => State.IsDirty;
 
-    internal void ClearDirty() => IsDirty = false;
-}
+    internal override void ClearDirty() => State.IsDirty = false;
 
-public abstract class StatefulGuiCanvas<TState> : StatefulGuiCanvas
-{
-    private TState _state;
-
-    public TState State
+    protected StatefulGuiCanvas(State<TState> state)
     {
-        get => _state;
-        set
-        {
-            if (!EqualityComparer<TState>.Default.Equals(_state, value))
-            {
-                _state = value;
-                Invalidate();
-            }
-        }
-    }
-
-    protected StatefulGuiCanvas(TState initialState)
-    {
-        _state = initialState;
+        State = state;
     }
 }
