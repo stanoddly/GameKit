@@ -10,21 +10,19 @@ public enum LayoutDirection
     None, Bottom, Top, Left, Right
 }
 
-public enum HAlign : byte { None, Start, Center, End }
-public enum VAlign : byte { None, Start, Center, End }
 public enum CursorState : byte { None, Hovered, Clicked }
 
 public readonly struct DirectionDisposer : IDisposable
 {
     private readonly Pencil _context;
-    private readonly ShortVector2 _previousPosition;
-    private readonly ShortVector2 _previousSize;
+    private readonly IntVector2 _previousPosition;
+    private readonly IntVector2 _previousSize;
     private readonly LayoutDirection _previousLayoutDirection;
 
     internal DirectionDisposer(
         Pencil context,
-        ShortVector2 previousPosition,
-        ShortVector2 previousSize,
+        IntVector2 previousPosition,
+        IntVector2 previousSize,
         LayoutDirection previousLayoutDirection)
     {
         _context = context;
@@ -44,9 +42,9 @@ public readonly struct DirectionDisposer : IDisposable
 public readonly struct GapDisposer : IDisposable
 {
     private readonly Pencil _context;
-    private readonly short _previousGap;
+    private readonly int _previousGap;
 
-    internal GapDisposer(Pencil context, short previousGap)
+    internal GapDisposer(Pencil context, int previousGap)
     {
         _context = context;
         _previousGap = previousGap;
@@ -64,27 +62,27 @@ public class Pencil
     internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
     internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
 
-    private readonly List<ShortRectangle> _hoverTests = new();
-    private readonly List<ShortRectangle> _hoverInTests = new();
-    private readonly List<ShortRectangle> _hoverOutTests = new();
-    private readonly List<ShortRectangle> _clickTests = new();
+    private readonly List<Rectangle> _hoverTests = new();
+    private readonly List<Rectangle> _hoverInTests = new();
+    private readonly List<Rectangle> _hoverOutTests = new();
+    private readonly List<Rectangle> _clickTests = new();
 
-    internal readonly short _viewportWidth;
-    internal readonly short _viewportHeight;
+    internal readonly int _viewportWidth;
+    internal readonly int _viewportHeight;
 
     public bool NeedsUpdate { get; private set; } = true;
     public void Invalidate() => NeedsUpdate = true;
 
-    public void UpdateCursor(ShortVector2 position, bool pressed)
+    public void UpdateCursor(IntVector2 position, bool pressed)
     {
 
     }
 
     public LayoutDirection CurrentDirection { get; set; } = LayoutDirection.Bottom;
-    public ShortVector2 CurrentPosition { get; set; }
-    public ShortVector2 CurrentSize { get; set; }
-    public ShortVector2 CursorPosition { get; set; }
-    public short CurrentGap { get; set; }
+    public IntVector2 CurrentPosition { get; set; }
+    public IntVector2 CurrentSize { get; set; }
+    public IntVector2 CursorPosition { get; set; }
+    public int CurrentGap { get; set; }
 
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
@@ -99,115 +97,91 @@ public class Pencil
     {
         if (appConfig.Size is { } size)
         {
-            _viewportWidth = (short)size.Width;
-            _viewportHeight = (short)size.Height;
+            _viewportWidth = (int)size.Width;
+            _viewportHeight = (int)size.Height;
         }
     }
 
-    public void AddHoverTest(ShortRectangle test)
+    public void AddHoverTest(Rectangle test)
     {
         _hoverTests.Add(test);
     }
 
-    public void AddHoverInTest(ShortRectangle test)
+    public void AddHoverInTest(Rectangle test)
     {
         _hoverInTests.Add(test);
     }
 
-    public void AddHoverOutTest(ShortRectangle test)
+    public void AddHoverOutTest(Rectangle test)
     {
         _hoverOutTests.Add(test);
     }
 
-    public void AddClickTest(ShortRectangle test)
+    public void AddClickTest(Rectangle test)
     {
         _clickTests.Add(test);
     }
 
-    public void AddRectangle(ShortRectangle rectangle, Color color)
+    public void AddRectangle(Rectangle rectangle, Color color)
     {
         _coloredRectangleInstructions.Add(new ColoredRectangleInstruction(_depth++, rectangle, color));
     }
 
-    public void AddTexture(Texture texture, ShortRectangle area, Vector4 uvs, FColor tint)
+    public void AddTexture(Texture texture, Rectangle area, Vector4 uvs, FColor tint)
     {
         _textureRegionInstructions.Add(new TextureRegionInstruction(_depth++, texture, area, uvs, tint));
     }
 
-    public ShortVector2 DetermineNextPosition(ShortVector2 size)
+    public IntVector2 DetermineNextPosition(IntVector2 size)
     {
-        short gap = CurrentSize != default ? CurrentGap : (short)0;
+        int gap = CurrentSize != default ? CurrentGap : 0;
 
         if (CurrentDirection == LayoutDirection.Bottom)
         {
-            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y + CurrentSize.Y + gap));
+            return new IntVector2(CurrentPosition.X, CurrentPosition.Y + CurrentSize.Y + gap);
         }
 
         if (CurrentDirection == LayoutDirection.Top)
         {
-            return new ShortVector2(CurrentPosition.X, (short)(CurrentPosition.Y - size.Y - gap));
+            return new IntVector2(CurrentPosition.X, CurrentPosition.Y - size.Y - gap);
         }
 
         if (CurrentDirection == LayoutDirection.Left)
         {
-            return new ShortVector2((short)(CurrentPosition.X - size.X - gap), CurrentPosition.Y);
+            return new IntVector2(CurrentPosition.X - size.X - gap, CurrentPosition.Y);
         }
 
         if (CurrentDirection == LayoutDirection.Right)
         {
-            return new ShortVector2((short)(CurrentPosition.X + CurrentSize.X + gap), CurrentPosition.Y);
+            return new IntVector2(CurrentPosition.X + CurrentSize.X + gap, CurrentPosition.Y);
         }
 
-        return new ShortVector2(CurrentPosition.X, CurrentPosition.Y);
+        return new IntVector2(CurrentPosition.X, CurrentPosition.Y);
     }
 
-    public void MoveTo(short x, short y)
+    public void MoveTo(int x, int y)
     {
-        CurrentPosition = new ShortVector2(x, y);
+        CurrentPosition = new IntVector2(x, y);
     }
 
-    public void MoveTo(ShortVector2 position)
+    public void MoveTo(IntVector2 position)
     {
         CurrentPosition = position;
     }
 
-    public void Align(HAlign h, VAlign v, short size, int count = 1, short margin = 0)
-    {
-        short totalExtent = (short)(count * size + (count - 1) * CurrentGap);
-        short x = h switch
-        {
-            HAlign.Start => margin,
-            HAlign.Center => (short)((_viewportWidth - totalExtent) / 2),
-            HAlign.End => (short)(_viewportWidth - totalExtent - margin),
-            _ => (short)0
-        };
-
-        short y = v switch
-        {
-            VAlign.Start => margin,
-            VAlign.Center => (short)((_viewportHeight - size) / 2),
-            VAlign.End => (short)(_viewportHeight - size - margin),
-            _ => (short)0
-        };
-
-        CurrentPosition = new ShortVector2(x, y);
-    }
-
-    public void AlignBottomCenter(short size, int count = 1, short margin = 0)
-        => Align(HAlign.Center, VAlign.End, size, count, margin);
-
-    public void AlignTopLeft(short size, int count = 1, short margin = 0)
-        => Align(HAlign.Start, VAlign.Start, size, count, margin);
-
-    public void AlignTopRight(short size, int count = 1, short margin = 0)
-        => Align(HAlign.End, VAlign.Start, size, count, margin);
-
-    public void AlignCenter(short size, int count = 1, short margin = 0)
-        => Align(HAlign.Center, VAlign.Center, size, count, margin);
+    public IntVector2 TopLeft => new IntVector2(0, 0);
+    public IntVector2 TopCenter => new IntVector2(_viewportWidth / 2, 0);
+    public IntVector2 TopRight => new IntVector2(_viewportWidth, 0);
+    public IntVector2 CenterLeft => new IntVector2(0, _viewportHeight / 2);
+    public IntVector2 Center => new IntVector2(_viewportWidth / 2, _viewportHeight / 2);
+    public IntVector2 CenterRight => new IntVector2(_viewportWidth, _viewportHeight / 2);
+    public IntVector2 BottomLeft => new IntVector2(0, _viewportHeight);
+    public IntVector2 BottomCenter => new IntVector2(_viewportWidth / 2, _viewportHeight);
+    public IntVector2 BottomRight => new IntVector2(_viewportWidth, _viewportHeight);
 
     public DirectionDisposer WithDirection(LayoutDirection direction)
     {
-        var disposer = new DirectionDisposer(
+        DirectionDisposer disposer = new DirectionDisposer(
             this,
             CurrentPosition,
             CurrentSize,
@@ -219,9 +193,9 @@ public class Pencil
         return disposer;
     }
 
-    public GapDisposer WithGap(short gap)
+    public GapDisposer WithGap(int gap)
     {
-        var disposer = new GapDisposer(this, CurrentGap);
+        GapDisposer disposer = new GapDisposer(this, CurrentGap);
         CurrentGap = gap;
         return disposer;
     }
@@ -230,9 +204,9 @@ public class Pencil
     {
         TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
         Vector4 uvs = sprite.CalculateTextureRegionUVs();
-        ShortVector2 size = sprite.Size;
-        ShortVector2 position = CurrentPosition;
-        ShortRectangle area = new ShortRectangle(position, size);
+        IntVector2 size = new IntVector2(sprite.Size.X, sprite.Size.Y);
+        IntVector2 position = CurrentPosition;
+        Rectangle area = new Rectangle(position, size);
 
         AddTexture(sprite.Texture, area, uvs, (FColor)color);
 
@@ -240,10 +214,10 @@ public class Pencil
         CurrentPosition = DetermineNextPosition(size);
     }
 
-    public ShortVector2 MeasureText(string text, Font font)
+    public IntVector2 MeasureText(string text, Font font)
     {
         ShortSize size = _fontSystem.MeasureTextSprite(text, font);
-        return new ShortVector2((short)size.Width, (short)size.Height);
+        return new IntVector2(size.Width, size.Height);
     }
 
     internal void ClearInstructions()
@@ -257,11 +231,11 @@ public class Pencil
 public static class PencilExtensions
 {
 
-    public static CursorState Panel(this Pencil pencil, short width, short height, Color color)
+    public static CursorState Panel(this Pencil pencil, int width, int height, Color color)
     {
-        ShortVector2 size = new ShortVector2(width, height);
-        ShortVector2 position = pencil.CurrentPosition;
-        ShortRectangle area = new ShortRectangle(position, size);
+        IntVector2 size = new IntVector2(width, height);
+        IntVector2 position = pencil.CurrentPosition;
+        Rectangle area = new Rectangle(position, size);
         pencil.AddRectangle(area, color);
         pencil.CurrentSize = size;
         pencil.CurrentPosition = pencil.DetermineNextPosition(size);
@@ -279,20 +253,18 @@ public static class PencilExtensions
 
     public static CursorState Button(this Pencil pencil, string text, Font font)
     {
-        // add render instructions
-
         GuiStyle style = pencil.Style;
 
-        var size = pencil.MeasureText(text, font);
-        ShortVector2 padding = new ShortVector2(pencil.Style.TextPadding);
+        IntVector2 size = pencil.MeasureText(text, font);
+        IntVector2 padding = new IntVector2(pencil.Style.TextPadding);
 
-        ShortVector2 fullSize = size + padding + padding;
-        ShortVector2 startPosition = pencil.DetermineNextPosition(fullSize);
+        IntVector2 fullSize = size + padding + padding;
+        IntVector2 startPosition = pencil.DetermineNextPosition(fullSize);
 
-        ShortVector2 thickness = new ShortVector2(style.BorderThickness);
+        IntVector2 thickness = new IntVector2(style.BorderThickness);
         Color innerColor = style.Background;
 
-        ShortRectangle area = new ShortRectangle(startPosition, fullSize);
+        Rectangle area = new Rectangle(startPosition, fullSize);
 
         pencil.AddHoverTest(area);
         pencil.AddHoverInTest(area);
