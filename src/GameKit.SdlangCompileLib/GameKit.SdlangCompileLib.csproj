@@ -15,18 +15,20 @@
         <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
         <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
         <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
+        <!-- Use absolute paths to avoid issues with Environment.CurrentDirectory during parallel builds -->
+        <SlangObjDir>$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)</SlangObjDir>
+        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
+        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
+        <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
+        <SlangLibDir>$(SlangBaseDir)/lib</SlangLibDir>
     </PropertyGroup>
 
     <!-- Download Slang if not already present -->
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
-        <PropertyGroup>
-            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
-        </PropertyGroup>
-
         <!-- Download Slang zip if not already present -->
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
-                      DestinationFolder="$(BaseIntermediateOutputPath)"
+                      DestinationFolder="$(SlangObjDir)"
                       DestinationFileName="$(SlangZipFile)"
                       Retries="3"
                       RetryDelayMilliseconds="1000"
@@ -37,12 +39,6 @@
 
     <!-- Extract Slang zip file and clean up unnecessary files -->
     <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild">
-        <PropertyGroup>
-            <SlangBaseDir>$(BaseIntermediateOutputPath)$(SlangDirName)</SlangBaseDir>
-            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
-            <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
-        </PropertyGroup>
-
         <!-- Only extract and clean up if bin directory doesn't exist -->
         <PropertyGroup>
             <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
@@ -65,14 +61,9 @@
     <!-- Copy Slang files to output directory after extraction -->
     <!-- This must run after extraction so the files exist, and before the build completes -->
     <Target Name="CopySlangToOutput" AfterTargets="ExtractSlang" BeforeTargets="Build">
-        <PropertyGroup>
-            <SlangSourceBinDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin</SlangSourceBinDir>
-            <SlangSourceLibDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib</SlangSourceLibDir>
-        </PropertyGroup>
-
         <ItemGroup>
-            <SlangBinFiles Include="$(SlangSourceBinDir)/**/*" />
-            <SlangLibFiles Include="$(SlangSourceLibDir)/**/*" />
+            <SlangBinFiles Include="$(SlangBinDir)/**/*" />
+            <SlangLibFiles Include="$(SlangLibDir)/**/*" />
         </ItemGroup>
 
         <Copy SourceFiles="@(SlangBinFiles)"
@@ -86,26 +77,21 @@
     <!-- Add Slang files to content collection for transitive copying to dependent projects -->
     <!-- This runs after extraction and before GetCopyToOutputDirectoryItems collects items -->
     <Target Name="AddSlangContentItems" DependsOnTargets="ExtractSlang" BeforeTargets="GetCopyToOutputDirectoryItems;AssignTargetPaths">
-        <PropertyGroup>
-            <SlangBinSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin/</SlangBinSourceDir>
-            <SlangLibSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib/</SlangLibSourceDir>
-        </PropertyGroup>
-
         <!-- Collect files first, then add to Content with computed TargetPath -->
         <ItemGroup>
-            <_SlangBinContent Include="$(SlangBinSourceDir)**/*" />
-            <_SlangLibContent Include="$(SlangLibSourceDir)**/*" />
+            <_SlangBinContent Include="$(SlangBinDir)/**/*" />
+            <_SlangLibContent Include="$(SlangLibDir)/**/*" />
         </ItemGroup>
 
         <!-- Add to ContentWithTargetPath directly for proper copying -->
         <ItemGroup>
             <ContentWithTargetPath Include="@(_SlangBinContent)">
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-                <TargetPath>bin/$([MSBuild]::MakeRelative('$(SlangBinSourceDir)', '%(FullPath)'))</TargetPath>
+                <TargetPath>bin/$([MSBuild]::MakeRelative('$(SlangBinDir)/', '%(FullPath)'))</TargetPath>
             </ContentWithTargetPath>
             <ContentWithTargetPath Include="@(_SlangLibContent)">
                 <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-                <TargetPath>lib/$([MSBuild]::MakeRelative('$(SlangLibSourceDir)', '%(FullPath)'))</TargetPath>
+                <TargetPath>lib/$([MSBuild]::MakeRelative('$(SlangLibDir)/', '%(FullPath)'))</TargetPath>
             </ContentWithTargetPath>
         </ItemGroup>
     </Target>
