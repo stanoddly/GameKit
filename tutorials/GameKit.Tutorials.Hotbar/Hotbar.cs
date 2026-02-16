@@ -32,7 +32,9 @@ public class Hotbar : StatefulGuiCanvas<int>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
+            {
                 State.Value = index;
+            }
         };
     }
 
@@ -59,7 +61,9 @@ public class Hotbar : StatefulGuiCanvas<int>
                 CursorState state = pencil.Panel(SlotSize, SlotSize, color);
 
                 if (state == CursorState.Clicked)
+                {
                     State.Value = i;
+                }
                 if (state >= CursorState.Hovered)
                 {
                     hoveredSlot = i;

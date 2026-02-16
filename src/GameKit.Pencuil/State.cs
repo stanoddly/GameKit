@@ -13,7 +13,11 @@ public class State<TValue>
 
     public bool ConsumeDirty()
     {
-        if (!IsDirty) return false;
+        if (!IsDirty)
+        {
+            return false;
+        }
+
         IsDirty = false;
         return true;
     }

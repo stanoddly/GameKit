@@ -37,12 +37,16 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
         bool needsBuild = _pencil.NeedsUpdate;
 
         foreach (IGuiCanvas canvas in _canvases)
+        {
             needsBuild |= canvas.ConsumeDirty();
+        }
 
         if (needsBuild)
         {
             foreach (IGuiCanvas canvas in _canvases)
+            {
                 canvas.Build(_pencil);
+            }
 
             _pencil.NeedsUpdate = false;
             _renderer.Render(renderContext.CommandBuffer, _pencil);
