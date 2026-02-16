@@ -15,18 +15,18 @@
         <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
         <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
         <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
+        <!-- Use absolute paths to avoid issues with Environment.CurrentDirectory during parallel builds -->
+        <SlangObjDir>$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)</SlangObjDir>
+        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
+        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
     </PropertyGroup>
 
     <!-- Download Slang if not already present -->
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
-        <PropertyGroup>
-            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
-        </PropertyGroup>
-
         <!-- Download Slang zip if not already present -->
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
-                      DestinationFolder="$(BaseIntermediateOutputPath)"
+                      DestinationFolder="$(SlangObjDir)"
                       DestinationFileName="$(SlangZipFile)"
                       Retries="3"
                       RetryDelayMilliseconds="1000"
@@ -38,8 +38,6 @@
     <!-- Extract Slang zip file and clean up unnecessary files -->
     <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild">
         <PropertyGroup>
-            <SlangBaseDir>$(BaseIntermediateOutputPath)$(SlangDirName)</SlangBaseDir>
-            <SlangZipPath>$(BaseIntermediateOutputPath)$(SlangZipFile)</SlangZipPath>
             <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
         </PropertyGroup>
 
@@ -66,8 +64,8 @@
     <!-- This must run after extraction so the files exist, and before the build completes -->
     <Target Name="CopySlangToOutput" AfterTargets="ExtractSlang" BeforeTargets="Build">
         <PropertyGroup>
-            <SlangSourceBinDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin</SlangSourceBinDir>
-            <SlangSourceLibDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib</SlangSourceLibDir>
+            <SlangSourceBinDir>$(SlangBaseDir)/bin</SlangSourceBinDir>
+            <SlangSourceLibDir>$(SlangBaseDir)/lib</SlangSourceLibDir>
         </PropertyGroup>
 
         <ItemGroup>
@@ -87,8 +85,8 @@
     <!-- This runs after extraction and before GetCopyToOutputDirectoryItems collects items -->
     <Target Name="AddSlangContentItems" DependsOnTargets="ExtractSlang" BeforeTargets="GetCopyToOutputDirectoryItems;AssignTargetPaths">
         <PropertyGroup>
-            <SlangBinSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/bin/</SlangBinSourceDir>
-            <SlangLibSourceDir>$(BaseIntermediateOutputPath)$(SlangDirName)/lib/</SlangLibSourceDir>
+            <SlangBinSourceDir>$(SlangBaseDir)/bin/</SlangBinSourceDir>
+            <SlangLibSourceDir>$(SlangBaseDir)/lib/</SlangLibSourceDir>
         </PropertyGroup>
 
         <!-- Collect files first, then add to Content with computed TargetPath -->
