@@ -1,15 +1,15 @@
 namespace GameKit.Pencuil;
 
-public abstract class StatefulGuiCanvas<TState> : GuiCanvas
+public abstract class StatefulGuiCanvas<TState> : IGuiCanvas
 {
-    public State<TState> State { get; }
+    protected State<TState> State { get; }
 
-    public override bool IsDirty => State.IsDirty;
-
-    internal override void ClearDirty() => State.IsDirty = false;
+    public bool ConsumeDirty() => State.ConsumeDirty();
 
     protected StatefulGuiCanvas(State<TState> state)
     {
         State = state;
     }
+
+    public abstract void Build(Pencil pencil);
 }

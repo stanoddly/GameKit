@@ -6,9 +6,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public record HotbarState(int SelectedSlot);
-
-public class Hotbar : StatefulGuiCanvas<HotbarState>
+public class Hotbar : StatefulGuiCanvas<int>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -25,23 +23,16 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
     private readonly Font _font;
     private int _hoveredSlot = -1;
 
-    public static Hotbar Create(IKeyboardService keyboardService, IFontSystem fontSystem)
+    public Hotbar(State<int> selectedSlot, IKeyboardService keyboardService, IFontSystem fontSystem)
+        : base(selectedSlot)
     {
-        Font font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
-        return new Hotbar(keyboardService, font);
-    }
-
-    public Hotbar(IKeyboardService keyboardService, Font font) : base(new HotbarState(0))
-    {
-        _font = font;
+        _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
         keyboardService.KeyDown += (_, args) =>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
-            {
-                State = State with { SelectedSlot = index };
-            }
+                State.Value = index;
         };
     }
 
@@ -61,16 +52,14 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == State.SelectedSlot ? SelectedColor
+                Color color = i == State.Value ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
                 CursorState state = pencil.Panel(SlotSize, SlotSize, color);
 
                 if (state == CursorState.Clicked)
-                {
-                    State = State with { SelectedSlot = i };
-                }
+                    State.Value = i;
                 if (state >= CursorState.Hovered)
                 {
                     hoveredSlot = i;

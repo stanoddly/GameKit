@@ -7,10 +7,10 @@ namespace GameKit.Pencuil;
 public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
 {
     private readonly Pencil _pencil;
-    private readonly GuiCanvas[] _canvases;
+    private readonly IGuiCanvas[] _canvases;
     private readonly PencuilRenderer _renderer;
 
-    public PencuilRenderPhase(Pencil pencil, IEnumerable<GuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService)
+    public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService)
     {
         _pencil = pencil;
         _canvases = canvases.ToArray();
@@ -36,18 +36,13 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
     {
         bool needsBuild = _pencil.NeedsUpdate;
 
-        foreach (GuiCanvas canvas in _canvases)
-        {
-            needsBuild |= canvas.IsDirty;
-        }
+        foreach (IGuiCanvas canvas in _canvases)
+            needsBuild |= canvas.ConsumeDirty();
 
         if (needsBuild)
         {
-            foreach (GuiCanvas canvas in _canvases)
-            {
+            foreach (IGuiCanvas canvas in _canvases)
                 canvas.Build(_pencil);
-                canvas.ClearDirty();
-            }
 
             _pencil.NeedsUpdate = false;
             _renderer.Render(renderContext.CommandBuffer, _pencil);
