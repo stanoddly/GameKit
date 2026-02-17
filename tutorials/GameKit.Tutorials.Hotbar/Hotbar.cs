@@ -6,9 +6,27 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public record HotbarState(int SelectedSlot);
+public class HotbarState : IGuiCanvasState
+{
+    public bool IsDirty { get; set; } = true;
 
-public class Hotbar : StatefulGuiCanvas<HotbarState>
+    private int _selectedSlot;
+
+    public int SelectedSlot
+    {
+        get => _selectedSlot;
+        set
+        {
+            if (_selectedSlot != value)
+            {
+                _selectedSlot = value;
+                IsDirty = true;
+            }
+        }
+    }
+}
+
+public class Hotbar : StatefulGuiCanvas
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -22,12 +40,14 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
     private static readonly string[] SlotNames =
         ["Sword", "Shield", "Bow", "Potion", "Scroll", "Torch", "Ring", "Gem", "Key"];
 
+    private readonly HotbarState _state;
     private readonly Font _font;
     private int _hoveredSlot = -1;
 
-    public Hotbar(State<HotbarState> state, IKeyboardService keyboardService, IFontSystem fontSystem)
+    public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem)
         : base(state)
     {
+        _state = state;
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
         keyboardService.KeyDown += (_, args) =>
@@ -35,7 +55,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
             {
-                State.Value = State.Value with { SelectedSlot = index };
+                _state.SelectedSlot = index;
             }
         };
     }
@@ -56,7 +76,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == State.Value.SelectedSlot ? SelectedColor
+                Color color = i == _state.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
@@ -64,7 +84,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
 
                 if (state == CursorState.Clicked)
                 {
-                    State.Value = State.Value with { SelectedSlot = i };
+                    _state.SelectedSlot = i;
                 }
                 if (state >= CursorState.Hovered)
                 {
