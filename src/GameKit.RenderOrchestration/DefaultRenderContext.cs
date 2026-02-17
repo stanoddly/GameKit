@@ -5,7 +5,7 @@ namespace GameKit.RenderOrchestration;
 /// <summary>
 /// Represents the default rendering context, holding resources required for a single frame rendering.
 /// </summary>
-public class DefaultRenderContext: IDisposable
+public class DefaultRenderContext: IDisposable, IPencuilHost
 {
     /// <summary>
     /// The swapchain texture for the current frame.
@@ -16,6 +16,9 @@ public class DefaultRenderContext: IDisposable
     /// The command buffer used to record rendering commands.
     /// </summary>
     public CommandBuffer CommandBuffer { get; }
+
+    /// <inheritdoc />
+    public virtual Texture PencuilTarget => SwapchainTexture;
 
     public DefaultRenderContext(SwapchainTexture swapchainTexture, CommandBuffer commandBuffer)
     {

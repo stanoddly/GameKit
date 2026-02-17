@@ -6,13 +6,17 @@ namespace GameKit.Pencuil;
 
 public static class PencuilExtensions
 {
-    public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder)
+    public static GameKitAppBuilder UsePencuil<TRenderContext>(this GameKitAppBuilder builder)
+        where TRenderContext : DefaultRenderContext, IPencuilHost
     {
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
         builder.RegisterInstance(GuiStyles.Style);
         builder.RegisterType<Pencil>();
         builder.RegisterType<PencuilRenderer>();
-        builder.RegisterType<PencuilRenderPhase>().As<IRenderPhase<DefaultRenderContext>>();
+        builder.RegisterType<PencuilRenderPhase<TRenderContext>>().As<IRenderPhase<TRenderContext>>();
         return builder;
     }
+
+    public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder)
+        => builder.UsePencuil<DefaultRenderContext>();
 }

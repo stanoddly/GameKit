@@ -4,11 +4,14 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Pencuil;
 
-public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
+public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
+    where TRenderContext : DefaultRenderContext, IPencuilHost
 {
     private readonly Pencil _pencil;
     private readonly IGuiCanvas[] _canvases;
     private readonly PencuilRenderer _renderer;
+
+    public int Order => 10_000;
 
     public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService)
     {
@@ -32,7 +35,7 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
         };
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(TRenderContext renderContext)
     {
         bool needsBuild = _pencil.NeedsUpdate;
 
@@ -53,6 +56,6 @@ public class PencuilRenderPhase : IRenderPhase<DefaultRenderContext>
         }
 
         _pencil.CursorJustReleased = false;
-        _renderer.Present(renderContext.CommandBuffer, renderContext.SwapchainTexture);
+        _renderer.Present(renderContext.CommandBuffer, renderContext.PencuilTarget);
     }
 }

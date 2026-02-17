@@ -21,6 +21,8 @@ public class PencuilRenderer
     private readonly GraphicsPipeline _tintedTexturePipeline;
     private readonly GraphicsPipeline _presentPipeline;
     private readonly Sampler _sampler;
+    public Texture RetainedTexture => _retainedTexture;
+
     private readonly Texture _retainedTexture;
     private readonly Texture _depthBuffer;
     private readonly Matrix4x4 _viewProjection;
@@ -158,8 +160,10 @@ public class PencuilRenderer
 
     public void Present(CommandBuffer commandBuffer, Texture target)
     {
+        var loadSettings = new ColorTargetSettings { LoadOperation = LoadOperation.Load };
+
         using IRenderPass presentPass = new RenderPassBuilder(commandBuffer)
-            .AddColorTarget(target, ColorTargetSettings.Clear)
+            .AddColorTarget(target, loadSettings)
             .Build();
 
         commandBuffer.PushVertexUniformData(0, _presentViewProjection);
