@@ -26,7 +26,7 @@ public class HotbarState : IGuiCanvasState
     }
 }
 
-public class Hotbar : StatefulGuiCanvas
+public class Hotbar : StatefulGuiCanvas<HotbarState>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -40,14 +40,12 @@ public class Hotbar : StatefulGuiCanvas
     private static readonly string[] SlotNames =
         ["Sword", "Shield", "Bow", "Potion", "Scroll", "Torch", "Ring", "Gem", "Key"];
 
-    private readonly HotbarState _state;
     private readonly Font _font;
     private int _hoveredSlot = -1;
 
     public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem)
         : base(state)
     {
-        _state = state;
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
         keyboardService.KeyDown += (_, args) =>
@@ -55,7 +53,7 @@ public class Hotbar : StatefulGuiCanvas
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
             {
-                _state.SelectedSlot = index;
+                State.SelectedSlot = index;
             }
         };
     }
@@ -76,7 +74,7 @@ public class Hotbar : StatefulGuiCanvas
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == _state.SelectedSlot ? SelectedColor
+                Color color = i == State.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
@@ -84,7 +82,7 @@ public class Hotbar : StatefulGuiCanvas
 
                 if (state == CursorState.Clicked)
                 {
-                    _state.SelectedSlot = i;
+                    State.SelectedSlot = i;
                 }
                 if (state >= CursorState.Hovered)
                 {
