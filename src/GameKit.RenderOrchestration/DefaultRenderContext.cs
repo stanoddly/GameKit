@@ -5,7 +5,7 @@ namespace GameKit.RenderOrchestration;
 /// <summary>
 /// Represents the default rendering context, holding resources required for a single frame rendering.
 /// </summary>
-public class DefaultRenderContext: IRenderContext, IColorTarget
+public class DefaultRenderContext: IRenderContext
 {
     /// <summary>
     /// The swapchain texture for the current frame.
