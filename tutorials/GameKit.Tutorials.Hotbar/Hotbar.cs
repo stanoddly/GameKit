@@ -6,7 +6,27 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public class Hotbar : GuiCanvas
+public class HotbarState : IGuiCanvasState
+{
+    public bool IsDirty { get; set; } = true;
+
+    private int _selectedSlot;
+
+    public int SelectedSlot
+    {
+        get => _selectedSlot;
+        set
+        {
+            if (_selectedSlot != value)
+            {
+                _selectedSlot = value;
+                IsDirty = true;
+            }
+        }
+    }
+}
+
+public class Hotbar : StatefulGuiCanvas<HotbarState>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -21,10 +41,10 @@ public class Hotbar : GuiCanvas
         ["Sword", "Shield", "Bow", "Potion", "Scroll", "Torch", "Ring", "Gem", "Key"];
 
     private readonly Font _font;
-    private int _selectedSlot = 0;
     private int _hoveredSlot = -1;
 
-    public Hotbar(IKeyboardService keyboardService, IFontSystem fontSystem)
+    public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem)
+        : base(state)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
@@ -32,7 +52,9 @@ public class Hotbar : GuiCanvas
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
-                _selectedSlot = index;
+            {
+                State.SelectedSlot = index;
+            }
         };
     }
 
@@ -52,14 +74,16 @@ public class Hotbar : GuiCanvas
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == _selectedSlot ? SelectedColor
+                Color color = i == State.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
                 CursorState state = pencil.Panel(SlotSize, SlotSize, color);
 
                 if (state == CursorState.Clicked)
-                    _selectedSlot = i;
+                {
+                    State.SelectedSlot = i;
+                }
                 if (state >= CursorState.Hovered)
                 {
                     hoveredSlot = i;
