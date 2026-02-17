@@ -1,0 +1,6 @@
+namespace GameKit.Pencuil;
+
+public class PencuilOptions
+{
+    public int Order { get; init; } = 10_000;
+}

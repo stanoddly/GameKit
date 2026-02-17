@@ -11,13 +11,14 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     private readonly IGuiCanvas[] _canvases;
     private readonly PencuilRenderer _renderer;
 
-    public int Order => 10_000;
+    public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService)
+    public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService, PencuilOptions options)
     {
         _pencil = pencil;
         _canvases = canvases.ToArray();
         _renderer = renderer;
+        Order = options.Order;
 
         mouseService.Motion += (_, args) =>
         {
