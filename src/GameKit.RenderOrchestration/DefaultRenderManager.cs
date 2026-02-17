@@ -8,7 +8,7 @@ namespace GameKit.RenderOrchestration;
 /// </summary>
 /// <typeparam name="TRenderContext">The type of the render context used by the render phases.</typeparam>
 public class DefaultRenderManager<TRenderContext> : IRenderManager
-    where TRenderContext: IDisposable
+    where TRenderContext: IRenderContext
 {
     private readonly IRenderPhase<TRenderContext>[] _renderers;
     private readonly GpuMemorySystem _gpuMemorySystem;

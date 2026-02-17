@@ -70,7 +70,7 @@ public class Pencil
     internal readonly int _viewportWidth;
     internal readonly int _viewportHeight;
 
-    public bool NeedsUpdate { get; internal set; } = true;
+    public bool NeedsUpdate { get; set; } = true;
     public void Invalidate() => NeedsUpdate = true;
 
     public void UpdateCursor(IntVector2 position, bool pressed)

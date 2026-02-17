@@ -12,7 +12,7 @@ public static class GameKitAppBuilderExtensions
     /// </summary>
     /// <param name="builder">The application builder.</param>
     /// <typeparam name="TRenderContext">The type of the render context.</typeparam>
-    public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IDisposable
+    public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IRenderContext
     {
         builder.RegisterType<DefaultRenderManager<TRenderContext>>().As<IRenderManager>();
         return builder;
