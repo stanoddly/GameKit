@@ -5,7 +5,7 @@ using GameKit.RenderOrchestration;
 namespace GameKit.Pencuil;
 
 public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
-    where TRenderContext : DefaultRenderContext, IPencuilHost
+    where TRenderContext : DefaultRenderContext, IColorTarget
 {
     private readonly Pencil _pencil;
     private readonly IGuiCanvas[] _canvases;
@@ -56,6 +56,6 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         }
 
         _pencil.CursorJustReleased = false;
-        _renderer.Present(renderContext.CommandBuffer, renderContext.PencuilTarget);
+        _renderer.Present(renderContext.CommandBuffer, renderContext.ColorTarget);
     }
 }

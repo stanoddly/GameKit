@@ -7,7 +7,7 @@ namespace GameKit.Pencuil;
 public static class PencuilExtensions
 {
     public static GameKitAppBuilder UsePencuil<TRenderContext>(this GameKitAppBuilder builder)
-        where TRenderContext : DefaultRenderContext, IPencuilHost
+        where TRenderContext : DefaultRenderContext, IColorTarget
     {
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
         builder.RegisterInstance(GuiStyles.Style);
