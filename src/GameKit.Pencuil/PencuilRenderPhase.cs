@@ -5,7 +5,7 @@ using GameKit.RenderOrchestration;
 namespace GameKit.Pencuil;
 
 public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
-    where TRenderContext : DefaultRenderContext, IColorTarget
+    where TRenderContext : IRenderContext, IColorTarget
 {
     private readonly Pencil _pencil;
     private readonly IGuiCanvas[] _canvases;

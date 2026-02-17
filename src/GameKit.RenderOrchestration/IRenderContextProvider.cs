@@ -6,7 +6,7 @@ namespace GameKit.RenderOrchestration;
 /// Defines a provider that creates and supplies a render context for a single frame.
 /// </summary>
 /// <typeparam name="TRenderContext">The type of the render context to provide.</typeparam>
-public interface IRenderContextProvider<TRenderContext> where TRenderContext: IDisposable
+public interface IRenderContextProvider<TRenderContext> where TRenderContext: IRenderContext
 {
     /// <summary>
     /// Attempts to create and provide a render context.
