@@ -158,12 +158,14 @@ public class PencuilRenderer
         pencil.ClearInstructions();
     }
 
-    public void Present(CommandBuffer commandBuffer, Texture target)
+    public void Present(CommandBuffer commandBuffer, Texture target, bool clearTarget)
     {
-        var loadSettings = new ColorTargetSettings { LoadOperation = LoadOperation.Load };
+        var settings = clearTarget
+            ? ColorTargetSettings.Clear
+            : new ColorTargetSettings { LoadOperation = LoadOperation.Load };
 
         using IRenderPass presentPass = new RenderPassBuilder(commandBuffer)
-            .AddColorTarget(target, loadSettings)
+            .AddColorTarget(target, settings)
             .Build();
 
         commandBuffer.PushVertexUniformData(0, _presentViewProjection);
