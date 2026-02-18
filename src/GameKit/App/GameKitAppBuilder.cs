@@ -128,10 +128,14 @@ public class GameKitAppBuilder
         ).As<IKeyboardService>();
         _moduleBuilder.RegisterFunc<GamepadService>(sp => sp.GetRequiredService<GameKitFactory>().CreateGamepadService()).As<IGamepadService>();
         _moduleBuilder.RegisterFunc<MouseService>(sp => sp.GetRequiredService<GameKitFactory>().CreateMouseService()).As<IMouseService>();
+        _moduleBuilder.RegisterFunc<WindowService>(sp => sp.GetRequiredService<GameKitFactory>().CreateWindowService(
+            sp.GetRequiredService<IWindow>())
+        ).As<IWindowService>();
         _moduleBuilder.RegisterFunc<EventService>(sp => sp.GetRequiredService<GameKitFactory>().CreateEventService(
             sp.GetRequiredService<KeyboardService>(),
             sp.GetRequiredService<GamepadService>(),
             sp.GetRequiredService<MouseService>(),
+            sp.GetRequiredService<WindowService>(),
             sp.GetRequiredService<AppControl>()
         ));
         _moduleBuilder.RegisterType<ShaderMetadataLoader>().As<IContentLoader<ShaderMetadata>>();

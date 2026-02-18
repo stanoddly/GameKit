@@ -67,11 +67,18 @@ public class Pencil
     private readonly List<Rectangle> _hoverOutTests = new();
     private readonly List<Rectangle> _clickTests = new();
 
-    internal readonly int _viewportWidth;
-    internal readonly int _viewportHeight;
+    internal int _viewportWidth;
+    internal int _viewportHeight;
 
     public bool NeedsUpdate { get; set; } = true;
     public void Invalidate() => NeedsUpdate = true;
+
+    public void UpdateViewport(int width, int height)
+    {
+        _viewportWidth = width;
+        _viewportHeight = height;
+        Invalidate();
+    }
 
     public void UpdateCursor(IntVector2 position, bool pressed)
     {
