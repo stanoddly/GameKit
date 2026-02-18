@@ -8,13 +8,13 @@ public class Font : IDisposable
 {
     private FontSystem _fontSystem;
     private readonly Pointer<TTF_Font> _ttfFont;
-    private readonly GCHandle _fontDataHandle;
+    private readonly unsafe byte* _fontData;
 
-    internal Font(FontSystem fontSystem, Pointer<TTF_Font> ttfFont, GCHandle fontDataHandle, string path, ushort size)
+    internal unsafe Font(FontSystem fontSystem, Pointer<TTF_Font> ttfFont, byte* fontData, string path, ushort size)
     {
         _fontSystem = fontSystem;
         _ttfFont = ttfFont;
-        _fontDataHandle = fontDataHandle;
+        _fontData = fontData;
         Path = path;
         Size = size;
     }
@@ -23,11 +23,11 @@ public class Font : IDisposable
     public string Path { get; }
     public ushort Size { get; }
 
-    internal void FreeFontData()
+    internal unsafe void FreeFontData()
     {
-        if (_fontDataHandle.IsAllocated)
+        if (_fontData != null)
         {
-            _fontDataHandle.Free();
+            NativeMemory.Free(_fontData);
         }
     }
 

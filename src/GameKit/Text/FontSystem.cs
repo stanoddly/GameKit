@@ -45,18 +45,18 @@ internal class FontSystem: IFontSystem, IUpdatable
         byte[] fontData = new byte[stream.Length];
         stream.ReadExactly(fontData);
 
-        GCHandle fontDataHandle = GCHandle.Alloc(fontData, GCHandleType.Pinned);
         unsafe
         {
-            byte* fontDataPtr = (byte*)fontDataHandle.AddrOfPinnedObject();
+            byte* nativeFontData = (byte*)NativeMemory.Alloc((nuint)fontData.Length);
+            fontData.AsSpan().CopyTo(new Span<byte>(nativeFontData, fontData.Length));
 
-            Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)fontDataPtr, (UIntPtr)stream.Length);
+            Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)nativeFontData, (UIntPtr)fontData.Length);
             SdlError.ThrowOnNull(sdlStream, nameof(SDL3.SDL_IOFromConstMem));
 
             Pointer<TTF_Font> ttfFont = SDL3_ttf.TTF_OpenFontIO(sdlStream, true, size);
             SdlError.ThrowOnNull(ttfFont, nameof(SDL3_ttf.TTF_OpenFontIO));
 
-            Font font = new Font(this, ttfFont, fontDataHandle, path, size);
+            Font font = new Font(this, ttfFont, nativeFontData, path, size);
             _fonts.Add(font);
             _fontCache[cacheKey] = font;
 
@@ -73,11 +73,11 @@ internal class FontSystem: IFontSystem, IUpdatable
             {
                 return cachedSprite;
             }
-            
+
             ShortSize size = cached.Texture.Size;
             ShortRectangle imageRegion = new(0, 0, (short)size.Width, (short)size.Height);
             TextSpriteAsset textSprite = new(cached.Texture, imageRegion);
-            
+
             _textSpriteCache[cacheKey] = (new WeakReference<TextSpriteAsset>(textSprite), cached.Texture);
             return textSprite;
         }
@@ -89,10 +89,10 @@ internal class FontSystem: IFontSystem, IUpdatable
             ShortSize size = texture.Size;
             ShortRectangle imageRegion = new(0, 0, (short)size.Width, (short)size.Height);
             TextSpriteAsset textSprite = new(texture, imageRegion);
-            
+
             var newWeakRef = new WeakReference<TextSpriteAsset>(textSprite);
             _textSpriteCache[cacheKey] = (newWeakRef, texture);
-            
+
             return textSprite;
         }
         finally
@@ -140,44 +140,44 @@ internal class FontSystem: IFontSystem, IUpdatable
             var pitch = sdlSurface->pitch;
             var pixelData = (byte*)sdlSurface->pixels;
             var totalBytes = pitch * sdlSurface->h;
-            
+
             var pixelFormat = (PixelFormat)sdlSurface->format;
-            
+
             byte[] data;
             PixelFormat targetFormat;
-            
+
             if (pixelFormat == PixelFormat.Argb8888)
             {
                 int width = sdlSurface->w;
                 int height = sdlSurface->h;
                 data = new byte[width * height * 4];
-                
+
                 fixed (byte* dataPtr = data)
                 {
                     byte* dst = dataPtr;
-                    
+
                     for (int y = 0; y < height; y++)
                     {
                         byte* src = pixelData + (y * pitch);
-                        
+
                         for (int x = 0; x < width; x++)
                         {
                             byte b = src[0];
                             byte g = src[1];
                             byte r = src[2];
                             byte a = src[3];
-                            
+
                             dst[0] = r;
                             dst[1] = g;
                             dst[2] = b;
                             dst[3] = a;
-                            
+
                             src += 4;
                             dst += 4;
                         }
                     }
                 }
-                
+
                 targetFormat = PixelFormat.Rgba8888;
             }
             else
@@ -189,9 +189,9 @@ internal class FontSystem: IFontSystem, IUpdatable
                 }
                 targetFormat = pixelFormat;
             }
-            
+
             var image = new RawImage(data, size, targetFormat);
-            
+
             Texture texture = _gpuMemorySystem.CreateTexture(image);
 
             return texture;
@@ -209,7 +209,7 @@ internal class FontSystem: IFontSystem, IUpdatable
                 keysToRemove.Add(kvp.Key);
             }
         }
-        
+
         foreach (var key in keysToRemove)
         {
             _textSpriteCache.Remove(key);
@@ -226,12 +226,12 @@ internal class FontSystem: IFontSystem, IUpdatable
                 keysToRemove.Add(kvp.Key);
             }
         }
-        
+
         foreach (var key in keysToRemove)
         {
             _textSpriteCache.Remove(key);
         }
-        
+
         textSprite.Dispose();
     }
 
@@ -255,13 +255,13 @@ internal class FontSystem: IFontSystem, IUpdatable
             kvp.Value.Texture.Dispose();
         }
         _textSpriteCache.Clear();
-        
+
         List<Font> fonts = new(_fonts);
         foreach (Font font in fonts)
         {
             ReleaseFont(font);
         }
-        
+
         SDL3_ttf.TTF_Quit();
     }
 }
