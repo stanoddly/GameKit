@@ -73,7 +73,7 @@ public class Pencil
     public bool NeedsUpdate { get; set; } = true;
     public void Invalidate() => NeedsUpdate = true;
 
-    public void UpdateViewport(int width, int height)
+    internal void UpdateViewport(int width, int height)
     {
         _viewportWidth = width;
         _viewportHeight = height;
