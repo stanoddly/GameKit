@@ -42,15 +42,14 @@ internal class FontSystem: IFontSystem, IUpdatable
         VirtualFile fontFile = _fileSystem.GetFile(path);
 
         using Stream stream = fontFile.Open();
-        byte[] fontData = new byte[stream.Length];
-        stream.ReadExactly(fontData);
+        int fontDataLength = (int)stream.Length;
 
         unsafe
         {
-            byte* nativeFontData = (byte*)NativeMemory.Alloc((nuint)fontData.Length);
-            fontData.AsSpan().CopyTo(new Span<byte>(nativeFontData, fontData.Length));
+            byte* nativeFontData = (byte*)NativeMemory.Alloc((nuint)fontDataLength);
+            stream.ReadExactly(new Span<byte>(nativeFontData, fontDataLength));
 
-            Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)nativeFontData, (UIntPtr)fontData.Length);
+            Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)nativeFontData, (UIntPtr)fontDataLength);
             SdlError.ThrowOnNull(sdlStream, nameof(SDL3.SDL_IOFromConstMem));
 
             Pointer<TTF_Font> ttfFont = SDL3_ttf.TTF_OpenFontIO(sdlStream, true, size);
