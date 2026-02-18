@@ -38,7 +38,8 @@ public class SdlangCompiler
         {
             throw new InvalidOperationException("Unable to determine assembly directory");
         }
-        string slangPath = Path.Combine(assemblyDir, "bin", "slangc");
+        string slangExe = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
+        string slangPath = Path.Combine(assemblyDir, "bin", slangExe);
 
         if (!File.Exists(slangPath))
         {
