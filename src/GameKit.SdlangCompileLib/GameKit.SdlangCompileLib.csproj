@@ -11,7 +11,9 @@
              because it's not source code and will be extracted/regenerated on each build.
              The final binaries are then copied to the output directory for runtime use. -->
         <SlangVersion>2026.1.1</SlangVersion>
-        <SlangPlatform>linux-x86_64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
         <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
         <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
         <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
@@ -22,6 +24,12 @@
         <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
         <SlangLibDir>$(SlangBaseDir)/lib</SlangLibDir>
     </PropertyGroup>
+
+    <!-- Validate that SlangPlatform was set (fails on unsupported OS/architecture combinations) -->
+    <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang">
+        <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64."
+               Condition="'$(SlangPlatform)' == ''" />
+    </Target>
 
     <!-- Download Slang if not already present -->
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
