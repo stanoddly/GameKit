@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
@@ -44,22 +45,22 @@ internal class FontSystem: IFontSystem, IUpdatable
         byte[] fontData = new byte[stream.Length];
         stream.ReadExactly(fontData);
 
+        GCHandle fontDataHandle = GCHandle.Alloc(fontData, GCHandleType.Pinned);
         unsafe
         {
-            fixed (byte* fontDataPtr = fontData)
-            {
-                Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)fontDataPtr, (UIntPtr)stream.Length);
-                SdlError.ThrowOnNull(sdlStream, nameof(SDL3.SDL_IOFromConstMem));
+            byte* fontDataPtr = (byte*)fontDataHandle.AddrOfPinnedObject();
 
-                Pointer<TTF_Font> ttfFont = SDL3_ttf.TTF_OpenFontIO(sdlStream, true, size);
-                SdlError.ThrowOnNull(ttfFont, nameof(SDL3_ttf.TTF_OpenFontIO));
+            Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)fontDataPtr, (UIntPtr)stream.Length);
+            SdlError.ThrowOnNull(sdlStream, nameof(SDL3.SDL_IOFromConstMem));
 
-                Font font = new Font(this, ttfFont, path, size);
-                _fonts.Add(font);
-                _fontCache[cacheKey] = font;
+            Pointer<TTF_Font> ttfFont = SDL3_ttf.TTF_OpenFontIO(sdlStream, true, size);
+            SdlError.ThrowOnNull(ttfFont, nameof(SDL3_ttf.TTF_OpenFontIO));
 
-                return font;
-            }
+            Font font = new Font(this, ttfFont, fontDataHandle, path, size);
+            _fonts.Add(font);
+            _fontCache[cacheKey] = font;
+
+            return font;
         }
     }
 
@@ -243,6 +244,8 @@ internal class FontSystem: IFontSystem, IUpdatable
         {
             SDL3_ttf.TTF_CloseFont(font.TtfFont);
         }
+
+        font.FreeFontData();
     }
 
     public void Dispose()
