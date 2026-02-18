@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
 
         <!-- Slang configuration -->
         <!-- Slang is a shader compilation dependency downloaded during the build.
@@ -104,7 +105,7 @@
         </ItemGroup>
     </Target>
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
+      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
     </ItemGroup>
 
     <ItemGroup>
@@ -113,5 +114,18 @@
         <_Parameter2>$(SlangVersion)</_Parameter2>
       </AssemblyAttribute>
     </ItemGroup>
+
+    <!-- Include build props in the NuGet package for conditional Slang native references -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build\" />
+    </ItemGroup>
+
+    <!-- Bundle ShaderCommon DLL into the package -->
+    <Target Name="IncludeBundledAssemblies" BeforeTargets="_GetBuildOutputFilesWithTfm"
+            Condition="'$(PackAsBundled)' == 'true'">
+        <ItemGroup>
+            <BuildOutputInPackage Include="$(OutputPath)GameKit.ShaderCommon.dll" />
+        </ItemGroup>
+    </Target>
 
 </Project>

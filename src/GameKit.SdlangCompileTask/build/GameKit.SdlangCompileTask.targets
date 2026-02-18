@@ -1,4 +1,11 @@
 <Project>
   <!-- Register the SdlangCompileTask -->
   <UsingTask TaskName="GameKit.SdlangCompileTask.SdlangCompileTask" AssemblyFile="$(SdlangCompileTaskAssembly)" />
+
+  <!-- Compile Slang shaders before build.
+       Consuming projects define @(SdlangShader) items pointing to .slang files.
+       SlangNativeBinDir is set automatically by GameKit.Slang.Native.{rid} packages. -->
+  <Target Name="CompileSdlangShaders" BeforeTargets="Build" Condition="'@(SdlangShader)' != ''">
+    <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangBinDir="$(SlangNativeBinDir)" />
+  </Target>
 </Project>

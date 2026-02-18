@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- Add a conditional PackageReference to the Slang native package matching the build platform.
+       The version placeholder is replaced by CI before packing. -->
+  <PropertyGroup>
+    <GameKitSlangNativeVersion Condition="'$(GameKitSlangNativeVersion)' == ''">0.1.0</GameKitSlangNativeVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">
+    <PackageReference Include="GameKit.Slang.Native.linux-x64" Version="$(GameKitSlangNativeVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">
+    <PackageReference Include="GameKit.Slang.Native.linux-arm64" Version="$(GameKitSlangNativeVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">
+    <PackageReference Include="GameKit.Slang.Native.win-x64" Version="$(GameKitSlangNativeVersion)" />
+  </ItemGroup>
+
+</Project>

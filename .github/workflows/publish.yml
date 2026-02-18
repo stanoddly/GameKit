@@ -1,0 +1,106 @@
+name: Publish NuGet Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g. 1.0.0). Should match the git tag.'
+        required: true
+        type: string
+
+env:
+  SLANG_VERSION: '2026.1.1'
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # --- Build and pack managed packages ---
+
+      - name: Update Slang native version in SdlangCompileLib props
+        run: |
+          sed -i "s|>0.1.0</GameKitSlangNativeVersion>|>${{ inputs.version }}</GameKitSlangNativeVersion>|" \
+            src/GameKit.SdlangCompileLib/build/GameKit.SdlangCompileLib.props
+
+      - name: Pack managed packages
+        run: |
+          dotnet pack GameKit.slnx \
+            -c Release \
+            -p:Version=${{ inputs.version }} \
+            -p:PackAsBundled=true \
+            -o packages/
+
+      # --- Build Slang native packages ---
+
+      - name: Download Slang for all platforms
+        run: |
+          SLANG_BASE_URL="https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}"
+          mkdir -p slang-downloads
+
+          curl -fSL "${SLANG_BASE_URL}/slang-${SLANG_VERSION}-linux-x86_64.zip" -o slang-downloads/linux-x64.zip &
+          curl -fSL "${SLANG_BASE_URL}/slang-${SLANG_VERSION}-linux-aarch64.zip" -o slang-downloads/linux-arm64.zip &
+          curl -fSL "${SLANG_BASE_URL}/slang-${SLANG_VERSION}-windows-x86_64.zip" -o slang-downloads/win-x64.zip &
+          wait
+
+      - name: Pack Slang native packages
+        run: |
+          PACK_DIR="packaging/GameKit.Slang.Native"
+
+          for rid in linux-x64 linux-arm64 win-x64; do
+            echo "--- Packing GameKit.Slang.Native.${rid} ---"
+
+            # Clean and extract
+            rm -rf "${PACK_DIR}/tools"
+            mkdir -p "${PACK_DIR}/tools"
+            unzip -q "slang-downloads/${rid}.zip" -d "${PACK_DIR}/tools"
+
+            # The zip extracts to a subdirectory; move contents up
+            EXTRACTED_DIR=$(ls -d ${PACK_DIR}/tools/slang-*)
+            mv "${EXTRACTED_DIR}/bin" "${PACK_DIR}/tools/bin"
+            mv "${EXTRACTED_DIR}/lib" "${PACK_DIR}/tools/lib"
+            rm -rf "${EXTRACTED_DIR}"
+
+            # Clean up unnecessary files
+            rm -rf "${PACK_DIR}/tools/include" "${PACK_DIR}/tools/share" "${PACK_DIR}/tools/lib/cmake"
+            rm -f "${PACK_DIR}/tools/LICENSE" "${PACK_DIR}/tools/README.md"
+
+            # Pack
+            dotnet pack "${PACK_DIR}/GameKit.Slang.Native.csproj" \
+              -p:SlangRid="${rid}" \
+              -p:Version=${{ inputs.version }} \
+              -o packages/
+          done
+
+      # --- Publish all packages ---
+
+      - name: Publish to GitHub Packages
+        run: |
+          for pkg in packages/*.nupkg; do
+            echo "Publishing ${pkg}..."
+            dotnet nuget push "${pkg}" \
+              --source "https://nuget.pkg.github.com/stanoddly/index.json" \
+              --api-key ${{ secrets.GITHUB_TOKEN }} \
+              --skip-duplicate
+          done
+
+          # Also push symbol packages if present
+          for snupkg in packages/*.snupkg; do
+            [ -f "${snupkg}" ] || continue
+            echo "Publishing symbols ${snupkg}..."
+            dotnet nuget push "${snupkg}" \
+              --source "https://nuget.pkg.github.com/stanoddly/index.json" \
+              --api-key ${{ secrets.GITHUB_TOKEN }} \
+              --skip-duplicate
+          done

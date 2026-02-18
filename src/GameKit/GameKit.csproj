@@ -27,11 +27,28 @@
       <PackageReference Include="ppy.SDL3_ttf-CS" Version="2025.1205.0" />
     </ItemGroup>
 
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <!-- When packing, suppress bundled project dependencies from the nuspec -->
+        <_BundlePrivateAssets Condition="'$(PackAsBundled)' == 'true'">all</_BundlePrivateAssets>
+    </PropertyGroup>
+
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
-      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
-      <ProjectReference Include="..\GameKit.Encs\GameKit.Encs.csproj" />
-      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
+      <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
+      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
+      <ProjectReference Include="..\GameKit.Encs\GameKit.Encs.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
+      <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
     </ItemGroup>
+
+    <!-- Bundle internal project DLLs into the GameKit NuGet package -->
+    <Target Name="IncludeBundledAssemblies" BeforeTargets="_GetBuildOutputFilesWithTfm"
+            Condition="'$(PackAsBundled)' == 'true'">
+        <ItemGroup>
+            <BuildOutputInPackage Include="$(OutputPath)GameKit.Collections.dll" />
+            <BuildOutputInPackage Include="$(OutputPath)GameKit.Common.dll" />
+            <BuildOutputInPackage Include="$(OutputPath)GameKit.Encs.dll" />
+            <BuildOutputInPackage Include="$(OutputPath)GameKit.ShaderCommon.dll" />
+        </ItemGroup>
+    </Target>
 
 </Project>

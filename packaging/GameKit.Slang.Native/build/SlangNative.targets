@@ -1,0 +1,28 @@
+<Project>
+
+  <!-- Copy Slang native files to the consuming project's output directory.
+       Preserves the bin/ and lib/ subdirectory structure expected by SdlangCompiler.cs. -->
+  <PropertyGroup>
+    <_SlangNativeToolsDir>$(MSBuildThisFileDirectory)../tools/</_SlangNativeToolsDir>
+  </PropertyGroup>
+
+  <!-- Expose the bin directory path so SdlangCompileTask can find slangc -->
+  <PropertyGroup>
+    <SlangNativeBinDir>$(_SlangNativeToolsDir)bin/</SlangNativeBinDir>
+  </PropertyGroup>
+
+  <Target Name="CopySlangNativeToOutput" BeforeTargets="Build">
+    <ItemGroup>
+      <_SlangNativeBinFiles Include="$(_SlangNativeToolsDir)bin/**/*" />
+      <_SlangNativeLibFiles Include="$(_SlangNativeToolsDir)lib/**/*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_SlangNativeBinFiles)"
+          DestinationFiles="@(_SlangNativeBinFiles->'$(OutputPath)bin/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_SlangNativeLibFiles)"
+          DestinationFiles="@(_SlangNativeLibFiles->'$(OutputPath)lib/%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

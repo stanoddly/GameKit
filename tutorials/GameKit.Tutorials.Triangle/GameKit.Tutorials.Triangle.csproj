@@ -26,12 +26,8 @@
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
-        <!-- Define shaders to compile -->
-        <ItemGroup>
-            <SdlangShader Include="Content\shaders\*.slang" />
-        </ItemGroup>
-        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
-    </Target>
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\*.slang" />
+    </ItemGroup>
     
 </Project>

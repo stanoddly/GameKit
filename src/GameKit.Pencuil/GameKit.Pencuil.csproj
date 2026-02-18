@@ -4,26 +4,23 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
+      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" PrivateAssets="$(_BundlePrivateAssets)" />
       <ProjectReference Include="..\GameKit\GameKit.csproj" />
       <ProjectReference Include="..\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
-      <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+      <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" PrivateAssets="all" />
     </ItemGroup>
 
     <!-- Import the task's props and targets files -->
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <!-- Compile shaders before build -->
-    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
-        <ItemGroup>
-            <SdlangShader Include="Content\shaders\*.slang" />
-        </ItemGroup>
-        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
-    </Target>
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\*.slang" />
+    </ItemGroup>
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
     <ItemGroup>

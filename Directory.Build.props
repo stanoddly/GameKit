@@ -1,0 +1,23 @@
+<Project>
+
+    <PropertyGroup>
+        <Version>0.1.0</Version>
+        <Authors>stanoddly</Authors>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/stanoddly/GameKit</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+
+        <!-- Symbol packages for source-level debugging -->
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+        <!-- Not packable by default; library projects opt in -->
+        <IsPackable>false</IsPackable>
+
+        <!-- Pass -p:PackAsBundled=true during 'dotnet pack' to bundle internal project DLLs
+             into their parent packages (suppresses them as separate NuGet dependencies).
+             During normal builds, types flow transitively as usual. -->
+        <_BundlePrivateAssets Condition="'$(PackAsBundled)' == 'true'">all</_BundlePrivateAssets>
+    </PropertyGroup>
+
+</Project>
