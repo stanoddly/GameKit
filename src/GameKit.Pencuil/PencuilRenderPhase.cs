@@ -14,7 +14,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService, IWindowService windowService, PencuilOptions options)
+    public PencuilRenderPhase(Pencil pencil, IEnumerable<IGuiCanvas> canvases, PencuilRenderer renderer, IMouseService mouseService, IWindow window, PencuilOptions options)
     {
         _pencil = pencil;
         _canvases = canvases.ToArray();
@@ -37,7 +37,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
         };
 
-        windowService.ResolutionChanged += args =>
+        window.ResolutionChanged += args =>
         {
             pencil.UpdateViewport(args.NewSize.Width, args.NewSize.Height);
             renderer.Resize(args.NewSize);

@@ -154,18 +154,11 @@ public class GameKitFactory: IDisposable
         return new MouseService();
     }
 
-    internal WindowService CreateWindowService(IWindow window)
+    internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
     {
         EnsureSdlInitialized();
 
-        return new WindowService(window);
-    }
-
-    public EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, WindowService windowService, AppControl appControl)
-    {
-        EnsureSdlInitialized();
-
-        return new EventService(keyboardService, gamepadService, mouseService, windowService, appControl);
+        return new EventService(keyboardService, gamepadService, mouseService, window, appControl);
     }
 
     public GameKitFrameContext CreateFrameContext()

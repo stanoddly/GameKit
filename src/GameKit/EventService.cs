@@ -8,15 +8,15 @@ public class EventService
     private readonly KeyboardService _keyboardService;
     private readonly GamepadService _gamepadService;
     private readonly MouseService _mouseService;
-    private readonly WindowService _windowService;
+    private readonly Window _window;
     private readonly AppControl _appControl;
 
-    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, WindowService windowService, AppControl appControl)
+    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
     {
         _keyboardService = keyboardService;
         _gamepadService = gamepadService;
         _mouseService = mouseService;
-        _windowService = windowService;
+        _window = window;
         _appControl = appControl;
     }
 
@@ -69,7 +69,7 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
-                    _windowService.OnWindowPixelSizeChanged(evt.window.timestamp);
+                    _window.OnPixelSizeChanged(evt.window.timestamp);
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
                 {

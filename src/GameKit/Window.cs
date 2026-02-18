@@ -13,11 +13,27 @@ internal class Window : IWindow
     
     public uint Id { get; }
 
+    private ShortSize _lastSize;
+
+    public event ResolutionChangedHandler? ResolutionChanged;
+
     internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
+        _lastSize = RenderSizeInPixels;
+    }
+
+    internal void OnPixelSizeChanged(ulong timestamp)
+    {
+        ShortSize newSize = RenderSizeInPixels;
+        ShortSize oldSize = _lastSize;
+
+        if (newSize == oldSize) return;
+
+        _lastSize = newSize;
+        ResolutionChanged?.Invoke(new ResolutionChangedEventArgs(oldSize, newSize, timestamp));
     }
 
     public ShortSize RenderSizeInPixels
