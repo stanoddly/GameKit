@@ -132,6 +132,7 @@ public class GameKitAppBuilder
             sp.GetRequiredService<KeyboardService>(),
             sp.GetRequiredService<GamepadService>(),
             sp.GetRequiredService<MouseService>(),
+            sp.GetRequiredService<Window>(),
             sp.GetRequiredService<AppControl>()
         ));
         _moduleBuilder.RegisterType<ShaderMetadataLoader>().As<IContentLoader<ShaderMetadata>>();

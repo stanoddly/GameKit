@@ -1,4 +1,5 @@
 using System.Numerics;
+using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Shaders;
 
@@ -23,9 +24,12 @@ public class PencuilRenderer
     private readonly Sampler _sampler;
     public Texture RetainedTexture => _retainedTexture;
 
-    private readonly Texture _retainedTexture;
-    private readonly Texture _depthBuffer;
-    private readonly Matrix4x4 _viewProjection;
+    private readonly IGpuDevice _gpuDevice;
+    private readonly TextureFormat _colorTargetFormat;
+
+    private Texture _retainedTexture;
+    private Texture _depthBuffer;
+    private Matrix4x4 _viewProjection;
 
     private int _maxDepthValue;
 
@@ -79,11 +83,24 @@ public class PencuilRenderer
             .AddColorTarget(colorTargetFormat, BlendingState.Standard)
             .Build();
 
+        _gpuDevice = gpuDevice;
+        _colorTargetFormat = colorTargetFormat;
+
         _sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
         _retainedTexture = gpuDevice.CreateColorTargetTexture(renderSize, colorTargetFormat);
         _depthBuffer = gpuDevice.CreateDepthBufferTexture(renderSize, DepthBufferFormat.Depth32);
 
         _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
+    }
+
+    public void Resize(ShortSize newSize)
+    {
+        _retainedTexture.Dispose();
+        _depthBuffer.Dispose();
+
+        _retainedTexture = _gpuDevice.CreateColorTargetTexture(newSize, _colorTargetFormat);
+        _depthBuffer = _gpuDevice.CreateDepthBufferTexture(newSize, DepthBufferFormat.Depth32);
+        _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, newSize.Width, newSize.Height, 0, 0, 1);
     }
 
     public void Render(CommandBuffer commandBuffer, Pencil pencil)
