@@ -37,11 +37,11 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_ADDED)
                 {
-                    
+                    _gamepadService.OnGamepadAdded(evt.gdevice.which);
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED)
                 {
-                    
+                    _gamepadService.OnGamepadRemoved(evt.gdevice.which);
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION)
                 {
