@@ -16,6 +16,19 @@ static class Program
 
         builder.OnStart((IGamepadService gamepadService) =>
         {
+            Console.WriteLine($"Gamepads connected at startup: {gamepadService.Gamepads.Count}");
+            foreach (var gp in gamepadService.Gamepads)
+            {
+                Console.WriteLine($"  Gamepad {gp.DeviceId}");
+            }
+
+            if (gamepadService.Gamepads.Count == 0)
+            {
+                Console.WriteLine("No gamepads detected. Connect a gamepad and it will be picked up automatically.");
+            }
+
+            Console.WriteLine("Listening for gamepad input...");
+
             gamepadService.LeftStickMotion += (gamepad, motion) =>
             {
                 Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Stick: ({motion.X:F2}, {motion.Y:F2})");

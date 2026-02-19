@@ -31,6 +31,8 @@ public class GamepadService : IGamepadService
     private const float JoystickMinDivisor = -1 * SDL3.SDL_JOYSTICK_AXIS_MIN;
     private const float JoystickMaxDivisor = SDL3.SDL_JOYSTICK_AXIS_MAX;
 
+    public IReadOnlyCollection<Gamepad> Gamepads => _gamepads.Values;
+
     public event GamepadMotionEventHandler? LeftStickMotion;
     public event GamepadMotionEventHandler? RightStickMotion;
     public event GamepadTriggerEventHandler? LeftTriggerMotion;
@@ -45,26 +47,26 @@ public class GamepadService : IGamepadService
         SDL3.SDL_SetGamepadEventsEnabled(true);
         unsafe
         {
-            
-            SDL_JoystickID *gamepads = SDL3.SDL_GetGamepads(null);
+            int count;
+            SDL_JoystickID *gamepads = SDL3.SDL_GetGamepads(&count);
 
             if (gamepads == null)
             {
                 return;
-            } 
-
-            int i = 0;
-            while (gamepads[i] != 0)
-            {
-                // TODO: close in Dispose
-                // TODO: initialize state based on the returned gamepad
-                SDL_Gamepad* gamepad = SDL3.SDL_OpenGamepad(gamepads[i]);
-                
-                //string? mapping = SDL3.SDL_GetGamepadMapping(gamepad);
-                
-                _gamepads.Add(gamepads[i], new Gamepad((uint)gamepads[i]));
-                i++;
             }
+
+            for (int i = 0; i < count; i++)
+            {
+                SDL_Gamepad* gamepad = SDL3.SDL_OpenGamepad(gamepads[i]);
+
+                if (gamepad == null)
+                {
+                    continue;
+                }
+
+                _gamepads.Add(gamepads[i], new Gamepad((uint)gamepads[i]));
+            }
+
             SDL3.SDL_free(gamepads);
         }
     }
