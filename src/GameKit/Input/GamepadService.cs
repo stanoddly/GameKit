@@ -13,12 +13,16 @@ public class Gamepad
     public uint DeviceId { get; }
     public Vector2 LeftStick { get; set; }
     public Vector2 RightStick { get; set; }
+    public float LeftTrigger { get; set; }
+    public float RightTrigger { get; set; }
     public int ButtonFlags { get; internal set; }
 }
 
 public delegate void GamepadMotionEventHandler(Gamepad gamepad, Vector2 motion);
+public delegate void GamepadTriggerEventHandler(Gamepad gamepad, float value);
 public delegate void GamepadButtonPressedHandler(Gamepad gamepad, GamepadButton button);
 public delegate void GamepadButtonReleasedHandler(Gamepad gamepad, GamepadButton button);
+public delegate void GamepadConnectionEventHandler(Gamepad gamepad);
 
 public class GamepadService : IGamepadService
 {
@@ -27,38 +31,73 @@ public class GamepadService : IGamepadService
     private const float JoystickMinDivisor = -1 * SDL3.SDL_JOYSTICK_AXIS_MIN;
     private const float JoystickMaxDivisor = SDL3.SDL_JOYSTICK_AXIS_MAX;
 
+    public IReadOnlyCollection<Gamepad> Gamepads => _gamepads.Values;
+
     public event GamepadMotionEventHandler? LeftStickMotion;
     public event GamepadMotionEventHandler? RightStickMotion;
+    public event GamepadTriggerEventHandler? LeftTriggerMotion;
+    public event GamepadTriggerEventHandler? RightTriggerMotion;
     public event GamepadButtonPressedHandler? ButtonPress;
     public event GamepadButtonReleasedHandler? ButtonRelease;
+    public event GamepadConnectionEventHandler? GamepadConnected;
+    public event GamepadConnectionEventHandler? GamepadDisconnected;
     
     internal void SetupGamepads()
     {
         SDL3.SDL_SetGamepadEventsEnabled(true);
         unsafe
         {
-            
-            SDL_JoystickID *gamepads = SDL3.SDL_GetGamepads(null);
+            int count;
+            SDL_JoystickID *gamepads = SDL3.SDL_GetGamepads(&count);
 
             if (gamepads == null)
             {
                 return;
-            } 
-
-            int i = 0;
-            while (gamepads[i] != 0)
-            {
-                // TODO: close in Dispose
-                // TODO: initialize state based on the returned gamepad
-                SDL_Gamepad* gamepad = SDL3.SDL_OpenGamepad(gamepads[i]);
-                
-                //string? mapping = SDL3.SDL_GetGamepadMapping(gamepad);
-                
-                _gamepads.Add(gamepads[i], new Gamepad((uint)gamepads[i]));
-                i++;
             }
+
+            for (int i = 0; i < count; i++)
+            {
+                SDL_Gamepad* gamepad = SDL3.SDL_OpenGamepad(gamepads[i]);
+
+                if (gamepad == null)
+                {
+                    continue;
+                }
+
+                _gamepads.Add(gamepads[i], new Gamepad((uint)gamepads[i]));
+            }
+
             SDL3.SDL_free(gamepads);
         }
+    }
+
+    internal unsafe void OnGamepadAdded(SDL_JoystickID joystickId)
+    {
+        if (_gamepads.ContainsKey(joystickId))
+        {
+            return;
+        }
+
+        SDL_Gamepad* gamepad = SDL3.SDL_OpenGamepad(joystickId);
+
+        if (gamepad == null)
+        {
+            return;
+        }
+
+        var pad = new Gamepad((uint)joystickId);
+        _gamepads.Add(joystickId, pad);
+        GamepadConnected?.Invoke(pad);
+    }
+
+    internal void OnGamepadRemoved(SDL_JoystickID joystickId)
+    {
+        if (!_gamepads.Remove(joystickId, out Gamepad? pad))
+        {
+            return;
+        }
+
+        GamepadDisconnected?.Invoke(pad);
     }
 
     internal void OnGamepadButtonPressed(SDL_GamepadButtonEvent gamepadButtonEvent)
@@ -180,9 +219,35 @@ public class GamepadService : IGamepadService
             {
                 return;
             }
-            
+
             gamepad.RightStick = originalRightStickState with { Y = normalizedValue };
             RightStickMotion?.Invoke(gamepad, gamepad.RightStick);
+        }
+        else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER)
+        {
+            float triggerValue = value / JoystickMaxDivisor;
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (gamepad.LeftTrigger == triggerValue)
+            {
+                return;
+            }
+
+            gamepad.LeftTrigger = triggerValue;
+            LeftTriggerMotion?.Invoke(gamepad, triggerValue);
+        }
+        else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
+        {
+            float triggerValue = value / JoystickMaxDivisor;
+
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (gamepad.RightTrigger == triggerValue)
+            {
+                return;
+            }
+
+            gamepad.RightTrigger = triggerValue;
+            RightTriggerMotion?.Invoke(gamepad, triggerValue);
         }
     }
 }
