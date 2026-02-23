@@ -1,6 +1,7 @@
 using System.Numerics;
 using GameKit.Common;
 using GameKit.Gpu;
+using GameKit.Sprites;
 using GameKit.Text;
 
 namespace GameKit.Pencuil;
@@ -237,6 +238,25 @@ public class Pencil
 
 public static class PencilExtensions
 {
+    public static void Image(this Pencil pencil, SpriteAsset sprite, Color tint)
+    {
+        IntVector2 size = new IntVector2(sprite.Size.X, sprite.Size.Y);
+        IntVector2 position = pencil.CurrentPosition;
+        Rectangle area = new Rectangle(position, size);
+        pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
+        pencil.CurrentSize = size;
+        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+    }
+
+    public static void Image(this Pencil pencil, SpriteAsset sprite, int width, int height, Color tint)
+    {
+        IntVector2 size = new IntVector2(width, height);
+        IntVector2 position = pencil.CurrentPosition;
+        Rectangle area = new Rectangle(position, size);
+        pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
+        pencil.CurrentSize = size;
+        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+    }
 
     public static CursorState Panel(this Pencil pencil, int width, int height, Color color)
     {
