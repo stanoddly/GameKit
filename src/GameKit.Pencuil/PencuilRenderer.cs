@@ -71,7 +71,7 @@ public class PencuilRenderer
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
             .SetShaders(vertexShader, tintedTextureFragmentShader)
-            .AddColorTarget(colorTargetFormat, BlendingState.Standard)
+            .AddColorTarget(colorTargetFormat, BlendingState.PremultipliedAlpha)
             .EnableDepthTesting(DepthBufferFormat.Depth32)
             .SetCullMode(CullMode.None)
             .Build();
