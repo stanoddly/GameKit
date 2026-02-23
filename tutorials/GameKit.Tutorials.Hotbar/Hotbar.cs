@@ -1,7 +1,9 @@
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Pencuil;
+using GameKit.Sprites;
 using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
@@ -40,13 +42,24 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
     private static readonly string[] SlotNames =
         ["Sword", "Shield", "Bow", "Potion", "Scroll", "Torch", "Ring", "Gem", "Key"];
 
+    private static readonly string[] SlotIcons =
+        ["sword", "shield", "bow", "potion", "scroll", "torch", "ring", "gem", "key"];
+
     private readonly Font _font;
+    private readonly SpriteAsset[] _slotSprites;
     private int _hoveredSlot = -1;
 
-    public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem)
+    public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem, ITextureLoader textureLoader)
         : base(state)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
+
+        _slotSprites = new SpriteAsset[SlotCount];
+        for (int i = 0; i < SlotCount; i++)
+        {
+            Texture texture = textureLoader.Load($"images/{SlotIcons[i]}.png");
+            _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, (short)texture.Size.Width, (short)texture.Size.Height));
+        }
 
         keyboardService.KeyDown += (_, args) =>
         {
@@ -79,6 +92,15 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
                     : SlotColor;
 
                 CursorState state = pencil.Panel(SlotSize, SlotSize, color);
+
+                // Draw icon centered in slot (32x32 icon in 48x48 slot = 8px padding)
+                IntVector2 nextPos = pencil.CurrentPosition;
+                IntVector2 nextSize = pencil.CurrentSize;
+                const int iconPadding = (SlotSize - 32) / 2;
+                pencil.MoveTo(slotPos.X + iconPadding, slotPos.Y + iconPadding);
+                pencil.Image(_slotSprites[i], Colors.White);
+                pencil.CurrentPosition = nextPos;
+                pencil.CurrentSize = nextSize;
 
                 if (state == CursorState.Clicked)
                 {

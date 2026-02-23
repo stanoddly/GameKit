@@ -123,7 +123,6 @@ public class PencuilRenderer
         renderPass.BindGraphicsPipeline(_colorPipeline);
         renderPass.BindVertexBuffer(_vertexBuffer);
 
-        int depth = 0;
         foreach (var instruction in pencil._coloredRectangleInstructions)
         {
             Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
@@ -134,7 +133,7 @@ public class PencuilRenderer
             Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                 instruction.Area.X,
                 instruction.Area.Y,
-                CalculateZCoordinate(depth++));
+                CalculateZCoordinate(instruction.Depth));
 
             Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
 
@@ -159,7 +158,7 @@ public class PencuilRenderer
                 Matrix4x4 translationMatrix = Matrix4x4.CreateTranslation(
                     instruction.Area.X,
                     instruction.Area.Y,
-                    CalculateZCoordinate(depth++));
+                    CalculateZCoordinate(instruction.Depth));
 
                 Matrix4x4 worldMatrix = scaleMatrix * translationMatrix;
 
@@ -197,6 +196,6 @@ public class PencuilRenderer
 
     private float CalculateZCoordinate(int elementDepth)
     {
-        return (elementDepth - _maxDepthValue) / (float)_maxDepthValue;
+        return (_maxDepthValue - elementDepth) / (float)(_maxDepthValue + 1);
     }
 }
