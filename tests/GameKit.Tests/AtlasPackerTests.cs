@@ -359,7 +359,6 @@ public class AtlasPackerTests
     }
 
     [Test]
-    [Explicit("Known bug: maximal-rectangles split produces overlapping free rects, causing overlap with many sprites")]
     public void ManySprites_AllPackedWithNoOverlaps()
     {
         var files = new ImmutableArray<VirtualFile>[1];
