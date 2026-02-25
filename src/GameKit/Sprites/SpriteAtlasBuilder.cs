@@ -303,48 +303,47 @@ public sealed class SpriteAtlasBuilder
 
     private void SplitRectangle(List<ShortRectangle> freeRectangles, ShortRectangle freeRect, ShortRectangle usedRect)
     {
-        if (usedRect.X > freeRect.X)
-        {
-            ShortRectangle leftRect = new ShortRectangle(
-                freeRect.X,
-                freeRect.Y,
-                (short)(usedRect.X - freeRect.X),
-                freeRect.Height
-            );
-            freeRectangles.Add(leftRect);
-        }
+        int rightWidth = freeRect.X + freeRect.Width - (usedRect.X + usedRect.Width);
+        int bottomHeight = freeRect.Y + freeRect.Height - (usedRect.Y + usedRect.Height);
 
-        if (usedRect.Y > freeRect.Y)
-        {
-            ShortRectangle topRect = new ShortRectangle(
-                freeRect.X,
-                freeRect.Y,
-                freeRect.Width,
-                (short)(usedRect.Y - freeRect.Y)
-            );
-            freeRectangles.Add(topRect);
-        }
+        bool hasRight = rightWidth > 0;
+        bool hasBottom = bottomHeight > 0;
 
-        if (usedRect.X + usedRect.Width < freeRect.X + freeRect.Width)
+        if (hasRight && hasBottom)
         {
-            ShortRectangle rightRect = new ShortRectangle(
-                (short)(usedRect.X + usedRect.Width),
-                freeRect.Y,
-                (short)(freeRect.X + freeRect.Width - (usedRect.X + usedRect.Width)),
-                freeRect.Height
-            );
-            freeRectangles.Add(rightRect);
+            // Guillotine cut: give the larger remainder the full extent
+            if (rightWidth > bottomHeight)
+            {
+                // Right gets full height, bottom gets only used width
+                freeRectangles.Add(new ShortRectangle(
+                    (short)(usedRect.X + usedRect.Width), freeRect.Y,
+                    (short)rightWidth, freeRect.Height));
+                freeRectangles.Add(new ShortRectangle(
+                    freeRect.X, (short)(usedRect.Y + usedRect.Height),
+                    usedRect.Width, (short)bottomHeight));
+            }
+            else
+            {
+                // Bottom gets full width, right gets only used height
+                freeRectangles.Add(new ShortRectangle(
+                    freeRect.X, (short)(usedRect.Y + usedRect.Height),
+                    freeRect.Width, (short)bottomHeight));
+                freeRectangles.Add(new ShortRectangle(
+                    (short)(usedRect.X + usedRect.Width), freeRect.Y,
+                    (short)rightWidth, usedRect.Height));
+            }
         }
-
-        if (usedRect.Y + usedRect.Height < freeRect.Y + freeRect.Height)
+        else if (hasRight)
         {
-            ShortRectangle bottomRect = new ShortRectangle(
-                freeRect.X,
-                (short)(usedRect.Y + usedRect.Height),
-                freeRect.Width,
-                (short)(freeRect.Y + freeRect.Height - (usedRect.Y + usedRect.Height))
-            );
-            freeRectangles.Add(bottomRect);
+            freeRectangles.Add(new ShortRectangle(
+                (short)(usedRect.X + usedRect.Width), freeRect.Y,
+                (short)rightWidth, freeRect.Height));
+        }
+        else if (hasBottom)
+        {
+            freeRectangles.Add(new ShortRectangle(
+                freeRect.X, (short)(usedRect.Y + usedRect.Height),
+                freeRect.Width, (short)bottomHeight));
         }
     }
 
