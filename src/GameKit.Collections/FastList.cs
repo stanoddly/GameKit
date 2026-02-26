@@ -114,25 +114,25 @@ public class FastList<TValue>
 
         Length = length;
     }
-
+    
     public bool SwapRemove(int index, out TValue swappedValue)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
 
         --Length;
-
+        
         // either empty or last one, no need for replacement
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default!;
+            swappedValue = default;
             return false;
         }
 
         ref TValue item = ref _items[Length];
         _items[index] = item;
         swappedValue = item;
-        // this may be a reference type, so stop referencing it for GC to handle it
+        // this may be a reference type, so stop referencing it for GC to handle it 
         item = default!;
 
         return true;
@@ -145,13 +145,13 @@ public class FastList<TValue>
             --Length;
         }
     }
-
+    
     public bool SwapRemove(int index)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
 
         --Length;
-
+        
         // either empty or last one, no need for replacement
         if (Length == 0 || index == Length)
         {
@@ -176,7 +176,7 @@ public class FastList<TValue>
     {
         return new Span<TValue>(_items, 0, Length);
     }
-
+    
     public ReadOnlySpan<TValue> AsReadOnlySpan()
     {
         return new ReadOnlySpan<TValue>(_items, 0, Length);
@@ -305,7 +305,7 @@ public struct FastListStruct<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default!;
+            swappedValue = default;
             return false;
         }
 
