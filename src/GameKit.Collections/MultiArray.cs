@@ -93,6 +93,7 @@ public class MultiArray<TValue1, TValue2>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -101,13 +102,12 @@ public class MultiArray<TValue1, TValue2>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -124,7 +124,7 @@ public class MultiArray<TValue1, TValue2>
     
     public bool TryGetButFirst(int index, out TValue2 value2)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -416,6 +416,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -425,13 +426,12 @@ public class MultiArray<TValue1, TValue2, TValue3>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -450,7 +450,7 @@ public class MultiArray<TValue1, TValue2, TValue3>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -821,6 +821,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -831,13 +832,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -858,7 +858,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -1308,6 +1308,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -1319,13 +1320,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -1348,7 +1348,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -1877,6 +1877,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -1889,13 +1890,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -1920,7 +1920,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -2528,6 +2528,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -2541,13 +2542,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -2574,7 +2574,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -3261,6 +3261,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -3275,13 +3276,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -3310,7 +3310,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -4076,6 +4076,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -4091,13 +4092,12 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -4128,7 +4128,7 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -4862,6 +4862,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -4870,13 +4871,12 @@ public struct MultiArrayStruct<TValue1, TValue2>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -4893,7 +4893,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
     
     public bool TryGetButFirst(int index, out TValue2 value2)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -5185,6 +5185,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -5194,13 +5195,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -5219,7 +5219,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -5590,6 +5590,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -5600,13 +5601,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -5627,7 +5627,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -6077,6 +6077,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -6088,13 +6089,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -6117,7 +6117,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -6646,6 +6646,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -6658,13 +6659,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -6689,7 +6689,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -7297,6 +7297,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -7310,13 +7311,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -7343,7 +7343,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -8030,6 +8030,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -8044,13 +8045,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -8079,7 +8079,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];
@@ -8845,6 +8845,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     public bool SwapRemove(int index)
     {
         int swappedIndex = _count - 1;
+        _count--;
         if (index != swappedIndex)
         {
             
@@ -8860,13 +8861,12 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             return false;
         }
 
-        _count--;
         return true;
     }
     
     public bool TryGet(int index, out TValue1 value1, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value1 = _values1[index];
@@ -8897,7 +8897,7 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
     
     public bool TryGetButFirst(int index, out TValue2 value2, out TValue3 value3, out TValue4 value4, out TValue5 value5, out TValue6 value6, out TValue7 value7, out TValue8 value8, out TValue9 value9)
     {
-        if (index >= _count)
+        if (index < _count)
         {
             
             value2 = _values2[index];

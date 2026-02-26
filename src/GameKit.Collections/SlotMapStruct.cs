@@ -1,56 +1,104 @@
 namespace GameKit.Collections;
 
 #nullable disable
-public struct SlotMapStruct<TType>
+public struct SlotMapStruct<THandle>
+    where THandle : struct, IHandle<THandle>
 {
-    private FastListStruct<TType> _data = new();
+    private const uint Tombstone = uint.MaxValue;
+    private FastListStruct<THandle> _slots;
+    private uint _freeIndex;
+    private uint _lastFreeIndex;
+    private int _count;
 
     public SlotMapStruct()
     {
+        _slots = new FastListStruct<THandle>();
+        _freeIndex = Tombstone;
+        _lastFreeIndex = Tombstone;
+        _count = 0;
     }
 
-    public void Set(Handle handle, TType value)
+    public int Count => _count;
+
+    public THandle CreateHandle()
     {
-        int index = handle;
-        if (_data.LastIndex < index)
+        if (_freeIndex == Tombstone)
         {
-            _data.ResizeFill(index + 1, default(TType));
+            uint index = (uint)_slots.Length;
+            THandle handle = new THandle { Index = index, Version = 0 };
+            _slots.Add(handle);
+            _count++;
+            return handle;
         }
-        _data[index] = value;
-    }
-    
-    public TType SetNewGetPrevious(Handle handle, TType value)
-    {
-        int index = handle;
-        if (_data.LastIndex < index)
+        else
         {
-            _data.ResizeFill(index + 1, default(TType));
+            var slotIndex = _freeIndex;
+            ref THandle slotToRecycle = ref _slots[slotIndex];
+
+            if (_freeIndex == _lastFreeIndex)
+            {
+                _freeIndex = Tombstone;
+                _lastFreeIndex = Tombstone;
+            }
+            else
+            {
+                _freeIndex = slotToRecycle.Index;
+            }
+
+            THandle handle = new THandle { Index = slotIndex, Version = slotToRecycle.Version };
+            slotToRecycle = handle;
+            _count++;
+            return handle;
+        }
+    }
+
+    public bool Contains(THandle handle)
+    {
+        if (handle.IsNull())
+        {
+            return false;
         }
 
-        ref TType currentValue = ref _data[index];
-        TType previousValue = currentValue;
-        currentValue = value;
-        return previousValue;
-    }
-
-    public ref TType GetRef(Handle handle)
-    {
-        int index = handle;
-        if (_data.LastIndex < index)
+        if (handle.Index >= _slots.Length)
         {
-            _data.ResizeFill(index + 1, default(TType));
-        }
-        return ref _data[index];
-    }
-    
-    public TType Get(Handle handle)
-    {
-        int index = handle;
-        if (index < _data.Length)
-        {
-            return _data[index];
+            return false;
         }
 
-        return default;
+        ref THandle stored = ref _slots[handle.Index];
+        return stored.Version == handle.Version;
+    }
+
+    public bool Remove(THandle handle)
+    {
+        if (handle.IsNull())
+        {
+            return false;
+        }
+
+        if (handle.Index >= _slots.Length)
+        {
+            return false;
+        }
+
+        ref THandle slot = ref _slots[handle.Index];
+        if (slot.Version != handle.Version)
+        {
+            return false;
+        }
+
+        slot = slot with
+        {
+            Version = handle.Version + 1,
+            Index = _freeIndex
+        };
+
+        if (_freeIndex == Tombstone)
+        {
+            _lastFreeIndex = handle.Index;
+        }
+
+        _freeIndex = handle.Index;
+        _count--;
+        return true;
     }
 }

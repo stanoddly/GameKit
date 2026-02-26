@@ -108,8 +108,7 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
 
         Array.Resize(ref _items, arrayLength);
         
-        int loopLength = length - Length;
-        for (int i = Length; i < loopLength; i++)
+        for (int i = Length; i < length; i++)
         {
             _items[i] = factory();
         }

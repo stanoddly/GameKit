@@ -107,8 +107,7 @@ public class FastList<TValue>
 
         Array.Resize(ref _items, arrayLength);
         
-        int loopLength = length - Length;
-        for (int i = Length; i < loopLength; i++)
+        for (int i = Length; i < length; i++)
         {
             _items[i] = factory();
         }
@@ -126,7 +125,7 @@ public class FastList<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default!;
+            swappedValue = default;
             return false;
         }
 
@@ -288,8 +287,7 @@ public struct FastListStruct<TValue>
 
         Array.Resize(ref _items, arrayLength);
         
-        int loopLength = length - Length;
-        for (int i = Length; i < loopLength; i++)
+        for (int i = Length; i < length; i++)
         {
             _items[i] = factory();
         }
@@ -307,7 +305,7 @@ public struct FastListStruct<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default!;
+            swappedValue = default;
             return false;
         }
 

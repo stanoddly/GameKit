@@ -205,7 +205,6 @@ public class DenseSlotMap<THandle, TValue1>
     
     public Span<TValue1> Values1 => _dense.Values2;
 }
-
 public class DenseSlotMap<THandle, TValue1, TValue2>
     where THandle: struct, IHandle<THandle>
 {
