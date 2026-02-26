@@ -164,7 +164,7 @@ public class AtlasPackerTests
     }
 
     [Test]
-    public void NegativeWidth_NormalizesAndPreservesAbsoluteSize()
+    public void NegativeWidth_PreservesSignForUvMirroring()
     {
         var (storage, _) = BuildAtlas(
             new()
@@ -177,12 +177,12 @@ public class AtlasPackerTests
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/mirror.json", out var sprite), Is.True);
-        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(30));
+        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(-30));
         Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
     }
 
     [Test]
-    public void NegativeHeight_NormalizesAndPreservesAbsoluteSize()
+    public void NegativeHeight_PreservesSignForUvMirroring()
     {
         var (storage, _) = BuildAtlas(
             new()
@@ -196,11 +196,11 @@ public class AtlasPackerTests
 
         Assert.That(storage.TryGetSprite("sprites/flip.json", out var sprite), Is.True);
         Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(30));
-        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
+        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(-40));
     }
 
     [Test]
-    public void BothNegative_NormalizesAndPreservesAbsoluteSize()
+    public void BothNegative_PreservesSignForUvMirroring()
     {
         var (storage, _) = BuildAtlas(
             new()
@@ -213,8 +213,8 @@ public class AtlasPackerTests
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/both.json", out var sprite), Is.True);
-        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(30));
-        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
+        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(-30));
+        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(-40));
     }
 
     [Test]
@@ -387,6 +387,46 @@ public class AtlasPackerTests
             Assert.That(RectanglesOverlap(regions[i], regions[j]), Is.False,
                 $"Regions {i} and {j} overlap: {regions[i]} vs {regions[j]}");
         }
+    }
+
+    [Test]
+    public void MirroredSprite_PreservesNegativeWidth()
+    {
+        var (storage, _) = BuildAtlas(
+            new()
+            {
+                ["sprites"] =
+                [
+                    new ByteVirtualFile("sprites/right.json", MakeSpriteJson(0, 0, 32, 32)),
+                    new ByteVirtualFile("sprites/left.json", MakeSpriteJson(31, 0, -32, 32)),
+                ]
+            },
+            new() { ["sprites"] = [] });
+
+        Assert.That(storage.TryGetSprite("sprites/right.json", out var right), Is.True);
+        Assert.That(storage.TryGetSprite("sprites/left.json", out var left), Is.True);
+        Assert.That(right!.ImageRegion.Width, Is.EqualTo(32));
+        Assert.That(left!.ImageRegion.Width, Is.EqualTo(-32));
+    }
+
+    [Test]
+    public void MirroredSprite_SharesAtlasPositionWithOriginal()
+    {
+        var (storage, _) = BuildAtlas(
+            new()
+            {
+                ["sprites"] =
+                [
+                    new ByteVirtualFile("sprites/right.json", MakeSpriteJson(0, 0, 32, 32)),
+                    new ByteVirtualFile("sprites/left.json", MakeSpriteJson(31, 0, -32, 32)),
+                ]
+            },
+            new() { ["sprites"] = [] });
+
+        Assert.That(storage.TryGetSprite("sprites/right.json", out var right), Is.True);
+        Assert.That(storage.TryGetSprite("sprites/left.json", out var left), Is.True);
+        Assert.That(left!.ImageRegion.X, Is.EqualTo(right!.ImageRegion.X));
+        Assert.That(left.ImageRegion.Y, Is.EqualTo(right.ImageRegion.Y));
     }
 
     [Test]
