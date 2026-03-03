@@ -125,14 +125,14 @@ public class FastList<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default;
+            swappedValue = default!;
             return false;
         }
 
         ref TValue item = ref _items[Length];
         _items[index] = item;
         swappedValue = item;
-        // this may be a reference type, so stop referencing it for GC to handle it 
+        // this may be a reference type, so stop referencing it for GC to handle it
         item = default!;
 
         return true;
@@ -305,14 +305,14 @@ public struct FastListStruct<TValue>
         if (Length == 0 || index == Length)
         {
             _items[Length] = default!;
-            swappedValue = default;
+            swappedValue = default!;
             return false;
         }
 
         ref TValue item = ref _items[Length];
         _items[index] = item;
         swappedValue = item;
-        // this may be a reference type, so stop referencing it for GC to handle it 
+        // this may be a reference type, so stop referencing it for GC to handle it
         item = default!;
 
         return true;
