@@ -23,10 +23,17 @@ public abstract class StateMachine<TSelf, TState> : GameComponent
 
     protected TState ChangeState(TState newState)
     {
+        ArgumentNullException.ThrowIfNull(newState);
         TSelf self = Unsafe.As<TSelf>(this);
-        _state.Exit(self);
+        TState oldState = _state;
         _state = newState;
-        _state.Enter(self);
+        oldState.Exit(self);
+        // Exit triggered a reentrant transition; that transition wins.
+        if (_state != newState)
+        {
+            return _state;
+        }
+        newState.Enter(self);
         return newState;
     }
 
