@@ -4,7 +4,7 @@ namespace GameKit.Collections;
 
 {%- assign kinds = "class,struct" | split: "," %}
 {% for kind in kinds -%}
-{%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif %}
+{%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif -%}
 
 public {{ kind }} SlotSet{{ suffix }}
 {
@@ -97,5 +97,4 @@ public {{ kind }} SlotSet{{ suffix }}
 
     public ReadOnlySpan<Handle> Handles => _dense.AsReadOnlySpan();
 }
-
 {% endfor %}

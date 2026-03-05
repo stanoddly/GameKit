@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 namespace GameKit.Collections;
 
 #nullable disable
+
 public class MultiArray<TValue1, TValue2>
 {
     private const int DefaultCapacity = 32;

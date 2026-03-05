@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace GameKit.Collections;
+
 public class FastList<TValue>
 {
     private TValue[] _items;
@@ -361,3 +362,4 @@ public struct FastListStruct<TValue>
         return new ReadOnlySpan<TValue>(_items, 0, Length);
     }
 }
+

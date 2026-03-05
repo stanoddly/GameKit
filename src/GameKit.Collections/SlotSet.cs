@@ -1,8 +1,6 @@
 using System.Runtime.CompilerServices;
 
 namespace GameKit.Collections;
-
-
 public class SlotSet
 {
     private FastListStruct<int> _sparse;
@@ -94,9 +92,6 @@ public class SlotSet
 
     public ReadOnlySpan<Handle> Handles => _dense.AsReadOnlySpan();
 }
-
-
-
 public struct SlotSetStruct
 {
     private FastListStruct<int> _sparse;
@@ -188,4 +183,3 @@ public struct SlotSetStruct
 
     public ReadOnlySpan<Handle> Handles => _dense.AsReadOnlySpan();
 }
-

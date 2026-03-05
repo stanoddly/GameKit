@@ -6,6 +6,7 @@ namespace GameKit.Collections;
 #nullable disable
 
 {%- assign kinds = "class,struct" | split: "," %}
+
 {% for kind in kinds -%}
 {%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif -%}
 {% for n in (2..9) -%}

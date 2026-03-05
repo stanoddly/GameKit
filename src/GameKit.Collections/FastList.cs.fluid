@@ -4,6 +4,7 @@ namespace GameKit.Collections;
 
 {%- assign kinds = "class,struct" | split: "," -%}
 {%- assign suffixes = ",Struct" | split: "," %}
+
 {% for kind in kinds -%}
 {%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif -%}
 public {{ kind }} FastList{{ suffix }}<TValue>
