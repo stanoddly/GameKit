@@ -2,19 +2,22 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GameKit.Collections;
 
-{% for type in [("class", ""), ("struct", "Struct")] -%}
-public {{type[0]}} FastList{{type[1]}}<TValue>
+{%- assign kinds = "class,struct" | split: "," -%}
+{%- assign suffixes = ",Struct" | split: "," %}
+{% for kind in kinds -%}
+{%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif -%}
+public {{ kind }} FastList{{ suffix }}<TValue>
 {
     private TValue[] _items;
     public int Length { get; private set; }
     public ref TValue this[int index] => ref _items[index];
 
-    public FastList{{type[1]}}()
+    public FastList{{ suffix }}()
     {
         _items = new TValue[64];
     }
-    
-    public FastList{{type[1]}}(int initialLength)
+
+    public FastList{{ suffix }}(int initialLength)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(initialLength, 1, nameof(initialLength));
         _items = new TValue[initialLength];
@@ -29,12 +32,12 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
 
             _items = newItems;
         }
-        
+
         _items[Length] = value;
 
         return Length++;
     }
-    
+
     public ref TValue Add(in TValue value, out int index)
     {
         if (Length >= _items.Length)
@@ -44,11 +47,11 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
 
             _items = newItems;
         }
-        
+
         ref TValue item = ref _items[Length];
         item = value;
         index = Length++;
-        
+
         return ref item;
     }
 
@@ -65,14 +68,14 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
         {
             arrayLength += arrayLength / 2;
         }
-        
+
         Array.Resize(ref _items, arrayLength);
-        
+
         Array.Fill(_items, defaultValue, Length, length - Length);
-        
+
         Length = length;
     }
-    
+
     public void Resize(int length)
     {
         if (length <= Length)
@@ -86,12 +89,12 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
         {
             arrayLength += arrayLength / 2;
         }
-        
+
         Array.Resize(ref _items, arrayLength);
-        
+
         Length = length;
     }
-    
+
     public void ResizeFill(int length, Func<TValue> factory)
     {
         if (length <= Length)
@@ -107,7 +110,7 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
         }
 
         Array.Resize(ref _items, arrayLength);
-        
+
         for (int i = Length; i < length; i++)
         {
             _items[i] = factory();
@@ -115,13 +118,13 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
 
         Length = length;
     }
-    
+
     public bool SwapRemove(int index, out TValue swappedValue)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
 
         --Length;
-        
+
         // either empty or last one, no need for replacement
         if (Length == 0 || index == Length)
         {
@@ -133,7 +136,7 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
         ref TValue item = ref _items[Length];
         _items[index] = item;
         swappedValue = item;
-        // this may be a reference type, so stop referencing it for GC to handle it 
+        // this may be a reference type, so stop referencing it for GC to handle it
         item = default!;
 
         return true;
@@ -146,13 +149,13 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
             --Length;
         }
     }
-    
+
     public bool SwapRemove(int index)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Length, nameof(index));
 
         --Length;
-        
+
         // either empty or last one, no need for replacement
         if (Length == 0 || index == Length)
         {
@@ -177,7 +180,7 @@ public {{type[0]}} FastList{{type[1]}}<TValue>
     {
         return new Span<TValue>(_items, 0, Length);
     }
-    
+
     public ReadOnlySpan<TValue> AsReadOnlySpan()
     {
         return new ReadOnlySpan<TValue>(_items, 0, Length);

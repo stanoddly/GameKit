@@ -8,4 +8,20 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Fluidify" Version="1.0.1">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Fluidify Include="MultiArray.cs.fluid" />
+        <Fluidify Include="MultiMap.cs.fluid" />
+        <Fluidify Include="FastList.cs.fluid" />
+        <Fluidify Include="DenseSlotMap.cs.fluid" />
+        <Fluidify Include="IConstructible.cs.fluid" />
+        <Fluidify Include="SlotSet.cs.fluid" />
+    </ItemGroup>
+
 </Project>

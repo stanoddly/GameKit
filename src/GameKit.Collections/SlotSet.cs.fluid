@@ -1,17 +1,18 @@
 using System.Runtime.CompilerServices;
 
-// Generated using jinja2-cli: jinja2 Filename.cs.jinja > Filename.cs
 namespace GameKit.Collections;
 
-{% for type in [("class", ""), ("struct", "Struct")] -%}
+{%- assign kinds = "class,struct" | split: "," %}
+{% for kind in kinds -%}
+{%- if kind == "struct" -%}{%- assign suffix = "Struct" -%}{%- else -%}{%- assign suffix = "" -%}{%- endif %}
 
-public {{type[0]}} SlotSet{{type[1]}}
+public {{ kind }} SlotSet{{ suffix }}
 {
     private FastListStruct<int> _sparse;
     private FastListStruct<Handle> _dense;
-    private const int TombStone = int.MaxValue;  
+    private const int TombStone = int.MaxValue;
 
-    public SlotSet{{type[1]}}()
+    public SlotSet{{ suffix }}()
     {
         _sparse = new FastListStruct<int>();
         _dense = new FastListStruct<Handle>();
@@ -62,7 +63,7 @@ public {{type[0]}} SlotSet{{type[1]}}
         {
             return false;
         }
-        
+
         if (_dense.SwapRemove(denseIndex, out Handle swappedHandle))
         {
             ref int swappedSparseIndex = ref _sparse[(int)swappedHandle];
@@ -77,8 +78,8 @@ public {{type[0]}} SlotSet{{type[1]}}
     {
         return Contains(handle, out _);
     }
-    
-    public bool Contains(Handle handle, out int handleIndex) 
+
+    public bool Contains(Handle handle, out int handleIndex)
     {
         int index = handle;
         if (index > _sparse.LastIndex)
@@ -86,7 +87,7 @@ public {{type[0]}} SlotSet{{type[1]}}
             handleIndex = default;
             return false;
         }
-        
+
         handleIndex = _sparse[index];
 
         return handleIndex != TombStone;
