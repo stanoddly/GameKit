@@ -406,11 +406,3 @@ FodyWeavers.xsd
 
 # Shaders
 compiled/
-
-# Fluidify generated files
-src/GameKit.Collections/MultiArray.cs
-src/GameKit.Collections/MultiMap.cs
-src/GameKit.Collections/FastList.cs
-src/GameKit.Collections/DenseSlotMap.cs
-src/GameKit.Collections/IConstructible.cs
-src/GameKit.Collections/SlotSet.cs
