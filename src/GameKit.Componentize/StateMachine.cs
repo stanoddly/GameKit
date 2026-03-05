@@ -13,14 +13,6 @@ public abstract class StateMachine<TSelf, TState> : GameComponent
     protected internal override void OnAttach() => _state.Enter(Unsafe.As<TSelf>(this));
     protected internal override void OnDetach() => _state.Exit(Unsafe.As<TSelf>(this));
 
-    public void Handle<TCommand>(in TCommand command) where TCommand : struct
-    {
-        if (_state is ICommandHandler<TCommand> handler)
-        {
-            handler.Handle(Unsafe.As<TSelf>(this), in command);
-        }
-    }
-
     protected TState ChangeState(TState newState)
     {
         ArgumentNullException.ThrowIfNull(newState);
@@ -45,8 +37,4 @@ public abstract class StateMachine<TSelf, TState> : GameComponent
         public virtual void Exit(TSelf context) { }
     }
 
-    public interface ICommandHandler<TCommand> where TCommand : struct
-    {
-        void Handle(TSelf context, in TCommand command);
-    }
 }
