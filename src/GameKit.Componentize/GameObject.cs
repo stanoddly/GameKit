@@ -13,6 +13,7 @@ public class ComponentNotFound(string componentName) : Exception(componentName);
 public class GameObject: IEnumerable<GameComponent>
 {
     public string Name { get; internal set; } = "nobody";
+    internal GameWorld? World;
     private readonly List<GameComponent> _components = new();
     private Dictionary<int, List<object>>? _eventHandlersPerType = null;
 
@@ -83,6 +84,7 @@ public class GameObject: IEnumerable<GameComponent>
         Subscribe(component);
         _components.Add(component);
         PublishEvent(new ComponentAddedArgs(component));
+        World?.NotifyComponentAttached(this, component);
         return this;
     }
 
@@ -93,6 +95,7 @@ public class GameObject: IEnumerable<GameComponent>
         Subscribe(component);
         _components.Add(component);
         PublishEvent(new ComponentAddedArgs(component));
+        World?.NotifyComponentAttached(this, component);
         return this;
     }
 
@@ -112,6 +115,7 @@ public class GameObject: IEnumerable<GameComponent>
             {
                 component.OnDetach();
                 Unsubscribe(component);
+                World?.NotifyComponentDetached(this, component);
                 component.InternalOwner = null;
                 _components.RemoveAt(i);
                 return;
@@ -127,6 +131,7 @@ public class GameObject: IEnumerable<GameComponent>
             {
                 component.OnDetach();
                 Unsubscribe(component);
+                World?.NotifyComponentDetached(this, component);
                 component.InternalOwner = null;
                 _components.RemoveAt(i);
             }
@@ -141,6 +146,7 @@ public class GameObject: IEnumerable<GameComponent>
             {
                 component.OnDetach();
                 Unsubscribe(component);
+                World?.NotifyComponentDetached(this, component);
                 component.InternalOwner = null;
                 _components.RemoveAt(i);
                 return;
@@ -154,11 +160,12 @@ public class GameObject: IEnumerable<GameComponent>
         {
             return;
         }
-        
+
         foreach (GameComponent component in _components)
         {
             component.OnDetach();
             Unsubscribe(component);
+            World?.NotifyComponentDetached(this, component);
         }
         _components.Clear();
     }
