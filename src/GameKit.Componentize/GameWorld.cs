@@ -10,11 +10,10 @@ public class GameWorld
 
     public GameObject CreateGameObject(string name)
     {
-        GameObject gameObject = new GameObject();
+        GameObject gameObject = new GameObject(this);
 
         _gameObjects.Add(name, gameObject);
         gameObject.Name = name;
-        gameObject.World = this;
 
         return gameObject;
     }

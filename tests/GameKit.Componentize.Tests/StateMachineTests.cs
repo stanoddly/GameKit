@@ -33,12 +33,14 @@ public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
 
 public class StateMachineTests
 {
+    private GameWorld _world;
     private GameObject _gameObject;
 
     [SetUp]
     public void Setup()
     {
-        _gameObject = new GameObject();
+        _world = new GameWorld();
+        _gameObject = _world.CreateGameObject("test");
     }
 
     [Test]

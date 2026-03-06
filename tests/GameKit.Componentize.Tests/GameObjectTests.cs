@@ -24,12 +24,14 @@ public class TestComponent2 : GameComponent
 
 public class GameObjectTests
 {
+    GameWorld _world;
     GameObject _gameObject;
 
     [SetUp]
     public void Setup()
     {
-        _gameObject = new GameObject();
+        _world = new GameWorld();
+        _gameObject = _world.CreateGameObject("test");
     }
 
     [Test]
