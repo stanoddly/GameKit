@@ -1,10 +1,13 @@
 using System.Runtime.CompilerServices;
+using GameKit;
 
 namespace GameKit.Componentize;
 
-public class GameWorld
+public class GameWorld : IUpdatable
 {
     private readonly Dictionary<string, GameObject> _gameObjects = new();
+    private readonly List<ITickable> _tickables = new();
+    private readonly List<ITickable> _tempTickables = new();
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
 
@@ -47,8 +50,28 @@ public class GameWorld
         _detachedCallbacks.Add((typeof(T), (gameObject, component) => callback(gameObject, Unsafe.As<GameComponent, T>(ref component))));
     }
 
+    public void Update()
+    {
+        _tempTickables.Clear();
+        _tempTickables.AddRange(_tickables);
+
+        foreach (ITickable tickable in _tempTickables)
+        {
+            GameComponent component = Unsafe.As<ITickable, GameComponent>(ref Unsafe.AsRef(in tickable));
+            if (component.InternalOwner != null)
+            {
+                tickable.Tick();
+            }
+        }
+    }
+
     internal void NotifyComponentAttached(GameObject gameObject, GameComponent component)
     {
+        if (component is ITickable tickable)
+        {
+            _tickables.Add(tickable);
+        }
+
         if (_attachedCallbacks == null) return;
 
         Type componentType = component.GetType();
@@ -63,6 +86,11 @@ public class GameWorld
 
     internal void NotifyComponentDetached(GameObject gameObject, GameComponent component)
     {
+        if (component is ITickable tickable)
+        {
+            _tickables.Remove(tickable);
+        }
+
         if (_detachedCallbacks == null) return;
 
         Type componentType = component.GetType();
