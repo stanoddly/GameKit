@@ -2,6 +2,23 @@ namespace GameKit.Componentize.Tests;
 
 public class DerivedTestComponent : TestComponent;
 
+public class TickableComponent : GameComponent, ITickable
+{
+    public int TickCount { get; private set; }
+    public void Tick() => TickCount++;
+}
+
+public class TickableDetachAllComponent : GameComponent, ITickable
+{
+    public int TickCount { get; private set; }
+
+    public void Tick()
+    {
+        TickCount++;
+        Owner.DetachAll();
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -143,5 +160,58 @@ public class GameWorldTests
         gameObject.Attach<TestComponent2>();
 
         Assert.That(count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Update_TickableComponentReceivesTickCalls()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+
+        _world.Update();
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Update_DetachedTickableComponentStopsReceivingTicks()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+
+        _world.Update();
+        gameObject.Detach(tickable);
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Update_DetachAllMidTickSkipsSiblingTickable()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        gameObject.Attach<TickableDetachAllComponent>();
+        TickableComponent sibling = new TickableComponent();
+        gameObject.Attach(sibling);
+
+        _world.Update();
+
+        Assert.That(sibling.TickCount, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Update_DuplicateAttachDoesNotCauseDuplicateTicks()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+        gameObject.Attach(tickable);
+
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(1));
     }
 }
