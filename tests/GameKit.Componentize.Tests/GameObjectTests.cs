@@ -215,4 +215,12 @@ public class GameObjectTests
         Assert.That(components.Count, Is.EqualTo(1));
         Assert.That(components[0].Value, Is.EqualTo("first"));
     }
+
+    [Test]
+    public void Detach_Self_WithoutOwner_DoesNothing()
+    {
+        TestComponent component = new TestComponent();
+
+        Assert.DoesNotThrow(() => component.Detach());
+    }
 }

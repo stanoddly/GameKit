@@ -34,7 +34,7 @@ public abstract class GameComponent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Detach()
     {
-        Owner.Detach(this);
+        InternalOwner?.Detach(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
