@@ -2,6 +2,12 @@ namespace GameKit.Componentize.Tests;
 
 public class DerivedTestComponent : TestComponent;
 
+public class TickableComponent : GameComponent, ITickable
+{
+    public int TickCount { get; private set; }
+    public void Tick() => TickCount++;
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -143,5 +149,32 @@ public class GameWorldTests
         gameObject.Attach<TestComponent2>();
 
         Assert.That(count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Update_TickableComponentReceivesTickCalls()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+
+        _world.Update();
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Update_DetachedTickableComponentStopsReceivingTicks()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+
+        _world.Update();
+        gameObject.Detach(tickable);
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(1));
     }
 }

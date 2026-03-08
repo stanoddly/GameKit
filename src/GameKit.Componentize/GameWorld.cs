@@ -57,6 +57,7 @@ public class GameWorld : IUpdatable
 
         foreach (ITickable tickable in _tempTickables)
         {
+            // Safe: _tickables is only populated via NotifyComponentAttached, which receives a GameComponent
             GameComponent component = Unsafe.As<ITickable, GameComponent>(ref Unsafe.AsRef(in tickable));
             if (component.InternalOwner != null)
             {
