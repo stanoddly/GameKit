@@ -32,9 +32,21 @@ public abstract class GameComponent
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Detach()
+    {
+        Owner.Detach(this);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void DetachSibling<TComponent>() where TComponent: GameComponent
     {
         Owner.Detach<TComponent>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void DetachSibling(GameComponent component)
+    {
+        Owner.Detach(component);
     }
 
     protected internal virtual void OnAttach()

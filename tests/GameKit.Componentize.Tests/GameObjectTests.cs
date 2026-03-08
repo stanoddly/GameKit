@@ -173,9 +173,46 @@ public class GameObjectTests
     public void Attach_WithInstance_ReturnsGameObject_ForChaining()
     {
         TestComponent instance = new TestComponent();
-        
+
         GameObject result = _gameObject.Attach(instance);
-        
+
         Assert.That(ReferenceEquals(result, _gameObject), Is.True);
+    }
+
+    [Test]
+    public void Detach_Self_RemovesComponentFromOwner()
+    {
+        _gameObject.Attach<TestComponent>();
+        TestComponent component = _gameObject.Get<TestComponent>();
+
+        component.Detach();
+
+        Assert.Throws<ComponentNotFound>(() => _gameObject.Get<TestComponent>());
+    }
+
+    [Test]
+    public void Detach_Self_CallsOnDetach()
+    {
+        _gameObject.Attach<TestComponent>();
+        TestComponent component = _gameObject.Get<TestComponent>();
+
+        component.Detach();
+
+        Assert.That(component.OnDetachCalled, Is.True);
+    }
+
+    [Test]
+    public void DetachSibling_ByInstance_RemovesSpecificComponent()
+    {
+        TestComponent first = new TestComponent { Value = "first" };
+        TestComponent second = new TestComponent { Value = "second" };
+        _gameObject.Attach(first);
+        _gameObject.Attach(second);
+
+        first.DetachSibling(second);
+
+        var components = _gameObject.GetComponents<TestComponent>();
+        Assert.That(components.Count, Is.EqualTo(1));
+        Assert.That(components[0].Value, Is.EqualTo("first"));
     }
 }
