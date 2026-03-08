@@ -8,6 +8,17 @@ public class TickableComponent : GameComponent, ITickable
     public void Tick() => TickCount++;
 }
 
+public class TickableDetachAllComponent : GameComponent, ITickable
+{
+    public int TickCount { get; private set; }
+
+    public void Tick()
+    {
+        TickCount++;
+        Owner.DetachAll();
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -176,5 +187,18 @@ public class GameWorldTests
         _world.Update();
 
         Assert.That(tickable.TickCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Update_DetachAllMidTickSkipsSiblingTickable()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        gameObject.Attach<TickableDetachAllComponent>();
+        TickableComponent sibling = new TickableComponent();
+        gameObject.Attach(sibling);
+
+        _world.Update();
+
+        Assert.That(sibling.TickCount, Is.EqualTo(0));
     }
 }

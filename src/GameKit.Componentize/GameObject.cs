@@ -171,6 +171,7 @@ public class GameObject: IEnumerable<GameComponent>
             component.OnDetach();
             Unsubscribe(component);
             World.NotifyComponentDetached(this, component);
+            component.InternalOwner = null;
         }
         _components.Clear();
     }
