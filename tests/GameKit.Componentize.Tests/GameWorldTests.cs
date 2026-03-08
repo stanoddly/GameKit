@@ -201,4 +201,17 @@ public class GameWorldTests
 
         Assert.That(sibling.TickCount, Is.EqualTo(0));
     }
+
+    [Test]
+    public void Update_DuplicateAttachDoesNotCauseDuplicateTicks()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        TickableComponent tickable = new TickableComponent();
+        gameObject.Attach(tickable);
+        gameObject.Attach(tickable);
+
+        _world.Update();
+
+        Assert.That(tickable.TickCount, Is.EqualTo(1));
+    }
 }

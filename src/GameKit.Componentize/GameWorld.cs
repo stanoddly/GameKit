@@ -6,7 +6,7 @@ namespace GameKit.Componentize;
 public class GameWorld : IUpdatable
 {
     private readonly Dictionary<string, GameObject> _gameObjects = new();
-    private readonly List<ITickable> _tickables = new();
+    private readonly HashSet<ITickable> _tickables = new();
     private readonly List<ITickable> _tempTickables = new();
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
