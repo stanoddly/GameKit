@@ -20,11 +20,11 @@ public readonly record struct Rectangle<TType>(TType X, TType Y, TType Width, TT
 }
 
 //[JsonConverter(typeof(SizeJsonConverter))]
-public readonly record struct ShortRectangle(short X, short Y, short Width, short Height)
+public readonly record struct ShortRectangle(short X, short Y, ushort Width, ushort Height)
 {
-    public ShortRectangle(ShortVector2 position, ShortVector2 size) : this(position.X, position.Y, size.X, size.Y) { }
+    public ShortRectangle(ShortVector2 position, UShortVector2 size) : this(position.X, position.Y, size.X, size.Y) { }
     public ShortVector2 Position => new ShortVector2(X, Y);
-    public ShortVector2 Size => new ShortVector2(Width, Height);
+    public UShortVector2 Size => new UShortVector2(Width, Height);
 
     public bool Intersects(ShortVector2 point) => point.X >= X && point.X <= X + Width && point.Y >= Y && point.Y <= Y + Height;
 

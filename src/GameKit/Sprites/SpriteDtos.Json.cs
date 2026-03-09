@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using GameKit.Common;
 using GameKit.Utilities;
 
 namespace GameKit.Sprites;
@@ -8,7 +9,7 @@ namespace GameKit.Sprites;
     WriteIndented = true,
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
-    Converters = [typeof(ShortRectangleJsonConverter)])]
+    Converters = [typeof(ShortRectangleJsonConverter), typeof(JsonStringEnumConverter<SpriteFlip>)])]
 [JsonSerializable(typeof(SpriteDto))]
 [JsonSerializable(typeof(AnimatedSpriteDto))]
 internal partial class SpriteDtosJsonContext : JsonSerializerContext;

@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
@@ -23,7 +24,7 @@ public sealed class SpriteAtlasBuilder
     {
         ReadCommentHandling = JsonCommentHandling.Skip,
         PropertyNameCaseInsensitive = true,
-        Converters = { new ShortRectangleJsonConverter() }
+        Converters = { new ShortRectangleJsonConverter(), new JsonStringEnumConverter<SpriteFlip>() }
     };
 
     public static SpriteAtlasBuilder Create(IServiceProvider serviceProvider)
@@ -49,31 +50,12 @@ public sealed class SpriteAtlasBuilder
         _storage = storage;
     }
 
-    private static ShortRectangle NormalizeRegion(ShortRectangle region)
-    {
-        short x = region.X;
-        short y = region.Y;
-        short width = region.Width;
-        short height = region.Height;
-        if (width < 0)
-        {
-            x = (short)(x + width + 1);
-            width = (short)-width;
-        }
-        if (height < 0)
-        {
-            y = (short)(y + height + 1);
-            height = (short)-height;
-        }
-        return new ShortRectangle(x, y, width, height);
-    }
-
     public void BuildSprites(params string[] directories)
     {
-        var entries = new List<(string path, string texturePath, ShortRectangle originalRegion,
+        var entries = new List<(string path, string texturePath, ShortRectangle region, SpriteFlip flip,
             bool isAnimatedFrame, string? animationPath, double frameDuration, bool repeat,
             int frameIndex, int totalFrames)>();
-        var animatedSpriteInfos = new Dictionary<string, (double frameDuration, bool repeat, List<int> frameIndices)>();
+        var animatedSpriteInfos = new Dictionary<string, (double frameDuration, bool repeat, SpriteFlip flip, List<int> frameIndices)>();
 
         foreach (var directory in directories)
         {
@@ -85,20 +67,20 @@ public sealed class SpriteAtlasBuilder
             return;
         }
 
-        // Deduplicate by (texturePath, normalizedRegion) — mirrored sprites share atlas space
-        var dedupMap = new Dictionary<(string texturePath, ShortRectangle normalizedRegion), int>();
-        var uniqueImages = new List<(Image image, ShortRectangle normalizedRegion)>();
+        // Deduplicate by (texturePath, region) — flipped sprites share atlas space
+        var dedupMap = new Dictionary<(string texturePath, ShortRectangle region), int>();
+        var uniqueImages = new List<(Image image, ShortRectangle region)>();
         var entryToUnique = new int[entries.Count];
 
         for (int i = 0; i < entries.Count; i++)
         {
-            ShortRectangle normalized = NormalizeRegion(entries[i].originalRegion);
-            var key = (entries[i].texturePath, normalized);
+            ShortRectangle region = entries[i].region;
+            var key = (entries[i].texturePath, region);
             if (!dedupMap.TryGetValue(key, out int uniqueIndex))
             {
                 uniqueIndex = uniqueImages.Count;
                 Image image = _imageLoader.Load(entries[i].texturePath);
-                uniqueImages.Add((image, normalized));
+                uniqueImages.Add((image, region));
                 dedupMap[key] = uniqueIndex;
             }
             entryToUnique[i] = uniqueIndex;
@@ -108,13 +90,13 @@ public sealed class SpriteAtlasBuilder
         var sortedIndices = Enumerable.Range(0, uniqueImages.Count).ToList();
         sortedIndices.Sort((a, b) =>
         {
-            int areaA = uniqueImages[a].normalizedRegion.Width * uniqueImages[a].normalizedRegion.Height;
-            int areaB = uniqueImages[b].normalizedRegion.Width * uniqueImages[b].normalizedRegion.Height;
+            int areaA = uniqueImages[a].region.Width * uniqueImages[a].region.Height;
+            int areaB = uniqueImages[b].region.Width * uniqueImages[b].region.Height;
             return areaB.CompareTo(areaA);
         });
 
         // Build a reordered list for packing and a mapping back
-        var sortedImages = new List<(Image image, ShortRectangle normalizedRegion)>(uniqueImages.Count);
+        var sortedImages = new List<(Image image, ShortRectangle region)>(uniqueImages.Count);
         var sortedToOriginal = new int[uniqueImages.Count];
         var originalToSorted = new int[uniqueImages.Count];
         for (int i = 0; i < sortedIndices.Count; i++)
@@ -127,7 +109,7 @@ public sealed class SpriteAtlasBuilder
         // Pack
         (ShortSize atlasSize, List<PackedRectangle> packedRectangles) = PackImagesIntoAtlas(sortedImages);
 
-        // Create atlas image (no mirroring — mirroring is handled by UV sign)
+        // Create atlas image
         RawImage atlasImage = CreateAtlasImage(sortedImages, packedRectangles, atlasSize);
         Texture atlasTexture = _textureLoader.Load(atlasImage);
 
@@ -143,12 +125,11 @@ public sealed class SpriteAtlasBuilder
             int uniqueIndex = entryToUnique[i];
             int sortedIndex = originalToSorted[uniqueIndex];
             PackedRectangle packed = packedRectangles[sortedIndex];
-            ShortRectangle originalRegion = entry.originalRegion;
 
             short atlasX = (short)(packed.Rectangle.X + Padding);
             short atlasY = (short)(packed.Rectangle.Y + Padding);
-            ShortRectangle atlasRegion = new ShortRectangle(atlasX, atlasY, originalRegion.Width, originalRegion.Height);
-            _storage.StoreSprite(entry.path, new SpriteAsset(atlasTexture, atlasRegion));
+            ShortRectangle atlasRegion = new ShortRectangle(atlasX, atlasY, entry.region.Width, entry.region.Height);
+            _storage.StoreSprite(entry.path, new SpriteAsset(atlasTexture, atlasRegion, entry.flip));
         }
 
         // Store animated sprites
@@ -169,21 +150,20 @@ public sealed class SpriteAtlasBuilder
             int uniqueIndex = entryToUnique[i];
             int sortedIndex = originalToSorted[uniqueIndex];
             PackedRectangle packed = packedRectangles[sortedIndex];
-            ShortRectangle originalRegion = entry.originalRegion;
 
             short atlasX = (short)(packed.Rectangle.X + Padding);
             short atlasY = (short)(packed.Rectangle.Y + Padding);
-            ShortRectangle atlasRegion = new ShortRectangle(atlasX, atlasY, originalRegion.Width, originalRegion.Height);
+            ShortRectangle atlasRegion = new ShortRectangle(atlasX, atlasY, entry.region.Width, entry.region.Height);
             animationFramesByPath[entry.animationPath][entry.frameIndex] = atlasRegion;
         }
 
         foreach (var kv in animatedSpriteInfos)
         {
             string animationPath = kv.Key;
-            var (frameDuration, repeat, _) = kv.Value;
+            var (frameDuration, repeat, flip, _) = kv.Value;
             var frames = animationFramesByPath[animationPath];
             var immutableFrames = System.Collections.Immutable.ImmutableArray.CreateRange(frames);
-            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, repeat, Vector2.Zero);
+            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, repeat, Vector2.Zero, flip);
             _storage.StoreAnimatedSprite(animationPath, animatedSpriteAsset);
         }
 
@@ -191,10 +171,10 @@ public sealed class SpriteAtlasBuilder
     }
 
     private void CollectSpritesRecursively(string directory,
-        List<(string path, string texturePath, ShortRectangle originalRegion,
+        List<(string path, string texturePath, ShortRectangle region, SpriteFlip flip,
             bool isAnimatedFrame, string? animationPath, double frameDuration, bool repeat,
             int frameIndex, int totalFrames)> entries,
-        Dictionary<string, (double frameDuration, bool repeat, List<int> frameIndices)> animatedSpriteInfos)
+        Dictionary<string, (double frameDuration, bool repeat, SpriteFlip flip, List<int> frameIndices)> animatedSpriteInfos)
     {
         ReadOnlySpan<VirtualFile> files = _fileSystem.GetFiles(directory);
         foreach (VirtualFile file in files)
@@ -207,7 +187,7 @@ public sealed class SpriteAtlasBuilder
                 try { spriteDto = JsonSerializer.Deserialize<SpriteDto>(stream, _options); } catch { }
                 if (spriteDto != null)
                 {
-                    entries.Add((file.Path, spriteDto.Texture, spriteDto.TextureRegion,
+                    entries.Add((file.Path, spriteDto.Texture, spriteDto.TextureRegion, spriteDto.Flip,
                         false, null, 0, false, 0, 0));
                     continue;
                 }
@@ -219,11 +199,11 @@ public sealed class SpriteAtlasBuilder
                     var frameIndices = new List<int>(totalFrames);
                     for (int i = 0; i < totalFrames; i++)
                     {
-                        entries.Add((file.Path, animatedDto.Texture, animatedDto.Frames[i],
+                        entries.Add((file.Path, animatedDto.Texture, animatedDto.Frames[i], animatedDto.Flip,
                             true, file.Path, animatedDto.FrameDuration, animatedDto.Repeat, i, totalFrames));
                         frameIndices.Add(entries.Count - 1);
                     }
-                    animatedSpriteInfos[file.Path] = (animatedDto.FrameDuration, animatedDto.Repeat, frameIndices);
+                    animatedSpriteInfos[file.Path] = (animatedDto.FrameDuration, animatedDto.Repeat, animatedDto.Flip, frameIndices);
                 }
             }
         }
@@ -235,7 +215,7 @@ public sealed class SpriteAtlasBuilder
     }
 
     private (ShortSize atlasSize, List<PackedRectangle> packedRectangles) PackImagesIntoAtlas(
-        List<(Image image, ShortRectangle normalizedRegion)> images)
+        List<(Image image, ShortRectangle region)> images)
     {
         List<PackedRectangle> packedRectangles = new List<PackedRectangle>(images.Count);
 
@@ -243,16 +223,16 @@ public sealed class SpriteAtlasBuilder
         int atlasHeight = 1024;
         List<ShortRectangle> freeRectangles = new List<ShortRectangle>
         {
-            new ShortRectangle(0, 0, (short)atlasWidth, (short)atlasHeight)
+            new ShortRectangle(0, 0, (ushort)atlasWidth, (ushort)atlasHeight)
         };
 
         for (int i = 0; i < images.Count; i++)
         {
-            ShortRectangle region = images[i].normalizedRegion;
-            short width = (short)(region.Width + Padding * 2);
-            short height = (short)(region.Height + Padding * 2);
+            ShortRectangle region = images[i].region;
+            ushort width = (ushort)(region.Width + Padding * 2);
+            ushort height = (ushort)(region.Height + Padding * 2);
 
-            ShortRectangle? bestRect = FindBestFitRectangle(freeRectangles, (ushort)width, (ushort)height);
+            ShortRectangle? bestRect = FindBestFitRectangle(freeRectangles, width, height);
 
             if (bestRect == null)
             {
@@ -260,7 +240,7 @@ public sealed class SpriteAtlasBuilder
                 atlasHeight *= 2;
 
                 freeRectangles.Clear();
-                freeRectangles.Add(new ShortRectangle(0, 0, (short)atlasWidth, (short)atlasHeight));
+                freeRectangles.Add(new ShortRectangle(0, 0, (ushort)atlasWidth, (ushort)atlasHeight));
                 packedRectangles.Clear();
                 i = -1;
                 continue;
@@ -317,38 +297,38 @@ public sealed class SpriteAtlasBuilder
                 // Right gets full height, bottom gets only used width
                 freeRectangles.Add(new ShortRectangle(
                     (short)(usedRect.X + usedRect.Width), freeRect.Y,
-                    (short)rightWidth, freeRect.Height));
+                    (ushort)rightWidth, freeRect.Height));
                 freeRectangles.Add(new ShortRectangle(
                     freeRect.X, (short)(usedRect.Y + usedRect.Height),
-                    usedRect.Width, (short)bottomHeight));
+                    usedRect.Width, (ushort)bottomHeight));
             }
             else
             {
                 // Bottom gets full width, right gets only used height
                 freeRectangles.Add(new ShortRectangle(
                     freeRect.X, (short)(usedRect.Y + usedRect.Height),
-                    freeRect.Width, (short)bottomHeight));
+                    freeRect.Width, (ushort)bottomHeight));
                 freeRectangles.Add(new ShortRectangle(
                     (short)(usedRect.X + usedRect.Width), freeRect.Y,
-                    (short)rightWidth, usedRect.Height));
+                    (ushort)rightWidth, usedRect.Height));
             }
         }
         else if (hasRight)
         {
             freeRectangles.Add(new ShortRectangle(
                 (short)(usedRect.X + usedRect.Width), freeRect.Y,
-                (short)rightWidth, freeRect.Height));
+                (ushort)rightWidth, freeRect.Height));
         }
         else if (hasBottom)
         {
             freeRectangles.Add(new ShortRectangle(
                 freeRect.X, (short)(usedRect.Y + usedRect.Height),
-                freeRect.Width, (short)bottomHeight));
+                freeRect.Width, (ushort)bottomHeight));
         }
     }
 
     private RawImage CreateAtlasImage(
-        List<(Image image, ShortRectangle normalizedRegion)> images,
+        List<(Image image, ShortRectangle region)> images,
         List<PackedRectangle> packedRectangles,
         ShortSize atlasSize)
     {

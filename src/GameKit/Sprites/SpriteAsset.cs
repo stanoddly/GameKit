@@ -4,9 +4,9 @@ using GameKit.Gpu;
 
 namespace GameKit.Sprites;
 
-public record SpriteAsset(Texture Texture, ShortRectangle ImageRegion)
+public record SpriteAsset(Texture Texture, ShortRectangle ImageRegion, SpriteFlip Flip = SpriteFlip.None)
 {
-    public Vector4 CalculateTextureRegionUVs() => Texture.CalculateTextureRegionUVs(ImageRegion);
+    public Vector4 CalculateTextureRegionUVs() => Texture.CalculateTextureRegionUVs(ImageRegion, Flip);
 
-    public ShortVector2 Size => ImageRegion.Size;
+    public UShortVector2 Size => ImageRegion.Size;
 }
