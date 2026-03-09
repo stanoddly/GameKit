@@ -93,6 +93,27 @@ public class GameObject: IEnumerable<GameComponent>
         return this;
     }
 
+    public GameObject AttachIfMissing<TComponent>() where TComponent: GameComponent, new()
+    {
+        if (TryGet<TComponent>() == null)
+        {
+            Attach<TComponent>();
+        }
+        return this;
+    }
+
+    public GameObject AttachIfMissing<TComponent>(out TComponent component) where TComponent: GameComponent, new()
+    {
+        TComponent? existing = TryGet<TComponent>();
+        if (existing == null)
+        {
+            existing = new TComponent();
+            Attach(existing);
+        }
+        component = existing;
+        return this;
+    }
+
     public GameObject Attach<TComponent>(TComponent component) where TComponent: GameComponent
     {
         component.InternalOwner = this;
