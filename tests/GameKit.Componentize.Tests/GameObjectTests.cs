@@ -223,4 +223,55 @@ public class GameObjectTests
 
         Assert.DoesNotThrow(() => component.Detach());
     }
+
+    [Test]
+    public void AttachIfMissing_WhenNotPresent_AttachesComponent()
+    {
+        _gameObject.AttachIfMissing<TestComponent>();
+
+        TestComponent component = _gameObject.Get<TestComponent>();
+        Assert.That(component, Is.Not.Null);
+        Assert.That(component.OnAttachCalled, Is.True);
+    }
+
+    [Test]
+    public void AttachIfMissing_WhenAlreadyPresent_DoesNotAttachAgain()
+    {
+        _gameObject.Attach<TestComponent>();
+
+        _gameObject.AttachIfMissing<TestComponent>();
+
+        var components = _gameObject.GetComponents<TestComponent>();
+        Assert.That(components.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void AttachIfMissing_ReturnsGameObject_ForChaining()
+    {
+        GameObject result = _gameObject.AttachIfMissing<TestComponent>();
+
+        Assert.That(ReferenceEquals(result, _gameObject), Is.True);
+    }
+
+    [Test]
+    public void AttachIfMissing_Out_WhenNotPresent_AttachesAndOutputsComponent()
+    {
+        _gameObject.AttachIfMissing<TestComponent>(out var component);
+
+        Assert.That(component, Is.Not.Null);
+        Assert.That(component.OnAttachCalled, Is.True);
+        Assert.That(ReferenceEquals(component, _gameObject.Get<TestComponent>()), Is.True);
+    }
+
+    [Test]
+    public void AttachIfMissing_Out_WhenAlreadyPresent_OutputsExistingComponent()
+    {
+        _gameObject.Attach<TestComponent>();
+        TestComponent original = _gameObject.Get<TestComponent>();
+
+        _gameObject.AttachIfMissing<TestComponent>(out var component);
+
+        Assert.That(ReferenceEquals(component, original), Is.True);
+        Assert.That(_gameObject.GetComponents<TestComponent>().Count, Is.EqualTo(1));
+    }
 }
