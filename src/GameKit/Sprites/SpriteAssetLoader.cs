@@ -35,7 +35,7 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
         Texture texture = _textureLoader.Load(spriteDto.Texture);
         ShortRectangle imageRegion = spriteDto.TextureRegion;
 
-        SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion);
+        SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion, spriteDto.Flip);
 
         _storage.StoreSprite(path.ToString(), spriteAsset);
 

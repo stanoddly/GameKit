@@ -58,7 +58,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
         for (int i = 0; i < SlotCount; i++)
         {
             Texture texture = textureLoader.Load($"images/{SlotIcons[i]}.png");
-            _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, (short)texture.Size.Width, (short)texture.Size.Height));
+            _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, texture.Size.Width, texture.Size.Height));
         }
 
         keyboardService.KeyDown += (_, args) =>

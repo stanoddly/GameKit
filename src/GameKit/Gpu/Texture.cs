@@ -20,7 +20,7 @@ public abstract class Texture: IDisposable, IGpuMemorySized
         SizeInBytes = sizeInBytes;
     }
 
-    public Vector4 CalculateTextureRegionUVs(ShortRectangle sourceRectangle)
+    public Vector4 CalculateTextureRegionUVs(ShortRectangle sourceRectangle, SpriteFlip flip = SpriteFlip.None)
     {
         float left = sourceRectangle.X;
         float top = sourceRectangle.Y;
@@ -28,15 +28,23 @@ public abstract class Texture: IDisposable, IGpuMemorySized
         float bottom = sourceRectangle.Y + sourceRectangle.Height;
 
         (ushort width, ushort height) = Size;
-        
-        Vector4 textureCoords = new Vector4(
-            left / width,
-            top / height,
-            right / width,
-            bottom / height
-        );
 
-        return textureCoords;
+        float u0 = left / width;
+        float v0 = top / height;
+        float u1 = right / width;
+        float v1 = bottom / height;
+
+        if ((flip & SpriteFlip.Horizontal) != 0)
+        {
+            (u0, u1) = (u1, u0);
+        }
+
+        if ((flip & SpriteFlip.Vertical) != 0)
+        {
+            (v0, v1) = (v1, v0);
+        }
+
+        return new Vector4(u0, v0, u1, v1);
     }
 
     public abstract void Dispose();

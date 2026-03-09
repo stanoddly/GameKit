@@ -191,10 +191,10 @@ public class ShortRectangleJsonConverter : JsonConverter<ShortRectangle>
         reader.ValidateJsonTokenType(JsonTokenType.StartArray);
         short x = reader.ValidatedGet<short>();
         short y = reader.ValidatedGet<short>();
-        short width = reader.ValidatedGet<short>();
-        short height = reader.ValidatedGet<short>();
+        ushort width = reader.ValidatedGet<ushort>();
+        ushort height = reader.ValidatedGet<ushort>();
         reader.ValidatedRead(JsonTokenType.EndArray);
-        
+
         return new ShortRectangle(x, y, width, height);
     }
 

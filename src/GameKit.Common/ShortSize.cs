@@ -25,6 +25,11 @@ public readonly record struct ShortSize(ushort Width, ushort Height)
     {
         return new ShortVector2((short)tuple.Width, (short)tuple.Height);
     }
+
+    public static implicit operator UShortVector2(ShortSize tuple)
+    {
+        return new UShortVector2(tuple.Width, tuple.Height);
+    }
     
     public static explicit operator Vector2(ShortSize tuple)
     {

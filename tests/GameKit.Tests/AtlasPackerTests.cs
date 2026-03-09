@@ -11,8 +11,11 @@ namespace GameKit.Tests;
 
 public class AtlasPackerTests
 {
-    private static byte[] MakeSpriteJson(short x, short y, short w, short h, string texture = "img.png") =>
+    private static byte[] MakeSpriteJson(short x, short y, ushort w, ushort h, string texture = "img.png") =>
         Encoding.UTF8.GetBytes($$"""{"texture":"{{texture}}","textureRegion":[{{x}},{{y}},{{w}},{{h}}]}""");
+
+    private static byte[] MakeSpriteJson(short x, short y, ushort w, ushort h, SpriteFlip flip, string texture = "img.png") =>
+        Encoding.UTF8.GetBytes($$"""{"texture":"{{texture}}","textureRegion":[{{x}},{{y}},{{w}},{{h}}],"flip":"{{flip}}"}""");
 
     private static byte[] MakeAnimatedSpriteJson(string texture, double frameDuration, bool repeat, params ShortRectangle[] frames)
     {
@@ -164,57 +167,77 @@ public class AtlasPackerTests
     }
 
     [Test]
-    public void NegativeWidth_PreservesSignForUvMirroring()
+    public void HorizontalFlip_PreservesSpriteFlip()
     {
         var (storage, _) = BuildAtlas(
             new()
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/mirror.json", MakeSpriteJson(50, 0, -30, 40))
+                    new ByteVirtualFile("sprites/mirror.json", MakeSpriteJson(0, 0, 30, 40, SpriteFlip.Horizontal))
                 ]
             },
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/mirror.json", out var sprite), Is.True);
-        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(-30));
+        Assert.That(sprite!.Flip, Is.EqualTo(SpriteFlip.Horizontal));
+        Assert.That(sprite.ImageRegion.Width, Is.EqualTo(30));
         Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
     }
 
     [Test]
-    public void NegativeHeight_PreservesSignForUvMirroring()
+    public void VerticalFlip_PreservesSpriteFlip()
     {
         var (storage, _) = BuildAtlas(
             new()
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/flip.json", MakeSpriteJson(0, 60, 30, -40))
+                    new ByteVirtualFile("sprites/flip.json", MakeSpriteJson(0, 0, 30, 40, SpriteFlip.Vertical))
                 ]
             },
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/flip.json", out var sprite), Is.True);
-        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(30));
-        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(-40));
+        Assert.That(sprite!.Flip, Is.EqualTo(SpriteFlip.Vertical));
+        Assert.That(sprite.ImageRegion.Width, Is.EqualTo(30));
+        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
     }
 
     [Test]
-    public void BothNegative_PreservesSignForUvMirroring()
+    public void BothFlip_PreservesSpriteFlip()
     {
         var (storage, _) = BuildAtlas(
             new()
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/both.json", MakeSpriteJson(50, 60, -30, -40))
+                    new ByteVirtualFile("sprites/both.json", MakeSpriteJson(0, 0, 30, 40, SpriteFlip.Both))
                 ]
             },
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/both.json", out var sprite), Is.True);
-        Assert.That(sprite!.ImageRegion.Width, Is.EqualTo(-30));
-        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(-40));
+        Assert.That(sprite!.Flip, Is.EqualTo(SpriteFlip.Both));
+        Assert.That(sprite.ImageRegion.Width, Is.EqualTo(30));
+        Assert.That(sprite.ImageRegion.Height, Is.EqualTo(40));
+    }
+
+    [Test]
+    public void NoFlip_DefaultsToNone()
+    {
+        var (storage, _) = BuildAtlas(
+            new()
+            {
+                ["sprites"] =
+                [
+                    new ByteVirtualFile("sprites/normal.json", MakeSpriteJson(0, 0, 32, 32))
+                ]
+            },
+            new() { ["sprites"] = [] });
+
+        Assert.That(storage.TryGetSprite("sprites/normal.json", out var sprite), Is.True);
+        Assert.That(sprite!.Flip, Is.EqualTo(SpriteFlip.None));
     }
 
     [Test]
@@ -365,8 +388,8 @@ public class AtlasPackerTests
         var sprites = new List<VirtualFile>();
         for (int i = 0; i < 30; i++)
         {
-            short w = (short)(16 + i % 5 * 16);
-            short h = (short)(16 + i % 7 * 16);
+            ushort w = (ushort)(16 + i % 5 * 16);
+            ushort h = (ushort)(16 + i % 7 * 16);
             sprites.Add(new ByteVirtualFile($"sprites/s{i}.json", MakeSpriteJson(0, 0, w, h)));
         }
 
@@ -390,7 +413,7 @@ public class AtlasPackerTests
     }
 
     [Test]
-    public void MirroredSprite_PreservesNegativeWidth()
+    public void FlippedSprite_SharesAtlasPositionWithOriginal()
     {
         var (storage, _) = BuildAtlas(
             new()
@@ -398,35 +421,19 @@ public class AtlasPackerTests
                 ["sprites"] =
                 [
                     new ByteVirtualFile("sprites/right.json", MakeSpriteJson(0, 0, 32, 32)),
-                    new ByteVirtualFile("sprites/left.json", MakeSpriteJson(31, 0, -32, 32)),
+                    new ByteVirtualFile("sprites/left.json", MakeSpriteJson(0, 0, 32, 32, SpriteFlip.Horizontal)),
                 ]
             },
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetSprite("sprites/right.json", out var right), Is.True);
         Assert.That(storage.TryGetSprite("sprites/left.json", out var left), Is.True);
-        Assert.That(right!.ImageRegion.Width, Is.EqualTo(32));
-        Assert.That(left!.ImageRegion.Width, Is.EqualTo(-32));
-    }
-
-    [Test]
-    public void MirroredSprite_SharesAtlasPositionWithOriginal()
-    {
-        var (storage, _) = BuildAtlas(
-            new()
-            {
-                ["sprites"] =
-                [
-                    new ByteVirtualFile("sprites/right.json", MakeSpriteJson(0, 0, 32, 32)),
-                    new ByteVirtualFile("sprites/left.json", MakeSpriteJson(31, 0, -32, 32)),
-                ]
-            },
-            new() { ["sprites"] = [] });
-
-        Assert.That(storage.TryGetSprite("sprites/right.json", out var right), Is.True);
-        Assert.That(storage.TryGetSprite("sprites/left.json", out var left), Is.True);
-        Assert.That(left!.ImageRegion.X, Is.EqualTo(right!.ImageRegion.X));
+        Assert.That(right!.Flip, Is.EqualTo(SpriteFlip.None));
+        Assert.That(left!.Flip, Is.EqualTo(SpriteFlip.Horizontal));
+        Assert.That(left.ImageRegion.X, Is.EqualTo(right.ImageRegion.X));
         Assert.That(left.ImageRegion.Y, Is.EqualTo(right.ImageRegion.Y));
+        Assert.That(left.ImageRegion.Width, Is.EqualTo(right.ImageRegion.Width));
+        Assert.That(left.ImageRegion.Height, Is.EqualTo(right.ImageRegion.Height));
     }
 
     [Test]

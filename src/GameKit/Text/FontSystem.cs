@@ -74,7 +74,7 @@ internal class FontSystem: IFontSystem, IUpdatable
             }
 
             ShortSize size = cached.Texture.Size;
-            ShortRectangle imageRegion = new(0, 0, (short)size.Width, (short)size.Height);
+            ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
             TextSpriteAsset textSprite = new(cached.Texture, imageRegion);
 
             _textSpriteCache[cacheKey] = (new WeakReference<TextSpriteAsset>(textSprite), cached.Texture);
@@ -86,7 +86,7 @@ internal class FontSystem: IFontSystem, IUpdatable
         {
             Texture texture = CreateTextureFromSurface(surface);
             ShortSize size = texture.Size;
-            ShortRectangle imageRegion = new(0, 0, (short)size.Width, (short)size.Height);
+            ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
             TextSpriteAsset textSprite = new(texture, imageRegion);
 
             var newWeakRef = new WeakReference<TextSpriteAsset>(textSprite);

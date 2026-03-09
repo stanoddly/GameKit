@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using GameKit.Common;
 
 namespace GameKit.Sprites;
@@ -6,7 +6,8 @@ namespace GameKit.Sprites;
 internal record SpriteDto
 {
     public required string Texture { get; init; }
-    public required ShortRectangle TextureRegion { get; init; } 
+    public required ShortRectangle TextureRegion { get; init; }
+    public SpriteFlip Flip { get; init; } = SpriteFlip.None;
 }
 
 internal record AnimatedSpriteDto
@@ -16,4 +17,5 @@ internal record AnimatedSpriteDto
     public required ImmutableArray<ShortRectangle> Frames { get; init; }
     public bool Repeat { get; init; } = false;
     public float[]? AnchorOffset { get; init; }
+    public SpriteFlip Flip { get; init; } = SpriteFlip.None;
 }

@@ -10,10 +10,11 @@ public record AnimatedSpriteAsset(
     Texture Texture,
     ImmutableArray<ShortRectangle> Frames,
     bool Repeat,
-    Vector2 AnchorOffset)
+    Vector2 AnchorOffset,
+    SpriteFlip Flip = SpriteFlip.None)
 {
     public Vector4 CalculateTextureRegionUVs(int frameIndex)
     {
-        return Texture.CalculateTextureRegionUVs(Frames[frameIndex]);
+        return Texture.CalculateTextureRegionUVs(Frames[frameIndex], Flip);
     }
 }
