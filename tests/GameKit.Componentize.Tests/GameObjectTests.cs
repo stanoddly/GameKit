@@ -276,24 +276,24 @@ public class GameObjectTests
     }
 
     [Test]
-    public void RemoveOwnerFromWorld_RemovesGameObjectFromWorld()
+    public void RemoveOwner_RemovesGameObjectFromWorld()
     {
         _gameObject.Attach<TestComponent>();
         TestComponent component = _gameObject.Get<TestComponent>();
 
-        component.RemoveOwnerFromWorld();
+        component.RemoveOwner();
 
         Assert.That(_world.GetGameObject("test"), Is.Null);
     }
 
     [Test]
-    public void RemoveOwnerFromWorld_DetachesAllComponents()
+    public void RemoveOwner_DetachesAllComponents()
     {
         _gameObject.Attach<TestComponent>();
         _gameObject.Attach<TestComponent2>();
         TestComponent component = _gameObject.Get<TestComponent>();
 
-        component.RemoveOwnerFromWorld();
+        component.RemoveOwner();
 
         Assert.That(component.OnDetachCalled, Is.True);
     }

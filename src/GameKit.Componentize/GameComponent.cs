@@ -50,7 +50,7 @@ public abstract class GameComponent
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void RemoveOwnerFromWorld()
+    public void RemoveOwner()
     {
         Owner.World.RemoveGameObject(Owner.Name);
     }
