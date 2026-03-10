@@ -1,4 +1,3 @@
-using GameKit.BackgroundJobs;
 using GameKit.Common;
 using GameKit.Ioc;
 using GameKit.Content;
@@ -18,7 +17,6 @@ public class GameKitAppBuilder
     private readonly List<IStartable> _startables = new();
     private readonly List<IUpdatable> _updatables = new();
     private readonly List<IDisposable> _disposables = new();
-    private readonly List<Action<IServiceProvider, BackgroundWorkerPool>> _handlerRegistrations = new();
 
     public GameKitAppBuilder()
     {
@@ -162,28 +160,10 @@ public class GameKitAppBuilder
 
         _moduleBuilder.RegisterType<UpdateSystem>();
         _moduleBuilder.RegisterType<TimerSystem>();
-        _moduleBuilder.RegisterFunc<BackgroundWorkHub>(_ => new BackgroundWorkHub(priorityLevels: 1));
-        _moduleBuilder.RegisterFunc<BackgroundWorkerPool>(sp => new BackgroundWorkerPool(
-            sp.GetRequiredService<BackgroundWorkHub>(),
-            sp.GetRequiredService<IGpuDevice>()));
-        _moduleBuilder.RegisterFunc<MainMessageDispatcher>(sp => new MainMessageDispatcher(
-            sp.GetRequiredService<BackgroundWorkHub>()));
 
         if (!_moduleBuilder.IsRegistered(typeof(IContentLoader<Image>)))
         {
             _moduleBuilder.RegisterType<SdlImageLoader>().As<IContentLoader<Image>>();
-        }
-
-        if (_handlerRegistrations.Count > 0)
-        {
-            _moduleBuilder.OnStart(sp =>
-            {
-                BackgroundWorkerPool pool = sp.GetRequiredService<BackgroundWorkerPool>();
-                foreach (var registration in _handlerRegistrations)
-                {
-                    registration(sp, pool);
-                }
-            });
         }
 
         IServiceProvider serviceProvider = _moduleBuilder.Build();
@@ -211,18 +191,4 @@ public class GameKitAppBuilder
         return this;
     }
 
-    public GameKitAppBuilder RegisterBackgroundWorkHandler<TMessage, TFactory>()
-        where TMessage : class
-        where TFactory : class, IHandlerFactory<TMessage>
-    {
-        _moduleBuilder.RegisterType<TFactory>();
-
-        _handlerRegistrations.Add((sp, pool) =>
-        {
-            TFactory factory = sp.GetRequiredService<TFactory>();
-            pool.RegisterHandler<TMessage>(factory.Create);
-        });
-
-        return this;
-    }
 }
