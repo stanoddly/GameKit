@@ -274,4 +274,27 @@ public class GameObjectTests
         Assert.That(ReferenceEquals(component, original), Is.True);
         Assert.That(_gameObject.GetComponents<TestComponent>().Count, Is.EqualTo(1));
     }
+
+    [Test]
+    public void RemoveOwnerFromWorld_RemovesGameObjectFromWorld()
+    {
+        _gameObject.Attach<TestComponent>();
+        TestComponent component = _gameObject.Get<TestComponent>();
+
+        component.RemoveOwnerFromWorld();
+
+        Assert.That(_world.GetGameObject("test"), Is.Null);
+    }
+
+    [Test]
+    public void RemoveOwnerFromWorld_DetachesAllComponents()
+    {
+        _gameObject.Attach<TestComponent>();
+        _gameObject.Attach<TestComponent2>();
+        TestComponent component = _gameObject.Get<TestComponent>();
+
+        component.RemoveOwnerFromWorld();
+
+        Assert.That(component.OnDetachCalled, Is.True);
+    }
 }

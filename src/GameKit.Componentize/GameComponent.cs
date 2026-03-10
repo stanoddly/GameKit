@@ -49,6 +49,12 @@ public abstract class GameComponent
         InternalOwner?.Detach(component);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void RemoveOwnerFromWorld()
+    {
+        Owner.World.RemoveGameObject(Owner.Name);
+    }
+
     protected internal virtual void OnAttach()
     {
         
