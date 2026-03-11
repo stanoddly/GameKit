@@ -172,7 +172,7 @@ public class GameObject: IEnumerable<GameComponent>
             return;
         }
 
-        var snapshot = new List<GameComponent>(_components);
+        GameComponent[] snapshot = _components.ToArray();
         _components.Clear();
 
         foreach (GameComponent component in snapshot)
