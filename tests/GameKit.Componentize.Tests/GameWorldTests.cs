@@ -214,4 +214,33 @@ public class GameWorldTests
 
         Assert.That(tickable.TickCount, Is.EqualTo(1));
     }
+
+    [Test]
+    public void RemoveGameObject_RemovedEventFired()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        gameObject.Attach<TestComponent>();
+
+        GameObject? received = null;
+        gameObject.Removed += go => received = go;
+
+        _world.RemoveGameObject("test");
+
+        Assert.That(received, Is.SameAs(gameObject));
+    }
+
+    [Test]
+    public void RemoveGameObject_RemovedEventFiredAfterDetachAll()
+    {
+        GameObject gameObject = _world.CreateGameObject("test");
+        gameObject.Attach<TestComponent>();
+
+        int componentCountDuringEvent = -1;
+        gameObject.Removed += go => componentCountDuringEvent = go.Count();
+
+        _world.RemoveGameObject("test");
+
+        Assert.That(componentCountDuringEvent, Is.EqualTo(0));
+    }
+
 }
