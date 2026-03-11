@@ -31,7 +31,6 @@ public class GameWorld : IUpdatable
     {
         if (_gameObjects.Remove(name, out GameObject? gameObject))
         {
-            // TODO: make an internal method to delete self for performance reasons
             gameObject.DetachAll();
             gameObject.NotifyRemoved();
         }
