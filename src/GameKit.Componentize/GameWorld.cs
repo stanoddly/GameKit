@@ -33,6 +33,7 @@ public class GameWorld : IUpdatable
         {
             // TODO: make an internal method to delete self for performance reasons
             gameObject.DetachAll();
+            gameObject.NotifyRemoved();
         }
     }
 

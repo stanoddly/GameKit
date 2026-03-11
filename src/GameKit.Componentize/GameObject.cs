@@ -13,6 +13,7 @@ public class ComponentNotFound(string componentName) : Exception(componentName);
 public class GameObject: IEnumerable<GameComponent>
 {
     public string Name { get; internal set; } = "nobody";
+    public event Action<GameObject>? Removed;
     internal GameWorld World { get; }
     private readonly List<GameComponent> _components = new();
 
@@ -229,6 +230,12 @@ public class GameObject: IEnumerable<GameComponent>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    internal void NotifyRemoved()
+    {
+        Removed?.Invoke(this);
+        Removed = null;
     }
 
     private void TeardownComponent(GameComponent component)
