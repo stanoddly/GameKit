@@ -19,6 +19,16 @@ public class TickableDetachAllComponent : GameComponent, ITickable
     }
 }
 
+public class CrossAttachOnDetachComponent : GameComponent
+{
+    public GameObject? Target { get; set; }
+
+    protected override void OnDetach()
+    {
+        Target?.Attach<TestComponent>();
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -241,6 +251,39 @@ public class GameWorldTests
         _world.RemoveGameObject("test");
 
         Assert.That(componentCountDuringEvent, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void DetachAll_OnDetachAttachingToOtherGameObject_DoesNotThrow()
+    {
+        GameObject objectA = _world.CreateGameObject("a");
+        GameObject objectB = _world.CreateGameObject("b");
+
+        objectA.Attach(new CrossAttachOnDetachComponent { Target = objectB });
+        objectA.Attach<TestComponent>();
+
+        Assert.DoesNotThrow(() => objectA.DetachAll());
+        Assert.That(objectB.TryGet<TestComponent>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void DetachAll_WorldCallbackReEntersOriginalObject_DoesNotThrow()
+    {
+        GameObject objectA = _world.CreateGameObject("a");
+        GameObject objectB = _world.CreateGameObject("b");
+
+        _world.OnComponentAttached<TestComponent>((go, c) =>
+        {
+            if (go == objectB)
+            {
+                objectA.Attach<TestComponent2>();
+            }
+        });
+
+        objectA.Attach(new CrossAttachOnDetachComponent { Target = objectB });
+        objectA.Attach<TestComponent>();
+
+        Assert.DoesNotThrow(() => objectA.DetachAll());
     }
 
 }
