@@ -172,11 +172,13 @@ public class GameObject: IEnumerable<GameComponent>
             return;
         }
 
-        foreach (GameComponent component in _components)
+        var snapshot = new List<GameComponent>(_components);
+        _components.Clear();
+
+        foreach (GameComponent component in snapshot)
         {
             TeardownComponent(component);
         }
-        _components.Clear();
     }
 
     public TComponent Get<TComponent>() where TComponent: GameComponent
