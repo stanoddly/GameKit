@@ -83,14 +83,7 @@ public class GameObject: IEnumerable<GameComponent>
 
     public GameObject Attach<TComponent>() where TComponent: GameComponent, new()
     {
-        TComponent component = new TComponent();
-        component.InternalOwner = this;
-        component.OnAttach();
-        Subscribe(component);
-        _components.Add(component);
-        PublishEvent(new ComponentAddedArgs(component));
-        World.NotifyComponentAttached(this, component);
-        return this;
+        return Attach(new TComponent());
     }
 
     public GameObject AttachIfMissing<TComponent>() where TComponent: GameComponent, new()
@@ -139,10 +132,7 @@ public class GameObject: IEnumerable<GameComponent>
         {
             if (_components[i] is TComponent component)
             {
-                component.OnDetach();
-                Unsubscribe(component);
-                World.NotifyComponentDetached(this, component);
-                component.InternalOwner = null;
+                TeardownComponent(component);
                 _components.RemoveAt(i);
                 return;
             }
@@ -155,10 +145,7 @@ public class GameObject: IEnumerable<GameComponent>
         {
             if (_components[i] is TComponent component)
             {
-                component.OnDetach();
-                Unsubscribe(component);
-                World.NotifyComponentDetached(this, component);
-                component.InternalOwner = null;
+                TeardownComponent(component);
                 _components.RemoveAt(i);
             }
         }
@@ -170,10 +157,7 @@ public class GameObject: IEnumerable<GameComponent>
         {
             if (_components[i] == component)
             {
-                component.OnDetach();
-                Unsubscribe(component);
-                World.NotifyComponentDetached(this, component);
-                component.InternalOwner = null;
+                TeardownComponent(component);
                 _components.RemoveAt(i);
                 return;
             }
@@ -189,10 +173,7 @@ public class GameObject: IEnumerable<GameComponent>
 
         foreach (GameComponent component in _components)
         {
-            component.OnDetach();
-            Unsubscribe(component);
-            World.NotifyComponentDetached(this, component);
-            component.InternalOwner = null;
+            TeardownComponent(component);
         }
         _components.Clear();
     }
@@ -248,6 +229,15 @@ public class GameObject: IEnumerable<GameComponent>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    private void TeardownComponent(GameComponent component)
+    {
+        component.OnDetach();
+        PublishEvent(new ComponentRemovedArgs(component));
+        Unsubscribe(component);
+        World.NotifyComponentDetached(this, component);
+        component.InternalOwner = null;
     }
 
     internal void PublishEvent<TEventArgs>(in TEventArgs args) where TEventArgs: struct
