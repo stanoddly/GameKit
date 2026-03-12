@@ -10,16 +10,25 @@ public readonly record struct ComponentAddedArgs(GameComponent GameComponent);
 
 public class ComponentNotFound(string componentName) : Exception(componentName);
 
+public enum GameObjectState : byte
+{
+    Alive,
+    Removing,
+    Removed
+}
+
 public class GameObject: IEnumerable<GameComponent>
 {
     public string Name { get; internal set; } = "nobody";
+    public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
-    public GameWorld World { get; }
+    private GameWorld? _world;
+    public GameWorld World => _world ?? throw new InvalidOperationException($"GameObject '{Name}' has been removed and has no World.");
     private readonly List<GameComponent> _components = new();
 
     internal GameObject(GameWorld world)
     {
-        World = world;
+        _world = world;
     }
     private Dictionary<int, List<object>>? _eventHandlersPerType = null;
 
@@ -110,6 +119,11 @@ public class GameObject: IEnumerable<GameComponent>
 
     public GameObject Attach<TComponent>(TComponent component) where TComponent: GameComponent
     {
+        if (State != GameObjectState.Alive)
+        {
+            throw new InvalidOperationException($"Cannot attach to {State} GameObject '{Name}'.");
+        }
+
         component.InternalOwner = this;
         component.OnAttach();
         Subscribe(component);
@@ -129,6 +143,11 @@ public class GameObject: IEnumerable<GameComponent>
 
     public void Detach<TComponent>() where TComponent: GameComponent
     {
+        if (State != GameObjectState.Alive)
+        {
+            return;
+        }
+
         for (int i = 0; i < _components.Count; i++)
         {
             if (_components[i] is TComponent component)
@@ -142,6 +161,11 @@ public class GameObject: IEnumerable<GameComponent>
 
     public void DetachAll<TComponent>() where TComponent: GameComponent
     {
+        if (State != GameObjectState.Alive)
+        {
+            return;
+        }
+
         for (int i = _components.Count - 1; i >= 0; i--)
         {
             if (_components[i] is TComponent component)
@@ -154,6 +178,11 @@ public class GameObject: IEnumerable<GameComponent>
 
     public void Detach(GameComponent component)
     {
+        if (State != GameObjectState.Alive)
+        {
+            return;
+        }
+
         for (int i = 0; i < _components.Count; i++)
         {
             if (_components[i] == component)
@@ -167,6 +196,11 @@ public class GameObject: IEnumerable<GameComponent>
 
     public void DetachAll()
     {
+        if (State == GameObjectState.Removed)
+        {
+            return;
+        }
+
         if (_components.Count == 0)
         {
             return;
@@ -234,10 +268,18 @@ public class GameObject: IEnumerable<GameComponent>
         return GetEnumerator();
     }
 
+    internal void NotifyRemoving()
+    {
+        State = GameObjectState.Removing;
+    }
+
     internal void NotifyRemoved()
     {
+        _eventHandlersPerType = null;
         Removed?.Invoke(this);
         Removed = null;
+        State = GameObjectState.Removed;
+        _world = null;
     }
 
     private void TeardownComponent(GameComponent component)

@@ -22,6 +22,16 @@ public class TestComponent2 : GameComponent
     public int Number { get; set; } = 42;
 }
 
+public class StateCapturingComponent : GameComponent
+{
+    public Action<StateCapturingComponent>? CaptureAction { get; set; }
+
+    protected override void OnDetach()
+    {
+        CaptureAction?.Invoke(this);
+    }
+}
+
 public class GameObjectTests
 {
     GameWorld _world;
@@ -296,5 +306,89 @@ public class GameObjectTests
         component.RemoveOwner();
 
         Assert.That(component.OnDetachCalled, Is.True);
+    }
+
+    [Test]
+    public void State_NewGameObject_IsAlive()
+    {
+        Assert.That(_gameObject.State, Is.EqualTo(GameObjectState.Alive));
+    }
+
+    [Test]
+    public void State_AfterRemove_IsRemoved()
+    {
+        _world.RemoveGameObject("test");
+
+        Assert.That(_gameObject.State, Is.EqualTo(GameObjectState.Removed));
+    }
+
+    [Test]
+    public void State_DuringOnDetach_IsRemoving()
+    {
+        GameObjectState? stateDuringDetach = null;
+        StateCapturingComponent component = new StateCapturingComponent();
+        component.CaptureAction = c => stateDuringDetach = c.Owner.State;
+        _gameObject.Attach(component);
+
+        _world.RemoveGameObject("test");
+
+        Assert.That(stateDuringDetach, Is.EqualTo(GameObjectState.Removing));
+    }
+
+    [Test]
+    public void State_DuringRemovedEvent_WorldIsAccessible()
+    {
+        GameWorld? worldDuringEvent = null;
+        _gameObject.Removed += go => worldDuringEvent = go.World;
+
+        _world.RemoveGameObject("test");
+
+        Assert.That(worldDuringEvent, Is.SameAs(_world));
+    }
+
+    [Test]
+    public void Attach_AfterRemove_Throws()
+    {
+        _world.RemoveGameObject("test");
+
+        Assert.Throws<InvalidOperationException>(() => _gameObject.Attach<TestComponent>());
+    }
+
+    [Test]
+    public void Attach_DuringRemoving_Throws()
+    {
+        StateCapturingComponent component = new StateCapturingComponent();
+        component.CaptureAction = c => c.Owner.Attach<TestComponent2>();
+        _gameObject.Attach(component);
+
+        Assert.Throws<InvalidOperationException>(() => _world.RemoveGameObject("test"));
+    }
+
+    [Test]
+    public void Detach_AfterRemove_DoesNotThrow()
+    {
+        _gameObject.Attach<TestComponent>();
+
+        _world.RemoveGameObject("test");
+
+        Assert.DoesNotThrow(() => _gameObject.Detach<TestComponent>());
+    }
+
+    [Test]
+    public void DetachAll_AfterRemove_DoesNotThrow()
+    {
+        _gameObject.Attach<TestComponent>();
+
+        _world.RemoveGameObject("test");
+
+        Assert.DoesNotThrow(() => _gameObject.DetachAll());
+    }
+
+    [Test]
+    public void World_AfterRemove_Throws()
+    {
+        _world.RemoveGameObject("test");
+
+        Assert.Throws<InvalidOperationException>(() => { GameWorld w = _gameObject.World; });
     }
 }
