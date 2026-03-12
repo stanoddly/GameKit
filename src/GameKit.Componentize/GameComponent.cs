@@ -5,7 +5,8 @@ namespace GameKit.Componentize;
 public abstract class GameComponent
 {
     internal GameObject? InternalOwner = null;
-    protected GameObject Owner => InternalOwner ?? throw new InvalidOperationException("Component has no owner. Attach it to a GameObject first.");
+    public GameObject Owner => InternalOwner ?? throw new InvalidOperationException("Component has no owner. Attach it to a GameObject first.");
+    public GameWorld World => Owner.World;
 
     public bool HasOwner()
     {
@@ -52,7 +53,7 @@ public abstract class GameComponent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveOwner()
     {
-        Owner.World.RemoveGameObject(Owner.Name);
+        World.RemoveGameObject(Owner.Name);
     }
 
     protected internal virtual void OnAttach()
