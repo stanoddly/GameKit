@@ -14,7 +14,7 @@ public class GameObject: IEnumerable<GameComponent>
 {
     public string Name { get; internal set; } = "nobody";
     public event Action<GameObject>? Removed;
-    internal GameWorld World { get; }
+    public GameWorld World { get; }
     private readonly List<GameComponent> _components = new();
 
     internal GameObject(GameWorld world)
