@@ -31,6 +31,7 @@ public class GameWorld : IUpdatable
     {
         if (_gameObjects.Remove(name, out GameObject? gameObject))
         {
+            gameObject.NotifyRemoving();
             gameObject.DetachAll();
             gameObject.NotifyRemoved();
         }
