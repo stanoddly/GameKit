@@ -13,10 +13,9 @@ builder.RegisterType<GameWorld>();
 
 builder.OnStart((GameWorld gameWorld) =>
 {
-    Handle<GameObject> handle = gameWorld.CreateGameObject();
-    GameObject player = gameWorld.GetGameObject(handle)!;
-    player.Attach<MovementComponent>()
-          .Attach<HealthComponent>();
+    gameWorld.CreateGameObject()
+        .Attach<MovementComponent>()
+        .Attach<HealthComponent>();
 });
 ```
 
@@ -25,8 +24,7 @@ builder.OnStart((GameWorld gameWorld) =>
 Entity that holds components, identified by `Handle<GameObject>`:
 
 ```csharp
-Handle<GameObject> handle = gameWorld.CreateGameObject();
-GameObject player = gameWorld.GetGameObject(handle)!;
+GameObject player = gameWorld.CreateGameObject();
 player.Attach<MovementComponent>();
 player.Attach(new HealthComponent(100)); // Instance attachment
 
@@ -36,7 +34,7 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 
 // Removal
 player.Detach<HealthComponent>();
-gameWorld.RemoveGameObject(handle); // Detaches all components
+gameWorld.RemoveGameObject(player.Handle); // Detaches all components
 ```
 
 ### GameComponent
