@@ -8,7 +8,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public class HotbarState : IGuiCanvasState
+public class HotbarViewModel : IViewModel
 {
     public bool IsDirty { get; set; } = true;
 
@@ -28,7 +28,7 @@ public class HotbarState : IGuiCanvasState
     }
 }
 
-public class Hotbar : StatefulGuiCanvas<HotbarState>
+public class Hotbar : View<HotbarViewModel>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -49,8 +49,8 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
     private readonly SpriteAsset[] _slotSprites;
     private int _hoveredSlot = -1;
 
-    public Hotbar(HotbarState state, IKeyboardService keyboardService, IFontSystem fontSystem, ITextureLoader textureLoader)
-        : base(state)
+    public Hotbar(HotbarViewModel viewModel, IKeyboardService keyboardService, IFontSystem fontSystem, ITextureLoader textureLoader)
+        : base(viewModel)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
@@ -66,7 +66,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
             {
-                State.SelectedSlot = index;
+                ViewModel.SelectedSlot = index;
             }
         };
     }
@@ -87,7 +87,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
             {
                 IntVector2 slotPos = pencil.CurrentPosition;
 
-                Color color = i == State.SelectedSlot ? SelectedColor
+                Color color = i == ViewModel.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
@@ -104,7 +104,7 @@ public class Hotbar : StatefulGuiCanvas<HotbarState>
 
                 if (state == CursorState.Clicked)
                 {
-                    State.SelectedSlot = i;
+                    ViewModel.SelectedSlot = i;
                 }
                 if (state >= CursorState.Hovered)
                 {

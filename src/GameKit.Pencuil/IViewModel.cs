@@ -1,6 +1,6 @@
 namespace GameKit.Pencuil;
 
-public interface IGuiCanvasState
+public interface IViewModel
 {
     bool IsDirty { get; set; }
 }

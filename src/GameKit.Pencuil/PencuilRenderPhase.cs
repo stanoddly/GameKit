@@ -8,16 +8,16 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     where TRenderContext : IRenderContext
 {
     private readonly Pencil _pencil;
-    private readonly GuiCanvasRegistry _canvasRegistry;
+    private readonly ViewRegistry _viewRegistry;
     private readonly PencuilRenderer _renderer;
     private readonly bool _clearTarget;
 
     public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, GuiCanvasRegistry canvasRegistry, PencuilRenderer renderer, IMouseService mouseService, IWindow window, PencuilOptions options)
+    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IWindow window, PencuilOptions options)
     {
         _pencil = pencil;
-        _canvasRegistry = canvasRegistry;
+        _viewRegistry = viewRegistry;
         _renderer = renderer;
         _clearTarget = options.ClearTarget;
         Order = options.Order;
@@ -47,18 +47,18 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     public void Render(TRenderContext renderContext)
     {
         bool needsBuild = _pencil.NeedsUpdate;
-        IReadOnlyList<IGuiCanvas> canvases = _canvasRegistry.Canvases;
+        IReadOnlyList<IView> views = _viewRegistry.Views;
 
-        foreach (IGuiCanvas canvas in canvases)
+        foreach (IView view in views)
         {
-            needsBuild |= canvas.ConsumeDirty();
+            needsBuild |= view.ConsumeDirty();
         }
 
         if (needsBuild)
         {
-            foreach (IGuiCanvas canvas in canvases)
+            foreach (IView view in views)
             {
-                canvas.Build(_pencil);
+                view.Build(_pencil);
             }
 
             _pencil.NeedsUpdate = false;
