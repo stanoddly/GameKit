@@ -66,7 +66,7 @@ public {{ kind }} MultiArray{{ suffix }}<{% for i in (1..n) %}TValue{{ i }}{% un
             throw new ArgumentOutOfRangeException(nameof(index));
 
         {% for i in (1..n) %}
-        _values{{ i }}[index] = value{{ i }};
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{ i }}), index) = value{{ i }};
         {% endfor %}
     }
 
@@ -76,7 +76,7 @@ public {{ kind }} MultiArray{{ suffix }}<{% for i in (1..n) %}TValue{{ i }}{% un
             throw new ArgumentOutOfRangeException(nameof(index));
 
         {% for i in (2..n) %}
-        _values{{ i }}[index] = value{{ i }};
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values{{ i }}), index) = value{{ i }};
         {% endfor %}
     }
 
@@ -101,9 +101,15 @@ public {{ kind }} MultiArray{{ suffix }}<{% for i in (1..n) %}TValue{{ i }}{% un
             {% for i in (1..n) %}
             _values{{ i }}[index] = _values{{ i }}[swappedIndex];
             {%- endfor %}
+            {% for i in (1..n) %}
+            _values{{ i }}[swappedIndex] = default!;
+            {%- endfor %}
             return false;
         }
 
+        {% for i in (1..n) %}
+        _values{{ i }}[swappedIndex] = default!;
+        {%- endfor %}
         return true;
     }
 

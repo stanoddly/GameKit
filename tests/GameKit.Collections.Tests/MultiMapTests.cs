@@ -141,6 +141,26 @@ public class MultiMapTests
     }
 
     [Test]
+    public void GetValues1OrDefault_WithMixedHandles_WritesCorrectPositions()
+    {
+        Handle handle0 = (Handle)0;
+        Handle handle1 = (Handle)1;
+        Handle handle2 = (Handle)2;
+
+        _multiMap.Set(handle0, 10, 1.0);
+        _multiMap.Set(handle2, 30, 3.0);
+
+        Handle[] handles = { handle0, handle1, handle2 };
+        int[] values = new int[3];
+
+        _multiMap.GetValues1OrDefault(handles, values);
+
+        Assert.That(values[0], Is.EqualTo(10));
+        Assert.That(values[1], Is.EqualTo(0));
+        Assert.That(values[2], Is.EqualTo(30));
+    }
+
+    [Test]
     public void RemoveInTheMiddleRearrangesValuesAsExpected()
     {
         // Arrange

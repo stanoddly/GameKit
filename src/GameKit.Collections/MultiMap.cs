@@ -245,15 +245,15 @@ public class MultiMap<TValue1>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -558,15 +558,15 @@ public class MultiMap<TValue1, TValue2>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -577,15 +577,15 @@ public class MultiMap<TValue1, TValue2>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -944,15 +944,15 @@ public class MultiMap<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -963,15 +963,15 @@ public class MultiMap<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -982,15 +982,15 @@ public class MultiMap<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1403,15 +1403,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1422,15 +1422,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1441,15 +1441,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1460,15 +1460,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1935,15 +1935,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1954,15 +1954,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1973,15 +1973,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -1992,15 +1992,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2011,15 +2011,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2540,15 +2540,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2559,15 +2559,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2578,15 +2578,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2597,15 +2597,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2616,15 +2616,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -2635,15 +2635,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3218,15 +3218,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3237,15 +3237,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3256,15 +3256,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3275,15 +3275,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3294,15 +3294,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3313,15 +3313,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3332,15 +3332,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue8(index);
+                values[j] = _dense.GetValue8(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3969,15 +3969,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -3988,15 +3988,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4007,15 +4007,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4026,15 +4026,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4045,15 +4045,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4064,15 +4064,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4083,15 +4083,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue8(index);
+                values[j] = _dense.GetValue8(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4102,15 +4102,15 @@ public class MultiMap<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TVal
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue9(index);
+                values[j] = _dense.GetValue9(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4370,15 +4370,15 @@ public struct MultiMapStruct<TValue1>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4683,15 +4683,15 @@ public struct MultiMapStruct<TValue1, TValue2>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -4702,15 +4702,15 @@ public struct MultiMapStruct<TValue1, TValue2>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5069,15 +5069,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5088,15 +5088,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5107,15 +5107,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5528,15 +5528,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5547,15 +5547,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5566,15 +5566,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -5585,15 +5585,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6060,15 +6060,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6079,15 +6079,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6098,15 +6098,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6117,15 +6117,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6136,15 +6136,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6665,15 +6665,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6684,15 +6684,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6703,15 +6703,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6722,15 +6722,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6741,15 +6741,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -6760,15 +6760,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7343,15 +7343,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7362,15 +7362,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7381,15 +7381,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7400,15 +7400,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7419,15 +7419,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7438,15 +7438,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -7457,15 +7457,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue8(index);
+                values[j] = _dense.GetValue8(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8094,15 +8094,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue2(index);
+                values[j] = _dense.GetValue2(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8113,15 +8113,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue3(index);
+                values[j] = _dense.GetValue3(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8132,15 +8132,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue4(index);
+                values[j] = _dense.GetValue4(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8151,15 +8151,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue5(index);
+                values[j] = _dense.GetValue5(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8170,15 +8170,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue6(index);
+                values[j] = _dense.GetValue6(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8189,15 +8189,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue7(index);
+                values[j] = _dense.GetValue7(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8208,15 +8208,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue8(index);
+                values[j] = _dense.GetValue8(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
@@ -8227,15 +8227,15 @@ public struct MultiMapStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TValue
             throw new ArgumentException("Length of values span must be greater than or equal to length of handles span.", nameof(values));
         }
 
-        for (int i = 0; i < handles.Length; i++)
+        for (int j = 0; j < handles.Length; j++)
         {
-            if (Contains(handles[i], out int index))
+            if (Contains(handles[j], out int index))
             {
-                values[index] = _dense.GetValue9(index);
+                values[j] = _dense.GetValue9(index);
             }
             else
             {
-                values[index] = default;
+                values[j] = default;
             }
         }
     }
