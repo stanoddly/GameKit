@@ -226,12 +226,12 @@ public class RenderPass<TValidator> : IRenderPass
 
     public bool IsDefault()
     {
-        return _nativePointer.IsNull();
+        return _nativePointer.IsNull;
     }
     
     public void Dispose()
     {
-        if (!_nativePointer.IsNull())
+        if (!_nativePointer.IsNull)
         {
             unsafe
             {
@@ -243,7 +243,7 @@ public class RenderPass<TValidator> : IRenderPass
     
     private void ThrowIfDisposed()
     {
-        if (_nativePointer.IsNull())
+        if (_nativePointer.IsNull)
             throw new ObjectDisposedException(nameof(RenderPass));
     }
 }

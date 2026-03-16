@@ -415,12 +415,12 @@ public class GraphicsPipelineBuilder
             throw new InvalidOperationException("No vertex attributes configured.");
         }
 
-        if (_info.VertexShader?.Pointer.IsNull() ?? false)
+        if (_info.VertexShader?.Pointer.IsNull ?? false)
         {
             throw new InvalidOperationException("Vertex shader has null pointer.");
         }
 
-        if (_info.FragmentShader?.Pointer.IsNull() ?? false)
+        if (_info.FragmentShader?.Pointer.IsNull ?? false)
         {
             throw new InvalidOperationException("Fragment shader has null pointer.");
         }

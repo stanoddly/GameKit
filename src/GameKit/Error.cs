@@ -36,7 +36,7 @@ public static class SdlError
 
     public static void ThrowOnNull<T>(Pointer<T> pointer, string context) where T : unmanaged
     {
-        if (!pointer.IsNull())
+        if (!pointer.IsNull)
         {
             return;
         }
@@ -46,7 +46,7 @@ public static class SdlError
     
     public static void ThrowOnNull<T>(Pointer<T> pointer) where T : unmanaged
     {
-        if (pointer.IsNull()) throw new GameKitException(SDL3.SDL_GetError());
+        if (pointer.IsNull) throw new GameKitException(SDL3.SDL_GetError());
     }
     
     public static unsafe void ThrowOnNull<T>(T* pointer) where T : unmanaged

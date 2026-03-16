@@ -66,13 +66,13 @@ internal class SdlImageLoader : IContentLoader<Image>
         fixed (byte* fileDataPtr = fileData)
         {
             Pointer<SDL_IOStream> sdlStream = SDL3.SDL_IOFromConstMem((IntPtr)fileDataPtr, (UIntPtr)fileData.Length);
-            if (sdlStream.IsNull())
+            if (sdlStream.IsNull)
             {
                 throw new InvalidOperationException($"SDL_IOFromConstMem failed: {SDL3.SDL_GetError()}");
             }
 
             Pointer<SDL_Surface> surface = SDL3_image.IMG_Load_IO(sdlStream, true);
-            if (surface.IsNull())
+            if (surface.IsNull)
             {
                 throw new InvalidOperationException($"IMG_Load_IO failed: {SDL3.SDL_GetError()}");
             }
@@ -97,7 +97,7 @@ internal class SdlImageLoader : IContentLoader<Image>
         Pointer<SDL_Surface> convertedSurface = SDL3.SDL_ConvertSurface(surface, SDL_PixelFormat.SDL_PIXELFORMAT_ABGR8888);
         SDL3.SDL_DestroySurface(surface);
 
-        if (convertedSurface.IsNull())
+        if (convertedSurface.IsNull)
         {
             throw new InvalidOperationException($"SDL_ConvertSurface failed for format {pixelFormat}: {SDL3.SDL_GetError()}");
         }

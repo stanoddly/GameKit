@@ -1,6 +1,8 @@
-﻿namespace GameKit.Utilities;
+﻿using System;
 
-public readonly struct Pointer<TValue> where TValue : unmanaged
+namespace GameKit.Utilities;
+
+public readonly struct Pointer<TValue> : IEquatable<Pointer<TValue>> where TValue : unmanaged
 {
     public static readonly Pointer<TValue> Null = default;
 
@@ -18,16 +20,11 @@ public readonly struct Pointer<TValue> where TValue : unmanaged
         return new Pointer<TValue>(rawPointer);
     }
     
-    public static unsafe implicit operator IntPtr(Pointer<TValue> pointer)
+    public static unsafe explicit operator IntPtr(Pointer<TValue> pointer)
     {
         return (IntPtr)pointer._rawPointer;
     }
-    
-    public static implicit operator bool(Pointer<TValue> pointer)
-    {
-        return !pointer.IsNull();
-    }
-    
+
     public ref TValue Value
     {
         get
@@ -40,9 +37,9 @@ public readonly struct Pointer<TValue> where TValue : unmanaged
         }
     }
 
-    public bool IsNull()
+    public bool IsNull
     {
-        unsafe { return _rawPointer == null;}
+        get { unsafe { return _rawPointer == null; } }
     }
 
     public void ThrowIfNull()
@@ -52,12 +49,50 @@ public readonly struct Pointer<TValue> where TValue : unmanaged
             if (_rawPointer == null) throw new InvalidOperationException("Pointer is null.");
         }
     }
-    
+
     public void ThrowIfNull(string message)
     {
         unsafe
         {
             if (_rawPointer == null) throw new InvalidOperationException(message);
+        }
+    }
+
+    public bool Equals(Pointer<TValue> other)
+    {
+        unsafe { return _rawPointer == other._rawPointer; }
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Pointer<TValue> other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        unsafe { return ((nint)_rawPointer).GetHashCode(); }
+    }
+
+    public static bool operator ==(Pointer<TValue> left, Pointer<TValue> right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Pointer<TValue> left, Pointer<TValue> right)
+    {
+        return !left.Equals(right);
+    }
+
+    public override string ToString()
+    {
+        unsafe
+        {
+            if (_rawPointer == null)
+            {
+                return "null";
+            }
+
+            return $"0x{(nint)_rawPointer:X}";
         }
     }
 }
