@@ -12,12 +12,12 @@ public class GameWorld : IUpdatable
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
 
-    public Handle<GameObject> CreateGameObject()
+    public GameObject CreateGameObject()
     {
         GameObject gameObject = new GameObject(this);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);
         gameObject.Handle = handle;
-        return handle;
+        return gameObject;
     }
 
     public GameObject? GetGameObject(Handle<GameObject> handle)
@@ -38,6 +38,11 @@ public class GameWorld : IUpdatable
             gameObject.DetachAll();
             gameObject.NotifyRemoved();
         }
+    }
+
+    public void RemoveGameObject(GameObject gameObject)
+    {
+        RemoveGameObject(gameObject.Handle);
     }
 
     public void OnComponentAttached<T>(Action<GameObject, T> callback) where T : GameComponent

@@ -1,5 +1,3 @@
-using GameKit.Collections;
-
 namespace GameKit.Componentize.Tests;
 
 public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
@@ -42,8 +40,7 @@ public class StateMachineTests
     public void Setup()
     {
         _world = new GameWorld();
-        Handle<GameObject> handle = _world.CreateGameObject();
-        _gameObject = _world.GetGameObject(handle)!;
+        _gameObject = _world.CreateGameObject();
     }
 
     [Test]
