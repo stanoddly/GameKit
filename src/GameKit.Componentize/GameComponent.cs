@@ -53,7 +53,7 @@ public abstract class GameComponent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveOwner()
     {
-        World.RemoveGameObject(Owner.Name);
+        World.RemoveGameObject(Owner.Handle);
     }
 
     protected internal virtual void OnAttach()

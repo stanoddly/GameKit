@@ -9,7 +9,8 @@ A component-based game architecture: GameObjects hold GameComponents, components
 Container for components. Stores components in a list — multiple components of the same type can coexist. Implements `IEnumerable<GameComponent>`.
 
 ```csharp
-GameObject dude = gameWorld.CreateGameObject("dude");
+Handle<GameObject> dudeHandle = gameWorld.CreateGameObject();
+GameObject dude = gameWorld.GetGameObject(dudeHandle)!;
 
 // new() shorthand and instance attachment (chainable)
 dude.Attach<TransformComponent>()
@@ -61,15 +62,15 @@ public class MyComponent : GameComponent
 
 ### GameWorld
 
-Named registry of GameObjects.
+Registry of GameObjects, identified by `Handle<GameObject>`.
 
 ```csharp
 GameWorld world = ServiceLocator.GetService<GameWorld>();
-GameObject obj = world.CreateGameObject("npc");
-GameObject? obj = world.GetGameObject("npc");
+Handle<GameObject> handle = world.CreateGameObject();
+GameObject? obj = world.GetGameObject(handle);
 
 // Removes the object and calls DetachAll
-world.RemoveGameObject("npc");
+world.RemoveGameObject(handle);
 ```
 
 ## Events (PubSub)
@@ -164,7 +165,7 @@ Services<GameWorld>.Instance
 ```csharp
 public class DynamicBodyComponent : GameComponent
 {
-    private Handle64<DynamicBodyTag> _handle;
+    private Handle<DynamicBodyTag> _handle;
 
     protected override void OnAttach()
     {

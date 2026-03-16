@@ -1,3 +1,5 @@
+using GameKit.Collections;
+
 namespace GameKit.Componentize.Tests;
 
 public class TestComponent : GameComponent
@@ -35,20 +37,22 @@ public class StateCapturingComponent : GameComponent
 public class GameObjectTests
 {
     GameWorld _world;
+    Handle<GameObject> _handle;
     GameObject _gameObject;
 
     [SetUp]
     public void Setup()
     {
         _world = new GameWorld();
-        _gameObject = _world.CreateGameObject("test");
+        _handle = _world.CreateGameObject();
+        _gameObject = _world.GetGameObject(_handle)!;
     }
 
     [Test]
     public void Attach_WithNewComponent_AttachesComponent()
     {
         _gameObject.Attach<TestComponent>();
-        
+
         TestComponent component = _gameObject.Get<TestComponent>();
         Assert.That(component, Is.Not.Null);
         Assert.That(component.Value, Is.EqualTo("test"));
@@ -58,7 +62,7 @@ public class GameObjectTests
     public void Attach_WithNewComponent_CallsOnAttach()
     {
         _gameObject.Attach<TestComponent>();
-        
+
         TestComponent component = _gameObject.Get<TestComponent>();
         Assert.That(component.OnAttachCalled, Is.True);
     }
@@ -67,7 +71,7 @@ public class GameObjectTests
     public void Attach_WithNewComponent_SetsOwner()
     {
         _gameObject.Attach<TestComponent>();
-        
+
         TestComponent component = _gameObject.Get<TestComponent>();
         Assert.That(component.HasOwner(), Is.True);
     }
@@ -78,9 +82,9 @@ public class GameObjectTests
         _gameObject.Attach<TestComponent>();
         TestComponent original = _gameObject.Get<TestComponent>();
         original.Value = "modified";
-        
+
         _gameObject.Attach<TestComponent>();
-        
+
         var components = _gameObject.GetComponents<TestComponent>();
         Assert.That(components.Count, Is.EqualTo(2));
         Assert.That(components[0].Value, Is.EqualTo("modified"));
@@ -92,7 +96,7 @@ public class GameObjectTests
     public void Attach_ReturnsGameObject_ForChaining()
     {
         GameObject result = _gameObject.Attach<TestComponent>();
-        
+
         Assert.That(ReferenceEquals(result, _gameObject), Is.True);
     }
 
@@ -100,9 +104,9 @@ public class GameObjectTests
     public void Get_WithExistingComponent_ReturnsComponent()
     {
         _gameObject.Attach<TestComponent>();
-        
+
         TestComponent component = _gameObject.Get<TestComponent>();
-        
+
         Assert.That(component, Is.Not.Null);
         Assert.That(component.Value, Is.EqualTo("test"));
     }
@@ -118,10 +122,10 @@ public class GameObjectTests
     {
         _gameObject.Attach<TestComponent>();
         _gameObject.Attach<TestComponent2>();
-        
+
         TestComponent component1 = _gameObject.Get<TestComponent>();
         TestComponent2 component2 = _gameObject.Get<TestComponent2>();
-        
+
         Assert.That(component1.Value, Is.EqualTo("test"));
         Assert.That(component2.Number, Is.EqualTo(42));
     }
@@ -131,7 +135,7 @@ public class GameObjectTests
     {
         _gameObject.Attach<TestComponent>();
         _gameObject.Detach<TestComponent>();
-        
+
         Assert.Throws<ComponentNotFound>(() => _gameObject.Get<TestComponent>());
     }
 
@@ -139,9 +143,9 @@ public class GameObjectTests
     public void Attach_WithInstance_AttachesProvidedInstance()
     {
         TestComponent instance = new TestComponent { Value = "custom" };
-        
+
         _gameObject.Attach(instance);
-        
+
         TestComponent retrieved = _gameObject.Get<TestComponent>();
         Assert.That(ReferenceEquals(retrieved, instance), Is.True);
         Assert.That(retrieved.Value, Is.EqualTo("custom"));
@@ -151,9 +155,9 @@ public class GameObjectTests
     public void Attach_WithInstance_CallsOnAttach()
     {
         TestComponent instance = new TestComponent();
-        
+
         _gameObject.Attach(instance);
-        
+
         Assert.That(instance.OnAttachCalled, Is.True);
     }
 
@@ -161,9 +165,9 @@ public class GameObjectTests
     public void Attach_WithInstance_SetsOwner()
     {
         TestComponent instance = new TestComponent();
-        
+
         _gameObject.Attach(instance);
-        
+
         Assert.That(instance.HasOwner(), Is.True);
     }
 
@@ -172,7 +176,7 @@ public class GameObjectTests
     {
         _gameObject.Attach<TestComponent>();
         _gameObject.Attach<TestComponent>();
-        
+
         var components = _gameObject.GetComponents<TestComponent>();
         Assert.That(components.Count, Is.EqualTo(2));
         Assert.That(components[0].OnAttachCalled, Is.True);
@@ -293,7 +297,7 @@ public class GameObjectTests
 
         component.RemoveOwner();
 
-        Assert.That(_world.GetGameObject("test"), Is.Null);
+        Assert.That(_world.GetGameObject(_handle), Is.Null);
     }
 
     [Test]
@@ -317,7 +321,7 @@ public class GameObjectTests
     [Test]
     public void State_AfterRemove_IsRemoved()
     {
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.That(_gameObject.State, Is.EqualTo(GameObjectState.Removed));
     }
@@ -330,7 +334,7 @@ public class GameObjectTests
         component.CaptureAction = c => stateDuringDetach = c.Owner.State;
         _gameObject.Attach(component);
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.That(stateDuringDetach, Is.EqualTo(GameObjectState.Removing));
     }
@@ -341,7 +345,7 @@ public class GameObjectTests
         GameWorld? worldDuringEvent = null;
         _gameObject.Removed += go => worldDuringEvent = go.World;
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.That(worldDuringEvent, Is.SameAs(_world));
     }
@@ -349,7 +353,7 @@ public class GameObjectTests
     [Test]
     public void Attach_AfterRemove_Throws()
     {
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.Throws<InvalidOperationException>(() => _gameObject.Attach<TestComponent>());
     }
@@ -361,7 +365,7 @@ public class GameObjectTests
         component.CaptureAction = c => c.Owner.Attach<TestComponent2>();
         _gameObject.Attach(component);
 
-        Assert.Throws<InvalidOperationException>(() => _world.RemoveGameObject("test"));
+        Assert.Throws<InvalidOperationException>(() => _world.RemoveGameObject(_handle));
     }
 
     [Test]
@@ -369,7 +373,7 @@ public class GameObjectTests
     {
         _gameObject.Attach<TestComponent>();
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.DoesNotThrow(() => _gameObject.Detach<TestComponent>());
     }
@@ -379,7 +383,7 @@ public class GameObjectTests
     {
         _gameObject.Attach<TestComponent>();
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.DoesNotThrow(() => _gameObject.DetachAll());
     }
@@ -387,7 +391,7 @@ public class GameObjectTests
     [Test]
     public void World_AfterRemove_Throws()
     {
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(_handle);
 
         Assert.Throws<InvalidOperationException>(() => { GameWorld w = _gameObject.World; });
     }

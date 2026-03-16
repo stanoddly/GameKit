@@ -2,7 +2,7 @@ namespace GameKit.Collections.Tests;
 
 public class DenseSlotMapTests
 {
-    DenseSlotMap<Handle64<object>, int> _slotMap;
+    DenseSlotMap<Handle<object>, int> _slotMap;
 
     [SetUp]
     public void Setup()
@@ -13,7 +13,7 @@ public class DenseSlotMapTests
     [Test]
     public void Contains_WithOneItem_ReturnsTrue()
     {
-        Handle64<object> handle = _slotMap.Add(42);
+        Handle<object> handle = _slotMap.Add(42);
         
         Assert.That(_slotMap.Contains(handle));
     }
@@ -21,7 +21,7 @@ public class DenseSlotMapTests
     [Test]
     public void Contains_BeyondItsSize_ReturnsFalse()
     {
-        Handle64<object> handle = new Handle64<object>{ Index = 1234, Version = 0 };
+        Handle<object> handle = new Handle<object>{ Index = 1234, Version = 0 };
         bool result = _slotMap.Contains(handle);
         
         Assert.That(!result);
@@ -31,11 +31,11 @@ public class DenseSlotMapTests
     public void AddAfterRemovalRecyclesIndex()
     {
         // Arrange
-        Handle64<object> handleFirst = _slotMap.Add(42);
+        Handle<object> handleFirst = _slotMap.Add(42);
         _slotMap.Remove(handleFirst);
         
         // Act
-        Handle64<object> handleSecond = _slotMap.Add(43);
+        Handle<object> handleSecond = _slotMap.Add(43);
         
         // Assert
         Assert.That(handleFirst.Index == handleSecond.Index);
@@ -46,11 +46,11 @@ public class DenseSlotMapTests
     public void AddAfterRemovalReplacesTheOldValue()
     {
         // Arrange
-        Handle64<object> handleFirst = _slotMap.Add(42);
+        Handle<object> handleFirst = _slotMap.Add(42);
         _slotMap.Remove(handleFirst);
         
         // Act
-        Handle64<object> handleSecond = _slotMap.Add(43);
+        Handle<object> handleSecond = _slotMap.Add(43);
 
         // Assert
         int value;
@@ -68,10 +68,10 @@ public class DenseSlotMapTests
     public void RemoveInTheMiddleRearrangesValuesAsExpected()
     {
         // Arrange
-        Handle64<object> handle1 = _slotMap.Add(42);
-        Handle64<object> handle2 = _slotMap.Add(43);
-        Handle64<object> handle3 = _slotMap.Add(44);
-        Handle64<object> handle4 = _slotMap.Add(45);
+        Handle<object> handle1 = _slotMap.Add(42);
+        Handle<object> handle2 = _slotMap.Add(43);
+        Handle<object> handle3 = _slotMap.Add(44);
+        Handle<object> handle4 = _slotMap.Add(45);
 
         // Act
         _slotMap.Remove(handle2);
@@ -103,15 +103,15 @@ public class DenseSlotMapTests
     public void ThreeAddAfterTwoRemovalsWorkAsExpected()
     {
         // Act
-        Handle64<object> handle1 = _slotMap.Add(42);
-        Handle64<object> handle2 = _slotMap.Add(43);
+        Handle<object> handle1 = _slotMap.Add(42);
+        Handle<object> handle2 = _slotMap.Add(43);
         
         _slotMap.Remove(handle2);
         _slotMap.Remove(handle1);
         
-        Handle64<object> handle3 = _slotMap.Add(52);
-        Handle64<object> handle4 = _slotMap.Add(53);
-        Handle64<object> handle5 = _slotMap.Add(54);
+        Handle<object> handle3 = _slotMap.Add(52);
+        Handle<object> handle4 = _slotMap.Add(53);
+        Handle<object> handle5 = _slotMap.Add(54);
 
         // Assert
         bool contains;
@@ -130,15 +130,15 @@ public class DenseSlotMapTests
     public void AddAfterRemoveInTheMiddleRecyclesIndex()
     {
         // Arrange
-        Handle64<object> handle1 = _slotMap.Add(42);
-        Handle64<object> handle2 = _slotMap.Add(43);
-        Handle64<object> handle3 = _slotMap.Add(44);
-        Handle64<object> handle4 = _slotMap.Add(45);
+        Handle<object> handle1 = _slotMap.Add(42);
+        Handle<object> handle2 = _slotMap.Add(43);
+        Handle<object> handle3 = _slotMap.Add(44);
+        Handle<object> handle4 = _slotMap.Add(45);
         
         _slotMap.Remove(handle2);
 
         // Act
-        Handle64<object> handle5 = _slotMap.Add(53);
+        Handle<object> handle5 = _slotMap.Add(53);
 
         // Assert
         int value;
@@ -161,7 +161,7 @@ public class DenseSlotMapTests
     [Test]
     public void UnsafeTryGetRefValue1_WhenHandleExists_ReportsTrue()
     {
-        Handle64<object> handle = _slotMap.Add(42);
+        Handle<object> handle = _slotMap.Add(42);
 
         _slotMap.UnsafeTryGetRefValue1(handle, out bool exists);
 
@@ -172,9 +172,9 @@ public class DenseSlotMapTests
     public void Add_MultipleTimes_WorksAsExpected()
     {
         // Act
-        Handle64<object> handle1 = _slotMap.Add(42);
-        Handle64<object> handle2 = _slotMap.Add(43);
-        Handle64<object> handle3 = _slotMap.Add(44);
+        Handle<object> handle1 = _slotMap.Add(42);
+        Handle<object> handle2 = _slotMap.Add(43);
+        Handle<object> handle3 = _slotMap.Add(44);
 
         // Assert
         int value;
