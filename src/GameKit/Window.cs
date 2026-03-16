@@ -131,7 +131,7 @@ internal class Window : IWindow
                     (IntPtr)pixels,
                     pitch);
 
-                if (surface.IsNull())
+                if (surface.IsNull)
                 {
                     throw new GameKitException($"SDL_CreateSurfaceFrom failed: {SDL3.SDL_GetError()}");
                 }

@@ -25,7 +25,7 @@ public class GpuFence : IDisposable
 
     public void Dispose()
     {
-        if (!Pointer.IsNull())
+        if (!Pointer.IsNull)
         {
             unsafe
             {
@@ -37,7 +37,7 @@ public class GpuFence : IDisposable
 
     private void ThrowIfDisposed()
     {
-        if (Pointer.IsNull())
+        if (Pointer.IsNull)
         {
             throw new ObjectDisposedException(nameof(GpuFence));
         }

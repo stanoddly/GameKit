@@ -67,7 +67,7 @@ internal class GpuDevice : IGpuDevice
         {
             Pointer<SDL_GPUCommandBuffer> sdlGpuCommandBuffer = SDL3.SDL_AcquireGPUCommandBuffer(SdlGpuDevice);
             
-            if (sdlGpuCommandBuffer.IsNull())
+            if (sdlGpuCommandBuffer.IsNull)
             {
                 throw new GameKitInitializationException($"SDL_AcquireGPUCommandBuffer failed: {SDL3.SDL_GetError()}");
             }
@@ -186,7 +186,7 @@ internal class GpuDevice : IGpuDevice
     {
         _textures.Remove(texture);
         Pointer<SDL_GPUTexture> pointer = texture.SdlGpuTexture;
-        if (pointer.IsNull())
+        if (pointer.IsNull)
         {
             return;
         }
@@ -203,7 +203,7 @@ internal class GpuDevice : IGpuDevice
     {
         _graphicsPipelines.Remove(pipeline);
         Pointer<SDL_GPUGraphicsPipeline> pointer = pipeline.Pointer;
-        if (pointer.IsNull())
+        if (pointer.IsNull)
         {
             return;
         }
@@ -231,7 +231,7 @@ internal class GpuDevice : IGpuDevice
     public void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer)
     {
         _vertexBuffers.Remove(vertexBuffer);
-        if (!vertexBuffer.SdlVertexBuffer.IsNull())
+        if (!vertexBuffer.SdlVertexBuffer.IsNull)
         {
             unsafe
             {
@@ -241,7 +241,7 @@ internal class GpuDevice : IGpuDevice
             vertexBuffer.SdlVertexBuffer = default;
         }
 
-        if (!vertexBuffer.SdlIndexBuffer.IsNull())
+        if (!vertexBuffer.SdlIndexBuffer.IsNull)
         {
             unsafe
             {
@@ -257,7 +257,7 @@ internal class GpuDevice : IGpuDevice
     public void ReleaseStorageBuffer(GpuStorageBuffer storageBuffer)
     {
         _storageBuffers.Remove(storageBuffer);
-        if (!storageBuffer.SdlBuffer.IsNull())
+        if (!storageBuffer.SdlBuffer.IsNull)
         {
             unsafe
             {

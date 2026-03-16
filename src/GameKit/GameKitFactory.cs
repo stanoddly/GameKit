@@ -70,7 +70,7 @@ public class GameKitFactory: IDisposable
              sdlWindow= SDL3.SDL_CreateWindow(windowTitle, (int)width, (int)height, fullscreen ? SDL_WindowFlags.SDL_WINDOW_FULLSCREEN : 0);
         }
 
-        if (sdlWindow.IsNull())
+        if (sdlWindow.IsNull)
         {
             throw new GameKitInitializationException($"SDL_CreateWindow failed: {SDL3.SDL_GetError()}");
         }
@@ -119,7 +119,7 @@ public class GameKitFactory: IDisposable
             Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDeviceWithProperties(props);
             SDL3.SDL_DestroyProperties(props);
 
-            if (device.IsNull())
+            if (device.IsNull)
             {
                 throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");
             }

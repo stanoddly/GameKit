@@ -146,7 +146,7 @@ public class CommandBuffer: ICommandBuffer
             SDL_GPURenderPass* gpuRenderPass;
             fixed (SDL_GPUColorTargetInfo* colorTargetInfosPtr = colorTargetInfos)
             {
-                if (depthBufferPointer.IsNull())
+                if (depthBufferPointer.IsNull)
                 {
                     gpuRenderPass = SDL3.SDL_BeginGPURenderPass(
                         SdlGpuCommandBuffer,
@@ -250,7 +250,7 @@ public class CommandBuffer: ICommandBuffer
 
     public void Cancel()
     {
-        if (!SdlGpuCommandBuffer.IsNull())
+        if (!SdlGpuCommandBuffer.IsNull)
         {
             unsafe
             {
@@ -267,7 +267,7 @@ public class CommandBuffer: ICommandBuffer
 
     private void ThrowIfDisposed()
     {
-        if (SdlGpuCommandBuffer.IsNull())
+        if (SdlGpuCommandBuffer.IsNull)
         {
             throw new ObjectDisposedException(nameof(CommandBuffer));
         }
