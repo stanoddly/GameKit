@@ -68,7 +68,7 @@ GameWorld world = ServiceLocator.GetService<GameWorld>();
 GameObject obj = world.CreateGameObject();
 
 // Removes the object and calls DetachAll
-world.RemoveGameObject(obj.Handle);
+world.RemoveGameObject(obj);
 ```
 
 ## Events (PubSub)

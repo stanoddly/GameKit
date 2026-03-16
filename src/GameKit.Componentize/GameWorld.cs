@@ -40,6 +40,11 @@ public class GameWorld : IUpdatable
         }
     }
 
+    public void RemoveGameObject(GameObject gameObject)
+    {
+        RemoveGameObject(gameObject.Handle);
+    }
+
     public void OnComponentAttached<T>(Action<GameObject, T> callback) where T : GameComponent
     {
         _attachedCallbacks ??= new();

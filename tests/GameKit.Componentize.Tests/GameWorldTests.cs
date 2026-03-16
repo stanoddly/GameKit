@@ -146,7 +146,7 @@ public class GameWorldTests
 
         GameObject gameObject = _world.CreateGameObject();
         gameObject.Attach<TestComponent>();
-        _world.RemoveGameObject(gameObject.Handle);
+        _world.RemoveGameObject(gameObject);
 
         Assert.That(count, Is.EqualTo(1));
     }
@@ -234,7 +234,7 @@ public class GameWorldTests
         GameObject? received = null;
         gameObject.Removed += go => received = go;
 
-        _world.RemoveGameObject(gameObject.Handle);
+        _world.RemoveGameObject(gameObject);
 
         Assert.That(received, Is.SameAs(gameObject));
     }
@@ -248,7 +248,7 @@ public class GameWorldTests
         int componentCountDuringEvent = -1;
         gameObject.Removed += go => componentCountDuringEvent = go.Count();
 
-        _world.RemoveGameObject(gameObject.Handle);
+        _world.RemoveGameObject(gameObject);
 
         Assert.That(componentCountDuringEvent, Is.EqualTo(0));
     }

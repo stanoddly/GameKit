@@ -34,7 +34,7 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 
 // Removal
 player.Detach<HealthComponent>();
-gameWorld.RemoveGameObject(player.Handle); // Detaches all components
+gameWorld.RemoveGameObject(player); // Detaches all components
 ```
 
 ### GameComponent
