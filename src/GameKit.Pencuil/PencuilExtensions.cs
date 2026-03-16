@@ -13,7 +13,7 @@ public static class PencuilExtensions
         builder.RegisterInstance(GuiStyles.Style);
         builder.RegisterInstance(new PencuilOptions { Order = order, ClearTarget = clearTarget });
         builder.RegisterType<Pencil>();
-        builder.RegisterType<GuiCanvasRegistry>();
+        builder.RegisterType<ViewRegistry>();
         builder.RegisterType<PencuilRenderer>();
         builder.RegisterType<PencuilRenderPhase<TRenderContext>>().As<IRenderPhase<TRenderContext>>();
         return builder;

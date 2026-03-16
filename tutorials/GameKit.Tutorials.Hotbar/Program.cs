@@ -14,8 +14,8 @@ static class Program
             .AddContentFromProjectDirectory("Content");
 
         builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
-        builder.RegisterInstance(new HotbarState());
-        builder.RegisterType<Hotbar>().As<IGuiCanvas>();
+        builder.RegisterInstance(new HotbarViewModel());
+        builder.RegisterType<Hotbar>().As<IView>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

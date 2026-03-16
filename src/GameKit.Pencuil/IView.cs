@@ -1,6 +1,6 @@
 namespace GameKit.Pencuil;
 
-public interface IGuiCanvas
+public interface IView
 {
     bool ConsumeDirty();
     void Build(Pencil pencil);
