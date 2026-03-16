@@ -38,7 +38,7 @@ public class DenseSlotMap<THandle, TValue1>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -162,7 +162,7 @@ public class DenseSlotMap<THandle, TValue1>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
 
@@ -179,7 +179,7 @@ public class DenseSlotMap<THandle, TValue1>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -190,7 +190,7 @@ public class DenseSlotMap<THandle, TValue1>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -240,7 +240,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -393,7 +393,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -404,7 +404,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
 
@@ -430,7 +430,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -441,7 +441,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -492,7 +492,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -674,7 +674,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -685,7 +685,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -696,7 +696,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
 
@@ -731,7 +731,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -742,7 +742,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -794,7 +794,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -1005,7 +1005,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -1016,7 +1016,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -1027,7 +1027,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -1038,7 +1038,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
 
@@ -1082,7 +1082,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -1093,7 +1093,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -1146,7 +1146,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -1386,7 +1386,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -1397,7 +1397,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -1408,7 +1408,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -1419,7 +1419,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -1430,7 +1430,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
 
@@ -1483,7 +1483,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -1494,7 +1494,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -1548,7 +1548,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -1817,7 +1817,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -1828,7 +1828,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -1839,7 +1839,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -1850,7 +1850,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -1861,7 +1861,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -1872,7 +1872,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
 
@@ -1934,7 +1934,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -1945,7 +1945,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -2000,7 +2000,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -2298,7 +2298,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -2309,7 +2309,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -2320,7 +2320,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -2331,7 +2331,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -2342,7 +2342,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -2353,7 +2353,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
     public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
@@ -2364,7 +2364,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue7>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue8((int)index);
     }
 
@@ -2435,7 +2435,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -2446,7 +2446,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -2502,7 +2502,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -2829,7 +2829,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -2840,7 +2840,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -2851,7 +2851,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -2862,7 +2862,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -2873,7 +2873,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -2884,7 +2884,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
     public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
@@ -2895,7 +2895,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue7>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue8((int)index);
     }
     public ref TValue8 UnsafeTryGetRefValue8(THandle handle, out bool value)
@@ -2906,7 +2906,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             return ref Unsafe.NullRef<TValue8>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue9((int)index);
     }
 
@@ -2986,7 +2986,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -2997,7 +2997,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -3055,7 +3055,7 @@ public struct DenseSlotMapStruct<THandle, TValue1>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -3179,7 +3179,7 @@ public struct DenseSlotMapStruct<THandle, TValue1>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
 
@@ -3196,7 +3196,7 @@ public struct DenseSlotMapStruct<THandle, TValue1>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -3207,7 +3207,7 @@ public struct DenseSlotMapStruct<THandle, TValue1>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -3257,7 +3257,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -3410,7 +3410,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -3421,7 +3421,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
 
@@ -3447,7 +3447,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -3458,7 +3458,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -3509,7 +3509,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -3691,7 +3691,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -3702,7 +3702,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -3713,7 +3713,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
 
@@ -3748,7 +3748,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -3759,7 +3759,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -3811,7 +3811,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -4022,7 +4022,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -4033,7 +4033,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -4044,7 +4044,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -4055,7 +4055,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
 
@@ -4099,7 +4099,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -4110,7 +4110,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -4163,7 +4163,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -4403,7 +4403,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -4414,7 +4414,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -4425,7 +4425,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -4436,7 +4436,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -4447,7 +4447,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
 
@@ -4500,7 +4500,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -4511,7 +4511,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -4565,7 +4565,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -4834,7 +4834,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -4845,7 +4845,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -4856,7 +4856,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -4867,7 +4867,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -4878,7 +4878,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -4889,7 +4889,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
 
@@ -4951,7 +4951,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -4962,7 +4962,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -5017,7 +5017,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -5315,7 +5315,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -5326,7 +5326,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -5337,7 +5337,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -5348,7 +5348,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -5359,7 +5359,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -5370,7 +5370,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
     public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
@@ -5381,7 +5381,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue7>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue8((int)index);
     }
 
@@ -5452,7 +5452,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -5463,7 +5463,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;
@@ -5519,7 +5519,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -5846,7 +5846,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue1>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue2((int)index);
     }
     public ref TValue2 UnsafeTryGetRefValue2(THandle handle, out bool value)
@@ -5857,7 +5857,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue2>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue3((int)index);
     }
     public ref TValue3 UnsafeTryGetRefValue3(THandle handle, out bool value)
@@ -5868,7 +5868,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue3>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue4((int)index);
     }
     public ref TValue4 UnsafeTryGetRefValue4(THandle handle, out bool value)
@@ -5879,7 +5879,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue4>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue5((int)index);
     }
     public ref TValue5 UnsafeTryGetRefValue5(THandle handle, out bool value)
@@ -5890,7 +5890,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue5>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue6((int)index);
     }
     public ref TValue6 UnsafeTryGetRefValue6(THandle handle, out bool value)
@@ -5901,7 +5901,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue6>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue7((int)index);
     }
     public ref TValue7 UnsafeTryGetRefValue7(THandle handle, out bool value)
@@ -5912,7 +5912,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue7>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue8((int)index);
     }
     public ref TValue8 UnsafeTryGetRefValue8(THandle handle, out bool value)
@@ -5923,7 +5923,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             return ref Unsafe.NullRef<TValue8>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue9((int)index);
     }
 
@@ -6003,7 +6003,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -6014,7 +6014,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;

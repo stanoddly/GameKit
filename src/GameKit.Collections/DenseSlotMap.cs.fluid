@@ -43,7 +43,7 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
         // Recycle
         else
         {
-            var handleIndex = _freeIndex;
+            uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
             bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
@@ -170,7 +170,7 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
             return ref Unsafe.NullRef<TValue{{ i }}>();
         }
 
-        value = false;
+        value = true;
         return ref _dense.GetRefValue{{ i | plus: 1 }}((int)index);
     }
     {%- endfor %}
@@ -189,7 +189,7 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
 
     public bool Contains(THandle handle)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             return false;
         }
@@ -200,7 +200,7 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
 
     public bool Contains(THandle handle, out uint index)
     {
-        if (handle.Index >= _handles.Length)
+        if ((nuint)handle.Index >= (nuint)_handles.Length)
         {
             index = default;
             return false;

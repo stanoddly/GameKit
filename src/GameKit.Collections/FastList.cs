@@ -25,7 +25,7 @@ public class FastList<TValue>
     {
         if (Length >= _items.Length)
         {
-            TValue[] newItems = new TValue[Length + Length / 2];
+            TValue[] newItems = new TValue[Math.Max(Length + Length / 2, Length + 1)];
             Array.Copy(_items, newItems, Length);
 
             _items = newItems;
@@ -40,7 +40,7 @@ public class FastList<TValue>
     {
         if (Length >= _items.Length)
         {
-            TValue[] newItems = new TValue[Length + Length / 2];
+            TValue[] newItems = new TValue[Math.Max(Length + Length / 2, Length + 1)];
             Array.Copy(_items, newItems, Length);
 
             _items = newItems;
@@ -205,7 +205,7 @@ public struct FastListStruct<TValue>
     {
         if (Length >= _items.Length)
         {
-            TValue[] newItems = new TValue[Length + Length / 2];
+            TValue[] newItems = new TValue[Math.Max(Length + Length / 2, Length + 1)];
             Array.Copy(_items, newItems, Length);
 
             _items = newItems;
@@ -220,7 +220,7 @@ public struct FastListStruct<TValue>
     {
         if (Length >= _items.Length)
         {
-            TValue[] newItems = new TValue[Length + Length / 2];
+            TValue[] newItems = new TValue[Math.Max(Length + Length / 2, Length + 1)];
             Array.Copy(_items, newItems, Length);
 
             _items = newItems;

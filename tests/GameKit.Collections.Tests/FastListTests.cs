@@ -192,6 +192,19 @@ public class FastListTests
     {
         Assert.That(() => new FastList<int>(0), Throws.TypeOf<ArgumentOutOfRangeException>());
     }
+
+    [Test]
+    public void Add_WithInitialCapacityOne_GrowsCorrectly()
+    {
+        FastList<int> smallList = new FastList<int>(1);
+
+        smallList.Add(1);
+        smallList.Add(2);
+
+        Assert.That(smallList.Length, Is.EqualTo(2));
+        Assert.That(smallList[0], Is.EqualTo(1));
+        Assert.That(smallList[1], Is.EqualTo(2));
+    }
 }
 
 public class FastListStructTests

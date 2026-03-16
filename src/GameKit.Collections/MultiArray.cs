@@ -61,9 +61,9 @@ public class MultiArray<TValue1, TValue2>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
     }
 
@@ -73,7 +73,7 @@ public class MultiArray<TValue1, TValue2>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
     }
 
@@ -100,9 +100,15 @@ public class MultiArray<TValue1, TValue2>
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
         return true;
     }
 
@@ -375,11 +381,11 @@ public class MultiArray<TValue1, TValue2, TValue3>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
     }
 
@@ -389,9 +395,9 @@ public class MultiArray<TValue1, TValue2, TValue3>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
     }
 
@@ -424,9 +430,17 @@ public class MultiArray<TValue1, TValue2, TValue3>
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
             _values3[index] = _values3[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
         return true;
     }
 
@@ -771,13 +785,13 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
     }
 
@@ -787,11 +801,11 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
     }
 
@@ -830,9 +844,19 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4>
             _values2[index] = _values2[swappedIndex];
             _values3[index] = _values3[swappedIndex];
             _values4[index] = _values4[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
         return true;
     }
 
@@ -1249,15 +1273,15 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
     }
 
@@ -1267,13 +1291,13 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
     }
 
@@ -1318,9 +1342,21 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5>
             _values3[index] = _values3[swappedIndex];
             _values4[index] = _values4[swappedIndex];
             _values5[index] = _values5[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
         return true;
     }
 
@@ -1809,17 +1845,17 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
     }
 
@@ -1829,15 +1865,15 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
     }
 
@@ -1888,9 +1924,23 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>
             _values4[index] = _values4[swappedIndex];
             _values5[index] = _values5[swappedIndex];
             _values6[index] = _values6[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
         return true;
     }
 
@@ -2451,19 +2501,19 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
     }
 
@@ -2473,17 +2523,17 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
     }
 
@@ -2540,9 +2590,25 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             _values5[index] = _values5[swappedIndex];
             _values6[index] = _values6[swappedIndex];
             _values7[index] = _values7[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
         return true;
     }
 
@@ -3175,21 +3241,21 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
     }
 
@@ -3199,19 +3265,19 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
     }
 
@@ -3274,9 +3340,27 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             _values6[index] = _values6[swappedIndex];
             _values7[index] = _values7[swappedIndex];
             _values8[index] = _values8[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
+            _values8[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
+        _values8[swappedIndex] = default!;
         return true;
     }
 
@@ -3981,23 +4065,23 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
-        _values9[index] = value9;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index) = value9;
         
     }
 
@@ -4007,21 +4091,21 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
-        _values9[index] = value9;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index) = value9;
         
     }
 
@@ -4090,9 +4174,29 @@ public class MultiArray<TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TV
             _values7[index] = _values7[swappedIndex];
             _values8[index] = _values8[swappedIndex];
             _values9[index] = _values9[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
+            _values8[swappedIndex] = default!;
+            _values9[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
+        _values8[swappedIndex] = default!;
+        _values9[swappedIndex] = default!;
         return true;
     }
 
@@ -4830,9 +4934,9 @@ public struct MultiArrayStruct<TValue1, TValue2>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
     }
 
@@ -4842,7 +4946,7 @@ public struct MultiArrayStruct<TValue1, TValue2>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
     }
 
@@ -4869,9 +4973,15 @@ public struct MultiArrayStruct<TValue1, TValue2>
             
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
         return true;
     }
 
@@ -5144,11 +5254,11 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
     }
 
@@ -5158,9 +5268,9 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
     }
 
@@ -5193,9 +5303,17 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3>
             _values1[index] = _values1[swappedIndex];
             _values2[index] = _values2[swappedIndex];
             _values3[index] = _values3[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
         return true;
     }
 
@@ -5540,13 +5658,13 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
     }
 
@@ -5556,11 +5674,11 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
     }
 
@@ -5599,9 +5717,19 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4>
             _values2[index] = _values2[swappedIndex];
             _values3[index] = _values3[swappedIndex];
             _values4[index] = _values4[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
         return true;
     }
 
@@ -6018,15 +6146,15 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
     }
 
@@ -6036,13 +6164,13 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
     }
 
@@ -6087,9 +6215,21 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5>
             _values3[index] = _values3[swappedIndex];
             _values4[index] = _values4[swappedIndex];
             _values5[index] = _values5[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
         return true;
     }
 
@@ -6578,17 +6718,17 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
     }
 
@@ -6598,15 +6738,15 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
     }
 
@@ -6657,9 +6797,23 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             _values4[index] = _values4[swappedIndex];
             _values5[index] = _values5[swappedIndex];
             _values6[index] = _values6[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
         return true;
     }
 
@@ -7220,19 +7374,19 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
     }
 
@@ -7242,17 +7396,17 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
     }
 
@@ -7309,9 +7463,25 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             _values5[index] = _values5[swappedIndex];
             _values6[index] = _values6[swappedIndex];
             _values7[index] = _values7[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
         return true;
     }
 
@@ -7944,21 +8114,21 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
     }
 
@@ -7968,19 +8138,19 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
     }
 
@@ -8043,9 +8213,27 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             _values6[index] = _values6[swappedIndex];
             _values7[index] = _values7[swappedIndex];
             _values8[index] = _values8[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
+            _values8[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
+        _values8[swappedIndex] = default!;
         return true;
     }
 
@@ -8750,23 +8938,23 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values1[index] = value1;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values1), index) = value1;
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
-        _values9[index] = value9;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index) = value9;
         
     }
 
@@ -8776,21 +8964,21 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             throw new ArgumentOutOfRangeException(nameof(index));
 
         
-        _values2[index] = value2;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values2), index) = value2;
         
-        _values3[index] = value3;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values3), index) = value3;
         
-        _values4[index] = value4;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values4), index) = value4;
         
-        _values5[index] = value5;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values5), index) = value5;
         
-        _values6[index] = value6;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values6), index) = value6;
         
-        _values7[index] = value7;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values7), index) = value7;
         
-        _values8[index] = value8;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values8), index) = value8;
         
-        _values9[index] = value9;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_values9), index) = value9;
         
     }
 
@@ -8859,9 +9047,29 @@ public struct MultiArrayStruct<TValue1, TValue2, TValue3, TValue4, TValue5, TVal
             _values7[index] = _values7[swappedIndex];
             _values8[index] = _values8[swappedIndex];
             _values9[index] = _values9[swappedIndex];
+            
+            _values1[swappedIndex] = default!;
+            _values2[swappedIndex] = default!;
+            _values3[swappedIndex] = default!;
+            _values4[swappedIndex] = default!;
+            _values5[swappedIndex] = default!;
+            _values6[swappedIndex] = default!;
+            _values7[swappedIndex] = default!;
+            _values8[swappedIndex] = default!;
+            _values9[swappedIndex] = default!;
             return false;
         }
 
+        
+        _values1[swappedIndex] = default!;
+        _values2[swappedIndex] = default!;
+        _values3[swappedIndex] = default!;
+        _values4[swappedIndex] = default!;
+        _values5[swappedIndex] = default!;
+        _values6[swappedIndex] = default!;
+        _values7[swappedIndex] = default!;
+        _values8[swappedIndex] = default!;
+        _values9[swappedIndex] = default!;
         return true;
     }
 

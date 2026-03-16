@@ -159,6 +159,16 @@ public class DenseSlotMapTests
     }
 
     [Test]
+    public void UnsafeTryGetRefValue1_WhenHandleExists_ReportsTrue()
+    {
+        Handle64<object> handle = _slotMap.Add(42);
+
+        _slotMap.UnsafeTryGetRefValue1(handle, out bool exists);
+
+        Assert.That(exists, Is.True);
+    }
+
+    [Test]
     public void Add_MultipleTimes_WorksAsExpected()
     {
         // Act
