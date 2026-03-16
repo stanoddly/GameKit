@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using GameKit.Collections;
 
 namespace GameKit.Componentize;
 
@@ -19,11 +20,11 @@ public enum GameObjectState : byte
 
 public class GameObject: IEnumerable<GameComponent>
 {
-    public string Name { get; internal set; } = "nobody";
+    public Handle<GameObject> Handle { get; internal set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
     private GameWorld? _world;
-    public GameWorld World => _world ?? throw new InvalidOperationException($"GameObject '{Name}' has been removed and has no World.");
+    public GameWorld World => _world ?? throw new InvalidOperationException("GameObject has been removed and has no World.");
     private readonly List<GameComponent> _components = new();
 
     internal GameObject(GameWorld world)
@@ -121,7 +122,7 @@ public class GameObject: IEnumerable<GameComponent>
     {
         if (State != GameObjectState.Alive)
         {
-            throw new InvalidOperationException($"Cannot attach to {State} GameObject '{Name}'.");
+            throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
         }
 
         component.InternalOwner = this;

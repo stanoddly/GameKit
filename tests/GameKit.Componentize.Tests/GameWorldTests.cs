@@ -1,3 +1,5 @@
+using GameKit.Collections;
+
 namespace GameKit.Componentize.Tests;
 
 public class DerivedTestComponent : TestComponent;
@@ -50,7 +52,8 @@ public class GameWorldTests
             received = c;
         });
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
 
         Assert.That(received, Is.Not.Null);
@@ -64,7 +67,8 @@ public class GameWorldTests
         GameComponent? received = null;
         _world.OnComponentDetached<TestComponent>((go, c) => received = c);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
         gameObject.Detach<TestComponent>();
 
@@ -78,7 +82,8 @@ public class GameWorldTests
         bool called = false;
         _world.OnComponentAttached<TestComponent2>((go, c) => called = true);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
 
         Assert.That(called, Is.False);
@@ -90,7 +95,8 @@ public class GameWorldTests
         GameComponent? received = null;
         _world.OnComponentAttached<TestComponent>((go, c) => received = c);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<DerivedTestComponent>();
 
         Assert.That(received, Is.Not.Null);
@@ -103,7 +109,8 @@ public class GameWorldTests
         GameComponent? received = null;
         _world.OnComponentDetached<TestComponent>((go, c) => received = c);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<DerivedTestComponent>();
         gameObject.Detach<DerivedTestComponent>();
 
@@ -117,7 +124,8 @@ public class GameWorldTests
         GameComponent? received = null;
         _world.OnComponentAttached<TestComponent>((go, c) => received = c);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         TestComponent instance = new TestComponent { Value = "custom" };
         gameObject.Attach(instance);
 
@@ -130,7 +138,8 @@ public class GameWorldTests
         int count = 0;
         _world.OnComponentDetached<TestComponent>((go, c) => count++);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
         gameObject.Attach<TestComponent>();
         gameObject.DetachAll();
@@ -144,9 +153,10 @@ public class GameWorldTests
         int count = 0;
         _world.OnComponentDetached<TestComponent>((go, c) => count++);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(handle);
 
         Assert.That(count, Is.EqualTo(1));
     }
@@ -154,7 +164,8 @@ public class GameWorldTests
     [Test]
     public void NoCallbacks_AttachDetachWorksWithoutError()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
         gameObject.Detach<TestComponent>();
     }
@@ -165,7 +176,8 @@ public class GameWorldTests
         int count = 0;
         _world.OnComponentAttached<GameComponent>((go, c) => count++);
 
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
         gameObject.Attach<TestComponent2>();
 
@@ -175,7 +187,8 @@ public class GameWorldTests
     [Test]
     public void Update_TickableComponentReceivesTickCalls()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         TickableComponent tickable = new TickableComponent();
         gameObject.Attach(tickable);
 
@@ -188,7 +201,8 @@ public class GameWorldTests
     [Test]
     public void Update_DetachedTickableComponentStopsReceivingTicks()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         TickableComponent tickable = new TickableComponent();
         gameObject.Attach(tickable);
 
@@ -202,7 +216,8 @@ public class GameWorldTests
     [Test]
     public void Update_DetachAllMidTickSkipsSiblingTickable()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TickableDetachAllComponent>();
         TickableComponent sibling = new TickableComponent();
         gameObject.Attach(sibling);
@@ -215,7 +230,8 @@ public class GameWorldTests
     [Test]
     public void Update_DuplicateAttachDoesNotCauseDuplicateTicks()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         TickableComponent tickable = new TickableComponent();
         gameObject.Attach(tickable);
         gameObject.Attach(tickable);
@@ -228,13 +244,14 @@ public class GameWorldTests
     [Test]
     public void RemoveGameObject_RemovedEventFired()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
 
         GameObject? received = null;
         gameObject.Removed += go => received = go;
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(handle);
 
         Assert.That(received, Is.SameAs(gameObject));
     }
@@ -242,13 +259,14 @@ public class GameWorldTests
     [Test]
     public void RemoveGameObject_RemovedEventFiredAfterDetachAll()
     {
-        GameObject gameObject = _world.CreateGameObject("test");
+        Handle<GameObject> handle = _world.CreateGameObject();
+        GameObject gameObject = _world.GetGameObject(handle)!;
         gameObject.Attach<TestComponent>();
 
         int componentCountDuringEvent = -1;
         gameObject.Removed += go => componentCountDuringEvent = go.Count();
 
-        _world.RemoveGameObject("test");
+        _world.RemoveGameObject(handle);
 
         Assert.That(componentCountDuringEvent, Is.EqualTo(0));
     }
@@ -256,8 +274,10 @@ public class GameWorldTests
     [Test]
     public void DetachAll_OnDetachAttachingToOtherGameObject_DoesNotThrow()
     {
-        GameObject objectA = _world.CreateGameObject("a");
-        GameObject objectB = _world.CreateGameObject("b");
+        Handle<GameObject> handleA = _world.CreateGameObject();
+        GameObject objectA = _world.GetGameObject(handleA)!;
+        Handle<GameObject> handleB = _world.CreateGameObject();
+        GameObject objectB = _world.GetGameObject(handleB)!;
 
         objectA.Attach(new CrossAttachOnDetachComponent { Target = objectB });
         objectA.Attach<TestComponent>();
@@ -269,8 +289,10 @@ public class GameWorldTests
     [Test]
     public void DetachAll_WorldCallbackReEntersOriginalObject_DoesNotThrow()
     {
-        GameObject objectA = _world.CreateGameObject("a");
-        GameObject objectB = _world.CreateGameObject("b");
+        Handle<GameObject> handleA = _world.CreateGameObject();
+        GameObject objectA = _world.GetGameObject(handleA)!;
+        Handle<GameObject> handleB = _world.CreateGameObject();
+        GameObject objectB = _world.GetGameObject(handleB)!;
 
         _world.OnComponentAttached<TestComponent>((go, c) =>
         {

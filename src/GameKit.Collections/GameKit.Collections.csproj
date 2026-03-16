@@ -17,11 +17,9 @@
 
     <ItemGroup>
         <Fluidify Include="MultiArray.cs.fluid" />
-        <Fluidify Include="MultiMap.cs.fluid" />
         <Fluidify Include="FastList.cs.fluid" />
         <Fluidify Include="DenseSlotMap.cs.fluid" />
         <Fluidify Include="IConstructible.cs.fluid" />
-        <Fluidify Include="SlotSet.cs.fluid" />
     </ItemGroup>
 
 </Project>

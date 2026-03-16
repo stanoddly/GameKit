@@ -1,36 +1,39 @@
 using System.Runtime.CompilerServices;
 using GameKit;
+using GameKit.Collections;
 
 namespace GameKit.Componentize;
 
 public class GameWorld : IUpdatable
 {
-    private readonly Dictionary<string, GameObject> _gameObjects = new();
+    private DenseSlotMap<Handle<GameObject>, GameObject> _gameObjects = new();
     private readonly HashSet<ITickable> _tickables = new();
     private readonly List<ITickable> _tempTickables = new();
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
 
-    public GameObject CreateGameObject(string name)
+    public Handle<GameObject> CreateGameObject()
     {
         GameObject gameObject = new GameObject(this);
-
-        _gameObjects.Add(name, gameObject);
-        gameObject.Name = name;
-
-        return gameObject;
+        Handle<GameObject> handle = _gameObjects.Add(gameObject);
+        gameObject.Handle = handle;
+        return handle;
     }
 
-    public GameObject? GetGameObject(string name)
+    public GameObject? GetGameObject(Handle<GameObject> handle)
     {
-        _gameObjects.TryGetValue(name, out GameObject? gameObject);
-        return gameObject;
-    }
-
-    public void RemoveGameObject(string name)
-    {
-        if (_gameObjects.Remove(name, out GameObject? gameObject))
+        if (_gameObjects.TryGetValue1(handle, out GameObject gameObject))
         {
+            return gameObject;
+        }
+        return null;
+    }
+
+    public void RemoveGameObject(Handle<GameObject> handle)
+    {
+        if (_gameObjects.TryGetValue1(handle, out GameObject gameObject))
+        {
+            _gameObjects.Remove(handle);
             gameObject.NotifyRemoving();
             gameObject.DetachAll();
             gameObject.NotifyRemoved();

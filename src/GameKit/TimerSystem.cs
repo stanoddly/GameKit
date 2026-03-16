@@ -22,8 +22,8 @@ public readonly struct TimerCallback
 public class TimerSystem : IUpdatable
 {
     private readonly FrameContext _frameContext;
-    private DenseSlotMapStruct<Handle64<TimerTag>, TimerCallback> _timers = new();
-    private readonly List<Handle64<TimerTag>> _toRemove = new();
+    private DenseSlotMapStruct<Handle<TimerTag>, TimerCallback> _timers = new();
+    private readonly List<Handle<TimerTag>> _toRemove = new();
 
     public TimerSystem(FrameContext frameContext)
     {
@@ -34,7 +34,7 @@ public class TimerSystem : IUpdatable
     {
         _toRemove.Clear();
         
-        ReadOnlySpan<Handle64<TimerTag>> handles = _timers.Handles;
+        ReadOnlySpan<Handle<TimerTag>> handles = _timers.Handles;
         ReadOnlySpan<TimerCallback> callbacks = _timers.Values1;
         
         for (int i = 0; i < handles.Length; i++)
@@ -47,25 +47,25 @@ public class TimerSystem : IUpdatable
             }
         }
         
-        foreach (Handle64<TimerTag> handle in _toRemove)
+        foreach (Handle<TimerTag> handle in _toRemove)
         {
             _timers.Remove(handle);
         }
     }
 
-    public Handle64<TimerTag> Schedule(TimeSpan delay, Action action)
+    public Handle<TimerTag> Schedule(TimeSpan delay, Action action)
     {
         TimeSpan triggerTime = _frameContext.ElapsedTime + delay;
         TimerCallback callback = new(triggerTime, action);
         return _timers.Add(callback);
     }
 
-    public void Cancel(Handle64<TimerTag> handle)
+    public void Cancel(Handle<TimerTag> handle)
     {
         _timers.Remove(handle);
     }
 
-    public bool Reschedule(Handle64<TimerTag> handle, TimeSpan delay)
+    public bool Reschedule(Handle<TimerTag> handle, TimeSpan delay)
     {
         if (!_timers.TryGetValue1(handle, out TimerCallback existing))
         {

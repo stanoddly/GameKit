@@ -13,18 +13,20 @@ builder.RegisterType<GameWorld>();
 
 builder.OnStart((GameWorld gameWorld) =>
 {
-    gameWorld.CreateGameObject("Player")
-        .Attach<MovementComponent>()
-        .Attach<HealthComponent>();
+    Handle<GameObject> handle = gameWorld.CreateGameObject();
+    GameObject player = gameWorld.GetGameObject(handle)!;
+    player.Attach<MovementComponent>()
+          .Attach<HealthComponent>();
 });
 ```
 
 ### GameObject
 
-Named entity that holds components:
+Entity that holds components, identified by `Handle<GameObject>`:
 
 ```csharp
-GameObject player = gameWorld.CreateGameObject("Player");
+Handle<GameObject> handle = gameWorld.CreateGameObject();
+GameObject player = gameWorld.GetGameObject(handle)!;
 player.Attach<MovementComponent>();
 player.Attach(new HealthComponent(100)); // Instance attachment
 
@@ -34,7 +36,7 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 
 // Removal
 player.Detach<HealthComponent>();
-gameWorld.RemoveGameObject("Player"); // Detaches all components
+gameWorld.RemoveGameObject(handle); // Detaches all components
 ```
 
 ### GameComponent
@@ -44,7 +46,7 @@ Base class for all components. Override `OnAttach` and `OnDetach` for lifecycle:
 ```csharp
 public class MovementComponent : GameComponent
 {
-    private Handle64<UpdateTag> _updateHandle;
+    private Handle<UpdateTag> _updateHandle;
 
     protected override void OnAttach()
     {
@@ -84,7 +86,7 @@ protected override void OnAttach()
 Updates are **not automatic**. Components must explicitly register with `UpdateSystem`:
 
 ```csharp
-private Handle64<UpdateTag> _updateHandle;
+private Handle<UpdateTag> _updateHandle;
 
 protected override void OnAttach()
 {
