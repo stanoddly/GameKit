@@ -12,14 +12,12 @@ public class DenseSlotMap<THandle, TValue1>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1)
@@ -41,16 +39,9 @@ public class DenseSlotMap<THandle, TValue1>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -104,14 +95,9 @@ public class DenseSlotMap<THandle, TValue1>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -214,14 +200,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2)
@@ -243,16 +227,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -306,14 +283,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -466,14 +438,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3)
@@ -495,16 +465,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -558,14 +521,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -768,14 +726,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
@@ -797,16 +753,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -860,14 +809,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -1120,14 +1064,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
@@ -1149,16 +1091,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -1212,14 +1147,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -1522,14 +1452,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
@@ -1551,16 +1479,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -1614,14 +1535,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -1974,14 +1890,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
@@ -2003,16 +1917,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -2066,14 +1973,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -2476,14 +2378,12 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
@@ -2505,16 +2405,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -2568,14 +2461,9 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -3029,14 +2917,12 @@ public struct DenseSlotMapStruct<THandle, TValue1>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1)
@@ -3058,16 +2944,9 @@ public struct DenseSlotMapStruct<THandle, TValue1>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -3121,14 +3000,9 @@ public struct DenseSlotMapStruct<THandle, TValue1>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -3231,14 +3105,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2)
@@ -3260,16 +3132,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -3323,14 +3188,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -3483,14 +3343,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3)
@@ -3512,16 +3370,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -3575,14 +3426,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -3785,14 +3631,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4)
@@ -3814,16 +3658,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -3877,14 +3714,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -4137,14 +3969,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5)
@@ -4166,16 +3996,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -4229,14 +4052,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -4539,14 +4357,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6)
@@ -4568,16 +4384,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -4631,14 +4440,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -4991,14 +4795,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7)
@@ -5020,16 +4822,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -5083,14 +4878,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
@@ -5493,14 +5283,12 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMapStruct()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, TValue6, TValue7, TValue8>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add(TValue1 value1, TValue2 value2, TValue3 value3, TValue4 value4, TValue5 value5, TValue6 value6, TValue7 value7, TValue8 value8)
@@ -5522,16 +5310,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -5585,14 +5366,9 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 

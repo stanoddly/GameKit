@@ -17,14 +17,12 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
     private FastListStruct<THandle> _handles;
     private MultiArrayStruct<THandle{% for i in (1..n) %}, TValue{{ i }}{% endfor %}> _dense;
     private uint _freeIndex;
-    private uint _lastFreeIndex;
 
     public DenseSlotMap{{ suffix }}()
     {
         _handles = new FastListStruct<THandle>();
         _dense = new MultiArrayStruct<THandle{% for i in (1..n) %}, TValue{{ i }}{% endfor %}>();
         _freeIndex = Tombstone;
-        _lastFreeIndex = Tombstone;
     }
 
     public THandle Add({% for i in (1..n) %}{% unless forloop.first %}, {% endunless %}TValue{{ i }} value{{ i }}{% endfor %})
@@ -46,16 +44,9 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
             uint handleIndex = _freeIndex;
             ref THandle handleToRecycle = ref _handles[handleIndex];
 
-            bool isItTheOnlyFreeIndex = _freeIndex == _lastFreeIndex;
-            if (isItTheOnlyFreeIndex)
-            {
-                _freeIndex = Tombstone;
-                _lastFreeIndex = Tombstone;
-            }
-            else
-            {
-                _freeIndex = handleToRecycle.Index;
-            }
+            // The tail of the free list always has Index = Tombstone, so this naturally
+            // sets _freeIndex to Tombstone when the last free slot is consumed.
+            _freeIndex = handleToRecycle.Index;
 
             // Note the version has been incremented on removal too, so it's free to use already
             THandle finalHandle = new THandle { Index = handleIndex, Version = handleToRecycle.Version };
@@ -109,14 +100,9 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
         {
             // Increment version so all the previous instances are invalid and it's ready for future recycle
             Version = handle.Version + 1,
+            // Chain into free list: points to previous head (Tombstone if list was empty)
             Index = _freeIndex
         };
-
-        // Update free list
-        if (_freeIndex == Tombstone)
-        {
-            _lastFreeIndex = handle.Index;
-        }
 
         _freeIndex = handle.Index;
 
