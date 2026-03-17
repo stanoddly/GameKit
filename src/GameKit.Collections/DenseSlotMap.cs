@@ -65,7 +65,7 @@ public class DenseSlotMap<THandle, TValue1>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -253,7 +253,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -491,7 +491,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -779,7 +779,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -1117,7 +1117,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -1505,7 +1505,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -1943,7 +1943,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -2431,7 +2431,7 @@ public class DenseSlotMap<THandle, TValue1, TValue2, TValue3, TValue4, TValue5, 
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -2970,7 +2970,7 @@ public struct DenseSlotMapStruct<THandle, TValue1>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -3158,7 +3158,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -3396,7 +3396,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -3684,7 +3684,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4>
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -4022,7 +4022,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -4410,7 +4410,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -4848,7 +4848,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
@@ -5336,7 +5336,7 @@ public struct DenseSlotMapStruct<THandle, TValue1, TValue2, TValue3, TValue4, TV
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }
