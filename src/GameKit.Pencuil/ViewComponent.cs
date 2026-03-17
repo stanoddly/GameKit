@@ -2,14 +2,9 @@ using GameKit.Componentize;
 
 namespace GameKit.Pencuil;
 
-public abstract class ViewComponent<TViewModel> : GameComponent, IView where TViewModel : IViewModel
+public abstract class ViewComponent<TViewModel> : GameComponent, IView where TViewModel : GameComponent, IViewModel
 {
-    protected TViewModel ViewModel { get; }
-
-    protected ViewComponent(TViewModel viewModel)
-    {
-        ViewModel = viewModel;
-    }
+    protected TViewModel ViewModel { get; private set; } = default!;
 
     public bool ConsumeDirty()
     {
@@ -26,6 +21,7 @@ public abstract class ViewComponent<TViewModel> : GameComponent, IView where TVi
 
     protected override void OnAttach()
     {
+        ViewModel = GetSibling<TViewModel>();
         Services<ViewRegistry>.Instance.Add(this);
     }
 
