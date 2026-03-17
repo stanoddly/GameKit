@@ -53,9 +53,9 @@ public sealed class SpriteAtlasBuilder
     public void BuildSprites(params string[] directories)
     {
         var entries = new List<(string path, string texturePath, ShortRectangle region, SpriteFlip flip,
-            bool isAnimatedFrame, string? animationPath, double frameDuration, bool repeat,
+            bool isAnimatedFrame, string? animationPath, double frameDuration,
             int frameIndex, int totalFrames)>();
-        var animatedSpriteInfos = new Dictionary<string, (double frameDuration, bool repeat, SpriteFlip flip, List<int> frameIndices)>();
+        var animatedSpriteInfos = new Dictionary<string, (double frameDuration, SpriteFlip flip, List<int> frameIndices)>();
 
         foreach (var directory in directories)
         {
@@ -160,10 +160,10 @@ public sealed class SpriteAtlasBuilder
         foreach (var kv in animatedSpriteInfos)
         {
             string animationPath = kv.Key;
-            var (frameDuration, repeat, flip, _) = kv.Value;
+            (double frameDuration, SpriteFlip flip, _) = kv.Value;
             var frames = animationFramesByPath[animationPath];
             var immutableFrames = System.Collections.Immutable.ImmutableArray.CreateRange(frames);
-            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, repeat, Vector2.Zero, flip);
+            AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)frameDuration, atlasTexture, immutableFrames, Vector2.Zero, flip);
             _storage.StoreAnimatedSprite(animationPath, animatedSpriteAsset);
         }
 
@@ -172,9 +172,9 @@ public sealed class SpriteAtlasBuilder
 
     private void CollectSpritesRecursively(string directory,
         List<(string path, string texturePath, ShortRectangle region, SpriteFlip flip,
-            bool isAnimatedFrame, string? animationPath, double frameDuration, bool repeat,
+            bool isAnimatedFrame, string? animationPath, double frameDuration,
             int frameIndex, int totalFrames)> entries,
-        Dictionary<string, (double frameDuration, bool repeat, SpriteFlip flip, List<int> frameIndices)> animatedSpriteInfos)
+        Dictionary<string, (double frameDuration, SpriteFlip flip, List<int> frameIndices)> animatedSpriteInfos)
     {
         ReadOnlySpan<VirtualFile> files = _fileSystem.GetFiles(directory);
         foreach (VirtualFile file in files)
@@ -188,7 +188,7 @@ public sealed class SpriteAtlasBuilder
                 if (spriteDto != null)
                 {
                     entries.Add((file.Path, spriteDto.Texture, spriteDto.TextureRegion, spriteDto.Flip,
-                        false, null, 0, false, 0, 0));
+                        false, null, 0, 0, 0));
                     continue;
                 }
                 stream.Position = 0;
@@ -200,10 +200,10 @@ public sealed class SpriteAtlasBuilder
                     for (int i = 0; i < totalFrames; i++)
                     {
                         entries.Add((file.Path, animatedDto.Texture, animatedDto.Frames[i], animatedDto.Flip,
-                            true, file.Path, animatedDto.FrameDuration, animatedDto.Repeat, i, totalFrames));
+                            true, file.Path, animatedDto.FrameDuration, i, totalFrames));
                         frameIndices.Add(entries.Count - 1);
                     }
-                    animatedSpriteInfos[file.Path] = (animatedDto.FrameDuration, animatedDto.Repeat, animatedDto.Flip, frameIndices);
+                    animatedSpriteInfos[file.Path] = (animatedDto.FrameDuration, animatedDto.Flip, frameIndices);
                 }
             }
         }

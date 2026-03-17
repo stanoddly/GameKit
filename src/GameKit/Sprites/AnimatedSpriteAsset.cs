@@ -9,7 +9,6 @@ public record AnimatedSpriteAsset(
     float FrameDuration,
     Texture Texture,
     ImmutableArray<ShortRectangle> Frames,
-    bool Repeat,
     Vector2 AnchorOffset,
     SpriteFlip Flip = SpriteFlip.None)
 {
