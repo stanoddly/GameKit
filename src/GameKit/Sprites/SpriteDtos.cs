@@ -15,7 +15,6 @@ internal record AnimatedSpriteDto
     public required double FrameDuration { get; init; }
     public required string Texture { get; init; }
     public required ImmutableArray<ShortRectangle> Frames { get; init; }
-    public bool Repeat { get; init; } = false;
     public float[]? AnchorOffset { get; init; }
     public SpriteFlip Flip { get; init; } = SpriteFlip.None;
 }

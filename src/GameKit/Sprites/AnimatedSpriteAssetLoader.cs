@@ -32,7 +32,7 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
         Vector2 anchorOffset = animatedSpriteDto.AnchorOffset is { Length: 2 } offset
             ? new Vector2(offset[0], offset[1])
             : Vector2.Zero;
-        AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, builder.MoveToImmutable(), animatedSpriteDto.Repeat, anchorOffset, animatedSpriteDto.Flip);
+        AnimatedSpriteAsset animatedSpriteAsset = new AnimatedSpriteAsset((float)animatedSpriteDto.FrameDuration, texture, builder.MoveToImmutable(), anchorOffset, animatedSpriteDto.Flip);
         return animatedSpriteAsset;
     }
 

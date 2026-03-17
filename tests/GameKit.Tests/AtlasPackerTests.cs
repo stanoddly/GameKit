@@ -17,10 +17,10 @@ public class AtlasPackerTests
     private static byte[] MakeSpriteJson(short x, short y, ushort w, ushort h, SpriteFlip flip, string texture = "img.png") =>
         Encoding.UTF8.GetBytes($$"""{"texture":"{{texture}}","textureRegion":[{{x}},{{y}},{{w}},{{h}}],"flip":"{{flip}}"}""");
 
-    private static byte[] MakeAnimatedSpriteJson(string texture, double frameDuration, bool repeat, params ShortRectangle[] frames)
+    private static byte[] MakeAnimatedSpriteJson(string texture, double frameDuration, params ShortRectangle[] frames)
     {
         var sb = new StringBuilder();
-        sb.Append($$"""{"texture":"{{texture}}","frameDuration":{{frameDuration}},"repeat":{{(repeat ? "true" : "false")}},"frames":[""");
+        sb.Append($$"""{"texture":"{{texture}}","frameDuration":{{frameDuration}},"frames":[""");
         for (int i = 0; i < frames.Length; i++)
         {
             if (i > 0) sb.Append(',');
@@ -254,7 +254,7 @@ public class AtlasPackerTests
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/walk.json", MakeAnimatedSpriteJson("img.png", 0.1, true, frames))
+                    new ByteVirtualFile("sprites/walk.json", MakeAnimatedSpriteJson("img.png", 0.1, frames))
                 ]
             },
             new() { ["sprites"] = [] });
@@ -283,7 +283,7 @@ public class AtlasPackerTests
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/run.json", MakeAnimatedSpriteJson("img.png", 0.05, false, frames))
+                    new ByteVirtualFile("sprites/run.json", MakeAnimatedSpriteJson("img.png", 0.05, frames))
                 ]
             },
             new() { ["sprites"] = [] });
@@ -310,14 +310,13 @@ public class AtlasPackerTests
             {
                 ["sprites"] =
                 [
-                    new ByteVirtualFile("sprites/anim.json", MakeAnimatedSpriteJson("img.png", 0.25, true, frames))
+                    new ByteVirtualFile("sprites/anim.json", MakeAnimatedSpriteJson("img.png", 0.25, frames))
                 ]
             },
             new() { ["sprites"] = [] });
 
         Assert.That(storage.TryGetAnimatedSprite("sprites/anim.json", out var anim), Is.True);
         Assert.That(anim!.FrameDuration, Is.EqualTo(0.25f));
-        Assert.That(anim.Repeat, Is.True);
     }
 
     [Test]
@@ -359,7 +358,7 @@ public class AtlasPackerTests
                 ["sprites"] =
                 [
                     new ByteVirtualFile("sprites/hero.json", MakeSpriteJson(0, 0, 64, 64)),
-                    new ByteVirtualFile("sprites/walk.json", MakeAnimatedSpriteJson("img.png", 0.1, true, frames)),
+                    new ByteVirtualFile("sprites/walk.json", MakeAnimatedSpriteJson("img.png", 0.1, frames)),
                 ]
             },
             new() { ["sprites"] = [] });
