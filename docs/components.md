@@ -115,45 +115,9 @@ AttachSibling(new BuffComponent());
 DetachSibling<BuffComponent>();
 ```
 
-## Events
-
-Components can publish and handle events within a GameObject:
-
-### Publishing Events
-
-```csharp
-public readonly record struct DamageTakenArgs(int Amount);
-
-public class HealthComponent : GameComponent
-{
-    public void TakeDamage(int amount)
-    {
-        _health -= amount;
-        PublishEvent(new DamageTakenArgs(amount));
-    }
-}
-```
-
-### Handling Events
-
-Implement `IComponentEventHandler<T>`:
-
-```csharp
-public class DamageEffectComponent : GameComponent, IComponentEventHandler<DamageTakenArgs>
-{
-    public void HandleEvent(GameObject sender, in DamageTakenArgs args)
-    {
-        // React to damage
-    }
-}
-```
-
-Event handlers are automatically subscribed when the component is attached.
-
 ## Key Points
 
 - Components have explicit lifecycle via `OnAttach`/`OnDetach`
 - Updates require manual registration with `UpdateSystem`
 - Use `Services<T>.Instance` to access registered services
-- Events are scoped to a single GameObject
 - Always clean up subscriptions in `OnDetach`

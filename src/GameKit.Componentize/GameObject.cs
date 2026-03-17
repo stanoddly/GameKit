@@ -1,13 +1,7 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using GameKit.Collections;
 
 namespace GameKit.Componentize;
-
-public readonly record struct ComponentRemovedArgs(GameComponent GameComponent);
-public readonly record struct ComponentAddedArgs(GameComponent GameComponent);
 
 public class ComponentNotFound(string componentName) : Exception(componentName);
 
@@ -30,66 +24,6 @@ public class GameObject: IEnumerable<GameComponent>
     internal GameObject(GameWorld world)
     {
         _world = world;
-    }
-    private Dictionary<int, List<object>>? _eventHandlersPerType = null;
-
-    public void Subscribe(object obj)
-    {
-        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
-
-        if (componentTypeHandledEventArgs.Count == 0)
-        {
-            return;
-        }
-        
-        _eventHandlersPerType ??= new();
-
-        foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
-        {
-            ref List<object>? value = ref CollectionsMarshal.GetValueRefOrAddDefault(_eventHandlersPerType, eventArgsTypeId, out bool exists);
-
-            if (!exists || value == null)
-            {
-                value = new List<object>();
-            }
-            
-            value.Add(obj);
-        }
-    }
-
-    public void Unsubscribe<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TComponent>(TComponent component) where TComponent: GameComponent
-    {
-        Unsubscribe((object)component);
-    }
-    
-    public void Subscribe<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TComponent>(TComponent component) where TComponent: GameComponent
-    {
-        Subscribe((object)component);
-    }
-
-    public void Unsubscribe(object obj)
-    {
-        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
-
-        if (componentTypeHandledEventArgs.Count == 0)
-        {
-            return;
-        }
-
-        if (_eventHandlersPerType == null)
-        {
-            return;
-        }
-        
-        foreach (var whateverInterface in componentTypeHandledEventArgs)
-        {
-            if (!_eventHandlersPerType.TryGetValue(whateverInterface, out List<object>? value))
-            {
-                return;
-            }
-
-            value.Remove(obj);
-        }
     }
 
     public GameObject Attach<TComponent>() where TComponent: GameComponent, new()
@@ -127,9 +61,7 @@ public class GameObject: IEnumerable<GameComponent>
 
         component.InternalOwner = this;
         component.OnAttach();
-        Subscribe(component);
         _components.Add(component);
-        PublishEvent(new ComponentAddedArgs(component));
         World.NotifyComponentAttached(this, component);
         return this;
     }
@@ -276,7 +208,6 @@ public class GameObject: IEnumerable<GameComponent>
 
     internal void NotifyRemoved()
     {
-        _eventHandlersPerType = null;
         Removed?.Invoke(this);
         Removed = null;
         State = GameObjectState.Removed;
@@ -286,27 +217,7 @@ public class GameObject: IEnumerable<GameComponent>
     private void TeardownComponent(GameComponent component)
     {
         component.OnDetach();
-        PublishEvent(new ComponentRemovedArgs(component));
-        Unsubscribe(component);
         World.NotifyComponentDetached(this, component);
         component.InternalOwner = null;
-    }
-
-    internal void PublishEvent<TEventArgs>(in TEventArgs args) where TEventArgs: struct
-    {
-        if (_eventHandlersPerType == null)
-        {
-            return;
-        }
-        
-        int eventArgsTypeId = EventTypeId<TEventArgs>.Id;
-
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out var subscriptions)) return;
-
-        foreach (object obj in subscriptions)
-        {
-            IComponentEventHandler<TEventArgs> componentEventHandler = Unsafe.As<IComponentEventHandler<TEventArgs>>(obj);
-            componentEventHandler.HandleEvent(this, in args);
-        }
     }
 }
