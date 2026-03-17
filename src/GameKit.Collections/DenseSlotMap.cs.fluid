@@ -70,7 +70,7 @@ public {{ kind }} DenseSlotMap{{ suffix }}<THandle, {% for i in (1..n) %}{% unle
 
     public bool Remove(THandle handle)
     {
-        if (handle.IsNull())
+        if (handle.IsNull)
         {
             return false;
         }

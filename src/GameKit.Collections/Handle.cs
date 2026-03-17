@@ -5,7 +5,7 @@ public interface IHandle<TSelf>
     uint Index { get; init; }
     uint Version { get; init; }
     static abstract TSelf Null { get; }
-    bool IsNull();
+    bool IsNull { get; }
 }
 
 public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<TType>>
@@ -27,10 +27,7 @@ public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<
 
     public static Handle<TType> Null { get; } = default;
 
-    public bool IsNull()
-    {
-        return _index == 0;
-    }
+    public bool IsNull => _index == 0;
 
     public bool Equals(Handle<TType> other)
     {
@@ -47,29 +44,13 @@ public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<
         return HashCode.Combine(_index, _version);
     }
     
-    public override string ToString() => IsNull() 
-        ? $"Handle<{typeof(TType).Name}>.Null" 
+    public override string ToString() => IsNull
+        ? $"Handle<{typeof(TType).Name}>.Null"
         : $"Handle<{typeof(TType).Name}>{{ Index={Index}, Version={Version} }}";
 
     public static implicit operator bool(Handle<TType> handle)
     {
         return handle._index != 0;
-    }
-}
-
-
-public class HandleNullException : Exception
-{
-    public HandleNullException()
-    {
-    }
-
-    public HandleNullException(string? message) : base(message)
-    {
-    }
-
-    public HandleNullException(string? message, Exception? innerException) : base(message, innerException)
-    {
     }
 }
 
