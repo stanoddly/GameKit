@@ -57,7 +57,6 @@ public class MyComponent : GameComponent
 
 **Other members:**
 - `HasOwner()` — returns true if attached to a GameObject
-- `PublishEvent(in TEventArgs)` — publish an event to the Owner's subscribers
 
 ### GameWorld
 
@@ -69,39 +68,6 @@ GameObject obj = world.CreateGameObject();
 
 // Removes the object and calls DetachAll
 world.RemoveGameObject(obj);
-```
-
-## Events (PubSub)
-
-Components that implement `IComponentEventHandler<TEventArgs>` are **automatically subscribed** when attached and unsubscribed when detached. `TEventArgs` must be a struct.
-
-```csharp
-public class SpriteComponent : GameComponent, IComponentEventHandler<PositionChangedArgs>
-{
-    public void HandleEvent(GameObject gameObject, in PositionChangedArgs args)
-    {
-        _storage.UpdatePosition(_handle, args.Value);
-    }
-}
-```
-
-A component can handle multiple event types:
-
-```csharp
-public class DebugComponent : GameComponent,
-    IComponentEventHandler<PositionChangedArgs>,
-    IComponentEventHandler<DirectionChangedArgs>
-{ ... }
-```
-
-Built-in event emitted by GameObject:
-- `ComponentAddedArgs(GameComponent)` — after any Attach
-
-**Manual subscription** to another GameObject's events:
-
-```csharp
-_otherGameObject.Subscribe(this);
-_otherGameObject.Unsubscribe(this);
 ```
 
 ## Behaviors (State Machines)
@@ -175,16 +141,6 @@ public class DynamicBodyComponent : GameComponent
     {
         Services<DynamicBodiesStorage>.Instance.Remove(_handle);
     }
-}
-```
-
-**Reactive property** — setter publishes an event, other components react:
-
-```csharp
-public Vector3 Position
-{
-    get => _position;
-    set { _position = value; PublishEvent(new PositionChangedArgs(value)); }
 }
 ```
 

@@ -63,11 +63,6 @@ public abstract class GameComponent
 
     protected internal virtual void OnDetach()
     {
-        
-    }
 
-    protected void PublishEvent<TEventArgs>(in TEventArgs args) where TEventArgs: struct
-    {
-        InternalOwner?.PublishEvent(in args);
     }
 }
