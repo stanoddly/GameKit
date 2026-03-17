@@ -159,6 +159,78 @@ public class DenseSlotMapTests
     }
 
     [Test]
+    public void InterleavedAddRemoveCycles_WorkAsExpected()
+    {
+        // First cycle: add, remove, add (drains free list of 1)
+        Handle<object> handle1 = _slotMap.Add(10);
+        _slotMap.Remove(handle1);
+        Handle<object> handle2 = _slotMap.Add(20);
+
+        Assert.That(handle2.Index, Is.EqualTo(handle1.Index));
+        Assert.That(_slotMap.TryGetValue1(handle1, out _), Is.False);
+        Assert.That(_slotMap.TryGetValue1(handle2, out int val2));
+        Assert.That(val2, Is.EqualTo(20));
+
+        // Second cycle: add another, remove both, add two back (drains free list of 2)
+        Handle<object> handle3 = _slotMap.Add(30);
+        _slotMap.Remove(handle2);
+        _slotMap.Remove(handle3);
+        Handle<object> handle4 = _slotMap.Add(40);
+        Handle<object> handle5 = _slotMap.Add(50);
+
+        Assert.That(_slotMap.TryGetValue1(handle2, out _), Is.False);
+        Assert.That(_slotMap.TryGetValue1(handle3, out _), Is.False);
+        Assert.That(_slotMap.TryGetValue1(handle4, out int val4));
+        Assert.That(val4, Is.EqualTo(40));
+        Assert.That(_slotMap.TryGetValue1(handle5, out int val5));
+        Assert.That(val5, Is.EqualTo(50));
+
+        // Third cycle: new allocation after free list fully drained
+        Handle<object> handle6 = _slotMap.Add(60);
+        Assert.That(_slotMap.TryGetValue1(handle6, out int val6));
+        Assert.That(val6, Is.EqualTo(60));
+        Assert.That(_slotMap.Length, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void RemoveAllThenAddAll_WorksAsExpected()
+    {
+        Handle<object> handle1 = _slotMap.Add(10);
+        Handle<object> handle2 = _slotMap.Add(20);
+        Handle<object> handle3 = _slotMap.Add(30);
+
+        _slotMap.Remove(handle1);
+        _slotMap.Remove(handle2);
+        _slotMap.Remove(handle3);
+
+        Assert.That(_slotMap.Length, Is.EqualTo(0));
+
+        // Re-add same count — all should recycle
+        Handle<object> handle4 = _slotMap.Add(40);
+        Handle<object> handle5 = _slotMap.Add(50);
+        Handle<object> handle6 = _slotMap.Add(60);
+
+        Assert.That(_slotMap.Length, Is.EqualTo(3));
+        Assert.That(_slotMap.TryGetValue1(handle4, out int val4));
+        Assert.That(val4, Is.EqualTo(40));
+        Assert.That(_slotMap.TryGetValue1(handle5, out int val5));
+        Assert.That(val5, Is.EqualTo(50));
+        Assert.That(_slotMap.TryGetValue1(handle6, out int val6));
+        Assert.That(val6, Is.EqualTo(60));
+
+        // Old handles should all be stale
+        Assert.That(_slotMap.TryGetValue1(handle1, out _), Is.False);
+        Assert.That(_slotMap.TryGetValue1(handle2, out _), Is.False);
+        Assert.That(_slotMap.TryGetValue1(handle3, out _), Is.False);
+
+        // One more new allocation to verify free list is fully drained
+        Handle<object> handle7 = _slotMap.Add(70);
+        Assert.That(_slotMap.Length, Is.EqualTo(4));
+        Assert.That(_slotMap.TryGetValue1(handle7, out int val7));
+        Assert.That(val7, Is.EqualTo(70));
+    }
+
+    [Test]
     public void UnsafeTryGetRefValue1_WhenHandleExists_ReportsTrue()
     {
         Handle<object> handle = _slotMap.Add(42);
