@@ -6,20 +6,6 @@
 
 What is the problem or situation? Why does a decision need to be made now? Include relevant technical details about the current state.
 
-## Alternatives Considered
-
-### [Short name for alternative]
-
-Describe the approach. Explain how it would work.
-
-**Rejected** because [reason].
-
-### [Short name for alternative]
-
-Describe the approach. Explain how it would work.
-
-**Rejected** because [reason].
-
 ## Decision
 
 State the decision clearly. Explain why it's the right choice given the context and rejected alternatives.

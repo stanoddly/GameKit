@@ -9,20 +9,6 @@ Components communicated via `IComponentEventHandler<TEventArgs>` — an interfac
 
 The full machinery included `IComponentEventHandler<T>`, `ComponentTypeHelper.GetComponentTypeHandledEventArgs` (reflection-based interface scanning with per-type cache), `EventTypeId` / `EventTypeId<T>` (type-to-int mapping), and `Subscribe`/`Unsubscribe`/`PublishEvent` on `GameObject`.
 
-## Alternatives Considered
-
-### Keep IComponentEventHandler but add a subscription-aware flag
-
-Add a boolean like `HasSubscribers` that components can check before publishing. This would address the "is anyone listening?" problem without changing the subscription model.
-
-**Rejected** because it doesn't solve the hot-path indirection issue, and the reflection-based auto-subscription remains implicit. The fundamental coupling between interface implementation and subscription lifetime stays in place.
-
-### Weak event pattern (WeakReference-based subscriptions)
-
-Use weak references in the subscription list so handlers don't need explicit unsubscription.
-
-**Rejected** because it adds GC pressure and non-deterministic cleanup — the opposite direction from cache-friendly game code. Components already have explicit `OnAttach`/`OnDetach` lifecycle hooks that are the natural place for subscribe/unsubscribe.
-
 ## Decision
 
 Remove the entire `IComponentEventHandler<T>` mechanism. Components expose native C# events instead.
