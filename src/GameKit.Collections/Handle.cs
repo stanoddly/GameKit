@@ -54,22 +54,6 @@ public readonly struct Handle<TType>: IHandle<Handle<TType>>, IEquatable<Handle<
     }
 }
 
-
-public class HandleNullException : Exception
-{
-    public HandleNullException()
-    {
-    }
-
-    public HandleNullException(string? message) : base(message)
-    {
-    }
-
-    public HandleNullException(string? message, Exception? innerException) : base(message, innerException)
-    {
-    }
-}
-
 public class HandleNotFoundException : Exception
 {
     public HandleNotFoundException()
