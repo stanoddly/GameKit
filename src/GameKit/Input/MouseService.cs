@@ -67,6 +67,8 @@ public delegate void MouseMotionHandler(Mouse mouse, MouseMotionEventArgs eventA
 public class MouseService : IMouseService
 {
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
+
+    // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
     private readonly MouseButtonEventArgs _buttonEventArgs = new();
     private readonly MouseMotionEventArgs _motionEventArgs = new();
 

@@ -21,6 +21,7 @@ public class KeyboardService : IKeyboardService
     // TODO: Dictionary isn't necessary, the amount of keyboards is usually truly small
     private readonly Dictionary<SDL_KeyboardID, Keyboard> _keyboards = new();
 
+    // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
     private readonly KeyEventArgs _keyEventArgs = new();
     private readonly PriorityEventHandlers<KeyDownEventHandler> _keyDownHandlers = new();
     private readonly PriorityEventHandlers<KeyUpEventHandler> _keyUpHandlers = new();
