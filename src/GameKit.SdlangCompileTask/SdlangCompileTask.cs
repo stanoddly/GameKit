@@ -21,8 +21,16 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
             return true;
         }
 
-        SdlangCompiler sdlangCompiler = new();
-        sdlangCompiler.Compile([InputFile], false);
-        return true;
+        try
+        {
+            SdlangCompiler sdlangCompiler = new();
+            sdlangCompiler.Compile([InputFile], false);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.LogError(ex.Message);
+            return false;
+        }
     }
 }
