@@ -107,7 +107,6 @@ public class PencuilRenderer
     {
         if (pencil._coloredRectangleInstructions.Count == 0 && pencil._textureRegionInstructions.Count == 0)
         {
-            pencil.ClearInstructions();
             return;
         }
 
@@ -171,7 +170,6 @@ public class PencuilRenderer
             }
         }
 
-        pencil.ClearInstructions();
     }
 
     public void Present(CommandBuffer commandBuffer, Texture target, bool clearTarget)

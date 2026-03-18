@@ -66,12 +66,10 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             if (_pencil.HaveInstructionsChanged())
             {
                 _renderer.Render(renderContext.CommandBuffer, _pencil);
-                _pencil.SwapInstructions();
             }
-            else
-            {
-                _pencil.ClearInstructions();
-            }
+
+            _pencil.SwapInstructions();
+            _pencil.ClearInstructions();
         }
 
         _pencil.CursorJustReleased = false;
