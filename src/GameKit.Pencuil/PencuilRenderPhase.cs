@@ -22,20 +22,25 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         _clearTarget = options.ClearTarget;
         Order = options.Order;
 
-        mouseService.Motion += (_, args) =>
+        mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
         {
             pencil.CursorPosition = (IntVector2)args.Position;
             pencil.Invalidate();
-        };
+        });
 
-        mouseService.ButtonRelease += (_, args) =>
+        mouseService.SubscribeButtonRelease(options.InputOrder, (_, args) =>
         {
             if (args.Button == MouseButton.Left)
             {
                 pencil.CursorJustReleased = true;
                 pencil.Invalidate();
+
+                if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
+                {
+                    args.Consumed = true;
+                }
             }
-        };
+        });
 
         window.ResolutionChanged += args =>
         {

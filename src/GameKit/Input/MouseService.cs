@@ -44,8 +44,21 @@ public class Mouse
     }
 }
 
-public readonly record struct MouseButtonEventArgs(MouseButton Button, Vector2 Position, ulong Timestamp);
-public readonly record struct MouseMotionEventArgs(Vector2 Position, Vector2 RelativeMotion, ulong Timestamp);
+public class MouseButtonEventArgs
+{
+    public MouseButton Button { get; internal set; }
+    public Vector2 Position { get; internal set; }
+    public ulong Timestamp { get; internal set; }
+    public bool Consumed { get; set; }
+}
+
+public class MouseMotionEventArgs
+{
+    public Vector2 Position { get; internal set; }
+    public Vector2 RelativeMotion { get; internal set; }
+    public ulong Timestamp { get; internal set; }
+    public bool Consumed { get; set; }
+}
 
 public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
 public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
@@ -55,9 +68,46 @@ public class MouseService : IMouseService
 {
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
 
-    public event MouseButtonPressedHandler? ButtonPress;
-    public event MouseButtonReleasedHandler? ButtonRelease;
-    public event MouseMotionHandler? Motion;
+    // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
+    private readonly MouseButtonEventArgs _buttonEventArgs = new();
+    private readonly MouseMotionEventArgs _motionEventArgs = new();
+
+    private readonly PriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
+    private readonly PriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
+    private readonly PriorityEventHandlers<MouseMotionHandler> _motionHandlers = new();
+
+    public event MouseButtonPressedHandler ButtonPress
+    {
+        add => _buttonPressHandlers.Add(0, value);
+        remove => _buttonPressHandlers.Remove(value);
+    }
+
+    public event MouseButtonReleasedHandler ButtonRelease
+    {
+        add => _buttonReleaseHandlers.Add(0, value);
+        remove => _buttonReleaseHandlers.Remove(value);
+    }
+
+    public event MouseMotionHandler Motion
+    {
+        add => _motionHandlers.Add(0, value);
+        remove => _motionHandlers.Remove(value);
+    }
+
+    public void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler)
+    {
+        _buttonPressHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeButtonRelease(int priority, MouseButtonReleasedHandler handler)
+    {
+        _buttonReleaseHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeMotion(int priority, MouseMotionHandler handler)
+    {
+        _motionHandlers.Add(priority, handler);
+    }
 
     internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
     {
@@ -75,19 +125,29 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseButtonEventArgs eventArgs = new(button, position, timestamp);
+        _buttonEventArgs.Button = button;
+        _buttonEventArgs.Position = position;
+        _buttonEventArgs.Timestamp = timestamp;
+        _buttonEventArgs.Consumed = false;
 
         if (mouseButtonEvent.down)
         {
             if (mouse.Set(button))
             {
-                ButtonPress?.Invoke(mouse, eventArgs);
+                foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
+                {
+                    handler(mouse, _buttonEventArgs);
+                }
             }
         }
         else
         {
             mouse.Unset(button);
-            ButtonRelease?.Invoke(mouse, eventArgs);
+
+            foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
+            {
+                handler(mouse, _buttonEventArgs);
+            }
         }
     }
 
@@ -107,7 +167,14 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseMotionEventArgs eventArgs = new(position, relativeMotion, timestamp);
-        Motion?.Invoke(mouse, eventArgs);
+        _motionEventArgs.Position = position;
+        _motionEventArgs.RelativeMotion = relativeMotion;
+        _motionEventArgs.Timestamp = timestamp;
+        _motionEventArgs.Consumed = false;
+
+        foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
+        {
+            handler(mouse, _motionEventArgs);
+        }
     }
 }

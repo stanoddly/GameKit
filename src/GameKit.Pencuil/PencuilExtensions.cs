@@ -6,12 +6,12 @@ namespace GameKit.Pencuil;
 
 public static class PencuilExtensions
 {
-    public static GameKitAppBuilder UsePencuil<TRenderContext>(this GameKitAppBuilder builder, int order = 10_000, bool clearTarget = false)
+    public static GameKitAppBuilder UsePencuil<TRenderContext>(this GameKitAppBuilder builder, int order = 10_000, int inputOrder = -10_000, bool clearTarget = false)
         where TRenderContext : IRenderContext
     {
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
         builder.RegisterInstance(GuiStyles.Style);
-        builder.RegisterInstance(new PencuilOptions { Order = order, ClearTarget = clearTarget });
+        builder.RegisterInstance(new PencuilOptions { Order = order, InputOrder = inputOrder, ClearTarget = clearTarget });
         builder.RegisterType<Pencil>();
         builder.RegisterType<ViewRegistry>();
         builder.RegisterType<PencuilRenderer>();
@@ -19,6 +19,6 @@ public static class PencuilExtensions
         return builder;
     }
 
-    public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder, int order = 10_000, bool clearTarget = true)
-        => builder.UsePencuil<DefaultRenderContext>(order, clearTarget);
+    public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder, int order = 10_000, int inputOrder = -10_000, bool clearTarget = true)
+        => builder.UsePencuil<DefaultRenderContext>(order, inputOrder, clearTarget);
 }

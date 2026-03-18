@@ -134,6 +134,19 @@ public class Pencil
         _clickTests.Add(test);
     }
 
+    public bool IsOverInteractiveArea(IntVector2 position)
+    {
+        foreach (Rectangle area in _clickTests)
+        {
+            if (area.Intersects(position))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void AddRectangle(Rectangle rectangle, Color color)
     {
         _coloredRectangleInstructions.Add(new ColoredRectangleInstruction(_depth++, rectangle, color));

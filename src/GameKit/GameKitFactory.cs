@@ -131,10 +131,8 @@ public class GameKitFactory: IDisposable
     internal KeyboardService CreateKeyboardService(AppControl appControl)
     {
         EnsureSdlInitialized();
-        
-        KeyboardService keyboardService = new(appControl);
 
-        return keyboardService;
+        return new KeyboardService(appControl);
     }
     
     internal GamepadService CreateGamepadService()
