@@ -128,14 +128,11 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal KeyboardService CreateKeyboardService(
-        AppControl appControl,
-        IEnumerable<IKeyDownHandler> keyDownHandlers,
-        IEnumerable<IKeyUpHandler> keyUpHandlers)
+    internal KeyboardService CreateKeyboardService(AppControl appControl)
     {
         EnsureSdlInitialized();
 
-        return new KeyboardService(appControl, keyDownHandlers, keyUpHandlers);
+        return new KeyboardService(appControl);
     }
     
     internal GamepadService CreateGamepadService()
@@ -148,14 +145,11 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(
-        IEnumerable<IMouseButtonPressHandler> pressHandlers,
-        IEnumerable<IMouseButtonReleaseHandler> releaseHandlers,
-        IEnumerable<IMouseMotionHandler> motionHandlers)
+    internal MouseService CreateMouseService()
     {
         EnsureSdlInitialized();
 
-        return new MouseService(pressHandlers, releaseHandlers, motionHandlers);
+        return new MouseService();
     }
 
     internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)

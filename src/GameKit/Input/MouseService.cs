@@ -51,22 +51,42 @@ public delegate void MouseMotionHandler(Mouse mouse, MouseMotionInputEvent input
 public class MouseService : IMouseService
 {
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
-    private readonly IMouseButtonPressHandler[] _pressHandlers;
-    private readonly IMouseButtonReleaseHandler[] _releaseHandlers;
-    private readonly IMouseMotionHandler[] _motionHandlers;
 
-    public event MouseButtonPressedHandler? ButtonPress;
-    public event MouseButtonReleasedHandler? ButtonRelease;
-    public event MouseMotionHandler? Motion;
+    private readonly PriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
+    private readonly PriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
+    private readonly PriorityEventHandlers<MouseMotionHandler> _motionHandlers = new();
 
-    public MouseService(
-        IEnumerable<IMouseButtonPressHandler> pressHandlers,
-        IEnumerable<IMouseButtonReleaseHandler> releaseHandlers,
-        IEnumerable<IMouseMotionHandler> motionHandlers)
+    public event MouseButtonPressedHandler ButtonPress
     {
-        _pressHandlers = pressHandlers.OrderBy(h => h.Order).ToArray();
-        _releaseHandlers = releaseHandlers.OrderBy(h => h.Order).ToArray();
-        _motionHandlers = motionHandlers.OrderBy(h => h.Order).ToArray();
+        add => _buttonPressHandlers.Add(0, value);
+        remove => _buttonPressHandlers.Remove(value);
+    }
+
+    public event MouseButtonReleasedHandler ButtonRelease
+    {
+        add => _buttonReleaseHandlers.Add(0, value);
+        remove => _buttonReleaseHandlers.Remove(value);
+    }
+
+    public event MouseMotionHandler Motion
+    {
+        add => _motionHandlers.Add(0, value);
+        remove => _motionHandlers.Remove(value);
+    }
+
+    public void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler)
+    {
+        _buttonPressHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeButtonRelease(int priority, MouseButtonReleasedHandler handler)
+    {
+        _buttonReleaseHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeMotion(int priority, MouseMotionHandler handler)
+    {
+        _motionHandlers.Add(priority, handler);
     }
 
     internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
@@ -91,14 +111,9 @@ public class MouseService : IMouseService
         {
             if (mouse.Set(button))
             {
-                foreach (IMouseButtonPressHandler handler in _pressHandlers)
+                foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
                 {
-                    handler.OnButtonPress(mouse, inputEvent);
-                }
-
-                if (!inputEvent.Consumed)
-                {
-                    ButtonPress?.Invoke(mouse, inputEvent);
+                    handler(mouse, inputEvent);
                 }
             }
         }
@@ -106,14 +121,9 @@ public class MouseService : IMouseService
         {
             mouse.Unset(button);
 
-            foreach (IMouseButtonReleaseHandler handler in _releaseHandlers)
+            foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
             {
-                handler.OnButtonRelease(mouse, inputEvent);
-            }
-
-            if (!inputEvent.Consumed)
-            {
-                ButtonRelease?.Invoke(mouse, inputEvent);
+                handler(mouse, inputEvent);
             }
         }
     }
@@ -136,14 +146,9 @@ public class MouseService : IMouseService
 
         MouseMotionInputEvent inputEvent = new(position, relativeMotion, timestamp);
 
-        foreach (IMouseMotionHandler handler in _motionHandlers)
+        foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
         {
-            handler.OnMotion(mouse, inputEvent);
-        }
-
-        if (!inputEvent.Consumed)
-        {
-            Motion?.Invoke(mouse, inputEvent);
+            handler(mouse, inputEvent);
         }
     }
 }

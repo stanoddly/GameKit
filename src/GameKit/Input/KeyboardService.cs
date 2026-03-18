@@ -9,23 +9,38 @@ public delegate void KeyUpEventHandler(Keyboard keyboard, KeyInputEvent inputEve
 public class KeyboardService : IKeyboardService
 {
     private readonly AppControl _appControl;
-    private readonly IKeyDownHandler[] _keyDownHandlers;
-    private readonly IKeyUpHandler[] _keyUpHandlers;
 
     // TODO: Dictionary isn't necessary, the amount of keyboards is usually truly small
     private readonly Dictionary<SDL_KeyboardID, Keyboard> _keyboards = new();
 
-    public event KeyDownEventHandler? KeyDown;
-    public event KeyUpEventHandler? KeyUp;
+    private readonly PriorityEventHandlers<KeyDownEventHandler> _keyDownHandlers = new();
+    private readonly PriorityEventHandlers<KeyUpEventHandler> _keyUpHandlers = new();
 
-    internal KeyboardService(
-        AppControl appControl,
-        IEnumerable<IKeyDownHandler> keyDownHandlers,
-        IEnumerable<IKeyUpHandler> keyUpHandlers)
+    public event KeyDownEventHandler KeyDown
+    {
+        add => _keyDownHandlers.Add(0, value);
+        remove => _keyDownHandlers.Remove(value);
+    }
+
+    public event KeyUpEventHandler KeyUp
+    {
+        add => _keyUpHandlers.Add(0, value);
+        remove => _keyUpHandlers.Remove(value);
+    }
+
+    public void SubscribeKeyDown(int priority, KeyDownEventHandler handler)
+    {
+        _keyDownHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeKeyUp(int priority, KeyUpEventHandler handler)
+    {
+        _keyUpHandlers.Add(priority, handler);
+    }
+
+    internal KeyboardService(AppControl appControl)
     {
         _appControl = appControl;
-        _keyDownHandlers = keyDownHandlers.OrderBy(h => h.Order).ToArray();
-        _keyUpHandlers = keyUpHandlers.OrderBy(h => h.Order).ToArray();
     }
 
     internal void OnKeyEvent(in SDL_KeyboardEvent keyboardEvent)
@@ -53,14 +68,9 @@ public class KeyboardService : IKeyboardService
                     _appControl.Quit();
                 }
 
-                foreach (IKeyDownHandler handler in _keyDownHandlers)
+                foreach ((_, KeyDownEventHandler handler) in _keyDownHandlers.GetSorted())
                 {
-                    handler.OnKeyDown(keyboard, inputEvent);
-                }
-
-                if (!inputEvent.Consumed)
-                {
-                    KeyDown?.Invoke(keyboard, inputEvent);
+                    handler(keyboard, inputEvent);
                 }
             }
         }
@@ -68,14 +78,9 @@ public class KeyboardService : IKeyboardService
         {
             keyboard.Unset(scancode);
 
-            foreach (IKeyUpHandler handler in _keyUpHandlers)
+            foreach ((_, KeyUpEventHandler handler) in _keyUpHandlers.GetSorted())
             {
-                handler.OnKeyUp(keyboard, inputEvent);
-            }
-
-            if (!inputEvent.Consumed)
-            {
-                KeyUp?.Invoke(keyboard, inputEvent);
+                handler(keyboard, inputEvent);
             }
         }
     }

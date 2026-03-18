@@ -1,6 +1,5 @@
 using GameKit.App;
 using GameKit.Content;
-using GameKit.Input;
 using GameKit.RenderOrchestration;
 
 namespace GameKit.Pencuil;
@@ -16,10 +15,7 @@ public static class PencuilExtensions
         builder.RegisterType<Pencil>();
         builder.RegisterType<ViewRegistry>();
         builder.RegisterType<PencuilRenderer>();
-        builder.RegisterType<PencuilRenderPhase<TRenderContext>>()
-            .As<IRenderPhase<TRenderContext>>()
-            .As<IMouseButtonReleaseHandler>()
-            .As<IMouseMotionHandler>();
+        builder.RegisterType<PencuilRenderPhase<TRenderContext>>().As<IRenderPhase<TRenderContext>>();
         return builder;
     }
 
