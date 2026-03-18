@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Sprites;
@@ -62,6 +63,9 @@ public class Pencil
 
     internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
     internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
+
+    private readonly List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
+    private readonly List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
 
     private readonly List<Rectangle> _hoverTests = new();
     private readonly List<Rectangle> _hoverInTests = new();
@@ -226,6 +230,23 @@ public class Pencil
     {
         ShortSize size = _fontSystem.MeasureTextSprite(text, font);
         return new IntVector2(size.Width, size.Height);
+    }
+
+    internal bool HaveInstructionsChanged()
+    {
+        bool changed =
+            !CollectionsMarshal.AsSpan(_coloredRectangleInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousColoredRectangleInstructions)) ||
+            !CollectionsMarshal.AsSpan(_textureRegionInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousTextureRegionInstructions));
+
+        if (changed)
+        {
+            _previousColoredRectangleInstructions.Clear();
+            _previousColoredRectangleInstructions.AddRange(_coloredRectangleInstructions);
+            _previousTextureRegionInstructions.Clear();
+            _previousTextureRegionInstructions.AddRange(_textureRegionInstructions);
+        }
+
+        return changed;
     }
 
     internal void ClearInstructions()
