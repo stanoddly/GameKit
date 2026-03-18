@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Sprites;
@@ -60,8 +61,11 @@ public class Pencil
     public GuiStyle Style { get; }
     internal int _depth = 0;
 
-    internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
-    internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
+    internal List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
+    internal List<TextureRegionInstruction> _textureRegionInstructions = new();
+
+    private List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
+    private List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
 
     private readonly List<Rectangle> _hoverTests = new();
     private readonly List<Rectangle> _hoverInTests = new();
@@ -228,8 +232,20 @@ public class Pencil
         return new IntVector2(size.Width, size.Height);
     }
 
-    internal void ClearInstructions()
+    internal bool HaveInstructionsChanged()
     {
+        return
+            !CollectionsMarshal.AsSpan(_coloredRectangleInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousColoredRectangleInstructions)) ||
+            !CollectionsMarshal.AsSpan(_textureRegionInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousTextureRegionInstructions));
+    }
+
+    internal void CycleInstructions()
+    {
+        (_coloredRectangleInstructions, _previousColoredRectangleInstructions) =
+            (_previousColoredRectangleInstructions, _coloredRectangleInstructions);
+        (_textureRegionInstructions, _previousTextureRegionInstructions) =
+            (_previousTextureRegionInstructions, _textureRegionInstructions);
+
         _coloredRectangleInstructions.Clear();
         _textureRegionInstructions.Clear();
         _depth = 0;
