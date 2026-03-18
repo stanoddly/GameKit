@@ -3,8 +3,13 @@ using SDL;
 
 namespace GameKit.Input;
 
-public delegate void KeyDownEventHandler(Keyboard keyboard, KeyInputEvent inputEvent);
-public delegate void KeyUpEventHandler(Keyboard keyboard, KeyInputEvent inputEvent);
+public record KeyEventArgs(Scancode Scancode, VirtualKey Key, ulong Timestamp)
+{
+    public bool Consumed { get; set; }
+}
+
+public delegate void KeyDownEventHandler(Keyboard keyboard, KeyEventArgs eventArgs);
+public delegate void KeyUpEventHandler(Keyboard keyboard, KeyEventArgs eventArgs);
 
 public class KeyboardService : IKeyboardService
 {
@@ -57,7 +62,7 @@ public class KeyboardService : IKeyboardService
             keyboard = new Keyboard();
         }
 
-        KeyInputEvent inputEvent = new(scancode, virtualKey, timestamp);
+        KeyEventArgs eventArgs = new(scancode, virtualKey, timestamp);
 
         if (keyboardEvent.down)
         {
@@ -70,7 +75,7 @@ public class KeyboardService : IKeyboardService
 
                 foreach ((_, KeyDownEventHandler handler) in _keyDownHandlers.GetSorted())
                 {
-                    handler(keyboard, inputEvent);
+                    handler(keyboard, eventArgs);
                 }
             }
         }
@@ -80,7 +85,7 @@ public class KeyboardService : IKeyboardService
 
             foreach ((_, KeyUpEventHandler handler) in _keyUpHandlers.GetSorted())
             {
-                handler(keyboard, inputEvent);
+                handler(keyboard, eventArgs);
             }
         }
     }

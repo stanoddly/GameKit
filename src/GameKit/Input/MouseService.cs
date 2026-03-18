@@ -44,9 +44,19 @@ public class Mouse
     }
 }
 
-public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonInputEvent inputEvent);
-public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonInputEvent inputEvent);
-public delegate void MouseMotionHandler(Mouse mouse, MouseMotionInputEvent inputEvent);
+public record MouseButtonEventArgs(MouseButton Button, Vector2 Position, ulong Timestamp)
+{
+    public bool Consumed { get; set; }
+}
+
+public record MouseMotionEventArgs(Vector2 Position, Vector2 RelativeMotion, ulong Timestamp)
+{
+    public bool Consumed { get; set; }
+}
+
+public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
+public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
+public delegate void MouseMotionHandler(Mouse mouse, MouseMotionEventArgs eventArgs);
 
 public class MouseService : IMouseService
 {
@@ -105,7 +115,7 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseButtonInputEvent inputEvent = new(button, position, timestamp);
+        MouseButtonEventArgs eventArgs = new(button, position, timestamp);
 
         if (mouseButtonEvent.down)
         {
@@ -113,7 +123,7 @@ public class MouseService : IMouseService
             {
                 foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
                 {
-                    handler(mouse, inputEvent);
+                    handler(mouse, eventArgs);
                 }
             }
         }
@@ -123,7 +133,7 @@ public class MouseService : IMouseService
 
             foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
             {
-                handler(mouse, inputEvent);
+                handler(mouse, eventArgs);
             }
         }
     }
@@ -144,11 +154,11 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseMotionInputEvent inputEvent = new(position, relativeMotion, timestamp);
+        MouseMotionEventArgs eventArgs = new(position, relativeMotion, timestamp);
 
         foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
         {
-            handler(mouse, inputEvent);
+            handler(mouse, eventArgs);
         }
     }
 }
