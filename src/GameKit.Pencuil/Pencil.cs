@@ -61,11 +61,11 @@ public class Pencil
     public GuiStyle Style { get; }
     internal int _depth = 0;
 
-    internal readonly List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
-    internal readonly List<TextureRegionInstruction> _textureRegionInstructions = new();
+    internal List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
+    internal List<TextureRegionInstruction> _textureRegionInstructions = new();
 
-    private readonly List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
-    private readonly List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
+    private List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
+    private List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
 
     private readonly List<Rectangle> _hoverTests = new();
     private readonly List<Rectangle> _hoverInTests = new();
@@ -234,19 +234,17 @@ public class Pencil
 
     internal bool HaveInstructionsChanged()
     {
-        bool changed =
+        return
             !CollectionsMarshal.AsSpan(_coloredRectangleInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousColoredRectangleInstructions)) ||
             !CollectionsMarshal.AsSpan(_textureRegionInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousTextureRegionInstructions));
+    }
 
-        if (changed)
-        {
-            _previousColoredRectangleInstructions.Clear();
-            _previousColoredRectangleInstructions.AddRange(_coloredRectangleInstructions);
-            _previousTextureRegionInstructions.Clear();
-            _previousTextureRegionInstructions.AddRange(_textureRegionInstructions);
-        }
-
-        return changed;
+    internal void SwapInstructions()
+    {
+        (_coloredRectangleInstructions, _previousColoredRectangleInstructions) =
+            (_previousColoredRectangleInstructions, _coloredRectangleInstructions);
+        (_textureRegionInstructions, _previousTextureRegionInstructions) =
+            (_previousTextureRegionInstructions, _textureRegionInstructions);
     }
 
     internal void ClearInstructions()
