@@ -10,7 +10,7 @@
              It's stored in obj/ (intermediate build artifacts) rather than the project root
              because it's not source code and will be extracted/regenerated on each build.
              The final binaries are then copied to the output directory for runtime use. -->
-        <SlangVersion>2026.3.1</SlangVersion>
+        <SlangVersion>2026.4.2</SlangVersion>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
