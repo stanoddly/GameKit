@@ -28,10 +28,17 @@ class Program
 
         var parseResult = rootCommand.Parse(args);
 
-        SdlangCompiler sdlangCompiler = new();
-        string[] filenames = parseResult.GetValue(filenamesOption) ?? [];
-        sdlangCompiler.Compile(filenames,parseResult.GetValue(forceOption));
-
-        return 0;
+        try
+        {
+            SdlangCompiler sdlangCompiler = new();
+            string[] filenames = parseResult.GetValue(filenamesOption) ?? [];
+            sdlangCompiler.Compile(filenames, parseResult.GetValue(forceOption));
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return 1;
+        }
     }
 }

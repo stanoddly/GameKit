@@ -17,6 +17,8 @@ internal enum ResourceType
 
 internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
 
+public class ShaderCompilationException(string message) : Exception(message);
+
 public class ShaderBindingValidationException(string message) : Exception(message);
 
 public class SdlangCompiler
@@ -62,8 +64,7 @@ public class SdlangCompiler
     {
         if (filenames.Length == 0)
         {
-            Console.WriteLine("Error: No filenames provided");
-            Environment.Exit(1);
+            throw new ShaderCompilationException("No filenames provided");
         }
 
         List<FileInfo> paths = filenames.Select(f => new FileInfo(f)).ToList();
@@ -86,8 +87,7 @@ public class SdlangCompiler
                 FileInfo shaderFile = new FileInfo(Path.Combine(dir.FullName, "shader.slang"));
                 if (!shaderFile.Exists)
                 {
-                    Console.WriteLine($"Error: File {shaderFile.FullName} does not exist");
-                    Environment.Exit(1);
+                    throw new ShaderCompilationException($"File {shaderFile.FullName} does not exist");
                 }
                 CompileShader(shaderFile, force);
             }
@@ -98,8 +98,7 @@ public class SdlangCompiler
             {
                 if (!file.Exists)
                 {
-                    Console.WriteLine($"Error: File {file.FullName} does not exist");
-                    Environment.Exit(1);
+                    throw new ShaderCompilationException($"File {file.FullName} does not exist");
                 }
                 CompileShader(file, force);
             }
@@ -181,8 +180,7 @@ public class SdlangCompiler
 
         if (process.ExitCode != 0)
         {
-            Console.WriteLine($"Error compiling shader");
-            Environment.Exit(1);
+            throw new ShaderCompilationException($"Shader compilation failed with exit code {process.ExitCode}");
         }
 
         return (reflectionFile, shaderInstances);
