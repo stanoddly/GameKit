@@ -68,8 +68,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
                 _renderer.Render(renderContext.CommandBuffer, _pencil);
             }
 
-            _pencil.SwapInstructions();
-            _pencil.ClearInstructions();
+            _pencil.CycleInstructions();
         }
 
         _pencil.CursorJustReleased = false;

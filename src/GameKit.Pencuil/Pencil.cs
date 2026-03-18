@@ -239,16 +239,13 @@ public class Pencil
             !CollectionsMarshal.AsSpan(_textureRegionInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousTextureRegionInstructions));
     }
 
-    internal void SwapInstructions()
+    internal void CycleInstructions()
     {
         (_coloredRectangleInstructions, _previousColoredRectangleInstructions) =
             (_previousColoredRectangleInstructions, _coloredRectangleInstructions);
         (_textureRegionInstructions, _previousTextureRegionInstructions) =
             (_previousTextureRegionInstructions, _textureRegionInstructions);
-    }
 
-    internal void ClearInstructions()
-    {
         _coloredRectangleInstructions.Clear();
         _textureRegionInstructions.Clear();
         _depth = 0;
