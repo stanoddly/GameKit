@@ -3,8 +3,11 @@ using SDL;
 
 namespace GameKit.Input;
 
-public record KeyEventArgs(Scancode Scancode, VirtualKey Key, ulong Timestamp)
+public class KeyEventArgs
 {
+    public Scancode Scancode { get; internal set; }
+    public VirtualKey Key { get; internal set; }
+    public ulong Timestamp { get; internal set; }
     public bool Consumed { get; set; }
 }
 
@@ -18,6 +21,7 @@ public class KeyboardService : IKeyboardService
     // TODO: Dictionary isn't necessary, the amount of keyboards is usually truly small
     private readonly Dictionary<SDL_KeyboardID, Keyboard> _keyboards = new();
 
+    private readonly KeyEventArgs _keyEventArgs = new();
     private readonly PriorityEventHandlers<KeyDownEventHandler> _keyDownHandlers = new();
     private readonly PriorityEventHandlers<KeyUpEventHandler> _keyUpHandlers = new();
 
@@ -62,7 +66,10 @@ public class KeyboardService : IKeyboardService
             keyboard = new Keyboard();
         }
 
-        KeyEventArgs eventArgs = new(scancode, virtualKey, timestamp);
+        _keyEventArgs.Scancode = scancode;
+        _keyEventArgs.Key = virtualKey;
+        _keyEventArgs.Timestamp = timestamp;
+        _keyEventArgs.Consumed = false;
 
         if (keyboardEvent.down)
         {
@@ -75,7 +82,7 @@ public class KeyboardService : IKeyboardService
 
                 foreach ((_, KeyDownEventHandler handler) in _keyDownHandlers.GetSorted())
                 {
-                    handler(keyboard, eventArgs);
+                    handler(keyboard, _keyEventArgs);
                 }
             }
         }
@@ -85,7 +92,7 @@ public class KeyboardService : IKeyboardService
 
             foreach ((_, KeyUpEventHandler handler) in _keyUpHandlers.GetSorted())
             {
-                handler(keyboard, eventArgs);
+                handler(keyboard, _keyEventArgs);
             }
         }
     }

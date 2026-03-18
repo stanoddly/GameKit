@@ -44,13 +44,19 @@ public class Mouse
     }
 }
 
-public record MouseButtonEventArgs(MouseButton Button, Vector2 Position, ulong Timestamp)
+public class MouseButtonEventArgs
 {
+    public MouseButton Button { get; internal set; }
+    public Vector2 Position { get; internal set; }
+    public ulong Timestamp { get; internal set; }
     public bool Consumed { get; set; }
 }
 
-public record MouseMotionEventArgs(Vector2 Position, Vector2 RelativeMotion, ulong Timestamp)
+public class MouseMotionEventArgs
 {
+    public Vector2 Position { get; internal set; }
+    public Vector2 RelativeMotion { get; internal set; }
+    public ulong Timestamp { get; internal set; }
     public bool Consumed { get; set; }
 }
 
@@ -61,6 +67,8 @@ public delegate void MouseMotionHandler(Mouse mouse, MouseMotionEventArgs eventA
 public class MouseService : IMouseService
 {
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
+    private readonly MouseButtonEventArgs _buttonEventArgs = new();
+    private readonly MouseMotionEventArgs _motionEventArgs = new();
 
     private readonly PriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
     private readonly PriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
@@ -115,7 +123,10 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseButtonEventArgs eventArgs = new(button, position, timestamp);
+        _buttonEventArgs.Button = button;
+        _buttonEventArgs.Position = position;
+        _buttonEventArgs.Timestamp = timestamp;
+        _buttonEventArgs.Consumed = false;
 
         if (mouseButtonEvent.down)
         {
@@ -123,7 +134,7 @@ public class MouseService : IMouseService
             {
                 foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
                 {
-                    handler(mouse, eventArgs);
+                    handler(mouse, _buttonEventArgs);
                 }
             }
         }
@@ -133,7 +144,7 @@ public class MouseService : IMouseService
 
             foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
             {
-                handler(mouse, eventArgs);
+                handler(mouse, _buttonEventArgs);
             }
         }
     }
@@ -154,11 +165,14 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseMotionEventArgs eventArgs = new(position, relativeMotion, timestamp);
+        _motionEventArgs.Position = position;
+        _motionEventArgs.RelativeMotion = relativeMotion;
+        _motionEventArgs.Timestamp = timestamp;
+        _motionEventArgs.Consumed = false;
 
         foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
         {
-            handler(mouse, eventArgs);
+            handler(mouse, _motionEventArgs);
         }
     }
 }
