@@ -122,10 +122,16 @@ public class GameKitAppBuilder
         _moduleBuilder.RegisterType<GpuMemorySystem>();
         
         _moduleBuilder.RegisterFunc<KeyboardService>(sp => sp.GetRequiredService<GameKitFactory>().CreateKeyboardService(
-            sp.GetRequiredService<AppControl>())
+            sp.GetRequiredService<AppControl>(),
+            sp.GetServices<IKeyDownHandler>(),
+            sp.GetServices<IKeyUpHandler>())
         ).As<IKeyboardService>();
         _moduleBuilder.RegisterFunc<GamepadService>(sp => sp.GetRequiredService<GameKitFactory>().CreateGamepadService()).As<IGamepadService>();
-        _moduleBuilder.RegisterFunc<MouseService>(sp => sp.GetRequiredService<GameKitFactory>().CreateMouseService()).As<IMouseService>();
+        _moduleBuilder.RegisterFunc<MouseService>(sp => sp.GetRequiredService<GameKitFactory>().CreateMouseService(
+            sp.GetServices<IMouseButtonPressHandler>(),
+            sp.GetServices<IMouseButtonReleaseHandler>(),
+            sp.GetServices<IMouseMotionHandler>())
+        ).As<IMouseService>();
         _moduleBuilder.RegisterFunc<EventService>(sp => sp.GetRequiredService<GameKitFactory>().CreateEventService(
             sp.GetRequiredService<KeyboardService>(),
             sp.GetRequiredService<GamepadService>(),

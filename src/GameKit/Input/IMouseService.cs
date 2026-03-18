@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace GameKit.Input;
 
 public interface IMouseService

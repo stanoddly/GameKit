@@ -44,20 +44,30 @@ public class Mouse
     }
 }
 
-public readonly record struct MouseButtonEventArgs(MouseButton Button, Vector2 Position, ulong Timestamp);
-public readonly record struct MouseMotionEventArgs(Vector2 Position, Vector2 RelativeMotion, ulong Timestamp);
-
-public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
-public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
-public delegate void MouseMotionHandler(Mouse mouse, MouseMotionEventArgs eventArgs);
+public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonInputEvent inputEvent);
+public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonInputEvent inputEvent);
+public delegate void MouseMotionHandler(Mouse mouse, MouseMotionInputEvent inputEvent);
 
 public class MouseService : IMouseService
 {
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
+    private readonly IMouseButtonPressHandler[] _pressHandlers;
+    private readonly IMouseButtonReleaseHandler[] _releaseHandlers;
+    private readonly IMouseMotionHandler[] _motionHandlers;
 
     public event MouseButtonPressedHandler? ButtonPress;
     public event MouseButtonReleasedHandler? ButtonRelease;
     public event MouseMotionHandler? Motion;
+
+    public MouseService(
+        IEnumerable<IMouseButtonPressHandler> pressHandlers,
+        IEnumerable<IMouseButtonReleaseHandler> releaseHandlers,
+        IEnumerable<IMouseMotionHandler> motionHandlers)
+    {
+        _pressHandlers = pressHandlers.OrderBy(h => h.Order).ToArray();
+        _releaseHandlers = releaseHandlers.OrderBy(h => h.Order).ToArray();
+        _motionHandlers = motionHandlers.OrderBy(h => h.Order).ToArray();
+    }
 
     internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
     {
@@ -75,19 +85,36 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseButtonEventArgs eventArgs = new(button, position, timestamp);
+        MouseButtonInputEvent inputEvent = new(button, position, timestamp);
 
         if (mouseButtonEvent.down)
         {
             if (mouse.Set(button))
             {
-                ButtonPress?.Invoke(mouse, eventArgs);
+                foreach (IMouseButtonPressHandler handler in _pressHandlers)
+                {
+                    handler.OnButtonPress(mouse, inputEvent);
+                }
+
+                if (!inputEvent.Consumed)
+                {
+                    ButtonPress?.Invoke(mouse, inputEvent);
+                }
             }
         }
         else
         {
             mouse.Unset(button);
-            ButtonRelease?.Invoke(mouse, eventArgs);
+
+            foreach (IMouseButtonReleaseHandler handler in _releaseHandlers)
+            {
+                handler.OnButtonRelease(mouse, inputEvent);
+            }
+
+            if (!inputEvent.Consumed)
+            {
+                ButtonRelease?.Invoke(mouse, inputEvent);
+            }
         }
     }
 
@@ -107,7 +134,16 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
-        MouseMotionEventArgs eventArgs = new(position, relativeMotion, timestamp);
-        Motion?.Invoke(mouse, eventArgs);
+        MouseMotionInputEvent inputEvent = new(position, relativeMotion, timestamp);
+
+        foreach (IMouseMotionHandler handler in _motionHandlers)
+        {
+            handler.OnMotion(mouse, inputEvent);
+        }
+
+        if (!inputEvent.Consumed)
+        {
+            Motion?.Invoke(mouse, inputEvent);
+        }
     }
 }
