@@ -15,6 +15,7 @@ public interface IWindow : IDisposable
     ShortSize RenderSizeInPixels { get; }
 
     TextureFormat ColorTargetFormat { get; }
+    bool MouseGrab { get; set; }
     bool WindowRelativeMouseMode { get; set; }
 
     event ResolutionChangedHandler? ResolutionChanged;

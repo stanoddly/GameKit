@@ -61,6 +61,24 @@ internal class Window : IWindow
         }
     }
 
+    public bool MouseGrab
+    {
+        get
+        {
+            unsafe
+            {
+                return SDL3.SDL_GetWindowMouseGrab(SdlWindow);
+            }
+        }
+        set
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowMouseGrab(SdlWindow, value);
+            }
+        }
+    }
+
     public bool WindowRelativeMouseMode
     {
         get
