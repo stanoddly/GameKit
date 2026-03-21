@@ -1,16 +1,11 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading.Channels;
 
 namespace GameKit.Logging;
 
 public static class GameLog
 {
-    private static readonly Channel<string> LogChannel = Channel.CreateBounded<string>(
-        new BoundedChannelOptions(1024)
-        {
-            FullMode = BoundedChannelFullMode.DropOldest,
-            SingleReader = true
-        });
+    private static readonly BlockingCollection<string> LogQueue = new(boundedCapacity: 1024);
 
     private static readonly Thread FlushThread;
 
@@ -27,46 +22,32 @@ public static class GameLog
     [Conditional("DEBUG")]
     public static void Debug(string message)
     {
-        LogChannel.Writer.TryWrite(message);
+        LogQueue.TryAdd(message);
     }
 
     [Conditional("DEBUG")]
     public static void Debug<T0>(string format, T0 arg0)
     {
-        LogChannel.Writer.TryWrite(string.Format(format, arg0));
+        LogQueue.TryAdd(string.Format(format, arg0));
     }
 
     [Conditional("DEBUG")]
     public static void Debug<T0, T1>(string format, T0 arg0, T1 arg1)
     {
-        LogChannel.Writer.TryWrite(string.Format(format, arg0, arg1));
+        LogQueue.TryAdd(string.Format(format, arg0, arg1));
     }
 
     [Conditional("DEBUG")]
     public static void Debug<T0, T1, T2>(string format, T0 arg0, T1 arg1, T2 arg2)
     {
-        LogChannel.Writer.TryWrite(string.Format(format, arg0, arg1, arg2));
+        LogQueue.TryAdd(string.Format(format, arg0, arg1, arg2));
     }
 
     private static void FlushLoop()
     {
-        ChannelReader<string> reader = LogChannel.Reader;
-
-        while (true)
+        foreach (string message in LogQueue.GetConsumingEnumerable())
         {
-            try
-            {
-                while (reader.TryRead(out string? message))
-                {
-                    Console.WriteLine(message);
-                }
-
-                reader.WaitToReadAsync().AsTask().GetAwaiter().GetResult();
-            }
-            catch (ChannelClosedException)
-            {
-                break;
-            }
+            Console.WriteLine(message);
         }
     }
 }
