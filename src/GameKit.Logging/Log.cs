@@ -17,11 +17,11 @@ namespace GameKit.Logging;
 /// Console.WriteLine, keeping I/O off the calling thread.
 /// </para>
 /// </summary>
-public static class GameLog
+public static class Log
 {
     private static BlockingCollection<string>? LogQueue;
 
-    static GameLog()
+    static Log()
     {
         Initialize();
     }
