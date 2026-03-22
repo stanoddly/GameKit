@@ -1,6 +1,6 @@
 namespace GameKit.Componentize.Tests;
 
-public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
+public class TestMachine : StatefulComponent<TestMachine, TestMachine.TestState>
 {
     public TestMachine(TestState initialState) : base(initialState) { }
 
@@ -31,7 +31,7 @@ public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
     }
 }
 
-public class StateMachineTests
+public class StatefulComponentTests
 {
     private GameWorld _world;
     private GameObject _gameObject;
