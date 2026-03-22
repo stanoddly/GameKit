@@ -2,13 +2,13 @@ using System.Runtime.CompilerServices;
 
 namespace GameKit.Componentize;
 
-public abstract class StateMachine<TSelf, TState> : GameComponent
-    where TSelf : StateMachine<TSelf, TState>
-    where TState : StateMachine<TSelf, TState>.State
+public abstract class StatefulComponent<TSelf, TState> : GameComponent
+    where TSelf : StatefulComponent<TSelf, TState>
+    where TState : StatefulComponent<TSelf, TState>.State
 {
     private TState _state;
 
-    protected StateMachine(TState initialState) => _state = initialState;
+    protected StatefulComponent(TState initialState) => _state = initialState;
 
     protected internal override void OnAttach() => _state.Enter(Unsafe.As<TSelf>(this));
     protected internal override void OnDetach() => _state.Exit(Unsafe.As<TSelf>(this));

@@ -1,8 +1,8 @@
 namespace GameKit.Componentize.Tests;
 
-public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
+public class TestStatefulComponent : StatefulComponent<TestStatefulComponent, TestStatefulComponent.TestState>
 {
-    public TestMachine(TestState initialState) : base(initialState) { }
+    public TestStatefulComponent(TestState initialState) : base(initialState) { }
 
     public new TestState ChangeState(TestState newState) => base.ChangeState(newState);
     public new TestState CurrentState => base.CurrentState;
@@ -14,8 +14,8 @@ public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
         public bool Entered { get; private set; }
         public bool Exited { get; private set; }
 
-        public override void Enter(TestMachine context) => Entered = true;
-        public override void Exit(TestMachine context) => Exited = true;
+        public override void Enter(TestStatefulComponent context) => Entered = true;
+        public override void Exit(TestStatefulComponent context) => Exited = true;
     }
 
     public class ActiveState : TestState
@@ -26,12 +26,12 @@ public class TestMachine : StateMachine<TestMachine, TestMachine.TestState>
 
         public ActiveState(string target) => Target = target;
 
-        public override void Enter(TestMachine context) => Entered = true;
-        public override void Exit(TestMachine context) => Exited = true;
+        public override void Enter(TestStatefulComponent context) => Entered = true;
+        public override void Exit(TestStatefulComponent context) => Exited = true;
     }
 }
 
-public class StateMachineTests
+public class StatefulComponentTests
 {
     private GameWorld _world;
     private GameObject _gameObject;
@@ -46,8 +46,8 @@ public class StateMachineTests
     [Test]
     public void Attach_CallsEnterOnInitialState()
     {
-        var idle = new TestMachine.IdleState();
-        var machine = new TestMachine(idle);
+        var idle = new TestStatefulComponent.IdleState();
+        var machine = new TestStatefulComponent(idle);
 
         _gameObject.Attach(machine);
 
@@ -57,11 +57,11 @@ public class StateMachineTests
     [Test]
     public void Detach_CallsExitOnCurrentState()
     {
-        var idle = new TestMachine.IdleState();
-        var machine = new TestMachine(idle);
+        var idle = new TestStatefulComponent.IdleState();
+        var machine = new TestStatefulComponent(idle);
         _gameObject.Attach(machine);
 
-        _gameObject.Detach<TestMachine>();
+        _gameObject.Detach<TestStatefulComponent>();
 
         Assert.That(idle.Exited, Is.True);
     }
@@ -69,11 +69,11 @@ public class StateMachineTests
     [Test]
     public void ChangeState_CallsExitOnOldAndEnterOnNew()
     {
-        var idle = new TestMachine.IdleState();
-        var machine = new TestMachine(idle);
+        var idle = new TestStatefulComponent.IdleState();
+        var machine = new TestStatefulComponent(idle);
         _gameObject.Attach(machine);
 
-        var active = new TestMachine.ActiveState("target");
+        var active = new TestStatefulComponent.ActiveState("target");
         machine.ChangeState(active);
 
         Assert.That(idle.Exited, Is.True);
@@ -83,11 +83,11 @@ public class StateMachineTests
     [Test]
     public void ChangeState_UpdatesCurrentState()
     {
-        var idle = new TestMachine.IdleState();
-        var machine = new TestMachine(idle);
+        var idle = new TestStatefulComponent.IdleState();
+        var machine = new TestStatefulComponent(idle);
         _gameObject.Attach(machine);
 
-        var active = new TestMachine.ActiveState("target");
+        var active = new TestStatefulComponent.ActiveState("target");
         machine.ChangeState(active);
 
         Assert.That(machine.CurrentState, Is.SameAs(active));
