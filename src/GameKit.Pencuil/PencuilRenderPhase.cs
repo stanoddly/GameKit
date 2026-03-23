@@ -28,6 +28,17 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             pencil.Invalidate();
         });
 
+        mouseService.SubscribeButtonPress(options.InputOrder, (_, args) =>
+        {
+            if (args.Button == MouseButton.Left)
+            {
+                if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
+                {
+                    args.Consumed = true;
+                }
+            }
+        });
+
         mouseService.SubscribeButtonRelease(options.InputOrder, (_, args) =>
         {
             if (args.Button == MouseButton.Left)
