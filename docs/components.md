@@ -13,9 +13,11 @@ builder.RegisterType<GameWorld>();
 
 builder.OnStart((GameWorld gameWorld) =>
 {
-    gameWorld.CreateGameObject()
-        .Attach<MovementComponent>()
-        .Attach<HealthComponent>();
+    GameObjectBuilder builder = gameWorld.CreateGameObjectBuilder();
+    builder
+        .With<MovementComponent>()
+        .With<HealthComponent>()
+        .Build();
 });
 ```
 
@@ -39,7 +41,13 @@ gameWorld.RemoveGameObject(player); // Detaches all components
 
 ### GameComponent
 
-Base class for all components. Override `OnAttach` and `OnDetach` for lifecycle:
+Base class for all components. Override lifecycle hooks:
+
+- **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. When using `GameObjectBuilder`, sibling `OnAttach` may not have run yet.
+- **`OnReady`** — all siblings are attached and their `OnAttach` has completed. Safe to resolve sibling references and subscribe to sibling events.
+- **`OnDetach`** — component is being removed. Clean up subscriptions and resources.
+
+When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` are called immediately in sequence.
 
 ```csharp
 public class MovementComponent : GameComponent
@@ -48,13 +56,16 @@ public class MovementComponent : GameComponent
 
     protected override void OnAttach()
     {
-        // Subscribe to input, register for updates, etc.
         _updateHandle = Services<UpdateSystem>.Instance.Add(Update);
+    }
+
+    protected override void OnReady()
+    {
+        // Safe to access siblings here
     }
 
     protected override void OnDetach()
     {
-        // Unsubscribe, cleanup
         Services<UpdateSystem>.Instance.Remove(_updateHandle);
     }
 
@@ -115,9 +126,49 @@ AttachSibling(new BuffComponent());
 DetachSibling<BuffComponent>();
 ```
 
+## GameObjectBuilder
+
+Use `GameObjectBuilder` to create GameObjects with multiple components. This provides a two-phase lifecycle: `OnAttach` runs for all components first, then `OnReady` runs for all, guaranteeing siblings exist during `OnReady`.
+
+```csharp
+GameObjectBuilder builder = gameWorld.CreateGameObjectBuilder();
+
+builder
+    .With(new TransformComponent { Position = pos })
+    .With<AnimatedSpriteComponent>()
+    .With<SilhouetteComponent>()
+    .Build();
+
+// The builder is reusable after Build
+builder
+    .With(new TransformComponent { Position = otherPos })
+    .With<CreatureAnimationComponent>()
+    .Build();
+```
+
+Extension methods on `GameObjectBuilder` are a convenient way to bundle related components:
+
+```csharp
+public static class GameObjectBuilderExtensions
+{
+    public static GameObjectBuilder WithUnitComponents(this GameObjectBuilder builder, Vector2 position)
+    {
+        return builder
+            .With(new TransformComponent { Position = position })
+            .With<AnimatedSpriteComponent>()
+            .With<SilhouetteComponent>();
+    }
+}
+
+// Usage
+builder.WithUnitComponents(pos).With<ArcherAIComponent>().Build();
+```
+
 ## Key Points
 
-- Components have explicit lifecycle via `OnAttach`/`OnDetach`
+- Components have explicit lifecycle via `OnAttach`/`OnReady`/`OnDetach`
+- Use `GameObjectBuilder` when creating GameObjects with interdependent components
+- `Attach` on a live GameObject returns the attached component
 - Updates require manual registration with `UpdateSystem`
 - Use `Services<T>.Instance` to access registered services
 - Always clean up subscriptions in `OnDetach`
