@@ -58,7 +58,12 @@ public abstract class GameComponent
 
     protected internal virtual void OnAttach()
     {
-        
+
+    }
+
+    protected internal virtual void OnReady()
+    {
+
     }
 
     protected internal virtual void OnDetach()

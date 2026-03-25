@@ -4,11 +4,17 @@ public class TestComponent : GameComponent
 {
     public string Value { get; set; } = "test";
     public bool OnAttachCalled { get; private set; }
+    public bool OnReadyCalled { get; private set; }
     public bool OnDetachCalled { get; private set; }
 
     protected override void OnAttach()
     {
         OnAttachCalled = true;
+    }
+
+    protected override void OnReady()
+    {
+        OnReadyCalled = true;
     }
 
     protected override void OnDetach()
@@ -89,11 +95,12 @@ public class GameObjectTests
 
 
     [Test]
-    public void Attach_ReturnsGameObject_ForChaining()
+    public void Attach_ReturnsComponent()
     {
-        GameObject result = _gameObject.Attach<TestComponent>();
+        TestComponent result = _gameObject.Attach<TestComponent>();
 
-        Assert.That(ReferenceEquals(result, _gameObject), Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(ReferenceEquals(result, _gameObject.Get<TestComponent>()), Is.True);
     }
 
     [Test]
@@ -180,13 +187,13 @@ public class GameObjectTests
     }
 
     [Test]
-    public void Attach_WithInstance_ReturnsGameObject_ForChaining()
+    public void Attach_WithInstance_ReturnsComponent()
     {
         TestComponent instance = new TestComponent();
 
-        GameObject result = _gameObject.Attach(instance);
+        TestComponent result = _gameObject.Attach(instance);
 
-        Assert.That(ReferenceEquals(result, _gameObject), Is.True);
+        Assert.That(ReferenceEquals(result, instance), Is.True);
     }
 
     [Test]
@@ -390,5 +397,24 @@ public class GameObjectTests
         _world.RemoveGameObject(_gameObject);
 
         Assert.Throws<InvalidOperationException>(() => { GameWorld w = _gameObject.World; });
+    }
+
+    [Test]
+    public void Attach_CallsOnReady()
+    {
+        _gameObject.Attach<TestComponent>();
+
+        TestComponent component = _gameObject.Get<TestComponent>();
+        Assert.That(component.OnReadyCalled, Is.True);
+    }
+
+    [Test]
+    public void Attach_WithInstance_CallsOnReady()
+    {
+        TestComponent instance = new TestComponent();
+
+        _gameObject.Attach(instance);
+
+        Assert.That(instance.OnReadyCalled, Is.True);
     }
 }

@@ -20,6 +20,11 @@ public class GameWorld : IUpdatable
         return gameObject;
     }
 
+    public GameObjectBuilder CreateGameObjectBuilder()
+    {
+        return new GameObjectBuilder(this);
+    }
+
     public GameObject? GetGameObject(Handle<GameObject> handle)
     {
         if (_gameObjects.TryGetValue1(handle, out GameObject gameObject))

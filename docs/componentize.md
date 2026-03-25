@@ -9,11 +9,16 @@ A component-based game architecture: GameObjects hold GameComponents, components
 Container for components. Stores components in a list — multiple components of the same type can coexist. Implements `IEnumerable<GameComponent>`.
 
 ```csharp
-GameObject dude = gameWorld.CreateGameObject();
+// Batch creation with two-phase lifecycle
+GameObjectBuilder builder = gameWorld.CreateGameObjectBuilder();
+builder
+    .With<TransformComponent>()
+    .With(new DynamicBodyComponent { Radius = 0.4f })
+    .Build();
 
-// new() shorthand and instance attachment (chainable)
-dude.Attach<TransformComponent>()
-    .Attach(new DynamicBodyComponent { Radius = 0.4f });
+// Single attachment to a live object (returns the component)
+GameObject dude = gameWorld.CreateGameObject();
+TransformComponent transform = dude.Attach<TransformComponent>();
 
 // Get throws ComponentNotFound
 dude.Get<TransformComponent>();
@@ -38,8 +43,11 @@ Base class. Has an `Owner` (the parent GameObject) and lifecycle hooks.
 ```csharp
 public class MyComponent : GameComponent
 {
-    // setup, cache siblings
+    // setup self-contained state (siblings may not exist yet)
     protected override void OnAttach()  { }
+
+    // all siblings guaranteed to exist, safe to resolve references
+    protected override void OnReady()   { }
 
     // cleanup
     protected override void OnDetach()  { }

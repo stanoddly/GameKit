@@ -26,7 +26,7 @@ public class GameObject: IEnumerable<GameComponent>
         _world = world;
     }
 
-    public GameObject Attach<TComponent>() where TComponent: GameComponent, new()
+    public TComponent Attach<TComponent>() where TComponent: GameComponent, new()
     {
         return Attach(new TComponent());
     }
@@ -52,7 +52,7 @@ public class GameObject: IEnumerable<GameComponent>
         return this;
     }
 
-    public GameObject Attach<TComponent>(TComponent component) where TComponent: GameComponent
+    public TComponent Attach<TComponent>(TComponent component) where TComponent: GameComponent
     {
         if (State != GameObjectState.Alive)
         {
@@ -63,10 +63,24 @@ public class GameObject: IEnumerable<GameComponent>
         component.OnAttach();
         _components.Add(component);
         World.NotifyComponentAttached(this, component);
-        return this;
+        component.OnReady();
+        return component;
     }
 
 
+
+    internal void AttachWithoutReady(GameComponent component)
+    {
+        if (State != GameObjectState.Alive)
+        {
+            throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
+        }
+
+        component.InternalOwner = this;
+        component.OnAttach();
+        _components.Add(component);
+        World.NotifyComponentAttached(this, component);
+    }
 
     // Convenience method to be able to use []
     public void Add<TComponent>(TComponent component) where TComponent : GameComponent
