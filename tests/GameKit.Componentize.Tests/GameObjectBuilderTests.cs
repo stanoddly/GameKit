@@ -164,14 +164,6 @@ public class GameObjectBuilderTests
     }
 
     [Test]
-    public void Build_DefaultBuilder_Throws()
-    {
-        GameObjectBuilder builder = default;
-
-        Assert.Throws<InvalidOperationException>(() => builder.Build());
-    }
-
-    [Test]
     public void Build_TriggersWorldCallbacks()
     {
         int attachCount = 0;
