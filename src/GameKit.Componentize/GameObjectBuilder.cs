@@ -3,7 +3,7 @@ namespace GameKit.Componentize;
 public class GameObjectBuilder
 {
     private readonly GameWorld _world;
-    private List<GameComponent> _components = new();
+    private List<GameComponent>? _components;
 
     internal GameObjectBuilder(GameWorld world)
     {
@@ -17,14 +17,15 @@ public class GameObjectBuilder
 
     public GameObjectBuilder With<TComponent>(TComponent component) where TComponent : GameComponent
     {
+        _components ??= new();
         _components.Add(component);
         return this;
     }
 
     public GameObject Build()
     {
-        List<GameComponent> components = _components;
-        _components = new();
+        List<GameComponent> components = _components ?? new();
+        _components = null;
 
         GameObject gameObject = _world.CreateGameObject(components);
 
