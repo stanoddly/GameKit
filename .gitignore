@@ -406,3 +406,6 @@ FodyWeavers.xsd
 
 # Shaders
 compiled/
+
+# Claude Code
+.tasks/
