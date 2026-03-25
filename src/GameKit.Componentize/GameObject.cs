@@ -66,8 +66,8 @@ public class GameObject: IEnumerable<GameComponent>
         }
 
         component.InternalOwner = this;
-        component.OnAttach();
         _components.Add(component);
+        component.OnAttach();
         World.NotifyComponentAttached(this, component);
         component.OnReady();
         return component;

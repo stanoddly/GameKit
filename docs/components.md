@@ -43,8 +43,8 @@ gameWorld.RemoveGameObject(player); // Detaches all components
 
 Base class for all components. Override lifecycle hooks:
 
-- **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. Siblings may not exist yet when using `GameObjectBuilder`.
-- **`OnReady`** — all siblings on the GameObject are guaranteed to exist. Safe to resolve sibling references and subscribe to sibling events.
+- **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. When using `GameObjectBuilder`, sibling `OnAttach` may not have run yet.
+- **`OnReady`** — all siblings are attached and their `OnAttach` has completed. Safe to resolve sibling references and subscribe to sibling events.
 - **`OnDetach`** — component is being removed. Clean up subscriptions and resources.
 
 When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` are called immediately in sequence.
@@ -144,6 +144,24 @@ builder
     .With(new TransformComponent { Position = otherPos })
     .With<CreatureAnimationComponent>()
     .Build();
+```
+
+Extension methods on `GameObjectBuilder` are a convenient way to bundle related components:
+
+```csharp
+public static class GameObjectBuilderExtensions
+{
+    public static GameObjectBuilder WithUnitComponents(this GameObjectBuilder builder, Vector2 position)
+    {
+        return builder
+            .With(new TransformComponent { Position = position })
+            .With<AnimatedSpriteComponent>()
+            .With<SilhouetteComponent>();
+    }
+}
+
+// Usage
+builder.WithUnitComponents(pos).With<ArcherAIComponent>().Build();
 ```
 
 ## Key Points

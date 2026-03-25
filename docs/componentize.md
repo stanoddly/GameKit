@@ -43,10 +43,10 @@ Base class. Has an `Owner` (the parent GameObject) and lifecycle hooks.
 ```csharp
 public class MyComponent : GameComponent
 {
-    // setup self-contained state (siblings may not exist yet)
+    // setup self-contained state (sibling OnAttach may not have run yet)
     protected override void OnAttach()  { }
 
-    // all siblings guaranteed to exist, safe to resolve references
+    // all siblings attached and initialized, safe to resolve references
     protected override void OnReady()   { }
 
     // cleanup
