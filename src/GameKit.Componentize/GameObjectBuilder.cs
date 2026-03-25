@@ -26,21 +26,30 @@ public struct GameObjectBuilder
     {
         GameWorld world = _world ?? throw new InvalidOperationException("GameObjectBuilder was not created via GameWorld.CreateGameObjectBuilder().");
 
-        GameObject gameObject = world.CreateGameObject();
+        List<GameComponent> components;
 
         if (_components != null)
         {
-            foreach (GameComponent component in _components)
-            {
-                gameObject.AttachWithoutReady(component);
-            }
-
-            foreach (GameComponent component in _components)
-            {
-                component.OnReady();
-            }
-
+            components = new List<GameComponent>(_components);
             _components.Clear();
+        }
+        else
+        {
+            components = new();
+        }
+
+        GameObject gameObject = world.CreateGameObject(components);
+
+        foreach (GameComponent component in components)
+        {
+            component.InternalOwner = gameObject;
+            component.OnAttach();
+            world.NotifyComponentAttached(gameObject, component);
+        }
+
+        foreach (GameComponent component in components)
+        {
+            component.OnReady();
         }
 
         return gameObject;

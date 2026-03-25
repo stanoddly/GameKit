@@ -19,11 +19,17 @@ public class GameObject: IEnumerable<GameComponent>
     public event Action<GameObject>? Removed;
     private GameWorld? _world;
     public GameWorld World => _world ?? throw new InvalidOperationException("GameObject has been removed and has no World.");
-    private readonly List<GameComponent> _components = new();
+    private List<GameComponent> _components = new();
 
     internal GameObject(GameWorld world)
     {
         _world = world;
+    }
+
+    internal GameObject(GameWorld world, List<GameComponent> components)
+    {
+        _world = world;
+        _components = components;
     }
 
     public TComponent Attach<TComponent>() where TComponent: GameComponent, new()
@@ -68,19 +74,6 @@ public class GameObject: IEnumerable<GameComponent>
     }
 
 
-
-    internal void AttachWithoutReady(GameComponent component)
-    {
-        if (State != GameObjectState.Alive)
-        {
-            throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
-        }
-
-        component.InternalOwner = this;
-        component.OnAttach();
-        _components.Add(component);
-        World.NotifyComponentAttached(this, component);
-    }
 
     // Convenience method to be able to use []
     public void Add<TComponent>(TComponent component) where TComponent : GameComponent

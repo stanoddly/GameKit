@@ -103,7 +103,7 @@ public class GameObjectBuilderTests
     }
 
     [Test]
-    public void Build_SiblingsNotVisibleDuringOnAttach_VisibleDuringOnReady()
+    public void Build_SiblingsGuaranteedDuringOnReady()
     {
         GameObjectBuilder builder = _world.CreateGameObjectBuilder();
 
@@ -113,7 +113,6 @@ public class GameObjectBuilderTests
             .Build();
 
         SiblingCapturingComponent capturing = gameObject.Get<SiblingCapturingComponent>();
-        Assert.That(capturing.SiblingDuringOnAttach, Is.Null);
         Assert.That(capturing.SiblingDuringOnReady, Is.Not.Null);
     }
 

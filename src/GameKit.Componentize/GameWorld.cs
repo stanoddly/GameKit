@@ -20,6 +20,14 @@ public class GameWorld : IUpdatable
         return gameObject;
     }
 
+    internal GameObject CreateGameObject(List<GameComponent> components)
+    {
+        GameObject gameObject = new GameObject(this, components);
+        Handle<GameObject> handle = _gameObjects.Add(gameObject);
+        gameObject.Handle = handle;
+        return gameObject;
+    }
+
     public GameObjectBuilder CreateGameObjectBuilder()
     {
         return new GameObjectBuilder(this);
