@@ -28,6 +28,9 @@ public class GameWorld : IUpdatable
         return gameObject;
     }
 
+    /// <summary>
+    /// Creates a reusable builder for constructing GameObjects with two-phase initialization.
+    /// </summary>
     public GameObjectBuilder CreateGameObjectBuilder()
     {
         return new GameObjectBuilder(this);

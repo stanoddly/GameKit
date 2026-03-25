@@ -1,5 +1,10 @@
 namespace GameKit.Componentize;
 
+/// <summary>
+/// Collects components via <see cref="With{TComponent}(TComponent)"/> and creates a GameObject
+/// with two-phase initialization via <see cref="Build"/>.
+/// Reusable — create one builder and call Build multiple times.
+/// </summary>
 public class GameObjectBuilder
 {
     private readonly GameWorld _world;
@@ -22,6 +27,11 @@ public class GameObjectBuilder
         return this;
     }
 
+    /// <summary>
+    /// Creates a GameObject and runs the two-phase lifecycle:
+    /// OnAttach for all components, then OnReady for all.
+    /// Resets internal state so the builder can be reused.
+    /// </summary>
     public GameObject Build()
     {
         List<GameComponent> components = _components ?? new();

@@ -130,6 +130,8 @@ DetachSibling<BuffComponent>();
 
 Use `GameObjectBuilder` to create GameObjects with multiple components. This provides a two-phase lifecycle: `OnAttach` runs for all components first, then `OnReady` runs for all, guaranteeing siblings exist during `OnReady`.
 
+Create one builder and reuse it for multiple GameObjects — each `Build` resets the builder's internal state. Avoid creating a new builder per GameObject, as that defeats the purpose of reuse.
+
 ```csharp
 GameObjectBuilder builder = gameWorld.CreateGameObjectBuilder();
 
@@ -139,7 +141,7 @@ builder
     .With<SilhouetteComponent>()
     .Build();
 
-// The builder is reusable after Build
+// Reuse the same builder for the next GameObject
 builder
     .With(new TransformComponent { Position = otherPos })
     .With<CreatureAnimationComponent>()
