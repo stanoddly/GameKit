@@ -51,41 +51,28 @@ public class PerformanceTracker : IUpdatable, IDisposable
 
     private void PrintSummary()
     {
-        Console.WriteLine("=== Performance Summary ===");
-
         if (_frameCount > 0)
         {
             double averageFrameTime = _totalFrameTime / _frameCount;
-            double averageFps = 1.0 / averageFrameTime;
 
             Console.WriteLine($"Frames: {_frameCount}");
-            Console.WriteLine($"Average frame time: {averageFrameTime * 1000:F2} ms ({averageFps:F1} FPS)");
-            Console.WriteLine($"Min frame time: {_minFrameTime * 1000:F2} ms ({1.0 / _minFrameTime:F1} FPS)");
-            Console.WriteLine($"Max frame time: {_maxFrameTime * 1000:F2} ms ({1.0 / _maxFrameTime:F1} FPS)");
-        }
-        else
-        {
-            Console.WriteLine("No frames recorded.");
+            Console.WriteLine($"Average Frame Time: {averageFrameTime * 1000:F2} ms ({1.0 / averageFrameTime:F1} FPS)");
+            Console.WriteLine($"Min Frame Time: {_minFrameTime * 1000:F2} ms ({1.0 / _minFrameTime:F1} FPS)");
+            Console.WriteLine($"Max Frame Time: {_maxFrameTime * 1000:F2} ms ({1.0 / _maxFrameTime:F1} FPS)");
         }
 
-        GpuMemoryStats final = _gpuDevice.MemoryStats;
+        GpuMemoryStats finalStats = _gpuDevice.MemoryStats;
 
-        Console.WriteLine("--- GPU Memory (Final) ---");
-        PrintMemoryStats(final);
-
-        Console.WriteLine("--- GPU Memory (Peak) ---");
-        PrintMemoryStats(_peakMemoryStats);
-
-        Console.WriteLine("===========================");
+        Console.WriteLine($"GPU Memory: {FormatMemoryStats(finalStats)}");
+        Console.WriteLine($"GPU Memory Peak: {FormatMemoryStats(_peakMemoryStats)}");
     }
 
-    private static void PrintMemoryStats(GpuMemoryStats stats)
+    private static string FormatMemoryStats(GpuMemoryStats stats)
     {
-        Console.WriteLine(
-            $"  Textures: {stats.TextureCount} ({FormatBytes(stats.TextureBytes)}) | " +
-            $"VertexBuffers: {stats.VertexBufferCount} ({FormatBytes(stats.VertexBufferBytes)}) | " +
-            $"StorageBuffers: {stats.StorageBufferCount} ({FormatBytes(stats.StorageBufferBytes)}) | " +
-            $"Total: {FormatBytes(stats.TotalBytes)}");
+        return $"Textures: {stats.TextureCount} ({FormatBytes(stats.TextureBytes)}), " +
+               $"VertexBuffers: {stats.VertexBufferCount} ({FormatBytes(stats.VertexBufferBytes)}), " +
+               $"StorageBuffers: {stats.StorageBufferCount} ({FormatBytes(stats.StorageBufferBytes)}), " +
+               $"Total: {FormatBytes(stats.TotalBytes)}";
     }
 
     private static string FormatBytes(long bytes)
