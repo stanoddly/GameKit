@@ -163,12 +163,15 @@ public class SdlangCompiler
 
         Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
 
+        // slangc reads from stdin even when given a file argument. Without redirecting and closing
+        // stdin, it inherits the parent's stdin and blocks indefinitely when stdin is a pipe.
         Process process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = SlangCompilerPath,
                 Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
+                RedirectStandardInput = true,
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false
@@ -176,6 +179,7 @@ public class SdlangCompiler
         };
 
         process.Start();
+        process.StandardInput.Close();
         process.WaitForExit();
 
         if (process.ExitCode != 0)
