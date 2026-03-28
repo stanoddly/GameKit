@@ -163,6 +163,8 @@ public class SdlangCompiler
 
         Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
 
+        // slangc reads from stdin even when given a file argument. Without redirecting and closing
+        // stdin, it inherits the parent's stdin and blocks indefinitely when stdin is a pipe.
         Process process = new Process
         {
             StartInfo = new ProcessStartInfo
