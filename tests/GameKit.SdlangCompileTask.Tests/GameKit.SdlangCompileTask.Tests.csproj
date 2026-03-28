@@ -37,7 +37,7 @@
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <Target Name="CompileSdlangShaders" BeforeTargets="Build">
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile">
         <!-- Define shaders to compile -->
         <ItemGroup>
             <SdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
@@ -46,7 +46,7 @@
     </Target>
 
     <!-- Test that builds succeed when no shaders match the glob pattern (issue #71) -->
-    <Target Name="CompileEmptySdlangShaders" BeforeTargets="Build">
+    <Target Name="CompileEmptySdlangShaders" BeforeTargets="CoreCompile">
         <ItemGroup>
             <EmptySdlangShader Include="Content\empty\*.slang" />
         </ItemGroup>

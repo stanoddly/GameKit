@@ -169,6 +169,7 @@ public class SdlangCompiler
             {
                 FileName = SlangCompilerPath,
                 Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
+                RedirectStandardInput = true,
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false
@@ -176,6 +177,7 @@ public class SdlangCompiler
         };
 
         process.Start();
+        process.StandardInput.Close();
         process.WaitForExit();
 
         if (process.ExitCode != 0)
