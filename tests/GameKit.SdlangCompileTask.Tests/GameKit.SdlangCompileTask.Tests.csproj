@@ -37,7 +37,8 @@
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile">
+    <!-- This target uses $(OutputPath) so it must run after CopyFilesToOutputDirectory -->
+    <Target Name="CompileSdlangShaders" AfterTargets="CopyFilesToOutputDirectory">
         <!-- Define shaders to compile -->
         <ItemGroup>
             <SdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
