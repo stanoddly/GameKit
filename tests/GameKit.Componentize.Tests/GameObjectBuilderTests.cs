@@ -136,7 +136,7 @@ public class GameObjectBuilderTests
 
         GameObject gameObject = builder.With<TestComponent>().Build();
 
-        Assert.That(_world.GetGameObject(gameObject.Handle), Is.SameAs(gameObject));
+        Assert.That(gameObject.State, Is.EqualTo(GameObjectState.Alive));
     }
 
     [Test]

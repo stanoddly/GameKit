@@ -14,7 +14,7 @@ public enum GameObjectState : byte
 
 public class GameObject: IEnumerable<GameComponent>
 {
-    public Handle<GameObject> Handle { get; internal set; }
+    internal Handle<GameObject> Handle { get; set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
     private GameWorld? _world;
@@ -37,25 +37,14 @@ public class GameObject: IEnumerable<GameComponent>
         return Attach(new TComponent());
     }
 
-    public GameObject AttachIfMissing<TComponent>() where TComponent: GameComponent, new()
-    {
-        if (TryGet<TComponent>() == null)
-        {
-            Attach<TComponent>();
-        }
-        return this;
-    }
-
-    public GameObject AttachIfMissing<TComponent>(out TComponent component) where TComponent: GameComponent, new()
+    public TComponent AttachIfMissing<TComponent>() where TComponent: GameComponent, new()
     {
         TComponent? existing = TryGet<TComponent>();
         if (existing == null)
         {
-            existing = new TComponent();
-            Attach(existing);
+            existing = Attach<TComponent>();
         }
-        component = existing;
-        return this;
+        return existing;
     }
 
     public TComponent Attach<TComponent>(TComponent component) where TComponent: GameComponent

@@ -263,32 +263,22 @@ public class GameObjectTests
     }
 
     [Test]
-    public void AttachIfMissing_ReturnsGameObject_ForChaining()
+    public void AttachIfMissing_ReturnsComponent()
     {
-        GameObject result = _gameObject.AttachIfMissing<TestComponent>();
+        TestComponent result = _gameObject.AttachIfMissing<TestComponent>();
 
-        Assert.That(ReferenceEquals(result, _gameObject), Is.True);
+        Assert.That(ReferenceEquals(result, _gameObject.Get<TestComponent>()), Is.True);
     }
 
     [Test]
-    public void AttachIfMissing_Out_WhenNotPresent_AttachesAndOutputsComponent()
-    {
-        _gameObject.AttachIfMissing<TestComponent>(out var component);
-
-        Assert.That(component, Is.Not.Null);
-        Assert.That(component.OnAttachCalled, Is.True);
-        Assert.That(ReferenceEquals(component, _gameObject.Get<TestComponent>()), Is.True);
-    }
-
-    [Test]
-    public void AttachIfMissing_Out_WhenAlreadyPresent_OutputsExistingComponent()
+    public void AttachIfMissing_WhenAlreadyPresent_ReturnsExistingComponent()
     {
         _gameObject.Attach<TestComponent>();
         TestComponent original = _gameObject.Get<TestComponent>();
 
-        _gameObject.AttachIfMissing<TestComponent>(out var component);
+        TestComponent result = _gameObject.AttachIfMissing<TestComponent>();
 
-        Assert.That(ReferenceEquals(component, original), Is.True);
+        Assert.That(ReferenceEquals(result, original), Is.True);
         Assert.That(_gameObject.GetComponents<TestComponent>().Count, Is.EqualTo(1));
     }
 
@@ -300,7 +290,7 @@ public class GameObjectTests
 
         component.RemoveOwner();
 
-        Assert.That(_world.GetGameObject(_gameObject.Handle), Is.Null);
+        Assert.That(_gameObject.State, Is.EqualTo(GameObjectState.Removed));
     }
 
     [Test]
