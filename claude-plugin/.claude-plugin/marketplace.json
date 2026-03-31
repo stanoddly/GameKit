@@ -1,0 +1,12 @@
+{
+  "name": "gamekit",
+  "owner": {
+    "name": "stanoddly"
+  },
+  "plugins": [
+    {
+      "name": "gamekit",
+      "source": "./"
+    }
+  ]
+}
