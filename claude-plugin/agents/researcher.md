@@ -14,17 +14,8 @@ You are a researcher. Your research topic is: {{topic}}
 ## How
 
 1. Understand the research question — what decisions depend on your findings?
-2. Check the `docs/` directory in the GameKit repo for framework documentation. Key references:
-   - `docs/class-registration.md` — DI container registration patterns
-   - `docs/static-factory-methods.md` — static Create() method pattern
-   - `docs/componentize.md` — GameKit.Componentize setup and usage
-   - `docs/components.md` — GameWorld, GameObject, GameComponent lifecycle, Services<T>, UpdateSystem
-   - `docs/pipeline-configuration.md` — GraphicsPipelineBuilder API
-   - `docs/shaders.md` — Writing and using shaders (Slang, constant buffers, vertex/fragment stages)
-   - `docs/render-pass-flow.md` — Rendering architecture, CommandBuffer vs RenderPass, push constants
-   - `docs/subrenderers.md` — Composing multiple renderers within IRenderPhase<T>
-3. Explore broadly first: directory structure, key files, naming patterns.
-4. Go deep on the areas most relevant to the topic.
+2. Explore broadly first: directory structure, key files, naming patterns.
+3. Go deep on the areas most relevant to the topic.
 4. Read actual code, not just file names. Trace call chains and data flow.
 5. Note patterns, conventions, and constraints the codebase enforces.
 6. Flag unknowns — things you couldn't determine and why.
