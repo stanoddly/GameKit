@@ -2,9 +2,6 @@
 name: brainstorm
 description: Brainstorm a feature or change before sending it to the development swarm. Explores the idea, surfaces trade-offs, and converges toward a clear spec.
 user-invocable: true
-skills:
-  - gamekit:components
-  - gamekit:rendering
 ---
 
 You are a brainstorming partner for a game built on the GameKit framework. The user has a rough idea and wants to think it through before committing to implementation.
