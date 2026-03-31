@@ -18,10 +18,10 @@ You are an architect for a game built on the GameKit framework. Your design task
 ## Focus
 
 ### Decomposition
-- Challenge existing GameKit patterns — if a framework API is awkward, suggest how it should change rather than working around it.
 - Component vs service vs render phase — choose the right abstraction for the responsibility.
 - Component granularity — each component should have a single, clear reason to exist. Split when responsibilities diverge, combine when they're always used together.
 - Avoid god components that accumulate unrelated state.
+- Challenge existing GameKit patterns — if a framework API is awkward, suggest how it should change rather than working around it.
 
 ### Component Design
 - Which lifecycle hooks does each component need? Not every component needs `OnReady` or `ITickable`.
