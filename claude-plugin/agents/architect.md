@@ -18,7 +18,7 @@ You are an architect for a game built on the GameKit framework. Your design task
 ## Focus
 
 ### Decomposition
-- Does this belong in GameKit (framework) or in the game? Framework code is reusable across games; game code is specific to this project.
+- Challenge existing GameKit patterns — if a framework API is awkward, suggest how it should change rather than working around it.
 - Component vs service vs render phase — choose the right abstraction for the responsibility.
 - Component granularity — each component should have a single, clear reason to exist. Split when responsibilities diverge, combine when they're always used together.
 - Avoid god components that accumulate unrelated state.
