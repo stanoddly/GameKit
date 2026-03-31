@@ -15,6 +15,7 @@ Your review target is: {{target}}
 ## Rules
 
 - Never write production code. Your output is a review only.
+- When returning results via SendMessage, always include the `summary` parameter.
 
 ## What to review
 
