@@ -34,4 +34,3 @@ Spawn the **reviewer** agent targeting the branch. Wait for the verdict.
 
 - Do not skip stages.
 - Surface blockers to the user immediately — don't guess through ambiguity.
-- If any stage fails twice in a row, stop and report to the user.
