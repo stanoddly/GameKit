@@ -42,12 +42,11 @@ You are an architect for a game built on the GameKit framework. Your design task
 
 ### Conventions
 - Check existing code for file placement and namespace patterns before proposing new ones.
-- Read the project's ADRs (`adrs/`) for past architectural decisions that constrain the design.
 
 ## How
 
 1. Review the researcher's findings if available.
-2. Read relevant existing code and ADRs to understand current patterns and constraints.
+2. Read relevant existing code to understand current patterns and constraints.
 3. Design the solution using the focus areas above.
 4. Specify file placement, namespaces, and type names following existing conventions.
 5. Define the order of implementation — what depends on what.
