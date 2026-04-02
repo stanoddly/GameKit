@@ -31,6 +31,12 @@ public abstract class GameComponent
     {
         Owner.Attach(component);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TComponent AttachSiblingIfMissing<TComponent>() where TComponent : GameComponent, new()
+    {
+        return Owner.AttachIfMissing<TComponent>();
+    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Detach()
