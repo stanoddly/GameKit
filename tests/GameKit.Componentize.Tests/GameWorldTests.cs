@@ -286,4 +286,103 @@ public class GameWorldTests
         Assert.DoesNotThrow(() => objectA.DetachAll());
     }
 
+    [Test]
+    public void Resolve_ExposedComponent_ReturnsComponent()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent component = new TestComponent();
+        gameObject.Attach(component);
+        _world.Expose<TestComponent>(component);
+
+        TestComponent resolved = _world.Resolve<TestComponent>();
+
+        Assert.That(resolved, Is.SameAs(component));
+    }
+
+    [Test]
+    public void TryResolve_ExposedComponent_ReturnsComponent()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent component = new TestComponent();
+        gameObject.Attach(component);
+        _world.Expose<TestComponent>(component);
+
+        TestComponent? resolved = _world.TryResolve<TestComponent>();
+
+        Assert.That(resolved, Is.SameAs(component));
+    }
+
+    [Test]
+    public void TryResolve_NothingExposed_ReturnsNull()
+    {
+        TestComponent? resolved = _world.TryResolve<TestComponent>();
+
+        Assert.That(resolved, Is.Null);
+    }
+
+    [Test]
+    public void Resolve_NothingExposed_Throws()
+    {
+        Assert.Throws<InvalidOperationException>(() => _world.Resolve<TestComponent>());
+    }
+
+    [Test]
+    public void Expose_DuplicateType_Throws()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent first = new TestComponent();
+        TestComponent second = new TestComponent();
+        gameObject.Attach(first);
+        gameObject.Attach(second);
+        _world.Expose<TestComponent>(first);
+
+        Assert.Throws<InvalidOperationException>(() => _world.Expose<TestComponent>(second));
+    }
+
+    [Test]
+    public void Revoke_ExposedComponent_RemovesFromResolution()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent component = new TestComponent();
+        gameObject.Attach(component);
+        _world.Expose<TestComponent>(component);
+        _world.Revoke<TestComponent>(component);
+
+        Assert.That(_world.TryResolve<TestComponent>(), Is.Null);
+    }
+
+    [Test]
+    public void Revoke_WrongComponent_Throws()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent exposed = new TestComponent();
+        TestComponent other = new TestComponent();
+        gameObject.Attach(exposed);
+        gameObject.Attach(other);
+        _world.Expose<TestComponent>(exposed);
+
+        Assert.Throws<InvalidOperationException>(() => _world.Revoke<TestComponent>(other));
+    }
+
+    [Test]
+    public void Revoke_NothingExposed_Throws()
+    {
+        TestComponent component = new TestComponent();
+
+        Assert.Throws<InvalidOperationException>(() => _world.Revoke<TestComponent>(component));
+    }
+
+    [Test]
+    public void Expose_DerivedAsBase_ResolvesAsBase()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        DerivedTestComponent derived = new DerivedTestComponent();
+        gameObject.Attach(derived);
+        _world.Expose<TestComponent>(derived);
+
+        TestComponent resolved = _world.Resolve<TestComponent>();
+
+        Assert.That(resolved, Is.SameAs(derived));
+    }
+
 }
