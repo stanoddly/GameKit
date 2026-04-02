@@ -11,6 +11,7 @@ public class GameWorld : IUpdatable
     private readonly List<ITickable> _tempTickables = new();
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
     private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
+    private Dictionary<Type, GameComponent>? _exposed;
 
     public GameObject CreateGameObject()
     {
@@ -73,6 +74,46 @@ public class GameWorld : IUpdatable
         _detachedCallbacks ??= new();
         // Safe: IsAssignableFrom guarantees the type match before invocation
         _detachedCallbacks.Add((typeof(T), (gameObject, component) => callback(gameObject, Unsafe.As<GameComponent, T>(ref component))));
+    }
+
+    public void Expose<T>(T component) where T : GameComponent
+    {
+        _exposed ??= new();
+
+        if (!_exposed.TryAdd(typeof(T), component))
+        {
+            throw new InvalidOperationException($"A component of type {typeof(T).Name} is already exposed.");
+        }
+    }
+
+    public void Revoke<T>(T component) where T : GameComponent
+    {
+        if (_exposed == null || !_exposed.TryGetValue(typeof(T), out GameComponent? existing) || existing != component)
+        {
+            throw new InvalidOperationException($"Component is not exposed as {typeof(T).Name}.");
+        }
+
+        _exposed.Remove(typeof(T));
+    }
+
+    public T Resolve<T>() where T : GameComponent
+    {
+        if (_exposed != null && _exposed.TryGetValue(typeof(T), out GameComponent? component))
+        {
+            return Unsafe.As<GameComponent, T>(ref component);
+        }
+
+        throw new InvalidOperationException($"No component exposed as {typeof(T).Name}.");
+    }
+
+    public T? TryResolve<T>() where T : GameComponent
+    {
+        if (_exposed != null && _exposed.TryGetValue(typeof(T), out GameComponent? component))
+        {
+            return Unsafe.As<GameComponent, T>(ref component);
+        }
+
+        return null;
     }
 
     public void Update()
