@@ -9,8 +9,6 @@ public class GameWorld : IUpdatable
     private DenseSlotMap<Handle<GameObject>, GameObject> _gameObjects = new();
     private readonly HashSet<ITickable> _tickables = new();
     private readonly List<ITickable> _tempTickables = new();
-    private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _attachedCallbacks;
-    private List<(Type Type, Action<GameObject, GameComponent> Callback)>? _detachedCallbacks;
     private Dictionary<Type, GameComponent>? _exposed;
 
     public GameObject CreateGameObject()
@@ -60,20 +58,6 @@ public class GameWorld : IUpdatable
     public void RemoveGameObject(GameObject gameObject)
     {
         RemoveGameObject(gameObject.Handle);
-    }
-
-    public void OnComponentAttached<T>(Action<GameObject, T> callback) where T : GameComponent
-    {
-        _attachedCallbacks ??= new();
-        // Safe: IsAssignableFrom guarantees the type match before invocation
-        _attachedCallbacks.Add((typeof(T), (gameObject, component) => callback(gameObject, Unsafe.As<GameComponent, T>(ref component))));
-    }
-
-    public void OnComponentDetached<T>(Action<GameObject, T> callback) where T : GameComponent
-    {
-        _detachedCallbacks ??= new();
-        // Safe: IsAssignableFrom guarantees the type match before invocation
-        _detachedCallbacks.Add((typeof(T), (gameObject, component) => callback(gameObject, Unsafe.As<GameComponent, T>(ref component))));
     }
 
     public void Expose<T>(T component) where T : GameComponent
@@ -138,17 +122,6 @@ public class GameWorld : IUpdatable
         {
             _tickables.Add(tickable);
         }
-
-        if (_attachedCallbacks == null) return;
-
-        Type componentType = component.GetType();
-        foreach (var (type, callback) in _attachedCallbacks)
-        {
-            if (type.IsAssignableFrom(componentType))
-            {
-                callback(gameObject, component);
-            }
-        }
     }
 
     internal void NotifyComponentDetached(GameObject gameObject, GameComponent component)
@@ -156,17 +129,6 @@ public class GameWorld : IUpdatable
         if (component is ITickable tickable)
         {
             _tickables.Remove(tickable);
-        }
-
-        if (_detachedCallbacks == null) return;
-
-        Type componentType = component.GetType();
-        foreach (var (type, callback) in _detachedCallbacks)
-        {
-            if (type.IsAssignableFrom(componentType))
-            {
-                callback(gameObject, component);
-            }
         }
     }
 }
