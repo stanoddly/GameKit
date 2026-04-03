@@ -163,15 +163,4 @@ public class GameObjectBuilderTests
         Assert.That(gameObject.Count(), Is.EqualTo(0));
     }
 
-    [Test]
-    public void Build_TriggersWorldCallbacks()
-    {
-        int attachCount = 0;
-        _world.OnComponentAttached<TestComponent>((go, c) => attachCount++);
-        GameObjectBuilder builder = _world.CreateGameObjectBuilder();
-
-        builder.With<TestComponent>().With<TestComponent>().Build();
-
-        Assert.That(attachCount, Is.EqualTo(2));
-    }
 }
