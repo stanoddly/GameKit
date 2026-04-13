@@ -9,7 +9,7 @@ using Yak;
 namespace GameKit.Tutorials.Gamepad;
 
 [Module]
-partial class GamepadApp : GameKitModule, IGameKitDefault
+partial class GamepadApp : GameKitModule, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (640, 480), Title = "Gamepad Tutorial" };
     public override GameKitConfig GameKitConfig { get; } = new();
@@ -85,6 +85,6 @@ static class Program
     static int Main()
     {
         using GamepadApp app = new();
-        return ((IGameKitDefault)app).Run();
+        return app.Run();
     }
 }

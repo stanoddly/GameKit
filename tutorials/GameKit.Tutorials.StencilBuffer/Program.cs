@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.StencilBuffer;
 
 [Module]
-partial class StencilBufferApp : GameKitModule, IGameKitDefault
+partial class StencilBufferApp : GameKitModule, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Stencil Buffer" };
     public override GameKitConfig GameKitConfig { get; } = new();
@@ -27,6 +27,6 @@ static class Program
     static int Main()
     {
         using StencilBufferApp app = new();
-        return ((IGameKitDefault)app).Run();
+        return app.Run();
     }
 }

@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.TextureArray;
 
 [Module]
-partial class TextureArrayApp : GameKitModule, IGameKitDefault
+partial class TextureArrayApp : GameKitModule, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Texture Array Demo" };
     public override GameKitConfig GameKitConfig { get; } = new();
@@ -27,6 +27,6 @@ static class Program
     static int Main()
     {
         using TextureArrayApp app = new();
-        return ((IGameKitDefault)app).Run();
+        return app.Run();
     }
 }

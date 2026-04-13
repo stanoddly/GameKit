@@ -8,7 +8,7 @@ GameKit provides composable `[Module]` interfaces that define groups of services
 
 - `GameKitModule` - Abstract base class with core services (GPU, window, input, shaders, fonts, etc.)
 - `IDefaultRenderOrchestration<TRenderContext>` - Render manager and context provider
-- `IGameKitDefault` - Convenience combination of default render orchestration with `DefaultRenderContextProvider`
+- `IDefaultRenderContext` - Convenience combination: `IDefaultRenderOrchestration<DefaultRenderContext>` with `DefaultRenderContextProvider` pinned
 - `IPencuil<TRenderContext>` - UI system (Pencil, ViewRegistry, PencuilRenderer)
 - `ISpriteLoading` - Sprite asset loading
 - `ISpriteAtlas` - Sprite atlas building
@@ -19,7 +19,7 @@ A consumer creates a `[Module] partial class` that inherits from `GameKitModule`
 
 ```csharp
 [Module]
-partial class MyApp : GameKitModule, IGameKitDefault
+partial class MyApp : GameKitModule, IDefaultRenderContext
 {
     // Consumer-provided properties (override abstract base properties)
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
@@ -95,10 +95,10 @@ void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhase
 
 ```csharp
 using MyApp app = new();
-return ((IGameKitDefault)app).Run();
+return app.Run();
 ```
 
-`IGameKitDefault.Run()` calls `ResolveAll()` to eagerly instantiate all singletons, then enters the game loop (frame timing, events, updates, rendering).
+`GameKitModule.Run()` calls `ResolveAll()` to eagerly instantiate all singletons, then enters the game loop (frame timing, events, updates, rendering). The `IRenderManager` is captured via `[OnActivate]` when the render orchestration creates it.
 
 ## Important Notes
 

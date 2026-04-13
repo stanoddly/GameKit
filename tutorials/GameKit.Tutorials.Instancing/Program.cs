@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.Instancing;
 
 [Module]
-partial class InstancingApp : GameKitModule, IGameKitDefault
+partial class InstancingApp : GameKitModule, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Instancing Demo" };
     public override GameKitConfig GameKitConfig { get; } = new();
@@ -27,6 +27,6 @@ static class Program
     static int Main()
     {
         using InstancingApp app = new();
-        return ((IGameKitDefault)app).Run();
+        return app.Run();
     }
 }

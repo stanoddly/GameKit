@@ -1,3 +1,4 @@
+using GameKit.App;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Encs;
@@ -20,6 +21,7 @@ public abstract partial class GameKitModule
     // Lifecycle tracking
     public List<IUpdatable> Updatables { get; } = new();
     public EventBus EventBus { get; } = new();
+    private IRenderManager? _renderManager;
 
     [OnActivate]
     protected void TrackUpdatable(IUpdatable updatable)
@@ -28,9 +30,44 @@ public abstract partial class GameKitModule
     }
 
     [OnActivate]
+    protected void TrackRenderManager(IRenderManager renderManager)
+    {
+        _renderManager = renderManager;
+    }
+
+    [OnActivate]
     protected void SubscribeEventBus(object obj)
     {
         EventBus.Subscribe(obj);
+    }
+
+    public int Run()
+    {
+        ResolveAll();
+
+        IRenderManager renderManager = _renderManager
+            ?? throw new InvalidOperationException("No IRenderManager registered. Implement IDefaultRenderOrchestration<T> or register an IRenderManager.");
+        GameKitFrameContext frameContext = FrameContext;
+        EventService eventService = EventService;
+        AppControl appControl = AppControl;
+
+        while (true)
+        {
+            frameContext.StartFrame();
+            eventService.Process();
+
+            foreach (IUpdatable updatable in Updatables)
+            {
+                updatable.Update();
+            }
+
+            if (appControl.QuitRequested)
+            {
+                return 0;
+            }
+
+            renderManager.Execute();
+        }
     }
 
     // Framework services

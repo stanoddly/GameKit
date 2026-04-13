@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.WindowCreation;
 
 [Module]
-partial class WindowCreationApp : GameKitModule, IGameKitDefault
+partial class WindowCreationApp : GameKitModule, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
     public override GameKitConfig GameKitConfig { get; } = new();
@@ -26,6 +26,6 @@ static class Program
     static int Main()
     {
         using WindowCreationApp app = new();
-        return ((IGameKitDefault)app).Run();
+        return app.Run();
     }
 }
