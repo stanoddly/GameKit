@@ -8,7 +8,7 @@ using Yak;
 namespace GameKit.Tutorials.Hotbar;
 
 [Module]
-partial class HotbarApp : GameKitModule, IDefaultRenderContext, IPencuil<DefaultRenderContext>
+partial class HotbarApp : GameKitApp, IDefaultRenderContext, IPencuil<DefaultRenderContext>
 {
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Hotbar" };
     public override GameKitConfig GameKitConfig { get; } = new();

@@ -9,7 +9,7 @@ using Yak;
 namespace GameKit.Tutorials.WindowConfiguration;
 
 [Module]
-partial class WindowConfigApp : GameKitModule, IDefaultRenderContext
+partial class WindowConfigApp : GameKitApp, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Window Configuration Demo" };
     public override GameKitConfig GameKitConfig { get; } = new();

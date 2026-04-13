@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.ImageLoading;
 
 [Module]
-partial class ImageLoadingApp : GameKitModule, IDefaultRenderContext
+partial class ImageLoadingApp : GameKitApp, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (443, 410), Title = "Image Loading Demo" };
     public override GameKitConfig GameKitConfig { get; } = new();

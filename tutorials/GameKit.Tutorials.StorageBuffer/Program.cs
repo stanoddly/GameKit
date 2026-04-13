@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.StorageBuffer;
 
 [Module]
-partial class StorageBufferApp : GameKitModule, IDefaultRenderContext
+partial class StorageBufferApp : GameKitApp, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Storage Buffer Demo" };
     public override GameKitConfig GameKitConfig { get; } = new();

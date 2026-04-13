@@ -6,7 +6,7 @@ GameKit uses [Yak](https://github.com/stanoddly/Yak), a compile-time inversion o
 
 GameKit provides composable `[Module]` interfaces that define groups of services:
 
-- `GameKitModule` - Abstract base class with core services (GPU, window, input, shaders, fonts, etc.)
+- `GameKitApp` - Abstract base class with core services (GPU, window, input, shaders, fonts, etc.)
 - `IDefaultRenderOrchestration<TRenderContext>` - Render manager and context provider
 - `IDefaultRenderContext` - Convenience combination: `IDefaultRenderOrchestration<DefaultRenderContext>` with `DefaultRenderContextProvider` pinned
 - `IPencuil<TRenderContext>` - UI system (Pencil, ViewRegistry, PencuilRenderer)
@@ -15,11 +15,11 @@ GameKit provides composable `[Module]` interfaces that define groups of services
 
 ## Defining a Module
 
-A consumer creates a `[Module] partial class` that inherits from `GameKitModule` and implements the desired interfaces:
+A consumer creates a `[Module] partial class` that inherits from `GameKitApp` and implements the desired interfaces:
 
 ```csharp
 [Module]
-partial class MyApp : GameKitModule, IDefaultRenderContext
+partial class MyApp : GameKitApp, IDefaultRenderContext
 {
     // Consumer-provided properties (override abstract base properties)
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
@@ -89,7 +89,7 @@ Called when a singleton matching the parameter type is created. Defined on the m
 void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
 ```
 
-`GameKitModule` base class provides callbacks for `IUpdatable` and `EventBus` subscription.
+`GameKitApp` base class provides callbacks for `IUpdatable` and `EventBus` subscription.
 
 ## Running the Application
 
@@ -98,7 +98,7 @@ using MyApp app = new();
 return app.Run();
 ```
 
-`GameKitModule.Run()` calls `ResolveAll()` to eagerly instantiate all singletons, then enters the game loop (frame timing, events, updates, rendering). The `IRenderManager` is captured via `[OnActivate]` when the render orchestration creates it.
+`GameKitApp.Run()` calls `ResolveAll()` to eagerly instantiate all singletons, then enters the game loop (frame timing, events, updates, rendering). The `IRenderManager` is captured via `[OnActivate]` when the render orchestration creates it.
 
 ## Important Notes
 

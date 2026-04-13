@@ -7,7 +7,7 @@ using Yak;
 namespace GameKit.Tutorials.Triangle;
 
 [Module]
-partial class TriangleApp : GameKitModule, IDefaultRenderContext
+partial class TriangleApp : GameKitApp, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
     public override GameKitConfig GameKitConfig { get; } = new();

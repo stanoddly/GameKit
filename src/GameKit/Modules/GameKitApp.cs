@@ -11,7 +11,7 @@ using Yak;
 namespace GameKit.Modules;
 
 [Module]
-public abstract partial class GameKitModule
+public abstract partial class GameKitApp
 {
     // Consumer-provided
     public abstract AppConfig AppConfig { get; }

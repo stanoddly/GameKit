@@ -8,7 +8,7 @@ using Yak;
 namespace GameKit.Tutorials.DepthOnly;
 
 [Module]
-partial class DepthOnlyApp : GameKitModule, IDefaultRenderContext
+partial class DepthOnlyApp : GameKitApp, IDefaultRenderContext
 {
     public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Depth-Only Pipeline Test" };
     public override GameKitConfig GameKitConfig { get; } = new();
