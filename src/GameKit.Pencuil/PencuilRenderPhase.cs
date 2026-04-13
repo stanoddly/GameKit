@@ -15,7 +15,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, MouseService mouseService, Window window, PencuilOptions options)
+    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IWindow window, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;

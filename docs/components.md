@@ -6,19 +6,21 @@ GameKit provides a lightweight component system for game logic through `GameKit.
 
 ### GameWorld
 
-Container for all game objects. Register it and create objects at startup:
+Container for all game objects. Register it as a singleton and create objects via `[OnActivate]`:
 
 ```csharp
-builder.RegisterType<GameWorld>();
+[Singleton]
+public partial GameWorld GameWorld { get; }
 
-builder.OnStart((GameWorld gameWorld) =>
+[OnActivate]
+void SetupWorld(GameWorld gameWorld)
 {
     GameObjectBuilder builder = gameWorld.CreateGameObjectBuilder();
     builder
         .With<MovementComponent>()
         .With<HealthComponent>()
         .Build();
-});
+}
 ```
 
 ### GameObject

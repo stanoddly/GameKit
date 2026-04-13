@@ -1,4 +1,5 @@
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
@@ -39,10 +40,10 @@ public class ImageLoadingRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static ImageLoadingRenderer Create(
-        ShaderLoader shaderLoader,
+        IContentLoader<Shader> shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        GpuDevice gpuDevice,
+        IGpuDevice gpuDevice,
         TextureLoader textureLoader)
     {
         // Load image from file using SDL3_image

@@ -49,10 +49,10 @@ public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static TextureArrayRenderer Create(
-        ShaderLoader shaderLoader,
+        IContentLoader<Shader> shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        GpuDevice gpuDevice)
+        IGpuDevice gpuDevice)
     {
         // Create solid color images programmatically
         Image[] images =

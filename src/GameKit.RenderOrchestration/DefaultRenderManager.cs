@@ -10,16 +10,21 @@ namespace GameKit.RenderOrchestration;
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IRenderContext
 {
-    private readonly List<IRenderPhase<TRenderContext>> _renderPhases;
+    private readonly IRenderPhase<TRenderContext>[] _renderPhases;
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
-    private IRenderPhase<TRenderContext>[]? _orderedPhases;
 
     public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, List<IRenderPhase<TRenderContext>> renderPhases)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
-        _renderPhases = renderPhases;
+
+        if (renderPhases.Count == 0)
+        {
+            throw new InvalidOperationException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
+        }
+
+        _renderPhases = renderPhases.OrderBy(r => r.Order).ToArray();
     }
 
     /// <summary>
@@ -27,16 +32,6 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
     /// </summary>
     public void Execute()
     {
-        if (_orderedPhases == null)
-        {
-            if (_renderPhases.Count == 0)
-            {
-                throw new InvalidOperationException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
-            }
-
-            _orderedPhases = _renderPhases.OrderBy(r => r.Order).ToArray();
-        }
-
         if (!_renderContextProvider.TryProvide(out TRenderContext? renderContext))
         {
             return;
@@ -44,7 +39,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            foreach (IRenderPhase<TRenderContext> renderer in _orderedPhases)
+            foreach (IRenderPhase<TRenderContext> renderer in _renderPhases)
             {
                 renderer.Render(renderContext);
             }

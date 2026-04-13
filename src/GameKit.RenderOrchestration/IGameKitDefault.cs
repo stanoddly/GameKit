@@ -6,10 +6,18 @@ using Yak;
 namespace GameKit.RenderOrchestration;
 
 [Module]
-public interface IGameKitDefault : IGameKitCore, IDefaultRenderOrchestration<DefaultRenderContext>
+public interface IGameKitDefault : IDefaultRenderOrchestration<DefaultRenderContext>
 {
     [Singleton<DefaultRenderContextProvider>]
     new IRenderContextProvider<DefaultRenderContext> RenderContextProvider { get; }
+
+    // These are declared on GameKitModule (base class) — referenced here for the game loop
+    AppControl AppControl { get; }
+    GameKitFrameContext FrameContext { get; }
+    EventService EventService { get; }
+    List<IUpdatable> Updatables { get; }
+
+    void ResolveAll();
 
     int Run()
     {
@@ -19,11 +27,6 @@ public interface IGameKitDefault : IGameKitCore, IDefaultRenderOrchestration<Def
         EventService eventService = EventService;
         AppControl appControl = AppControl;
         IRenderManager renderManager = RenderManager;
-
-        for (int i = Startables.Count - 1; i >= 0; i--)
-        {
-            Startables[i].Start();
-        }
 
         while (true)
         {

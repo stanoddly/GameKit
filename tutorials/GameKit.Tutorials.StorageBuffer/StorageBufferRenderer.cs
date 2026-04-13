@@ -49,10 +49,10 @@ public class StorageBufferRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static StorageBufferRenderer Create(
-        ShaderLoader shaderLoader,
+        IContentLoader<Shader> shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        GpuDevice gpuDevice)
+        IGpuDevice gpuDevice)
     {
         // Create an array of colors to store in the storage buffer
         // This demonstrates passing more data than uniform slots would allow

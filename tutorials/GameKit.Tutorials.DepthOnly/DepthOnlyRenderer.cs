@@ -1,4 +1,5 @@
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
@@ -47,10 +48,10 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static DepthOnlyRenderer Create(
-        ShaderLoader shaderLoader,
+        IContentLoader<Shader> shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        GpuDevice gpuDevice)
+        IGpuDevice gpuDevice)
     {
         // Create depth texture
         Texture depthTexture = gpuDevice.CreateDepthBufferTexture(

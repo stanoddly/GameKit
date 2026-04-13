@@ -1,5 +1,7 @@
 using System.Numerics;
+using GameKit;
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Shaders;
 
@@ -24,7 +26,7 @@ public class PencuilRenderer
     private readonly Sampler _sampler;
     public Texture RetainedTexture => _retainedTexture;
 
-    private readonly GpuDevice _gpuDevice;
+    private readonly IGpuDevice _gpuDevice;
     private readonly TextureFormat _colorTargetFormat;
 
     private Texture _retainedTexture;
@@ -36,9 +38,9 @@ public class PencuilRenderer
     public PencuilRenderer(
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        ShaderLoader shaderLoader,
-        GpuDevice gpuDevice,
-        Window window)
+        IContentLoader<Shader> shaderLoader,
+        IGpuDevice gpuDevice,
+        IWindow window)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [

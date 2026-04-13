@@ -9,9 +9,9 @@ namespace GameKit.Tutorials.ImageLoading;
 [Module]
 partial class ImageLoadingApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (443, 410), Title = "Image Loading Demo" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+    public override AppConfig AppConfig { get; } = new() { Size = (443, 410), Title = "Image Loading Demo" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
         .AddContentFromProjectDirectory("Content").Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 

@@ -9,11 +9,11 @@ using Yak;
 namespace GameKit.Tutorials.Gamepad;
 
 [Module]
-partial class GamepadApp : GameKitModule, IGameKitDefault, IStartable
+partial class GamepadApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (640, 480), Title = "Gamepad Tutorial" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
+    public override AppConfig AppConfig { get; } = new() { Size = (640, 480), Title = "Gamepad Tutorial" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 
     [Singleton]
@@ -22,10 +22,9 @@ partial class GamepadApp : GameKitModule, IGameKitDefault, IStartable
     [OnActivate]
     void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
 
-    public void Start()
+    [OnActivate]
+    void SetupGamepad(IGamepadService gamepadService)
     {
-        GamepadService gamepadService = GamepadService;
-
         Console.WriteLine($"Gamepads connected at startup: {gamepadService.Gamepads.Count}");
         foreach (Input.Gamepad gp in gamepadService.Gamepads)
         {

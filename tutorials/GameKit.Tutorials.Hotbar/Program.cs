@@ -10,9 +10,9 @@ namespace GameKit.Tutorials.Hotbar;
 [Module]
 partial class HotbarApp : GameKitModule, IGameKitDefault, IPencuil<DefaultRenderContext>
 {
-    public AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Hotbar" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+    public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Hotbar" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
         .AddContentFromProjectDirectory("Content")
         .AddSourceFileSystem(EmbeddedFileSystem.Create(typeof(IPencuil<>).Assembly))
         .Create();

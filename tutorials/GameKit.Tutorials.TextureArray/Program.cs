@@ -9,9 +9,9 @@ namespace GameKit.Tutorials.TextureArray;
 [Module]
 partial class TextureArrayApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Texture Array Demo" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+    public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Texture Array Demo" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
         .AddContentFromProjectDirectory("Content").Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 

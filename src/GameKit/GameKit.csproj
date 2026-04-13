@@ -22,8 +22,7 @@
     <ItemGroup>
       <PackageReference Include="MessagePack" Version="3.1.0" />
       <PackageReference Include="ppy.SDL3-CS" Version="2026.302.0" />
-      <ProjectReference Include="..\..\..\Yak\src\Yak\Yak.csproj" />
-      <ProjectReference Include="..\..\..\Yak\src\Yak.Generator\Yak.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+      <PackageReference Include="Yak" Version="1.2.0" />
       <PackageReference Include="ppy.SDL3_image-CS" Version="2026.302.0" />
       <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.302.0" />
     </ItemGroup>

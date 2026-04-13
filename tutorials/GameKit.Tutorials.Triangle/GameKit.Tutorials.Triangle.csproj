@@ -9,10 +9,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Yak" Version="1.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
-      <ProjectReference Include="..\..\..\Yak\src\Yak\Yak.csproj" />
-      <ProjectReference Include="..\..\..\Yak\src\Yak.Generator\Yak.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <!-- Reference the SdlangCompileTask project -->

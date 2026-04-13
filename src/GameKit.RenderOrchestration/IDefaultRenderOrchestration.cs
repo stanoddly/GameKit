@@ -1,11 +1,11 @@
 using GameKit.App;
-using GameKit.Modules;
+using GameKit.Gpu;
 using Yak;
 
 namespace GameKit.RenderOrchestration;
 
 [Module]
-public interface IDefaultRenderOrchestration<TRenderContext> : IGameKitCore
+public interface IDefaultRenderOrchestration<TRenderContext>
     where TRenderContext : IRenderContext
 {
     // Consumer-provided: collects render phases via [OnActivate]

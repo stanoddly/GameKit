@@ -9,11 +9,11 @@ public class ShaderLoader: IContentLoader<Shader>
 {
     private const string CompiledShaderDirectory = "compiled";
     private readonly GpuDevice _gpuDevice;
-    private readonly ShaderMetadataLoader _shaderMetadataLoader;
+    private readonly IContentLoader<ShaderMetadata> _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
     private VirtualFileSystem _virtualFileSystem;
 
-    public ShaderLoader(GpuDevice gpuDevice, ShaderMetadataLoader shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ShaderLoader(GpuDevice gpuDevice, IContentLoader<ShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
     {
         _gpuDevice = gpuDevice;
         _shaderMetadataLoader = shaderMetadataLoader;

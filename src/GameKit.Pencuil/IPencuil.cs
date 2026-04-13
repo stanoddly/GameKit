@@ -1,11 +1,10 @@
-using GameKit.Modules;
 using GameKit.RenderOrchestration;
 using Yak;
 
 namespace GameKit.Pencuil;
 
 [Module]
-public interface IPencuil<TRenderContext> : IGameKitCore
+public interface IPencuil<TRenderContext>
     where TRenderContext : IRenderContext
 {
     // Consumer-provided

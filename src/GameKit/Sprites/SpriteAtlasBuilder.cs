@@ -27,14 +27,19 @@ public sealed class SpriteAtlasBuilder
         Converters = { new ShortRectangleJsonConverter(), new JsonStringEnumConverter<SpriteFlip>() }
     };
 
-    public SpriteAtlasBuilder(SpriteAtlasBuilderConfig spriteAtlasBuilderConfig, ITextureLoader textureLoader, IContentLoader<Image> imageLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
+    public static SpriteAtlasBuilder Create(SpriteAtlasBuilderConfig spriteAtlasBuilderConfig, ITextureLoader textureLoader, IContentLoader<Image> imageLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
+    {
+        SpriteAtlasBuilder spriteAtlasBuilder = new(textureLoader, imageLoader, fileSystem, storage);
+        spriteAtlasBuilder.BuildSprites(spriteAtlasBuilderConfig.Directories);
+        return spriteAtlasBuilder;
+    }
+
+    internal SpriteAtlasBuilder(ITextureLoader textureLoader, IContentLoader<Image> imageLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
     {
         _textureLoader = textureLoader;
         _imageLoader = imageLoader;
         _fileSystem = fileSystem;
         _storage = storage;
-
-        BuildSprites(spriteAtlasBuilderConfig.Directories);
     }
 
     public void BuildSprites(params string[] directories)

@@ -9,9 +9,9 @@ namespace GameKit.Tutorials.WindowCreation;
 [Module]
 partial class WindowCreationApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
+    public override AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 
     [Singleton]

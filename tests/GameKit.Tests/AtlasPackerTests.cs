@@ -5,8 +5,6 @@ using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Sprites;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace GameKit.Tests;
 
 public class AtlasPackerTests
@@ -59,15 +57,11 @@ public class AtlasPackerTests
             ["img.png"] = MakeImage(256, 256)
         };
 
-        var services = new ServiceCollection();
-        services.AddSingleton<SpriteAtlasBuilderConfig>(new SpriteAtlasBuilderConfig(directories.Keys.ToArray()));
-        services.AddSingleton<ITextureLoader>(new StubTextureLoader());
-        services.AddSingleton<IContentLoader<Image>>(new StubImageLoader(images));
-        services.AddSingleton<VirtualFileSystem>(fs);
-        services.AddSingleton(storage);
-        var sp = services.BuildServiceProvider();
+        SpriteAtlasBuilderConfig config = new(directories.Keys.ToArray());
+        ITextureLoader textureLoader = new StubTextureLoader();
+        IContentLoader<Image> imageLoader = new StubImageLoader(images);
 
-        var builder = SpriteAtlasBuilder.Create(sp);
+        SpriteAtlasBuilder builder = SpriteAtlasBuilder.Create(config, textureLoader, imageLoader, fs, storage);
         return (storage, builder);
     }
 

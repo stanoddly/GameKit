@@ -9,6 +9,6 @@ public interface ISpriteAtlas : ISpriteLoading
     // Consumer-provided
     SpriteAtlasBuilderConfig SpriteAtlasBuilderConfig { get; }
 
-    [Singleton]
+    [Singleton, StaticFactory<SpriteAtlasBuilder>]
     SpriteAtlasBuilder SpriteAtlasBuilder { get; }
 }

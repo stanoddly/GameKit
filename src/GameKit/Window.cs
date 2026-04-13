@@ -6,7 +6,7 @@ using SDL;
 
 namespace GameKit;
 
-public class Window : IWindow
+internal class Window : IWindow
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }

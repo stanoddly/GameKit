@@ -1,6 +1,9 @@
 using System.Runtime.InteropServices;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.Shaders;
+using GameKit.Text;
 using GameKit.Utilities;
 using SDL;
 
@@ -43,12 +46,12 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    public Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
+    public IWindow CreateWindow(IGpuDevice gpuDevice, AppConfig config)
     {
-        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
+        return CreateWindowInternal((GpuDevice)gpuDevice, config.Size, config.Title, config.Fullscreen);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false)
+    private Window CreateWindowInternal(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false)
     {
         EnsureSdlInitialized();
 
@@ -97,7 +100,7 @@ public class GameKitFactory: IDisposable
         return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
-    public GpuDevice CreateGpuDevice()
+    public IGpuDevice CreateGpuDevice()
     {
         EnsureSdlInitialized();
 
@@ -123,45 +126,65 @@ public class GameKitFactory: IDisposable
             {
                 throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");
             }
-            
+
             return new GpuDevice(device);
         }
     }
 
-    public KeyboardService CreateKeyboardService(AppControl appControl)
+    public IKeyboardService CreateKeyboardService(AppControl appControl)
     {
         EnsureSdlInitialized();
 
         return new KeyboardService(appControl);
     }
-    
-    public GamepadService CreateGamepadService()
+
+    public IGamepadService CreateGamepadService()
     {
         EnsureSdlInitialized();
-        
+
         GamepadService gamepadService = new();
         gamepadService.SetupGamepads();
-        
+
         return gamepadService;
     }
 
-    public MouseService CreateMouseService()
+    public IMouseService CreateMouseService()
     {
         EnsureSdlInitialized();
 
         return new MouseService();
     }
 
-    public EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
+    public EventService CreateEventService(IKeyboardService keyboardService, IGamepadService gamepadService, IMouseService mouseService, IWindow window, AppControl appControl)
     {
         EnsureSdlInitialized();
 
-        return new EventService(keyboardService, gamepadService, mouseService, window, appControl);
+        return new EventService((KeyboardService)keyboardService, (GamepadService)gamepadService, (MouseService)mouseService, (Window)window, appControl);
     }
 
     public GameKitFrameContext CreateFrameContext()
     {
         return new GameKitFrameContext();
+    }
+
+    public IContentLoader<Image> CreateImageLoader(VirtualFileSystem fileSystem)
+    {
+        return new SdlImageLoader(fileSystem);
+    }
+
+    public IFontSystem CreateFontSystem(GpuMemorySystem gpuMemorySystem, VirtualFileSystem fileSystem)
+    {
+        return FontSystem.Create(gpuMemorySystem, fileSystem);
+    }
+
+    public IContentLoader<Shader> CreateShaderLoader(IGpuDevice gpuDevice, ShaderMetadataLoader shaderMetadataLoader, VirtualFileSystem fileSystem)
+    {
+        return new ShaderLoader((GpuDevice)gpuDevice, shaderMetadataLoader, fileSystem);
+    }
+
+    public GraphicsPipelineBuilder CreateGraphicsPipelineBuilder(IGpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader)
+    {
+        return new GraphicsPipelineBuilder((GpuDevice)gpuDevice, (Window)window, (ShaderLoader)shaderLoader);
     }
 
     public void Dispose()

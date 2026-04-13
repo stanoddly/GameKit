@@ -7,7 +7,7 @@ using SDL;
 
 namespace GameKit.Text;
 
-public class FontSystem: IFontSystem, IUpdatable
+internal class FontSystem: IFontSystem, IUpdatable
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;

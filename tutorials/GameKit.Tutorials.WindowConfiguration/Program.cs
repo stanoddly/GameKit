@@ -9,11 +9,11 @@ using Yak;
 namespace GameKit.Tutorials.WindowConfiguration;
 
 [Module]
-partial class WindowConfigApp : GameKitModule, IGameKitDefault, IStartable
+partial class WindowConfigApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Window Configuration Demo" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
+    public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Window Configuration Demo" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder().Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 
     [Singleton]
@@ -22,10 +22,11 @@ partial class WindowConfigApp : GameKitModule, IGameKitDefault, IStartable
     [OnActivate]
     void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
 
-    public void Start()
+    [OnActivate]
+    void SetWindowIcon(IWindow window)
     {
         using RawImage icon = CreateIcon(32, 32);
-        Window.SetIcon(icon);
+        window.SetIcon(icon);
     }
 
     static RawImage CreateIcon(int width, int height)

@@ -9,9 +9,9 @@ namespace GameKit.Tutorials.Instancing;
 [Module]
 partial class InstancingApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Instancing Demo" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+    public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Instancing Demo" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
         .AddContentFromProjectDirectory("Content").Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 

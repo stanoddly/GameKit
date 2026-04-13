@@ -6,7 +6,7 @@ using SDL;
 
 namespace GameKit.Gpu;
 
-public class GpuDevice : IGpuDevice
+internal class GpuDevice : IGpuDevice
 {
     private MemoryTrackedSet<Texture> _textures = new();
     private MemoryTrackedSet<GpuVertexBuffer> _vertexBuffers = new();

@@ -8,13 +8,13 @@ using Yak;
 namespace GameKit.Tutorials.DepthOnly;
 
 [Module]
-partial class DepthOnlyApp : GameKitModule, IGameKitDefault, IVertexShaderOnly
+partial class DepthOnlyApp : GameKitModule, IGameKitDefault
 {
-    public AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Depth-Only Pipeline Test" };
-    public GameKitConfig GameKitConfig { get; } = new();
-    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+    public override AppConfig AppConfig { get; } = new() { Size = (800, 600), Title = "Depth-Only Pipeline Test" };
+    public override GameKitConfig GameKitConfig { get; } = new();
+    public override VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
         .AddContentFromProjectDirectory("Content")
-        .AddSourceFileSystem(EmbeddedFileSystem.Create(typeof(IVertexShaderOnly).Assembly))
+        .AddSourceFileSystem(EmbeddedFileSystem.Create(typeof(GraphicsPipelineBuilderExtensions).Assembly))
         .Create();
     public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 

@@ -5,7 +5,7 @@ using Yak;
 namespace GameKit.Modules;
 
 [Module]
-public interface ISpriteLoading : IGameKitCore
+public interface ISpriteLoading
 {
     [Singleton]
     SpriteAssetStorage SpriteAssetStorage { get; }

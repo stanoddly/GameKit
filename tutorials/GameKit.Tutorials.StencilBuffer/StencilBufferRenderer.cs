@@ -1,5 +1,6 @@
 using System.Numerics;
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
@@ -61,10 +62,10 @@ public class StencilBufferRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static StencilBufferRenderer Create(
-        ShaderLoader shaderLoader,
+        IContentLoader<Shader> shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        GpuDevice gpuDevice)
+        IGpuDevice gpuDevice)
     {
         Texture depthStencilTexture = gpuDevice.CreateDepthBufferTexture(
             new ShortSize(1280, 720),
