@@ -1,106 +1,110 @@
 # Class Registration in GameKit
 
-GameKit uses a dependency injection system built on Microsoft.Extensions.DependencyInjection with custom lifecycle management. All services are registered as singletons and are eagerly instantiated during `Build()`.
+GameKit uses [Yak](https://github.com/stanoddly/Yak), a compile-time inversion of control container. Services are declared as properties on module interfaces and concrete module classes. Yak's source generator implements the property getters at compile time with zero runtime reflection.
 
-## Registration Methods
+## Module Interfaces
 
-GameKit provides three registration methods on `GameKitAppBuilder`:
+GameKit provides composable `[Module]` interfaces that define groups of services:
 
-### 1. RegisterInstance
+- `IGameKitCore` - Core services (GPU, window, input, shaders, fonts, etc.)
+- `IDefaultRenderOrchestration<TRenderContext>` - Render manager and context provider
+- `IGameKitDefault` - Convenience combination of core + default render orchestration
+- `IPencuil<TRenderContext>` - UI system (Pencil, ViewRegistry, PencuilRenderer)
+- `ISpriteLoading` - Sprite asset loading
+- `ISpriteAtlas` - Sprite atlas building
+- `IVertexShaderOnly` - Vertex-shader-only pipeline support
 
-Register an already-created instance.
+## Defining a Module
 
-```csharp
-builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-```
-
-Use when:
-- You have a concrete instance to provide
-- The object requires no dependencies
-- Configuration objects or simple data holders
-
-### 2. RegisterType
-
-Register a type that will be constructed via dependency injection.
+A consumer creates a `[Module] partial class` that inherits from `GameKitModule` and implements the desired interfaces:
 
 ```csharp
-builder.RegisterType<MyService>();
-builder.RegisterType<GameRenderContextProvider>().As<IRenderContextProvider<GameRenderContext>>();
-```
-
-Use when:
-- The class has dependencies that are already registered
-- Constructor parameters will be resolved automatically
-- Most common registration method for services
-
-### 3. RegisterFunc
-
-Register a factory method for custom construction logic. Dependencies are declared as method parameters and resolved automatically.
-
-```csharp
-// Static factory method with dependencies
-builder.RegisterFunc<RenderConfig>(RenderConfig.Create);
-
-// Static method without dependencies
-builder.RegisterFunc<Camera>(Camera.CreateDefault);
-```
-
-See @guides/static-factory-methods.md for when and how to implement factory methods.
-
-## Interface Registration with .As<T>()
-
-All registration methods return a `GameModuleRegistrar<T>` that allows interface binding via `.As<TInterface>()`:
-
-```csharp
-builder.RegisterType<ConcreteService>()
-    .As<IService>();
-
-builder.RegisterInstance(new MyConfig())
-    .As<IConfiguration>();
-
-builder.RegisterFunc<Implementation>(Implementation.Create)
-    .As<IInterface>();
-```
-
-The concrete type is registered first, then aliased to the interface. Both can be resolved from the service provider.
-
-## Module Pattern
-
-Organize related registrations into extension methods:
-
-```csharp
-public static class GraphicsModuleRegistrar
+[Module]
+partial class MyApp : GameKitModule, IGameKitDefault
 {
-    public static GameKitAppBuilder RegisterGraphics(this GameKitAppBuilder builder)
-    {
-        builder.RegisterType<CullingService>();
-        builder.RegisterType<GeometryStageRenderer>()
-            .As<IRenderer<GameRenderContext>>();
+    // Consumer-provided properties (no lifetime attribute)
+    public AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
+    public GameKitConfig GameKitConfig { get; } = new();
+    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+        .AddContentFromProjectDirectory("Content").Create();
+    public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
 
-        builder.RegisterFunc<Camera>(GameCameraFactory.Create);
+    // Custom singleton with static factory
+    [Singleton<MyRenderer>, StaticFactory<MyRenderer>]
+    public partial IRenderPhase<DefaultRenderContext> Renderer { get; }
 
-        return builder;
-    }
+    // Collect render phases via callback
+    [OnActivate]
+    void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
 }
-
-// Usage
-builder.RegisterGraphics();
 ```
 
-## Lifecycle Hooks
+## Property Attributes
 
-Objects can implement lifecycle interfaces:
+### `[Singleton]`
+Creates one instance per module, cached after first access. Constructor parameters are resolved from other module properties.
 
-- `IInitializable` - `Initialize()` called after construction
-- `IUpdatable` - `Update()` called each frame
-- `IDisposable` - `Dispose()` called on shutdown
+```csharp
+[Singleton]
+public partial MyService MyService { get; }
+```
 
-These are automatically detected and wired during registration.
+### `[Singleton<TImplementation>]`
+Creates a singleton of `TImplementation` exposed as the property's declared type.
+
+```csharp
+[Singleton<ConcreteService>]
+public partial IService Service { get; }
+```
+
+### `[Factory<TSource>]`
+Creates the instance by calling a matching instance method on `TSource`. `TSource` must be a service in the module graph.
+
+```csharp
+[Singleton, Factory<GameKitFactory>]
+public partial GpuDevice GpuDevice { get; }
+```
+
+### `[StaticFactory<TSource>]`
+Creates the instance by calling a matching public static method on `TSource`.
+
+```csharp
+[Singleton<MyRenderer>, StaticFactory<MyRenderer>]
+public partial IRenderPhase<DefaultRenderContext> Renderer { get; }
+```
+
+### No attribute (consumer-provided)
+Properties without lifetime attributes must be provided by the concrete class.
+
+```csharp
+public AppConfig AppConfig { get; } = new() { Size = (1280, 720) };
+```
+
+## Lifecycle Callbacks
+
+### `[OnActivate]`
+Called when a singleton matching the parameter type is created. Defined on the module class and propagated to derived classes.
+
+```csharp
+[OnActivate]
+void TrackStartable(IStartable startable) => Startables.Add(startable);
+```
+
+`GameKitModule` base class provides callbacks for `IStartable`, `IUpdatable`, and `EventBus` subscription.
+
+## Running the Application
+
+```csharp
+using MyApp app = new();
+return ((IGameKitDefault)app).Run();
+```
+
+`IGameKitDefault.Run()` calls `ResolveAll()` to eagerly instantiate all singletons, then enters the game loop (frame timing, events, updates, rendering).
 
 ## Important Notes
 
-- All services are singletons
-- Services are eagerly instantiated during `Build()`
-- Registering the same concrete type twice throws `InvalidOperationException`
-- Multiple implementations can be registered as the same interface via `.As<T>()` to support `IEnumerable<T>` constructor injection
-- Constructor and factory method parameters are resolved automatically
+- All registered services are singletons
+- `ResolveAll()` eagerly instantiates all singletons (generated by Yak)
+- Yak resolves constructor/factory parameters by matching declared property types
+- The concrete class can override interface-defined properties (class wins)
+- `Dispose()` is generated by Yak and disposes singletons in reverse creation order

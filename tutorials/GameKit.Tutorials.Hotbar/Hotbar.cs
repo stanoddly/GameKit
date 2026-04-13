@@ -49,7 +49,7 @@ public class Hotbar : View<HotbarViewModel>
     private readonly SpriteAsset[] _slotSprites;
     private int _hoveredSlot = -1;
 
-    public Hotbar(HotbarViewModel viewModel, IKeyboardService keyboardService, IFontSystem fontSystem, ITextureLoader textureLoader)
+    public Hotbar(HotbarViewModel viewModel, KeyboardService keyboardService, IFontSystem fontSystem, TextureLoader textureLoader)
         : base(viewModel)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);

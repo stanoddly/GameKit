@@ -48,7 +48,7 @@ internal class SdlImage : Image
     }
 }
 
-internal class SdlImageLoader : IContentLoader<Image>
+public class SdlImageLoader : IContentLoader<Image>
 {
     private readonly VirtualFileSystem _fileSystem;
 

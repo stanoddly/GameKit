@@ -42,8 +42,8 @@ public class ImageLoadingRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice,
-        ITextureLoader textureLoader)
+        GpuDevice gpuDevice,
+        TextureLoader textureLoader)
     {
         // Load image from file using SDL3_image
         Texture texture = textureLoader.Load("images/sample.png");

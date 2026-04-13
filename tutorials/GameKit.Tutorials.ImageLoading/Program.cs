@@ -1,21 +1,32 @@
-using GameKit.App;
+using GameKit;
+using GameKit.Content;
+using GameKit.Modules;
 using GameKit.RenderOrchestration;
+using Yak;
 
 namespace GameKit.Tutorials.ImageLoading;
 
+[Module]
+partial class ImageLoadingApp : GameKitModule, IGameKitDefault
+{
+    public AppConfig AppConfig { get; } = new() { Size = (443, 410), Title = "Image Loading Demo" };
+    public GameKitConfig GameKitConfig { get; } = new();
+    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+        .AddContentFromProjectDirectory("Content").Create();
+    public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
+
+    [Singleton<ImageLoadingRenderer>, StaticFactory<ImageLoadingRenderer>]
+    public partial IRenderPhase<DefaultRenderContext> Renderer { get; }
+
+    [OnActivate]
+    void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
+}
+
 static class Program
 {
-    static int Main(string[] args)
+    static int Main()
     {
-        var builder = new GameKitAppBuilder()
-            .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
-
-        builder
-            .RegisterInstance(new AppConfig { Size = (443, 410), Title = "Image Loading Demo" });
-        builder.RegisterFunc<ImageLoadingRenderer>(ImageLoadingRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
-
-        using IGameKitApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using ImageLoadingApp app = new();
+        return ((IGameKitDefault)app).Run();
     }
 }

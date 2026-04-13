@@ -1,25 +1,23 @@
-﻿using GameKit.Common;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace GameKit.Componentize;
 
 public static class ServiceLocator
 {
-    private static IServiceProvider _serviceProvider;
-    
-    static ServiceLocator()
+    private static Func<Type, object>? _serviceResolver;
+
+    public static void SetServiceResolver(Func<Type, object> resolver)
     {
-        _serviceProvider = new ServiceCollection().BuildServiceProvider();
+        _serviceResolver = resolver;
     }
-    
-    public static void SetServiceProvider(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-    
+
     public static TService GetService<TService>() where TService : class
     {
-        return _serviceProvider.GetMandatoryService<TService>();
+        if (_serviceResolver == null)
+        {
+            throw new InvalidOperationException("ServiceLocator has not been configured. Call SetServiceResolver first.");
+        }
+
+        object service = _serviceResolver(typeof(TService));
+        return (TService)service;
     }
 }
 
@@ -29,6 +27,6 @@ public static class Services<TService> where TService: class
     {
         Instance = ServiceLocator.GetService<TService>();
     }
-    
+
     public static TService Instance { get; }
 }

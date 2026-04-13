@@ -18,7 +18,7 @@ public class GameKitFrameContext: FrameContext
     // 100 ms = 0.1 seconds maximum delta time
     private const double MaxDeltaTime = 0.100;
     
-    internal GameKitFrameContext()
+    public GameKitFrameContext()
     {
     }
 

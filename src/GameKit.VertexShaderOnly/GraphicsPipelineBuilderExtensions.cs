@@ -18,8 +18,8 @@ public static class GraphicsPipelineBuilderExtensions
     /// <param name="vertexShader">The vertex shader to use.</param>
     /// <returns>The graphics pipeline builder for chaining.</returns>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if the no-op fragment shader is not found. Ensure <see cref="GameKitAppBuilderExtensions.AddVertexShaderOnlySupport"/>
-    /// was called during application setup.
+    /// Thrown if the no-op fragment shader is not found. Ensure the VertexShaderOnly embedded file system
+    /// is included in the VirtualFileSystem.
     /// </exception>
     public static GraphicsPipelineBuilder SetVertexShader(
         this GraphicsPipelineBuilder builder,
@@ -34,7 +34,7 @@ public static class GraphicsPipelineBuilderExtensions
         {
             throw new InvalidOperationException(
                 $"Failed to load the no-op fragment shader at '{NoopFragmentShaderPath}'. " +
-                "Ensure AddVertexShaderOnlySupport() was called on GameKitAppBuilder during application setup.",
+                "Ensure the VertexShaderOnly embedded file system is included in the VirtualFileSystem.",
                 ex);
         }
 

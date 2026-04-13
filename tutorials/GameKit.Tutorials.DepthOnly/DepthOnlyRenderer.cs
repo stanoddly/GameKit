@@ -50,7 +50,7 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice)
+        GpuDevice gpuDevice)
     {
         // Create depth texture
         Texture depthTexture = gpuDevice.CreateDepthBufferTexture(

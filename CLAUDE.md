@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- `docs/class-registration.md` - DI container registration patterns
+- `docs/class-registration.md` - Yak module interfaces and registration patterns
 - `docs/static-factory-methods.md` - Static Create() method pattern
 - `docs/componentize.md` - GameKit.Componentize setup and usage
 - `docs/components.md` - GameWorld, GameObject, GameComponent lifecycle, Services<T>, UpdateSystem

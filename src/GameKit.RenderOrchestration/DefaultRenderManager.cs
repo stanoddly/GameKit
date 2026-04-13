@@ -10,20 +10,16 @@ namespace GameKit.RenderOrchestration;
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IRenderContext
 {
-    private readonly IRenderPhase<TRenderContext>[] _renderers;
+    private readonly List<IRenderPhase<TRenderContext>> _renderPhases;
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
+    private IRenderPhase<TRenderContext>[]? _orderedPhases;
 
-    public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, IEnumerable<IRenderPhase<TRenderContext>> renderers)
+    public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, List<IRenderPhase<TRenderContext>> renderPhases)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
-        _renderers = renderers.OrderBy(r => r.Order).ToArray();
-        
-        if (_renderers.Length == 0)
-        {
-            throw new ArgumentException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
-        }
+        _renderPhases = renderPhases;
     }
 
     /// <summary>
@@ -31,6 +27,16 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
     /// </summary>
     public void Execute()
     {
+        if (_orderedPhases == null)
+        {
+            if (_renderPhases.Count == 0)
+            {
+                throw new InvalidOperationException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
+            }
+
+            _orderedPhases = _renderPhases.OrderBy(r => r.Order).ToArray();
+        }
+
         if (!_renderContextProvider.TryProvide(out TRenderContext? renderContext))
         {
             return;
@@ -38,11 +44,11 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            foreach (IRenderPhase<TRenderContext> renderer in _renderers)
+            foreach (IRenderPhase<TRenderContext> renderer in _orderedPhases)
             {
                 renderer.Render(renderContext);
             }
-            
+
             // submit all pending changes before renderContext is disposed
             _gpuMemorySystem.Submit();
         }

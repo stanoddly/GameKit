@@ -1,22 +1,33 @@
-﻿using GameKit.App;
+using GameKit;
+using GameKit.Content;
+using GameKit.Modules;
 using GameKit.RenderOrchestration;
+using Yak;
 
 namespace GameKit.Tutorials.Triangle;
 
+[Module]
+partial class TriangleApp : GameKitModule, IGameKitDefault
+{
+    public AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Game" };
+    public GameKitConfig GameKitConfig { get; } = new();
+    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+        .AddContentFromProjectDirectory("Content").Create();
+
+    public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
+
+    [Singleton<TriangleRenderer>, StaticFactory<TriangleRenderer>]
+    public partial IRenderPhase<DefaultRenderContext> Renderer { get; }
+
+    [OnActivate]
+    void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
+}
+
 static class Program
 {
-    static int Main(string[] args)
+    static int Main()
     {
-        var builder = new GameKitAppBuilder()
-            //.AddContentFromZipPattern("data*.pak")
-            .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
-
-        builder
-            .RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-        builder.RegisterFunc<TriangleRenderer>(TriangleRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
-
-        using IGameKitApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using TriangleApp app = new();
+        return ((IGameKitDefault)app).Run();
     }
 }

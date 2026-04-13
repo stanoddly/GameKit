@@ -1,23 +1,43 @@
-using GameKit.App;
+using GameKit;
+using GameKit.Content;
+using GameKit.Modules;
 using GameKit.Pencuil;
 using GameKit.RenderOrchestration;
+using Yak;
 
 namespace GameKit.Tutorials.Hotbar;
 
+[Module]
+partial class HotbarApp : GameKitModule, IGameKitDefault, IPencuil<DefaultRenderContext>
+{
+    public AppConfig AppConfig { get; } = new() { Size = (1280, 720), Title = "Hotbar" };
+    public GameKitConfig GameKitConfig { get; } = new();
+    public VirtualFileSystem FileSystem { get; } = new FileSystemBuilder()
+        .AddContentFromProjectDirectory("Content")
+        .AddSourceFileSystem(EmbeddedFileSystem.Create(typeof(IPencuil<>).Assembly))
+        .Create();
+    public List<IRenderPhase<DefaultRenderContext>> RenderPhases { get; } = new();
+    public PencuilOptions PencuilOptions { get; } = new() { ClearTarget = true };
+    public GuiStyle GuiStyle { get; } = GuiStyles.Style;
+    public List<IView> Views { get; } = new();
+
+    public HotbarViewModel HotbarViewModel { get; } = new();
+
+    [Singleton<Hotbar>]
+    public partial IView HotbarView { get; }
+
+    [OnActivate]
+    void CollectRenderPhase(IRenderPhase<DefaultRenderContext> phase) => RenderPhases.Add(phase);
+
+    [OnActivate]
+    void CollectView(IView view) => Views.Add(view);
+}
+
 static class Program
 {
-    static int Main(string[] args)
+    static int Main()
     {
-        var builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager()
-            .UsePencuil()
-            .AddContentFromProjectDirectory("Content");
-
-        builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
-        builder.RegisterInstance(new HotbarViewModel());
-        builder.RegisterType<Hotbar>().As<IView>();
-
-        using IGameKitApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using HotbarApp app = new();
+        return ((IGameKitDefault)app).Run();
     }
 }

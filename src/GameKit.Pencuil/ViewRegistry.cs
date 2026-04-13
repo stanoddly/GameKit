@@ -5,10 +5,10 @@ public class ViewRegistry
     private readonly List<IView> _views;
     private readonly Pencil _pencil;
 
-    public ViewRegistry(Pencil pencil, IEnumerable<IView> views)
+    public ViewRegistry(Pencil pencil, List<IView> views)
     {
         _pencil = pencil;
-        _views = [..views];
+        _views = views;
     }
 
     public IReadOnlyList<IView> Views => _views;

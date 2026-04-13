@@ -24,7 +24,7 @@ public class PencuilRenderer
     private readonly Sampler _sampler;
     public Texture RetainedTexture => _retainedTexture;
 
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     private readonly TextureFormat _colorTargetFormat;
 
     private Texture _retainedTexture;
@@ -37,8 +37,8 @@ public class PencuilRenderer
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
-        IGpuDevice gpuDevice,
-        IWindow window)
+        GpuDevice gpuDevice,
+        Window window)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [

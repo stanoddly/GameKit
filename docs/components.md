@@ -83,12 +83,12 @@ Components access registered services via `Services<T>.Instance`:
 ```csharp
 protected override void OnAttach()
 {
-    IKeyboardService keyboard = Services<IKeyboardService>.Instance;
+    KeyboardService keyboard = Services<KeyboardService>.Instance;
     keyboard.KeyDown += OnKeyDown;
 }
 ```
 
-**Note:** `Services<T>` caches the instance on first access. The service must be registered before any component accesses it.
+**Note:** `Services<T>` caches the instance on first access. The `ServiceLocator` must be configured with `SetServiceResolver` before any component accesses it.
 
 ## Update Registration
 

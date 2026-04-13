@@ -43,7 +43,7 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
+    public Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
     {
         return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
     }
@@ -97,7 +97,7 @@ public class GameKitFactory: IDisposable
         return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
-    internal GpuDevice CreateGpuDevice()
+    public GpuDevice CreateGpuDevice()
     {
         EnsureSdlInitialized();
 
@@ -128,14 +128,14 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal KeyboardService CreateKeyboardService(AppControl appControl)
+    public KeyboardService CreateKeyboardService(AppControl appControl)
     {
         EnsureSdlInitialized();
 
         return new KeyboardService(appControl);
     }
     
-    internal GamepadService CreateGamepadService()
+    public GamepadService CreateGamepadService()
     {
         EnsureSdlInitialized();
         
@@ -145,14 +145,14 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService()
+    public MouseService CreateMouseService()
     {
         EnsureSdlInitialized();
 
         return new MouseService();
     }
 
-    internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
+    public EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
     {
         EnsureSdlInitialized();
 

@@ -21,11 +21,11 @@ public readonly struct TimerCallback
 
 public class TimerSystem : IUpdatable
 {
-    private readonly FrameContext _frameContext;
+    private readonly GameKitFrameContext _frameContext;
     private DenseSlotMapStruct<Handle<TimerTag>, TimerCallback> _timers = new();
     private readonly List<Handle<TimerTag>> _toRemove = new();
 
-    public TimerSystem(FrameContext frameContext)
+    public TimerSystem(GameKitFrameContext frameContext)
     {
         _frameContext = frameContext;
     }

@@ -115,16 +115,16 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly IWindow _window;
-    private readonly IContentLoader<Shader> _shaderLoader;
+    private readonly Window _window;
+    private readonly ShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
     /// <summary>
     /// Gets the shader loader for loading shaders from the virtual file system.
     /// </summary>
-    public IContentLoader<Shader> ShaderLoader => _shaderLoader;
+    public ShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader)
+    public GraphicsPipelineBuilder(GpuDevice gpuDevice, Window window, ShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
         _window = window;
