@@ -216,7 +216,7 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         // Get the type info of the delegate argument
         TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(argExpression, ct);
-        ITypeSymbol? delegateType = typeInfo.ConvertedType ?? typeInfo.Type;
+        ITypeSymbol? delegateType = typeInfo.Type ?? typeInfo.ConvertedType;
 
         if (delegateType is not INamedTypeSymbol namedDelegateType)
         {

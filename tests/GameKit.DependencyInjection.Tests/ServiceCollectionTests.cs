@@ -129,12 +129,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterType_MultipleConstructors_Throws()
+    public void RegisterType_MultipleConstructors_ThrowsNotIntercepted()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<MultiConstructorService>();
 
-        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+        Assert.Throws<InvalidOperationException>(() => collection.RegisterType<MultiConstructorService>());
     }
 
     [Test]
@@ -605,12 +604,14 @@ public class ServiceCollectionTests
     // --- RegisterFactory validation ---
 
     [Test]
-    public void RegisterFactory_WrongReturnType_Throws()
+    public void RegisterFactory_WrongReturnType_ThrowsAtResolution()
     {
         ServiceCollection collection = new();
+        collection.RegisterFactory<SimpleService>(() => new AnotherService());
 
-        Assert.Throws<ArgumentException>(() =>
-            collection.RegisterFactory<SimpleService>(() => new AnotherService()));
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.Throws<InvalidCastException>(() => provider.GetService<SimpleService>());
     }
 
     // --- Parent-child alias ---

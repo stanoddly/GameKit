@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Reflection;
 
 namespace GameKit.DependencyInjection;
 
@@ -8,22 +7,13 @@ public class ServiceCollection
     private readonly List<ServiceDescriptor> _descriptors = new();
     private readonly HashSet<Type> _registeredTypes = new();
     private readonly List<Action<object>> _activationCallbacks = new();
-    private readonly List<Delegate> _onStartActions = new();
     private readonly List<Action<ServiceProvider>> _onStartGeneratedActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
 
     public ServiceRegistrar<T> RegisterType<T>() where T : class
     {
-        Type type = typeof(T);
-
-        if (!_registeredTypes.Add(type))
-        {
-            throw new InvalidOperationException($"Type {type.Name} is already registered.");
-        }
-
-        _descriptors.Add(ServiceDescriptor.ForType(type));
-
-        return new ServiceRegistrar<T>(this);
+        throw new InvalidOperationException(
+            $"RegisterType<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
     public ServiceRegistrar<T> RegisterInstance<T>(T instance) where T : class
@@ -42,23 +32,8 @@ public class ServiceCollection
 
     public ServiceRegistrar<T> RegisterFactory<T>(Delegate factory) where T : class
     {
-        Type type = typeof(T);
-        Type returnType = factory.Method.ReturnType;
-
-        if (!type.IsAssignableFrom(returnType))
-        {
-            throw new ArgumentException(
-                $"Factory delegate returns {returnType.Name}, which is not assignable to {type.Name}.");
-        }
-
-        if (!_registeredTypes.Add(type))
-        {
-            throw new InvalidOperationException($"Type {type.Name} is already registered.");
-        }
-
-        _descriptors.Add(ServiceDescriptor.ForFactory(type, factory));
-
-        return new ServiceRegistrar<T>(this);
+        throw new InvalidOperationException(
+            $"RegisterFactory<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -109,7 +84,8 @@ public class ServiceCollection
 
     public void OnStart(Delegate action)
     {
-        _onStartActions.Add(action);
+        throw new InvalidOperationException(
+            "OnStart() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
     public void OnDispose(Action<ServiceProvider> callback)
@@ -168,11 +144,6 @@ public class ServiceCollection
         }
 
         // Fire OnStart callbacks
-        foreach (Delegate action in _onStartActions)
-        {
-            InvokeDelegateVoid(action, provider, parent, descriptorMap, resolving);
-        }
-
         foreach (Action<ServiceProvider> action in _onStartGeneratedActions)
         {
             action(provider);
@@ -208,21 +179,6 @@ public class ServiceCollection
                 break;
             }
 
-            case ServiceDescriptorKind.Type:
-            {
-                if (!resolving.Add(descriptor.ServiceType))
-                {
-                    throw new InvalidOperationException(
-                        $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
-                }
-
-                object instance = CreateInstance(descriptor.ServiceType, provider, parent, descriptorMap, resolving);
-                provider.SetService(id, instance);
-                InvokeActivationCallbacks(instance);
-                resolving.Remove(descriptor.ServiceType);
-                break;
-            }
-
             case ServiceDescriptorKind.TypedFactory:
             {
                 if (!resolving.Add(descriptor.ServiceType))
@@ -233,21 +189,6 @@ public class ServiceCollection
 
                 object instance = descriptor.TypedFactory!(provider)
                     ?? throw new InvalidOperationException("Factory delegate returned null.");
-                provider.SetService(id, instance);
-                InvokeActivationCallbacks(instance);
-                resolving.Remove(descriptor.ServiceType);
-                break;
-            }
-
-            case ServiceDescriptorKind.Factory:
-            {
-                if (!resolving.Add(descriptor.ServiceType))
-                {
-                    throw new InvalidOperationException(
-                        $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
-                }
-
-                object instance = InvokeDelegate(descriptor.Factory!, provider, parent, descriptorMap, resolving);
                 provider.SetService(id, instance);
                 InvokeActivationCallbacks(instance);
                 resolving.Remove(descriptor.ServiceType);
@@ -341,98 +282,6 @@ public class ServiceCollection
         }
 
         return parent?.TryGetService(type);
-    }
-
-    private object CreateInstance(
-        Type type,
-        ServiceProvider provider,
-        ServiceProvider? parent,
-        Dictionary<Type, ServiceDescriptor> descriptorMap,
-        HashSet<Type> resolving)
-    {
-        ConstructorInfo[] constructors = type.GetConstructors();
-
-        if (constructors.Length != 1)
-        {
-            throw new InvalidOperationException(
-                $"Type {type.Name} must have exactly one public constructor.");
-        }
-
-        ConstructorInfo constructor = constructors[0];
-        ParameterInfo[] parameters = constructor.GetParameters();
-        object[] args = new object[parameters.Length];
-
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            object? resolved = TryResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
-
-            if (resolved == null)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot resolve parameter '{parameters[i].Name}' of type {parameters[i].ParameterType.Name} when constructing {type.Name}.");
-            }
-
-            args[i] = resolved;
-        }
-
-        return constructor.Invoke(args);
-    }
-
-    private object[] ResolveDelegateArgs(
-        Delegate action,
-        ServiceProvider provider,
-        ServiceProvider? parent,
-        Dictionary<Type, ServiceDescriptor> descriptorMap,
-        HashSet<Type> resolving)
-    {
-        MethodInfo method = action.Method;
-        ParameterInfo[] parameters = method.GetParameters();
-        object[] args = new object[parameters.Length];
-
-        for (int i = 0; i < parameters.Length; i++)
-        {
-            object? resolved = TryResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
-
-            if (resolved == null)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot resolve parameter '{parameters[i].Name}' of type {parameters[i].ParameterType.Name}.");
-            }
-
-            args[i] = resolved;
-        }
-
-        return args;
-    }
-
-    private object InvokeDelegate(
-        Delegate action,
-        ServiceProvider provider,
-        ServiceProvider? parent,
-        Dictionary<Type, ServiceDescriptor> descriptorMap,
-        HashSet<Type> resolving)
-    {
-        object[] args = ResolveDelegateArgs(action, provider, parent, descriptorMap, resolving);
-        object? result = action.Method.Invoke(action.Target, args);
-
-        if (result == null)
-        {
-            throw new InvalidOperationException(
-                $"Factory delegate returned null.");
-        }
-
-        return result;
-    }
-
-    private void InvokeDelegateVoid(
-        Delegate action,
-        ServiceProvider provider,
-        ServiceProvider? parent,
-        Dictionary<Type, ServiceDescriptor> descriptorMap,
-        HashSet<Type> resolving)
-    {
-        object[] args = ResolveDelegateArgs(action, provider, parent, descriptorMap, resolving);
-        action.Method.Invoke(action.Target, args);
     }
 
     private void InvokeActivationCallbacks(object instance)
