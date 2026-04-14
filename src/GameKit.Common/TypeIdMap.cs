@@ -17,7 +17,7 @@ public class TypeIdMap<TDomain> where TDomain : TypeIdMap<TDomain>
 
         if (!exists)
         {
-            value = ++_nextId;
+            value = _nextId++;
         }
 
         return value;
