@@ -388,11 +388,9 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        public static void AddSingleton_{index}<TService, TImplementation>(");
         sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
         sb.AppendLine($"            where TService : class");
-        sb.AppendLine($"            where TImplementation : class");
+        sb.AppendLine($"            where TImplementation : class, TService");
         sb.AppendLine($"        {{");
-        sb.AppendLine($"            if (!collection.IsRegistered<{info.ImplementationTypeFullName}>())");
-        sb.AppendLine($"            {{");
-        sb.Append($"                collection.AddSingletonGenerated<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+        sb.Append($"            collection.AddSingletonGenerated<{info.ServiceTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
         for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
         {
@@ -404,8 +402,6 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         sb.AppendLine("));");
-        sb.AppendLine($"            }}");
-        sb.AppendLine($"            collection.AddAlias<{info.ServiceTypeFullName}, {info.ImplementationTypeFullName}>();");
         sb.AppendLine($"        }}");
     }
 

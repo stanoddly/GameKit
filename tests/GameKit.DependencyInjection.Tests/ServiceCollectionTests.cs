@@ -120,12 +120,13 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void AddSingleton_Duplicate_Throws()
+    public void AddSingleton_Duplicate_LastWins()
     {
         ServiceCollection collection = new();
         collection.AddSingleton<SimpleService>();
 
-        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton<SimpleService>());
+        // Second registration should not throw — last registration wins
+        Assert.DoesNotThrow(() => collection.AddSingleton<SimpleService>());
     }
 
     [Test]
@@ -170,12 +171,18 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void AddSingleton_Instance_Duplicate_Throws()
+    public void AddSingleton_Instance_Duplicate_LastWins()
     {
         ServiceCollection collection = new();
-        collection.AddSingleton(new SimpleService());
+        SimpleService first = new();
+        SimpleService second = new();
+        collection.AddSingleton(first);
+        collection.AddSingleton(second);
 
-        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton(new SimpleService()));
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        // Second registration wins
+        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(second));
     }
 
     // --- AddSingleton<T>(Delegate) ---
@@ -207,13 +214,18 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void AddSingleton_Factory_Duplicate_Throws()
+    public void AddSingleton_Factory_Duplicate_LastWins()
     {
         ServiceCollection collection = new();
-        collection.AddSingleton<SimpleService>(() => new SimpleService());
+        SimpleService first = new();
+        SimpleService second = new();
+        collection.AddSingleton<SimpleService>(() => first);
+        collection.AddSingleton<SimpleService>(() => second);
 
-        Assert.Throws<InvalidOperationException>(() =>
-            collection.AddSingleton<SimpleService>(() => new SimpleService()));
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        // Second factory registration wins
+        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(second));
     }
 
     // --- AddSingleton<TService, TImplementation>() ---
@@ -229,26 +241,31 @@ public class ServiceCollectionTests
         IMyService service = provider.GetService<IMyService>();
 
         Assert.That(service, Is.InstanceOf<MyServiceImpl>());
-        Assert.That(service, Is.SameAs(provider.GetService<MyServiceImpl>()));
     }
 
     [Test]
-    public void AddSingleton_WithAlias_IncompatibleType_Throws()
-    {
-        ServiceCollection collection = new();
-
-        Assert.Throws<ArgumentException>(() =>
-            collection.AddSingleton<IUnrelated, MyServiceImpl>());
-    }
-
-    [Test]
-    public void AddSingleton_WithAlias_DuplicateTarget_Throws()
+    public void AddSingleton_WithAlias_OnlyRegistersUnderServiceType_NotImplType()
     {
         ServiceCollection collection = new();
         collection.AddSingleton<IMyService, MyServiceImpl>();
 
-        Assert.Throws<InvalidOperationException>(() =>
-            collection.AddSingleton<IMyService, AnotherServiceImpl>());
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        // TImpl is NOT separately registered — only TService is
+        Assert.Throws<InvalidOperationException>(() => provider.GetService<MyServiceImpl>());
+    }
+
+    [Test]
+    public void AddSingleton_WithAlias_DuplicateServiceType_LastWins()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        // Second registration wins
+        Assert.That(provider.GetService<IMyService>(), Is.InstanceOf<AnotherServiceImpl>());
     }
 
     // --- AddAlias ---
@@ -266,6 +283,111 @@ public class ServiceCollectionTests
 
         Assert.That(service, Is.InstanceOf<MyServiceImpl>());
         Assert.That(service, Is.SameAs(provider.GetService<MyServiceImpl>()));
+    }
+
+    [Test]
+    public void AddAlias_Duplicate_LastWins()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<MyServiceImpl>();
+        collection.AddSingleton<AnotherServiceImpl>();
+        collection.AddAlias<IMyService, MyServiceImpl>();
+
+        // Second alias for the same TService should not throw — last wins
+        Assert.DoesNotThrow(() => collection.AddAlias<IMyService, AnotherServiceImpl>());
+    }
+
+    // --- GetServices ---
+
+    [Test]
+    public void GetServices_ReturnsEmptyCollection_WhenNothingRegistered()
+    {
+        ServiceCollection collection = new();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Is.Empty);
+    }
+
+    [Test]
+    public void GetServices_ReturnsSingleRegistration()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Has.Count.EqualTo(1));
+        Assert.That(services[0], Is.SameAs(provider.GetService<SimpleService>()));
+    }
+
+    [Test]
+    public void GetServices_ReturnsAllRegistrationsInOrder()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
+
+        Assert.That(services, Has.Count.EqualTo(2));
+        Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
+    }
+
+    [Test]
+    public void GetServices_LastRegistrationMatchesGetService()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
+
+        // GetService<T> returns last-wins; GetServices returns all
+        Assert.That(provider.GetService<IMyService>(), Is.SameAs(services[1]));
+    }
+
+    [Test]
+    public void GetServices_AddSingletonDuplicate_CollectsAll()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<SimpleService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void GetServices_FactoryCalledOncePerRegistration()
+    {
+        ServiceCollection collection = new();
+        List<object> activated = new();
+        collection.OnActivation(obj => activated.Add(obj));
+
+        // Register the same service type twice; both instances must go through OnActivation
+        collection.AddSingleton<SimpleService>(() => new SimpleService());
+        collection.AddSingleton<SimpleService>(() => new SimpleService());
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Has.Count.EqualTo(2));
+        // Every instance returned by GetServices must have triggered OnActivation
+        Assert.That(activated, Has.Count.EqualTo(2));
+        Assert.That(activated, Contains.Item(services[0]));
+        Assert.That(activated, Contains.Item(services[1]));
     }
 
     // --- GetService / TryGetService ---

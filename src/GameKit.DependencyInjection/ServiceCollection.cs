@@ -4,8 +4,8 @@ namespace GameKit.DependencyInjection;
 
 public class ServiceCollection
 {
-    private readonly List<ServiceDescriptor> _descriptors = new();
     private readonly HashSet<Type> _registeredTypes = new();
+    private readonly Dictionary<Type, List<ServiceDescriptor>> _serviceGroups = new();
     private readonly List<Action<object>> _activationCallbacks = new();
     private readonly List<Action<ServiceProvider>> _onStartGeneratedActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
@@ -18,7 +18,7 @@ public class ServiceCollection
 
     public void AddSingleton<TService, TImplementation>()
         where TService : class
-        where TImplementation : class
+        where TImplementation : class, TService
     {
         throw new InvalidOperationException(
             $"AddSingleton<{typeof(TService).Name}, {typeof(TImplementation).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
@@ -27,13 +27,8 @@ public class ServiceCollection
     public void AddSingleton<T>(T instance) where T : class
     {
         Type type = typeof(T);
-
-        if (!_registeredTypes.Add(type))
-        {
-            throw new InvalidOperationException($"Type {type.Name} is already registered.");
-        }
-
-        _descriptors.Add(ServiceDescriptor.ForInstance(type, instance));
+        ServiceDescriptor descriptor = ServiceDescriptor.ForInstance(type, instance);
+        RegisterDescriptor(type, descriptor);
     }
 
     public void AddSingleton<T>(Delegate factory) where T : class
@@ -46,13 +41,8 @@ public class ServiceCollection
     public void AddSingletonGenerated<T>(Func<ServiceProvider, object> factory) where T : class
     {
         Type type = typeof(T);
-
-        if (!_registeredTypes.Add(type))
-        {
-            throw new InvalidOperationException($"Type {type.Name} is already registered.");
-        }
-
-        _descriptors.Add(ServiceDescriptor.ForTypedFactory(type, factory));
+        ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactory(type, factory);
+        RegisterDescriptor(type, descriptor);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -63,24 +53,28 @@ public class ServiceCollection
 
     public void AddAlias<TService, TImplementation>()
         where TService : class
-        where TImplementation : class
+        where TImplementation : class, TService
     {
-        if (!typeof(TService).IsAssignableFrom(typeof(TImplementation)))
-        {
-            throw new ArgumentException($"{typeof(TImplementation).Name} is not assignable to {typeof(TService).Name}.");
-        }
-
         if (!_registeredTypes.Contains(typeof(TImplementation)))
         {
             throw new InvalidOperationException($"{typeof(TImplementation).Name} has not been registered first.");
         }
 
-        if (!_registeredTypes.Add(typeof(TService)))
+        ServiceDescriptor descriptor = ServiceDescriptor.ForAlias(typeof(TService), typeof(TImplementation));
+        RegisterDescriptor(typeof(TService), descriptor);
+    }
+
+    private void RegisterDescriptor(Type type, ServiceDescriptor descriptor)
+    {
+        _registeredTypes.Add(type);
+
+        if (!_serviceGroups.TryGetValue(type, out List<ServiceDescriptor>? group))
         {
-            throw new InvalidOperationException($"Type {typeof(TService).Name} is already registered.");
+            group = new List<ServiceDescriptor>();
+            _serviceGroups[type] = group;
         }
 
-        _descriptors.Add(ServiceDescriptor.ForAlias(typeof(TService), typeof(TImplementation)));
+        group.Add(descriptor);
     }
 
     public void OnActivation(Action<object> callback)
@@ -116,13 +110,15 @@ public class ServiceCollection
 
     public ServiceProvider BuildServiceProvider(ServiceProvider? parent)
     {
+        // Build descriptorMap: last-wins descriptor per type (last element in each group)
         Dictionary<Type, ServiceDescriptor> descriptorMap = new();
         int maxId = ServiceTypeId<ServiceProvider>.Id;
 
-        foreach (ServiceDescriptor descriptor in _descriptors)
+        foreach (KeyValuePair<Type, List<ServiceDescriptor>> entry in _serviceGroups)
         {
-            descriptorMap[descriptor.ServiceType] = descriptor;
-            int id = ServiceTypeId.GetId(descriptor.ServiceType);
+            ServiceDescriptor lastDescriptor = entry.Value[entry.Value.Count - 1];
+            descriptorMap[entry.Key] = lastDescriptor;
+            int id = ServiceTypeId.GetId(entry.Key);
             if (id > maxId)
             {
                 maxId = id;
@@ -136,7 +132,9 @@ public class ServiceCollection
         // Register ServiceProvider itself
         services[ServiceTypeId<ServiceProvider>.Id] = provider;
 
-        // Resolve all registered services
+        // Cache of resolved instances keyed by descriptor, for non-last-wins descriptors
+        Dictionary<ServiceDescriptor, object> resolvedInstances = new();
+
         HashSet<Type> resolving = new();
 
         // Set build-time resolvers so generated factories can trigger on-demand resolution
@@ -144,10 +142,62 @@ public class ServiceCollection
             type => ResolveServiceByType(type, provider, parent, descriptorMap, resolving),
             type => TryResolveServiceByType(type, provider, parent, descriptorMap, resolving));
 
-        foreach (ServiceDescriptor descriptor in _descriptors)
+        // Resolve all last-wins descriptors (their instances go into the services array)
+        foreach (KeyValuePair<Type, ServiceDescriptor> entry in descriptorMap)
         {
-            Resolve(descriptor, provider, parent, descriptorMap, resolving);
+            Resolve(entry.Value, provider, parent, descriptorMap, resolving);
         }
+
+        // Resolve all non-last-wins descriptors and cache their instances
+        foreach (KeyValuePair<Type, List<ServiceDescriptor>> entry in _serviceGroups)
+        {
+            List<ServiceDescriptor> group = entry.Value;
+            // Skip the last element (last-wins, already resolved above)
+            for (int i = 0; i < group.Count - 1; i++)
+            {
+                ServiceDescriptor descriptor = group[i];
+                object? instance = ResolveNonLastDescriptor(descriptor, provider, parent, descriptorMap, resolving);
+                if (instance != null)
+                {
+                    resolvedInstances[descriptor] = instance;
+                }
+            }
+        }
+
+        // Build service collections for GetServices<T>() from pre-resolved instances
+        Dictionary<Type, object[]> serviceCollections = new();
+        foreach (KeyValuePair<Type, List<ServiceDescriptor>> entry in _serviceGroups)
+        {
+            List<ServiceDescriptor> group = entry.Value;
+            List<object> instances = new(group.Count);
+
+            for (int i = 0; i < group.Count; i++)
+            {
+                ServiceDescriptor descriptor = group[i];
+                // Last-wins descriptor: retrieve from services array
+                if (i == group.Count - 1)
+                {
+                    int slotId = ServiceTypeId.GetId(descriptor.ServiceType);
+                    object? slotInstance = slotId < provider.ServicesLength ? provider.GetServiceByIndex(slotId) : null;
+                    if (slotInstance != null)
+                    {
+                        instances.Add(slotInstance);
+                    }
+                }
+                else
+                {
+                    // Non-last-wins: use cached resolved instance
+                    if (resolvedInstances.TryGetValue(descriptor, out object? cachedInstance))
+                    {
+                        instances.Add(cachedInstance);
+                    }
+                }
+            }
+
+            serviceCollections[entry.Key] = instances.ToArray();
+        }
+
+        provider.SetServiceCollections(serviceCollections);
 
         // Fire OnStart callbacks
         foreach (Action<ServiceProvider> action in _onStartGeneratedActions)
@@ -221,6 +271,44 @@ public class ServiceCollection
 
                 provider.SetService(id, source);
                 break;
+            }
+        }
+    }
+
+    private object? ResolveNonLastDescriptor(
+        ServiceDescriptor descriptor,
+        ServiceProvider provider,
+        ServiceProvider? parent,
+        Dictionary<Type, ServiceDescriptor> descriptorMap,
+        HashSet<Type> resolving)
+    {
+        switch (descriptor.Kind)
+        {
+            case ServiceDescriptorKind.Instance:
+            {
+                object instance = descriptor.Instance!;
+                InvokeActivationCallbacks(instance);
+                return instance;
+            }
+
+            case ServiceDescriptorKind.TypedFactory:
+            {
+                object instance = descriptor.TypedFactory!(provider)
+                    ?? throw new InvalidOperationException("Factory delegate returned null.");
+                InvokeActivationCallbacks(instance);
+                return instance;
+            }
+
+            case ServiceDescriptorKind.Alias:
+            {
+                int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
+                object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
+                return source ?? parent?.TryGetService(descriptor.AliasSource!);
+            }
+
+            default:
+            {
+                return null;
             }
         }
     }

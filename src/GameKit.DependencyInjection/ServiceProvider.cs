@@ -8,12 +8,18 @@ public class ServiceProvider : IDisposable
     private Func<Type, object>? _buildTimeResolver;
     private Func<Type, object?>? _buildTimeTryResolver;
     private bool _disposed;
+    private Dictionary<Type, object[]>? _serviceCollections;
 
     internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
         _services = services;
         _parent = parent;
         _disposeCallbacks = disposeCallbacks;
+    }
+
+    internal void SetServiceCollections(Dictionary<Type, object[]> collections)
+    {
+        _serviceCollections = collections;
     }
 
     internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver)
@@ -65,6 +71,26 @@ public class ServiceProvider : IDisposable
         }
 
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
+    }
+
+    public IReadOnlyList<T> GetServices<T>() where T : class
+    {
+        if (_serviceCollections != null && _serviceCollections.TryGetValue(typeof(T), out object[]? items))
+        {
+            T[] typed = new T[items.Length];
+            for (int i = 0; i < items.Length; i++)
+            {
+                typed[i] = (T)items[i];
+            }
+            return typed;
+        }
+
+        if (_parent != null)
+        {
+            return _parent.GetServices<T>();
+        }
+
+        return Array.Empty<T>();
     }
 
     public T? TryGetService<T>() where T : class
