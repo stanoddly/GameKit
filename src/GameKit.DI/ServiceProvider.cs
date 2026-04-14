@@ -6,6 +6,7 @@ public class ServiceProvider : IDisposable
     private readonly ServiceProvider? _parent;
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
     private Func<Type, object>? _buildTimeResolver;
+    private bool _disposed;
 
     internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
@@ -77,6 +78,11 @@ public class ServiceProvider : IDisposable
             }
         }
 
+        if (_buildTimeResolver != null)
+        {
+            return (T)_buildTimeResolver(typeof(T));
+        }
+
         if (_parent != null)
         {
             return _parent.TryGetService<T>();
@@ -108,6 +114,13 @@ public class ServiceProvider : IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
         foreach (Action<ServiceProvider> callback in _disposeCallbacks)
         {
             callback(this);

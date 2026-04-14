@@ -12,36 +12,39 @@ internal class ServiceDescriptor
 {
     public Type ServiceType { get; }
     public ServiceDescriptorKind Kind { get; }
-    public object? Instance { get; }
-    public Delegate? Factory { get; }
-    public Func<ServiceProvider, object>? TypedFactory { get; }
-    public Type? AliasSource { get; }
+    public object? Instance { get; private init; }
+    public Delegate? Factory { get; private init; }
+    public Func<ServiceProvider, object>? TypedFactory { get; private init; }
+    public Type? AliasSource { get; private init; }
 
-    public ServiceDescriptor(Type serviceType, ServiceDescriptorKind kind, Type? aliasSource = null)
+    private ServiceDescriptor(Type serviceType, ServiceDescriptorKind kind)
     {
         ServiceType = serviceType;
         Kind = kind;
-        AliasSource = aliasSource;
     }
 
-    public ServiceDescriptor(Type serviceType, object instance)
+    public static ServiceDescriptor ForType(Type serviceType)
     {
-        ServiceType = serviceType;
-        Kind = ServiceDescriptorKind.Instance;
-        Instance = instance;
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Type);
     }
 
-    public ServiceDescriptor(Type serviceType, Delegate factory)
+    public static ServiceDescriptor ForInstance(Type serviceType, object instance)
     {
-        ServiceType = serviceType;
-        Kind = ServiceDescriptorKind.Factory;
-        Factory = factory;
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Instance) { Instance = instance };
     }
 
-    public ServiceDescriptor(Type serviceType, Func<ServiceProvider, object> typedFactory)
+    public static ServiceDescriptor ForFactory(Type serviceType, Delegate factory)
     {
-        ServiceType = serviceType;
-        Kind = ServiceDescriptorKind.Type;
-        TypedFactory = typedFactory;
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Factory) { Factory = factory };
+    }
+
+    public static ServiceDescriptor ForTypedFactory(Type serviceType, Func<ServiceProvider, object> typedFactory)
+    {
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Type) { TypedFactory = typedFactory };
+    }
+
+    public static ServiceDescriptor ForAlias(Type serviceType, Type aliasSource)
+    {
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Alias) { AliasSource = aliasSource };
     }
 }

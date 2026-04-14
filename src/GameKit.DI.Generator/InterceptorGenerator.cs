@@ -323,7 +323,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            this global::GameKit.DI.ServiceCollection collection)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
-        sb.Append($"            var registrar = collection.RegisterTypeGenerated<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+        sb.Append($"            return collection.RegisterTypeGenerated<T>(static sp => new {info.ImplementationTypeFullName}(");
 
         for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
         {
@@ -335,7 +335,6 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         sb.AppendLine("));");
-        sb.AppendLine($"            return global::System.Runtime.CompilerServices.Unsafe.As<global::GameKit.DI.ServiceRegistrar<{info.ImplementationTypeFullName}>, global::GameKit.DI.ServiceRegistrar<T>>(ref registrar);");
         sb.AppendLine($"        }}");
     }
 
@@ -347,7 +346,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            global::System.Delegate factory)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
-        sb.AppendLine($"            var typedFactory = ({info.DelegateTypeFullName})factory;");
+        sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
         sb.Append($"            return collection.RegisterTypeGenerated<T>(sp => (object)typedFactory(");
 
         for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
@@ -370,7 +369,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            this global::GameKit.DI.ServiceCollection collection,");
         sb.AppendLine($"            global::System.Delegate action)");
         sb.AppendLine($"        {{");
-        sb.AppendLine($"            var typedAction = ({info.DelegateTypeFullName})action;");
+        sb.AppendLine($"            {info.DelegateTypeFullName} typedAction = ({info.DelegateTypeFullName})action;");
         sb.AppendLine($"            collection.OnStartGenerated(sp => typedAction(");
 
         for (int j = 0; j < info.DelegateParameterTypes.Length; j++)

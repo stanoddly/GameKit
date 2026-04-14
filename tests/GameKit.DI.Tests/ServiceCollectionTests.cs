@@ -570,6 +570,48 @@ public class ServiceCollectionTests
 
         Assert.That(service.Simple, Is.SameAs(provider.GetService<SimpleService>()));
     }
+    // --- Double dispose ---
+
+    [Test]
+    public void Dispose_CalledTwice_OnlyFiresCallbacksOnce()
+    {
+        ServiceCollection collection = new();
+        int disposeCount = 0;
+        collection.OnDispose(_ => disposeCount++);
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        provider.Dispose();
+        provider.Dispose();
+
+        Assert.That(disposeCount, Is.EqualTo(1));
+    }
+
+    // --- RegisterFactory validation ---
+
+    [Test]
+    public void RegisterFactory_WrongReturnType_Throws()
+    {
+        ServiceCollection collection = new();
+
+        Assert.Throws<ArgumentException>(() =>
+            collection.RegisterFactory<SimpleService>(() => new AnotherService()));
+    }
+
+    // --- Parent-child alias ---
+
+    [Test]
+    public void ChildContainer_AliasToParentType_Resolves()
+    {
+        ServiceCollection rootCollection = new();
+        rootCollection.RegisterType<MyServiceImpl>();
+        ServiceProvider root = rootCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.RegisterType<MyServiceImpl>().As<IMyService>();
+        ServiceProvider child = childCollection.BuildServiceProvider(root);
+
+        Assert.That(child.GetService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
+    }
 }
 
 public class ServiceNeedingProvider

@@ -21,7 +21,7 @@ public class ServiceCollection
             throw new InvalidOperationException($"Type {type.Name} is already registered.");
         }
 
-        _descriptors.Add(new ServiceDescriptor(type, ServiceDescriptorKind.Type));
+        _descriptors.Add(ServiceDescriptor.ForType(type));
 
         return new ServiceRegistrar<T>(this);
     }
@@ -35,7 +35,7 @@ public class ServiceCollection
             throw new InvalidOperationException($"Type {type.Name} is already registered.");
         }
 
-        _descriptors.Add(new ServiceDescriptor(type, instance));
+        _descriptors.Add(ServiceDescriptor.ForInstance(type, instance));
 
         return new ServiceRegistrar<T>(this);
     }
@@ -43,13 +43,20 @@ public class ServiceCollection
     public ServiceRegistrar<T> RegisterFactory<T>(Delegate factory) where T : class
     {
         Type type = typeof(T);
+        Type returnType = factory.Method.ReturnType;
+
+        if (!type.IsAssignableFrom(returnType))
+        {
+            throw new ArgumentException(
+                $"Factory delegate returns {returnType.Name}, which is not assignable to {type.Name}.");
+        }
 
         if (!_registeredTypes.Add(type))
         {
             throw new InvalidOperationException($"Type {type.Name} is already registered.");
         }
 
-        _descriptors.Add(new ServiceDescriptor(type, factory));
+        _descriptors.Add(ServiceDescriptor.ForFactory(type, factory));
 
         return new ServiceRegistrar<T>(this);
     }
@@ -64,7 +71,7 @@ public class ServiceCollection
             throw new InvalidOperationException($"Type {type.Name} is already registered.");
         }
 
-        _descriptors.Add(new ServiceDescriptor(type, factory));
+        _descriptors.Add(ServiceDescriptor.ForTypedFactory(type, factory));
 
         return new ServiceRegistrar<T>(this);
     }
@@ -92,7 +99,7 @@ public class ServiceCollection
             throw new InvalidOperationException($"Type {typeof(TTarget).Name} is already registered.");
         }
 
-        _descriptors.Add(new ServiceDescriptor(typeof(TTarget), ServiceDescriptorKind.Alias, typeof(TSource)));
+        _descriptors.Add(ServiceDescriptor.ForAlias(typeof(TTarget), typeof(TSource)));
     }
 
     public void OnActivation(Action<object> callback)
@@ -128,15 +135,24 @@ public class ServiceCollection
     public ServiceProvider BuildServiceProvider(ServiceProvider? parent)
     {
         Dictionary<Type, ServiceDescriptor> descriptorMap = new();
+        int maxId = ServiceTypeId<ServiceProvider>.Id;
+
         foreach (ServiceDescriptor descriptor in _descriptors)
         {
             descriptorMap[descriptor.ServiceType] = descriptor;
+            int id = ServiceTypeId.GetId(descriptor.ServiceType);
+            if (id > maxId)
+            {
+                maxId = id;
+            }
         }
 
-        ServiceProvider provider = new ServiceProvider([], parent, _disposeCallbacks);
+        object?[] services = new object?[maxId + 1];
+        List<Action<ServiceProvider>> disposeCallbacks = new(_disposeCallbacks);
+        ServiceProvider provider = new ServiceProvider(services, parent, disposeCallbacks);
 
         // Register ServiceProvider itself
-        provider.SetService(ServiceTypeId<ServiceProvider>.Id, provider);
+        services[ServiceTypeId<ServiceProvider>.Id] = provider;
 
         // Resolve all registered services
         HashSet<Type> resolving = new();
@@ -152,7 +168,7 @@ public class ServiceCollection
         // Fire OnStart callbacks
         foreach (Delegate action in _onStartActions)
         {
-            InvokeDelegate(action, provider, parent, descriptorMap, resolving);
+            InvokeDelegateVoid(action, provider, parent, descriptorMap, resolving);
         }
 
         foreach (Action<ServiceProvider> action in _onStartGeneratedActions)
@@ -325,7 +341,7 @@ public class ServiceCollection
         return constructor.Invoke(args);
     }
 
-    private object InvokeDelegate(
+    private object[] ResolveDelegateArgs(
         Delegate action,
         ServiceProvider provider,
         ServiceProvider? parent,
@@ -349,8 +365,37 @@ public class ServiceCollection
             }
         }
 
-        object? result = method.Invoke(action.Target, args);
-        return result!;
+        return args;
+    }
+
+    private object InvokeDelegate(
+        Delegate action,
+        ServiceProvider provider,
+        ServiceProvider? parent,
+        Dictionary<Type, ServiceDescriptor> descriptorMap,
+        HashSet<Type> resolving)
+    {
+        object[] args = ResolveDelegateArgs(action, provider, parent, descriptorMap, resolving);
+        object? result = action.Method.Invoke(action.Target, args);
+
+        if (result == null)
+        {
+            throw new InvalidOperationException(
+                $"Factory delegate returned null.");
+        }
+
+        return result;
+    }
+
+    private void InvokeDelegateVoid(
+        Delegate action,
+        ServiceProvider provider,
+        ServiceProvider? parent,
+        Dictionary<Type, ServiceDescriptor> descriptorMap,
+        HashSet<Type> resolving)
+    {
+        object[] args = ResolveDelegateArgs(action, provider, parent, descriptorMap, resolving);
+        action.Method.Invoke(action.Target, args);
     }
 
     private void InvokeActivationCallbacks(object instance)
