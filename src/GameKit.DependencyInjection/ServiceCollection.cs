@@ -364,15 +364,15 @@ public class ServiceCollection
 
         for (int i = 0; i < parameters.Length; i++)
         {
-            try
-            {
-                args[i] = ResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
-            }
-            catch (InvalidOperationException)
+            object? resolved = TryResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
+
+            if (resolved == null)
             {
                 throw new InvalidOperationException(
                     $"Cannot resolve parameter '{parameters[i].Name}' of type {parameters[i].ParameterType.Name} when constructing {type.Name}.");
             }
+
+            args[i] = resolved;
         }
 
         return constructor.Invoke(args);
@@ -391,15 +391,15 @@ public class ServiceCollection
 
         for (int i = 0; i < parameters.Length; i++)
         {
-            try
-            {
-                args[i] = ResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
-            }
-            catch (InvalidOperationException)
+            object? resolved = TryResolveServiceByType(parameters[i].ParameterType, provider, parent, descriptorMap, resolving);
+
+            if (resolved == null)
             {
                 throw new InvalidOperationException(
                     $"Cannot resolve parameter '{parameters[i].Name}' of type {parameters[i].ParameterType.Name}.");
             }
+
+            args[i] = resolved;
         }
 
         return args;
