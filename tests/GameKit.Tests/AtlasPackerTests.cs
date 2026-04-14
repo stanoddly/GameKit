@@ -5,7 +5,6 @@ using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.Sprites;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GameKit.Tests;
 
@@ -52,22 +51,19 @@ public class AtlasPackerTests
         Dictionary<string, ImmutableArray<string>> directories,
         Dictionary<string, RawImage>? images = null)
     {
-        var fs = new DictFileSystem(files.ToFrozenDictionary(), directories.ToFrozenDictionary());
-        var storage = new SpriteAssetStorage();
+        DictFileSystem fs = new DictFileSystem(files.ToFrozenDictionary(), directories.ToFrozenDictionary());
+        SpriteAssetStorage storage = new SpriteAssetStorage();
         images ??= new Dictionary<string, RawImage>
         {
             ["img.png"] = MakeImage(256, 256)
         };
 
-        var services = new ServiceCollection();
-        services.AddSingleton<SpriteAtlasBuilderConfig>(new SpriteAtlasBuilderConfig(directories.Keys.ToArray()));
-        services.AddSingleton<ITextureLoader>(new StubTextureLoader());
-        services.AddSingleton<IContentLoader<Image>>(new StubImageLoader(images));
-        services.AddSingleton<VirtualFileSystem>(fs);
-        services.AddSingleton(storage);
-        var sp = services.BuildServiceProvider();
-
-        var builder = SpriteAtlasBuilder.Create(sp);
+        SpriteAtlasBuilder builder = SpriteAtlasBuilder.Create(
+            new SpriteAtlasBuilderConfig(directories.Keys.ToArray()),
+            new StubTextureLoader(),
+            new StubImageLoader(images),
+            fs,
+            storage);
         return (storage, builder);
     }
 

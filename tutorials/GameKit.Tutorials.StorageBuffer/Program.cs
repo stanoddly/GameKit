@@ -11,9 +11,9 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 
-        builder
-            .RegisterInstance(new AppConfig { Size = (800, 600), Title = "Storage Buffer Demo" });
-        builder.RegisterFunc<StorageBufferRenderer>(StorageBufferRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Storage Buffer Demo" });
+        builder.AddSingleton<StorageBufferRenderer>(StorageBufferRenderer.Create);
+        builder.AddAlias<IRenderPhase<DefaultRenderContext>, StorageBufferRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

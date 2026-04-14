@@ -1,15 +1,29 @@
 using System.Runtime.CompilerServices;
 using GameKit;
 using GameKit.Collections;
+using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize;
 
 public class GameWorld : IUpdatable
 {
+    private readonly ServiceProvider? _serviceProvider;
     private DenseSlotMap<Handle<GameObject>, GameObject> _gameObjects = new();
     private readonly HashSet<ITickable> _tickables = new();
     private readonly List<ITickable> _tempTickables = new();
     private Dictionary<Type, GameComponent>? _exposed;
+
+    public GameWorld()
+    {
+    }
+
+    public GameWorld(ServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    internal ServiceProvider ServiceProvider =>
+        _serviceProvider ?? throw new InvalidOperationException("GameWorld was created without a ServiceProvider.");
 
     public GameObject CreateGameObject()
     {

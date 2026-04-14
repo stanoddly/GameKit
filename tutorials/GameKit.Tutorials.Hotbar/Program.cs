@@ -13,9 +13,9 @@ static class Program
             .UsePencuil()
             .AddContentFromProjectDirectory("Content");
 
-        builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
-        builder.RegisterInstance(new HotbarViewModel());
-        builder.RegisterType<Hotbar>().As<IView>();
+        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
+        builder.AddSingleton(new HotbarViewModel());
+        builder.AddSingleton<IView, Hotbar>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

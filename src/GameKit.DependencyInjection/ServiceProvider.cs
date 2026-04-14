@@ -7,6 +7,7 @@ public class ServiceProvider : IDisposable
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
     private Func<Type, object>? _buildTimeResolver;
     private Func<Type, object?>? _buildTimeTryResolver;
+    private Func<Type, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
     private Dictionary<Type, object[]>? _serviceCollections;
 
@@ -22,10 +23,11 @@ public class ServiceProvider : IDisposable
         _serviceCollections = collections;
     }
 
-    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver)
+    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver, Func<Type, object[]>? collectionResolver)
     {
         _buildTimeResolver = resolver;
         _buildTimeTryResolver = tryResolver;
+        _buildTimeCollectionResolver = collectionResolver;
     }
 
     internal int ServicesLength => _services.Length;
@@ -81,6 +83,17 @@ public class ServiceProvider : IDisposable
             for (int i = 0; i < items.Length; i++)
             {
                 typed[i] = (T)items[i];
+            }
+            return typed;
+        }
+
+        if (_buildTimeCollectionResolver != null)
+        {
+            object[] resolved = _buildTimeCollectionResolver(typeof(T));
+            T[] typed = new T[resolved.Length];
+            for (int i = 0; i < resolved.Length; i++)
+            {
+                typed[i] = (T)resolved[i];
             }
             return typed;
         }

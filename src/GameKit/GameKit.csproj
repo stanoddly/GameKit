@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -21,7 +22,6 @@
 
     <ItemGroup>
       <PackageReference Include="MessagePack" Version="3.1.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
       <PackageReference Include="ppy.SDL3-CS" Version="2026.302.0" />
       <PackageReference Include="ppy.SDL3_image-CS" Version="2026.302.0" />
       <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.302.0" />
@@ -29,6 +29,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
+      <ProjectReference Include="..\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
       <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
       <ProjectReference Include="..\GameKit.Encs\GameKit.Encs.csproj" />
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />

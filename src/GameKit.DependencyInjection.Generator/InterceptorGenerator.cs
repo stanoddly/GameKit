@@ -59,24 +59,18 @@ public class InterceptorGenerator : IIncrementalGenerator
             return false;
         }
 
-        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess)
+        string? methodName = invocation.Expression switch
         {
-            return false;
-        }
-
-        string methodName;
-        if (memberAccess.Name is GenericNameSyntax genericName)
-        {
-            methodName = genericName.Identifier.Text;
-        }
-        else if (memberAccess.Name is IdentifierNameSyntax identifierName)
-        {
-            methodName = identifierName.Identifier.Text;
-        }
-        else
-        {
-            return false;
-        }
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name switch
+            {
+                GenericNameSyntax g => g.Identifier.Text,
+                IdentifierNameSyntax id => id.Identifier.Text,
+                _ => null
+            },
+            GenericNameSyntax g => g.Identifier.Text,
+            IdentifierNameSyntax id => id.Identifier.Text,
+            _ => null
+        };
 
         return methodName is "AddSingleton" or "OnStart";
     }
@@ -84,7 +78,6 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static InterceptionInfo? ExtractInterception(GeneratorSyntaxContext context, CancellationToken ct)
     {
         InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
-        MemberAccessExpressionSyntax memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
 
         SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo(invocation, ct);
         if (symbolInfo.Symbol is not IMethodSymbol methodSymbol)
@@ -127,7 +120,9 @@ public class InterceptorGenerator : IIncrementalGenerator
         CancellationToken ct)
     {
         // AddSingleton<T>(Delegate) — factory overload
-        if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 1)
+        // Must check parameter type to distinguish from AddSingleton<T>(T instance)
+        if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 1
+            && methodSymbol.Parameters[0].Type.ToDisplayString() == "System.Delegate")
         {
             return ExtractDelegateInterception(
                 InterceptionKind.AddSingletonFactory,
@@ -257,23 +252,71 @@ public class InterceptorGenerator : IIncrementalGenerator
         TypeInfo typeInfo = context.SemanticModel.GetTypeInfo(argExpression, ct);
         ITypeSymbol? delegateType = typeInfo.Type ?? typeInfo.ConvertedType;
 
-        if (delegateType is not INamedTypeSymbol namedDelegateType)
+        if (delegateType is INamedTypeSymbol namedDelegateType && namedDelegateType.DelegateInvokeMethod != null)
+        {
+            IMethodSymbol invokeMethod = namedDelegateType.DelegateInvokeMethod;
+
+            ImmutableArray<string> paramTypes = invokeMethod.Parameters
+                .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                .ToImmutableArray();
+
+            string delegateTypeStr = namedDelegateType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            bool returnsVoid = invokeMethod.ReturnsVoid;
+
+            return new InterceptionInfo(
+                kind,
+                interceptableLocation.GetInterceptsLocationAttributeSyntax(),
+                null,
+                new EquatableArray<string>(ImmutableArray<string>.Empty),
+                null,
+                delegateTypeStr,
+                new EquatableArray<string>(paramTypes),
+                returnsVoid
+            );
+        }
+
+        // Method group: the argument has no concrete delegate type, but GetSymbolInfo
+        // resolves the target method directly.
+        SymbolInfo argSymbolInfo = context.SemanticModel.GetSymbolInfo(argExpression, ct);
+        IMethodSymbol? targetMethod = argSymbolInfo.Symbol as IMethodSymbol
+            ?? argSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+
+        if (targetMethod == null)
         {
             return null;
         }
 
-        IMethodSymbol? invokeMethod = namedDelegateType.DelegateInvokeMethod;
-        if (invokeMethod == null)
-        {
-            return null;
-        }
-
-        ImmutableArray<string> paramTypes = invokeMethod.Parameters
+        ImmutableArray<string> methodParamTypes = targetMethod.Parameters
             .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
 
-        string delegateTypeStr = namedDelegateType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        bool returnsVoid = invokeMethod.ReturnsVoid;
+        // Build the appropriate Func<> or Action<> delegate type string
+        string methodDelegateTypeStr;
+        bool methodReturnsVoid = targetMethod.ReturnsVoid;
+
+        if (methodReturnsVoid)
+        {
+            if (methodParamTypes.Length == 0)
+            {
+                methodDelegateTypeStr = "global::System.Action";
+            }
+            else
+            {
+                methodDelegateTypeStr = $"global::System.Action<{string.Join(", ", methodParamTypes)}>";
+            }
+        }
+        else
+        {
+            string returnType = targetMethod.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            if (methodParamTypes.Length == 0)
+            {
+                methodDelegateTypeStr = $"global::System.Func<{returnType}>";
+            }
+            else
+            {
+                methodDelegateTypeStr = $"global::System.Func<{string.Join(", ", methodParamTypes)}, {returnType}>";
+            }
+        }
 
         return new InterceptionInfo(
             kind,
@@ -281,9 +324,9 @@ public class InterceptorGenerator : IIncrementalGenerator
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
             null,
-            delegateTypeStr,
-            new EquatableArray<string>(paramTypes),
-            returnsVoid
+            methodDelegateTypeStr,
+            new EquatableArray<string>(methodParamTypes),
+            methodReturnsVoid
         );
     }
 

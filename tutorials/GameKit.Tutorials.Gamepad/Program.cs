@@ -11,8 +11,8 @@ static class Program
         var builder = new GameKitAppBuilder()
             .UseDefaultRenderManager();
 
-        builder.RegisterInstance(new AppConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
-        builder.RegisterType<NullRenderPhase<DefaultRenderContext>>().As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
+        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         builder.OnStart((IGamepadService gamepadService) =>
         {

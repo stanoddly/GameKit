@@ -7,16 +7,16 @@ public static class SpriteLoadingExtensions
 {
     public static GameKitAppBuilder RegisterSpriteLoading(this GameKitAppBuilder builder)
     {
-        builder.RegisterType<SpriteAssetStorage>();
-        builder.RegisterType<SpriteAssetLoader>().As<IContentLoader<SpriteAsset>>();
-        builder.RegisterType<AnimatedSpriteAssetLoader>().As<IContentLoader<AnimatedSpriteAsset>>();
+        builder.AddSingleton<SpriteAssetStorage>();
+        builder.AddSingleton<IContentLoader<SpriteAsset>, SpriteAssetLoader>();
+        builder.AddSingleton<IContentLoader<AnimatedSpriteAsset>, AnimatedSpriteAssetLoader>();
         return builder;
     }
 
     public static GameKitAppBuilder RegisterAtlas(this GameKitAppBuilder builder, params string[] paths)
     {
-        builder.RegisterInstance(new SpriteAtlasBuilderConfig(paths));
-        builder.RegisterFunc<SpriteAtlasBuilder>(SpriteAtlasBuilder.Create);
+        builder.AddSingleton(new SpriteAtlasBuilderConfig(paths));
+        builder.AddSingleton<SpriteAtlasBuilder>(SpriteAtlasBuilder.Create);
         return builder;
     }
 }
