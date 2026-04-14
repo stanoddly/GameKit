@@ -36,16 +36,16 @@ public class ServiceWithTwoDependencies
     }
 }
 
-public class ServiceA
+public class CircularServiceA
 {
-    public ServiceB B { get; }
-    public ServiceA(ServiceB b) => B = b;
+    public CircularServiceB B { get; }
+    public CircularServiceA(CircularServiceB b) => B = b;
 }
 
-public class ServiceB
+public class CircularServiceB
 {
-    public ServiceA A { get; }
-    public ServiceB(ServiceA a) => A = a;
+    public CircularServiceA A { get; }
+    public CircularServiceB(CircularServiceA a) => A = a;
 }
 
 public class MultiConstructorService
@@ -150,8 +150,8 @@ public class ServiceCollectionTests
     public void RegisterType_CircularDependency_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<ServiceA>();
-        collection.RegisterType<ServiceB>();
+        collection.RegisterType<CircularServiceA>();
+        collection.RegisterType<CircularServiceB>();
 
         Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
     }
@@ -453,6 +453,22 @@ public class ServiceCollectionTests
         provider.Dispose();
 
         Assert.That(received, Is.SameAs(provider));
+    }
+
+    [Test]
+    public void Dispose_DisposesDisposableServices()
+    {
+        ServiceCollection collection = new();
+        collection.RegisterType<DisposableService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        DisposableService service = provider.GetService<DisposableService>();
+
+        Assert.That(service.Disposed, Is.False);
+
+        provider.Dispose();
+
+        Assert.That(service.Disposed, Is.True);
     }
 
     // --- Subcontainers ---

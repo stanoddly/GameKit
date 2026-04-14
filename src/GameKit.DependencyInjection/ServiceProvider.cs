@@ -33,7 +33,7 @@ public class ServiceProvider : IDisposable
     {
         if (id >= _services.Length)
         {
-            object?[] resized = new object?[id + 1];
+            object?[] resized = new object?[Math.Max(id + 1, _services.Length * 2)];
             Array.Copy(_services, resized, _services.Length);
             _services = resized;
         }
@@ -126,6 +126,14 @@ public class ServiceProvider : IDisposable
         foreach (Action<ServiceProvider> callback in _disposeCallbacks)
         {
             callback(this);
+        }
+
+        foreach (object? service in _services)
+        {
+            if (service is IDisposable disposable && !ReferenceEquals(service, this))
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

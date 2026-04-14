@@ -3,6 +3,7 @@ namespace GameKit.DependencyInjection;
 internal enum ServiceDescriptorKind
 {
     Type,
+    TypedFactory,
     Instance,
     Factory,
     Alias
@@ -40,7 +41,7 @@ internal class ServiceDescriptor
 
     public static ServiceDescriptor ForTypedFactory(Type serviceType, Func<ServiceProvider, object> typedFactory)
     {
-        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.Type) { TypedFactory = typedFactory };
+        return new ServiceDescriptor(serviceType, ServiceDescriptorKind.TypedFactory) { TypedFactory = typedFactory };
     }
 
     public static ServiceDescriptor ForAlias(Type serviceType, Type aliasSource)

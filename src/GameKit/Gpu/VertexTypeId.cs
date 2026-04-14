@@ -36,7 +36,7 @@ public readonly struct VertexTypeId : IEquatable<VertexTypeId>
         return !left.Equals(right);
     }
 
-    public static readonly VertexTypeId Null = default;
+    public static readonly VertexTypeId Null = new(-1);
 }
 
 public class VertexTypeIdMap : TypeIdMap<VertexTypeIdMap>;

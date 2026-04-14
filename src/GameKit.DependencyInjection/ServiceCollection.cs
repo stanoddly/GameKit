@@ -216,16 +216,23 @@ public class ServiceCollection
                         $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
                 }
 
-                object instance;
-                if (descriptor.TypedFactory != null)
+                object instance = CreateInstance(descriptor.ServiceType, provider, parent, descriptorMap, resolving);
+                provider.SetService(id, instance);
+                InvokeActivationCallbacks(instance);
+                resolving.Remove(descriptor.ServiceType);
+                break;
+            }
+
+            case ServiceDescriptorKind.TypedFactory:
+            {
+                if (!resolving.Add(descriptor.ServiceType))
                 {
-                    instance = descriptor.TypedFactory(provider);
-                }
-                else
-                {
-                    instance = CreateInstance(descriptor.ServiceType, provider, parent, descriptorMap, resolving);
+                    throw new InvalidOperationException(
+                        $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
                 }
 
+                object instance = descriptor.TypedFactory!(provider)
+                    ?? throw new InvalidOperationException("Factory delegate returned null.");
                 provider.SetService(id, instance);
                 InvokeActivationCallbacks(instance);
                 resolving.Remove(descriptor.ServiceType);
