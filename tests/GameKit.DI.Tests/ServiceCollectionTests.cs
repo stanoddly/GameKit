@@ -612,6 +612,73 @@ public class ServiceCollectionTests
 
         Assert.That(child.GetService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
     }
+
+    // --- TryGetService during build ---
+
+    [Test]
+    public void TryGetService_DuringBuild_ResolvesRegisteredService()
+    {
+        ServiceCollection collection = new();
+        collection.RegisterType<SimpleService>();
+
+        SimpleService? captured = null;
+        collection.RegisterFactory<AnotherService>((ServiceProvider sp) =>
+        {
+            captured = sp.TryGetService<SimpleService>();
+            return new AnotherService();
+        });
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(captured, Is.SameAs(provider.GetService<SimpleService>()));
+    }
+
+    [Test]
+    public void TryGetService_DuringBuild_ReturnsNullForUnregistered()
+    {
+        ServiceCollection collection = new();
+
+        SimpleService? captured = null;
+        collection.RegisterFactory<AnotherService>((ServiceProvider sp) =>
+        {
+            captured = sp.TryGetService<SimpleService>();
+            return new AnotherService();
+        });
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(captured, Is.Null);
+    }
+
+    // --- Factory returning null ---
+
+    [Test]
+    public void RegisterFactory_ReturnsNull_Throws()
+    {
+        ServiceCollection collection = new();
+        collection.RegisterFactory<SimpleService>((Func<SimpleService>)(() => null!));
+
+        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+    }
+
+    // --- ServiceCollection reuse ---
+
+    [Test]
+    public void BuildServiceProvider_Twice_ProducesIndependentProviders()
+    {
+        ServiceCollection collection = new();
+        int disposeCount = 0;
+        collection.OnDispose(_ => disposeCount++);
+        collection.RegisterType<SimpleService>();
+
+        ServiceProvider first = collection.BuildServiceProvider();
+        ServiceProvider second = collection.BuildServiceProvider();
+
+        first.Dispose();
+
+        Assert.That(disposeCount, Is.EqualTo(1));
+        Assert.That(second.GetService<SimpleService>(), Is.Not.SameAs(first.GetService<SimpleService>()));
+    }
 }
 
 public class ServiceNeedingProvider

@@ -157,8 +157,10 @@ public class ServiceCollection
         // Resolve all registered services
         HashSet<Type> resolving = new();
 
-        // Set build-time resolver so generated factories can trigger on-demand resolution
-        provider.SetBuildTimeResolver(type => ResolveServiceByType(type, provider, parent, descriptorMap, resolving));
+        // Set build-time resolvers so generated factories can trigger on-demand resolution
+        provider.SetBuildTimeResolver(
+            type => ResolveServiceByType(type, provider, parent, descriptorMap, resolving),
+            type => TryResolveServiceByType(type, provider, parent, descriptorMap, resolving));
 
         foreach (ServiceDescriptor descriptor in _descriptors)
         {
@@ -176,8 +178,8 @@ public class ServiceCollection
             action(provider);
         }
 
-        // Clear build-time resolver — after build, all singletons are resolved
-        provider.SetBuildTimeResolver(null);
+        // Clear build-time resolvers — after build, all singletons are resolved
+        provider.SetBuildTimeResolver(null, null);
 
         return provider;
     }
@@ -304,6 +306,34 @@ public class ServiceCollection
 
         throw new InvalidOperationException(
             $"Cannot resolve service of type {type.Name}.");
+    }
+
+    private object? TryResolveServiceByType(
+        Type type,
+        ServiceProvider provider,
+        ServiceProvider? parent,
+        Dictionary<Type, ServiceDescriptor> descriptorMap,
+        HashSet<Type> resolving)
+    {
+        int id = ServiceTypeId.GetId(type);
+        object? service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+
+        if (service != null)
+        {
+            return service;
+        }
+
+        if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
+        {
+            Resolve(descriptor, provider, parent, descriptorMap, resolving);
+            service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+            if (service != null)
+            {
+                return service;
+            }
+        }
+
+        return parent?.TryGetService(type);
     }
 
     private object CreateInstance(

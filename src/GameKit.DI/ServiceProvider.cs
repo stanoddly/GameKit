@@ -6,6 +6,7 @@ public class ServiceProvider : IDisposable
     private readonly ServiceProvider? _parent;
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
     private Func<Type, object>? _buildTimeResolver;
+    private Func<Type, object?>? _buildTimeTryResolver;
     private bool _disposed;
 
     internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
@@ -15,9 +16,10 @@ public class ServiceProvider : IDisposable
         _disposeCallbacks = disposeCallbacks;
     }
 
-    internal void SetBuildTimeResolver(Func<Type, object>? resolver)
+    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver)
     {
         _buildTimeResolver = resolver;
+        _buildTimeTryResolver = tryResolver;
     }
 
     internal int ServicesLength => _services.Length;
@@ -78,9 +80,9 @@ public class ServiceProvider : IDisposable
             }
         }
 
-        if (_buildTimeResolver != null)
+        if (_buildTimeTryResolver != null)
         {
-            return (T)_buildTimeResolver(typeof(T));
+            return (T?)_buildTimeTryResolver(typeof(T));
         }
 
         if (_parent != null)
