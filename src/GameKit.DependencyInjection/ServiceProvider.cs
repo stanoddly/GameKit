@@ -1,4 +1,4 @@
-namespace GameKit.DI;
+namespace GameKit.DependencyInjection;
 
 public class ServiceProvider : IDisposable
 {

@@ -1,6 +1,6 @@
 using GameKit.Common;
 
-namespace GameKit.DI;
+namespace GameKit.DependencyInjection;
 
 internal class ServiceTypeId : TypeIdMap<ServiceTypeId>;
 

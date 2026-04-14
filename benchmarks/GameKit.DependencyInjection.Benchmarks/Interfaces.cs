@@ -1,4 +1,4 @@
-namespace GameKit.DI.Benchmarks;
+namespace GameKit.DependencyInjection.Benchmarks;
 
 // Interfaces for alias benchmarking
 public interface ILeaf00;

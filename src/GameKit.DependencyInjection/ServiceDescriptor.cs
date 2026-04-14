@@ -1,4 +1,4 @@
-namespace GameKit.DI;
+namespace GameKit.DependencyInjection;
 
 internal enum ServiceDescriptorKind
 {

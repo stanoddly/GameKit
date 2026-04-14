@@ -1,7 +1,7 @@
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
-using GameKit.DI.Benchmarks;
+using GameKit.DependencyInjection.Benchmarks;
 
 ManualConfig config = ManualConfig.CreateMinimumViable()
     .AddLogger(ConsoleLogger.Default);

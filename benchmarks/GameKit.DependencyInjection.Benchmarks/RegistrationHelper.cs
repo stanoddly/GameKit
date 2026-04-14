@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using GkDI = GameKit.DI;
+using GkDI = GameKit.DependencyInjection;
 
-namespace GameKit.DI.Benchmarks;
+namespace GameKit.DependencyInjection.Benchmarks;
 
 public static class RegistrationHelper
 {

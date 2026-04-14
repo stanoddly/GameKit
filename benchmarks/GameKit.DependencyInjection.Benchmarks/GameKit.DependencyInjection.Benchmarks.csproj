@@ -6,7 +6,7 @@
         <LangVersion>14</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DI.Generated</InterceptorsNamespaces>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\GameKit.DI\GameKit.DI.csproj" />
-      <ProjectReference Include="..\..\src\GameKit.DI.Generator\GameKit.DI.Generator.csproj"
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false" />
     </ItemGroup>

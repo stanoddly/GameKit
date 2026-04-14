@@ -1,6 +1,6 @@
-using GameKit.DI;
+using GameKit.DependencyInjection;
 
-namespace GameKit.DI.Tests;
+namespace GameKit.DependencyInjection.Tests;
 
 public class SimpleService;
 

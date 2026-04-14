@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Reflection;
 
-namespace GameKit.DI;
+namespace GameKit.DependencyInjection;
 
 public class ServiceCollection
 {

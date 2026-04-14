@@ -1,4 +1,4 @@
-namespace GameKit.DI.Benchmarks;
+namespace GameKit.DependencyInjection.Benchmarks;
 
 // Leaf services (no dependencies) — 20 services
 public class Leaf00; public class Leaf01; public class Leaf02; public class Leaf03; public class Leaf04;

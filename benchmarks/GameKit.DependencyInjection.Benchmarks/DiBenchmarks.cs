@@ -1,13 +1,13 @@
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
-using GkDI = GameKit.DI;
+using GkDI = GameKit.DependencyInjection;
 
-namespace GameKit.DI.Benchmarks;
+namespace GameKit.DependencyInjection.Benchmarks;
 
 [MemoryDiagnoser]
 public class BuildAndResolveAllBenchmark
 {
-    [Benchmark(Description = "GameKit.DI")]
+    [Benchmark(Description = "GameKit.DependencyInjection")]
     public GkDI.ServiceProvider GameKitDI()
     {
         GkDI.ServiceCollection collection = RegistrationHelper.BuildGameKitCollection();
@@ -64,7 +64,7 @@ public class GetServiceBenchmark
         _mediProvider.GetRequiredService<Top19>();
     }
 
-    [Benchmark(Description = "GameKit.DI")]
+    [Benchmark(Description = "GameKit.DependencyInjection")]
     public Top19 GameKitDI()
     {
         return _gameKitProvider.GetService<Top19>();
@@ -99,7 +99,7 @@ public class GetServiceManyBenchmark
         _mediProvider.GetRequiredService<Leaf00>();
     }
 
-    [Benchmark(Description = "GameKit.DI")]
+    [Benchmark(Description = "GameKit.DependencyInjection")]
     public int GameKitDI()
     {
         // Resolve a mix of services across all tiers to simulate real access patterns

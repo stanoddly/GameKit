@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace GameKit.DI.Generator;
+namespace GameKit.DependencyInjection.Generator;
 
 enum InterceptionKind
 {
@@ -26,7 +26,7 @@ readonly record struct InterceptionInfo(
 [Generator]
 public class InterceptorGenerator : IIncrementalGenerator
 {
-    private const string ServiceCollectionFullName = "GameKit.DI.ServiceCollection";
+    private const string ServiceCollectionFullName = "GameKit.DependencyInjection.ServiceCollection";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -283,7 +283,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine("#pragma warning restore CS9113");
         sb.AppendLine("}");
         sb.AppendLine();
-        sb.AppendLine("namespace GameKit.DI.Generated");
+        sb.AppendLine("namespace GameKit.DependencyInjection.Generated");
         sb.AppendLine("{");
         sb.AppendLine("    file static class ServiceCollectionInterceptors");
         sb.AppendLine("    {");
@@ -320,8 +320,8 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static void GenerateRegisterTypeInterceptor(StringBuilder sb, InterceptionInfo info, int index)
     {
         sb.AppendLine($"        {info.InterceptsLocationAttribute}");
-        sb.AppendLine($"        public static global::GameKit.DI.ServiceRegistrar<T> RegisterType_{index}<T>(");
-        sb.AppendLine($"            this global::GameKit.DI.ServiceCollection collection)");
+        sb.AppendLine($"        public static global::GameKit.DependencyInjection.ServiceRegistrar<T> RegisterType_{index}<T>(");
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
         sb.Append($"            return collection.RegisterTypeGenerated<T>(static sp => new {info.ImplementationTypeFullName}(");
@@ -342,8 +342,8 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static void GenerateRegisterFactoryInterceptor(StringBuilder sb, InterceptionInfo info, int index)
     {
         sb.AppendLine($"        {info.InterceptsLocationAttribute}");
-        sb.AppendLine($"        public static global::GameKit.DI.ServiceRegistrar<T> RegisterFactory_{index}<T>(");
-        sb.AppendLine($"            this global::GameKit.DI.ServiceCollection collection,");
+        sb.AppendLine($"        public static global::GameKit.DependencyInjection.ServiceRegistrar<T> RegisterFactory_{index}<T>(");
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection,");
         sb.AppendLine($"            global::System.Delegate factory)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
@@ -367,7 +367,7 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         sb.AppendLine($"        {info.InterceptsLocationAttribute}");
         sb.AppendLine($"        public static void OnStart_{index}(");
-        sb.AppendLine($"            this global::GameKit.DI.ServiceCollection collection,");
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection,");
         sb.AppendLine($"            global::System.Delegate action)");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            {info.DelegateTypeFullName} typedAction = ({info.DelegateTypeFullName})action;");
