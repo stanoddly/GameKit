@@ -10,13 +10,21 @@ public class ServiceCollection
     private readonly List<Action<ServiceProvider>> _onStartGeneratedActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
 
-    public ServiceRegistrar<T> RegisterType<T>() where T : class
+    public void AddSingleton<T>() where T : class
     {
         throw new InvalidOperationException(
-            $"RegisterType<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+            $"AddSingleton<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    public ServiceRegistrar<T> RegisterInstance<T>(T instance) where T : class
+    public void AddSingleton<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class
+    {
+        throw new InvalidOperationException(
+            $"AddSingleton<{typeof(TService).Name}, {typeof(TImplementation).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+    }
+
+    public void AddSingleton<T>(T instance) where T : class
     {
         Type type = typeof(T);
 
@@ -26,18 +34,16 @@ public class ServiceCollection
         }
 
         _descriptors.Add(ServiceDescriptor.ForInstance(type, instance));
-
-        return new ServiceRegistrar<T>(this);
     }
 
-    public ServiceRegistrar<T> RegisterFactory<T>(Delegate factory) where T : class
+    public void AddSingleton<T>(Delegate factory) where T : class
     {
         throw new InvalidOperationException(
-            $"RegisterFactory<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+            $"AddSingleton<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public ServiceRegistrar<T> RegisterTypeGenerated<T>(Func<ServiceProvider, object> factory) where T : class
+    public void AddSingletonGenerated<T>(Func<ServiceProvider, object> factory) where T : class
     {
         Type type = typeof(T);
 
@@ -47,8 +53,6 @@ public class ServiceCollection
         }
 
         _descriptors.Add(ServiceDescriptor.ForTypedFactory(type, factory));
-
-        return new ServiceRegistrar<T>(this);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -57,24 +61,26 @@ public class ServiceCollection
         _onStartGeneratedActions.Add(action);
     }
 
-    internal void RegisterAlias<TSource, TTarget>() where TSource : class where TTarget : class
+    public void AddAlias<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class
     {
-        if (!typeof(TTarget).IsAssignableFrom(typeof(TSource)))
+        if (!typeof(TService).IsAssignableFrom(typeof(TImplementation)))
         {
-            throw new ArgumentException($"{typeof(TSource).Name} is not assignable to {typeof(TTarget).Name}.");
+            throw new ArgumentException($"{typeof(TImplementation).Name} is not assignable to {typeof(TService).Name}.");
         }
 
-        if (!_registeredTypes.Contains(typeof(TSource)))
+        if (!_registeredTypes.Contains(typeof(TImplementation)))
         {
-            throw new InvalidOperationException($"{typeof(TSource).Name} has not been registered first.");
+            throw new InvalidOperationException($"{typeof(TImplementation).Name} has not been registered first.");
         }
 
-        if (!_registeredTypes.Add(typeof(TTarget)))
+        if (!_registeredTypes.Add(typeof(TService)))
         {
-            throw new InvalidOperationException($"Type {typeof(TTarget).Name} is already registered.");
+            throw new InvalidOperationException($"Type {typeof(TService).Name} is already registered.");
         }
 
-        _descriptors.Add(ServiceDescriptor.ForAlias(typeof(TTarget), typeof(TSource)));
+        _descriptors.Add(ServiceDescriptor.ForAlias(typeof(TService), typeof(TImplementation)));
     }
 
     public void OnActivation(Action<object> callback)
@@ -234,7 +240,6 @@ public class ServiceCollection
             return service;
         }
 
-        // Try to resolve from descriptors
         if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
         {
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
@@ -245,7 +250,6 @@ public class ServiceCollection
             }
         }
 
-        // Try parent
         service = parent?.TryGetService(type);
         if (service != null)
         {

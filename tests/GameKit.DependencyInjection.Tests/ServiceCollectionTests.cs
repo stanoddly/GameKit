@@ -62,13 +62,13 @@ public class DisposableService : IDisposable
 
 public class ServiceCollectionTests
 {
-    // --- RegisterType ---
+    // --- AddSingleton<T>() ---
 
     [Test]
-    public void RegisterType_ResolvesService()
+    public void AddSingleton_ResolvesService()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -76,10 +76,10 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterType_ReturnsSameInstance()
+    public void AddSingleton_ReturnsSameInstance()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -90,11 +90,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterType_WithDependency_ResolvesDependency()
+    public void AddSingleton_WithDependency_ResolvesDependency()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
-        collection.RegisterType<ServiceWithDependency>();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<ServiceWithDependency>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -104,12 +104,12 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterType_WithMultipleDependencies_ResolvesAll()
+    public void AddSingleton_WithMultipleDependencies_ResolvesAll()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
-        collection.RegisterType<AnotherService>();
-        collection.RegisterType<ServiceWithTwoDependencies>();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<AnotherService>();
+        collection.AddSingleton<ServiceWithTwoDependencies>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -120,49 +120,49 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterType_Duplicate_Throws()
+    public void AddSingleton_Duplicate_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
-        Assert.Throws<InvalidOperationException>(() => collection.RegisterType<SimpleService>());
+        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton<SimpleService>());
     }
 
     [Test]
-    public void RegisterType_MultipleConstructors_ThrowsNotIntercepted()
+    public void AddSingleton_MultipleConstructors_ThrowsNotIntercepted()
     {
         ServiceCollection collection = new();
 
-        Assert.Throws<InvalidOperationException>(() => collection.RegisterType<MultiConstructorService>());
+        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton<MultiConstructorService>());
     }
 
     [Test]
-    public void RegisterType_MissingDependency_Throws()
+    public void AddSingleton_MissingDependency_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<ServiceWithDependency>();
+        collection.AddSingleton<ServiceWithDependency>();
 
         Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
     }
 
     [Test]
-    public void RegisterType_CircularDependency_Throws()
+    public void AddSingleton_CircularDependency_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<CircularServiceA>();
-        collection.RegisterType<CircularServiceB>();
+        collection.AddSingleton<CircularServiceA>();
+        collection.AddSingleton<CircularServiceB>();
 
         Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
     }
 
-    // --- RegisterInstance ---
+    // --- AddSingleton<T>(T instance) ---
 
     [Test]
-    public void RegisterInstance_ReturnsExactInstance()
+    public void AddSingleton_Instance_ReturnsExactInstance()
     {
         ServiceCollection collection = new();
         SimpleService instance = new();
-        collection.RegisterInstance(instance);
+        collection.AddSingleton(instance);
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -170,22 +170,22 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterInstance_Duplicate_Throws()
+    public void AddSingleton_Instance_Duplicate_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterInstance(new SimpleService());
+        collection.AddSingleton(new SimpleService());
 
-        Assert.Throws<InvalidOperationException>(() => collection.RegisterInstance(new SimpleService()));
+        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton(new SimpleService()));
     }
 
-    // --- RegisterFactory ---
+    // --- AddSingleton<T>(Delegate) ---
 
     [Test]
-    public void RegisterFactory_ResolvesFromFactory()
+    public void AddSingleton_Factory_ResolvesFromFactory()
     {
         ServiceCollection collection = new();
         SimpleService expected = new();
-        collection.RegisterFactory<SimpleService>(() => expected);
+        collection.AddSingleton<SimpleService>(() => expected);
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -193,11 +193,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterFactory_WithDependencyParameter_ResolvesDependency()
+    public void AddSingleton_Factory_WithDependencyParameter_ResolvesDependency()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
-        collection.RegisterFactory<ServiceWithDependency>((SimpleService s) => new ServiceWithDependency(s));
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<ServiceWithDependency>((SimpleService s) => new ServiceWithDependency(s));
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -207,22 +207,22 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void RegisterFactory_Duplicate_Throws()
+    public void AddSingleton_Factory_Duplicate_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterFactory<SimpleService>(() => new SimpleService());
+        collection.AddSingleton<SimpleService>(() => new SimpleService());
 
         Assert.Throws<InvalidOperationException>(() =>
-            collection.RegisterFactory<SimpleService>(() => new SimpleService()));
+            collection.AddSingleton<SimpleService>(() => new SimpleService()));
     }
 
-    // --- As<T> ---
+    // --- AddSingleton<TService, TImplementation>() ---
 
     [Test]
-    public void As_ResolvesViaInterface()
+    public void AddSingleton_WithAlias_ResolvesViaInterface()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<MyServiceImpl>().As<IMyService>();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -233,22 +233,39 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void As_IncompatibleType_Throws()
+    public void AddSingleton_WithAlias_IncompatibleType_Throws()
     {
         ServiceCollection collection = new();
 
         Assert.Throws<ArgumentException>(() =>
-            collection.RegisterType<MyServiceImpl>().As<IUnrelated>());
+            collection.AddSingleton<IUnrelated, MyServiceImpl>());
     }
 
     [Test]
-    public void As_DuplicateTarget_Throws()
+    public void AddSingleton_WithAlias_DuplicateTarget_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<MyServiceImpl>().As<IMyService>();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
 
         Assert.Throws<InvalidOperationException>(() =>
-            collection.RegisterType<AnotherServiceImpl>().As<IMyService>());
+            collection.AddSingleton<IMyService, AnotherServiceImpl>());
+    }
+
+    // --- AddAlias ---
+
+    [Test]
+    public void AddAlias_ResolvesViaInterface()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<MyServiceImpl>();
+        collection.AddAlias<IMyService, MyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IMyService service = provider.GetService<IMyService>();
+
+        Assert.That(service, Is.InstanceOf<MyServiceImpl>());
+        Assert.That(service, Is.SameAs(provider.GetService<MyServiceImpl>()));
     }
 
     // --- GetService / TryGetService ---
@@ -275,7 +292,7 @@ public class ServiceCollectionTests
     public void TryGetService_Registered_ReturnsService()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -295,10 +312,10 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void ServiceProvider_InjectableViaConstrutor()
+    public void ServiceProvider_InjectableViaConstructor()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<ServiceNeedingProvider>();
+        collection.AddSingleton<ServiceNeedingProvider>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -313,7 +330,7 @@ public class ServiceCollectionTests
     public void IsRegistered_ReturnsTrueForRegisteredType()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         Assert.That(collection.IsRegistered<SimpleService>(), Is.True);
         Assert.That(collection.IsRegistered(typeof(SimpleService)), Is.True);
@@ -336,8 +353,8 @@ public class ServiceCollectionTests
         List<object> activated = new();
         collection.OnActivation(obj => activated.Add(obj));
 
-        collection.RegisterType<SimpleService>();
-        collection.RegisterType<AnotherService>();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<AnotherService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -354,7 +371,7 @@ public class ServiceCollectionTests
         collection.OnActivation(obj => activated.Add(obj));
 
         SimpleService instance = new();
-        collection.RegisterInstance(instance);
+        collection.AddSingleton(instance);
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -369,7 +386,7 @@ public class ServiceCollectionTests
         List<object> activated = new();
         collection.OnActivation(obj => activated.Add(obj));
 
-        collection.RegisterFactory<SimpleService>(() => new SimpleService());
+        collection.AddSingleton<SimpleService>(() => new SimpleService());
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -384,7 +401,7 @@ public class ServiceCollectionTests
         List<object> activated = new();
         collection.OnActivation(obj => activated.Add(obj));
 
-        collection.RegisterType<MyServiceImpl>().As<IMyService>();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -399,7 +416,7 @@ public class ServiceCollectionTests
     public void OnStart_CalledAfterAllResolved()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         SimpleService? captured = null;
         collection.OnStart((SimpleService s) => { captured = s; });
@@ -458,7 +475,7 @@ public class ServiceCollectionTests
     public void Dispose_DisposesDisposableServices()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<DisposableService>();
+        collection.AddSingleton<DisposableService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
         DisposableService service = provider.GetService<DisposableService>();
@@ -476,11 +493,11 @@ public class ServiceCollectionTests
     public void ChildContainer_ResolvesOwnServices()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.RegisterType<SimpleService>();
+        rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        childCollection.RegisterType<AnotherService>();
+        childCollection.AddSingleton<AnotherService>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         Assert.That(child.GetService<AnotherService>(), Is.Not.Null);
@@ -490,11 +507,11 @@ public class ServiceCollectionTests
     public void ChildContainer_FallsBackToParent()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.RegisterType<SimpleService>();
+        rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        childCollection.RegisterType<AnotherService>();
+        childCollection.AddSingleton<AnotherService>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         Assert.That(child.GetService<SimpleService>(), Is.SameAs(root.GetService<SimpleService>()));
@@ -504,11 +521,11 @@ public class ServiceCollectionTests
     public void ChildContainer_ConstructorResolvesFromParent()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.RegisterType<SimpleService>();
+        rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        childCollection.RegisterType<ServiceWithDependency>();
+        childCollection.AddSingleton<ServiceWithDependency>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         ServiceWithDependency service = child.GetService<ServiceWithDependency>();
@@ -533,12 +550,12 @@ public class ServiceCollectionTests
     {
         ServiceCollection rootCollection = new();
         SimpleService rootInstance = new();
-        rootCollection.RegisterInstance(rootInstance);
+        rootCollection.AddSingleton(rootInstance);
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
         SimpleService childInstance = new();
-        childCollection.RegisterInstance(childInstance);
+        childCollection.AddSingleton(childInstance);
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         Assert.That(child.GetService<SimpleService>(), Is.SameAs(childInstance));
@@ -549,7 +566,7 @@ public class ServiceCollectionTests
     public void ChildContainer_TryGetService_FallsBackToParent()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.RegisterType<SimpleService>();
+        rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
@@ -573,11 +590,11 @@ public class ServiceCollectionTests
     // --- Registration order independence ---
 
     [Test]
-    public void RegisterType_DependencyRegisteredAfter_StillResolves()
+    public void AddSingleton_DependencyRegisteredAfter_StillResolves()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<ServiceWithDependency>();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<ServiceWithDependency>();
+        collection.AddSingleton<SimpleService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -601,13 +618,13 @@ public class ServiceCollectionTests
         Assert.That(disposeCount, Is.EqualTo(1));
     }
 
-    // --- RegisterFactory validation ---
+    // --- AddSingleton<T>(Delegate) validation ---
 
     [Test]
-    public void RegisterFactory_WrongReturnType_ThrowsAtResolution()
+    public void AddSingleton_Factory_WrongReturnType_ThrowsAtResolution()
     {
         ServiceCollection collection = new();
-        collection.RegisterFactory<SimpleService>(() => new AnotherService());
+        collection.AddSingleton<SimpleService>(() => new AnotherService());
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
@@ -620,11 +637,11 @@ public class ServiceCollectionTests
     public void ChildContainer_AliasToParentType_Resolves()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.RegisterType<MyServiceImpl>();
+        rootCollection.AddSingleton<MyServiceImpl>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        childCollection.RegisterType<MyServiceImpl>().As<IMyService>();
+        childCollection.AddSingleton<IMyService, MyServiceImpl>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         Assert.That(child.GetService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
@@ -636,10 +653,10 @@ public class ServiceCollectionTests
     public void TryGetService_DuringBuild_ResolvesRegisteredService()
     {
         ServiceCollection collection = new();
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         SimpleService? captured = null;
-        collection.RegisterFactory<AnotherService>((ServiceProvider sp) =>
+        collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
         {
             captured = sp.TryGetService<SimpleService>();
             return new AnotherService();
@@ -656,7 +673,7 @@ public class ServiceCollectionTests
         ServiceCollection collection = new();
 
         SimpleService? captured = null;
-        collection.RegisterFactory<AnotherService>((ServiceProvider sp) =>
+        collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
         {
             captured = sp.TryGetService<SimpleService>();
             return new AnotherService();
@@ -670,10 +687,10 @@ public class ServiceCollectionTests
     // --- Factory returning null ---
 
     [Test]
-    public void RegisterFactory_ReturnsNull_Throws()
+    public void AddSingleton_Factory_ReturnsNull_Throws()
     {
         ServiceCollection collection = new();
-        collection.RegisterFactory<SimpleService>((Func<SimpleService>)(() => null!));
+        collection.AddSingleton<SimpleService>((Func<SimpleService>)(() => null!));
 
         Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
     }
@@ -686,7 +703,7 @@ public class ServiceCollectionTests
         ServiceCollection collection = new();
         int disposeCount = 0;
         collection.OnDispose(_ => disposeCount++);
-        collection.RegisterType<SimpleService>();
+        collection.AddSingleton<SimpleService>();
 
         ServiceProvider first = collection.BuildServiceProvider();
         ServiceProvider second = collection.BuildServiceProvider();
@@ -707,4 +724,3 @@ public class ServiceNeedingProvider
         Provider = provider;
     }
 }
-
