@@ -817,7 +817,7 @@ public class ServiceCollectionTests
         Assert.That(second.GetService<SimpleService>(), Is.Not.SameAs(first.GetService<SimpleService>()));
     }
 
-    // --- Bug: Dispose order must be reverse creation order ---
+    // --- Dispose order must be reverse creation order ---
 
     [Test]
     public void Dispose_DisposesServicesInReverseCreationOrder()
@@ -837,7 +837,7 @@ public class ServiceCollectionTests
         Assert.That(disposeLog, Is.EqualTo(new[] { "C", "B", "A" }));
     }
 
-    // --- Bug: GetServices called during build must not corrupt the last-wins factory slot ---
+    // --- GetServices called during build must not corrupt the last-wins factory slot ---
 
     [Test]
     public void GetServices_CalledDuringBuild_LastWinsFactoryResolvesToLastInstance()
@@ -867,7 +867,7 @@ public class ServiceCollectionTests
         Assert.That(services[1], Is.SameAs(lastInstance));
     }
 
-    // --- Bug: GetServices called during build must resolve alias sources eagerly ---
+    // --- GetServices called during build must resolve alias sources eagerly ---
 
     [Test]
     public void GetServices_CalledDuringBuild_IncludesAliasSource()
@@ -892,7 +892,7 @@ public class ServiceCollectionTests
         Assert.That(capturedDuringBuild![0], Is.InstanceOf<MyServiceImpl>());
     }
 
-    // --- Bug: Aliased services must not be double-disposed ---
+    // --- Aliased services must not be double-disposed ---
 
     [Test]
     public void Dispose_AliasedService_DisposedExactlyOnce()
