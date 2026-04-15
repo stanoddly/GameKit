@@ -18,12 +18,12 @@ public static class PencuilExtensions
         builder.AddSingleton<ViewRegistry>();
         builder.AddSingleton<PencuilRenderer>();
         builder.AddSingleton<IRenderPhase<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
-            sp.GetService<Pencil>(),
-            sp.GetService<ViewRegistry>(),
-            sp.GetService<PencuilRenderer>(),
-            sp.GetService<IMouseService>(),
-            sp.GetService<IWindow>(),
-            sp.GetService<PencuilOptions>()));
+            sp.GetRequiredService<Pencil>(),
+            sp.GetRequiredService<ViewRegistry>(),
+            sp.GetRequiredService<PencuilRenderer>(),
+            sp.GetRequiredService<IMouseService>(),
+            sp.GetRequiredService<IWindow>(),
+            sp.GetRequiredService<PencuilOptions>()));
         return builder;
     }
 

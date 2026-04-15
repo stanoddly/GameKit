@@ -72,7 +72,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.GetService<SimpleService>(), Is.Not.Null);
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.Not.Null);
     }
 
     [Test]
@@ -83,8 +83,8 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        SimpleService first = provider.GetService<SimpleService>();
-        SimpleService second = provider.GetService<SimpleService>();
+        SimpleService first = provider.GetRequiredService<SimpleService>();
+        SimpleService second = provider.GetRequiredService<SimpleService>();
 
         Assert.That(second, Is.SameAs(first));
     }
@@ -98,9 +98,9 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        ServiceWithDependency service = provider.GetService<ServiceWithDependency>();
+        ServiceWithDependency service = provider.GetRequiredService<ServiceWithDependency>();
 
-        Assert.That(service.Simple, Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -113,10 +113,10 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        ServiceWithTwoDependencies service = provider.GetService<ServiceWithTwoDependencies>();
+        ServiceWithTwoDependencies service = provider.GetRequiredService<ServiceWithTwoDependencies>();
 
-        Assert.That(service.Simple, Is.SameAs(provider.GetService<SimpleService>()));
-        Assert.That(service.Another, Is.SameAs(provider.GetService<AnotherService>()));
+        Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+        Assert.That(service.Another, Is.SameAs(provider.GetRequiredService<AnotherService>()));
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(instance));
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(instance));
     }
 
     [Test]
@@ -176,7 +176,7 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         // Second registration wins
-        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(second));
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(second));
     }
 
     // --- AddSingleton<T>(Delegate) ---
@@ -190,7 +190,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(expected));
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(expected));
     }
 
     [Test]
@@ -202,9 +202,9 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        ServiceWithDependency service = provider.GetService<ServiceWithDependency>();
+        ServiceWithDependency service = provider.GetRequiredService<ServiceWithDependency>();
 
-        Assert.That(service.Simple, Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -219,7 +219,7 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         // Second factory registration wins
-        Assert.That(provider.GetService<SimpleService>(), Is.SameAs(second));
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(second));
     }
 
     // --- AddSingleton<TService, TImplementation>() ---
@@ -232,7 +232,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        IMyService service = provider.GetService<IMyService>();
+        IMyService service = provider.GetRequiredService<IMyService>();
 
         Assert.That(service, Is.InstanceOf<MyServiceImpl>());
     }
@@ -246,7 +246,7 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         // TImpl is NOT separately registered — only TService is
-        Assert.Throws<InvalidOperationException>(() => provider.GetService<MyServiceImpl>());
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<MyServiceImpl>());
     }
 
     [Test]
@@ -259,7 +259,7 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         // Second registration wins
-        Assert.That(provider.GetService<IMyService>(), Is.InstanceOf<AnotherServiceImpl>());
+        Assert.That(provider.GetRequiredService<IMyService>(), Is.InstanceOf<AnotherServiceImpl>());
     }
 
     // --- AddAlias ---
@@ -273,10 +273,10 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        IMyService service = provider.GetService<IMyService>();
+        IMyService service = provider.GetRequiredService<IMyService>();
 
         Assert.That(service, Is.InstanceOf<MyServiceImpl>());
-        Assert.That(service, Is.SameAs(provider.GetService<MyServiceImpl>()));
+        Assert.That(service, Is.SameAs(provider.GetRequiredService<MyServiceImpl>()));
     }
 
     [Test]
@@ -315,7 +315,7 @@ public class ServiceCollectionTests
         IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
 
         Assert.That(services, Has.Count.EqualTo(1));
-        Assert.That(services[0], Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(services[0], Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -345,8 +345,8 @@ public class ServiceCollectionTests
 
         IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
 
-        // GetService<T> returns last-wins; GetServices returns all
-        Assert.That(provider.GetService<IMyService>(), Is.SameAs(services[1]));
+        // GetRequiredService<T> returns last-wins; GetServices returns all
+        Assert.That(provider.GetRequiredService<IMyService>(), Is.SameAs(services[1]));
     }
 
     [Test]
@@ -384,35 +384,35 @@ public class ServiceCollectionTests
         Assert.That(activated, Contains.Item(services[1]));
     }
 
-    // --- GetService / TryGetService ---
+    // --- GetRequiredService / GetService ---
 
     [Test]
-    public void GetService_Unregistered_Throws()
+    public void GetRequiredService_Unregistered_Throws()
     {
         ServiceCollection collection = new();
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.Throws<InvalidOperationException>(() => provider.GetService<SimpleService>());
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<SimpleService>());
     }
 
     [Test]
-    public void TryGetService_Unregistered_ReturnsNull()
+    public void GetService_Unregistered_ReturnsNull()
     {
         ServiceCollection collection = new();
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.TryGetService<SimpleService>(), Is.Null);
+        Assert.That(provider.GetService<SimpleService>(), Is.Null);
     }
 
     [Test]
-    public void TryGetService_Registered_ReturnsService()
+    public void GetService_Registered_ReturnsService()
     {
         ServiceCollection collection = new();
         collection.AddSingleton<SimpleService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.TryGetService<SimpleService>(), Is.Not.Null);
+        Assert.That(provider.GetService<SimpleService>(), Is.Not.Null);
     }
 
     // --- ServiceProvider self-registration ---
@@ -424,7 +424,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.GetService<ServiceProvider>(), Is.SameAs(provider));
+        Assert.That(provider.GetRequiredService<ServiceProvider>(), Is.SameAs(provider));
     }
 
     [Test]
@@ -435,7 +435,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        ServiceNeedingProvider service = provider.GetService<ServiceNeedingProvider>();
+        ServiceNeedingProvider service = provider.GetRequiredService<ServiceNeedingProvider>();
 
         Assert.That(service.Provider, Is.SameAs(provider));
     }
@@ -539,7 +539,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(captured, Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(captured, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -594,7 +594,7 @@ public class ServiceCollectionTests
         collection.AddSingleton<DisposableService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
-        DisposableService service = provider.GetService<DisposableService>();
+        DisposableService service = provider.GetRequiredService<DisposableService>();
 
         Assert.That(service.Disposed, Is.False);
 
@@ -616,7 +616,7 @@ public class ServiceCollectionTests
         childCollection.AddSingleton<AnotherService>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.GetService<AnotherService>(), Is.Not.Null);
+        Assert.That(child.GetRequiredService<AnotherService>(), Is.Not.Null);
     }
 
     [Test]
@@ -630,7 +630,7 @@ public class ServiceCollectionTests
         childCollection.AddSingleton<AnotherService>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.GetService<SimpleService>(), Is.SameAs(root.GetService<SimpleService>()));
+        Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(root.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -644,9 +644,9 @@ public class ServiceCollectionTests
         childCollection.AddSingleton<ServiceWithDependency>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        ServiceWithDependency service = child.GetService<ServiceWithDependency>();
+        ServiceWithDependency service = child.GetRequiredService<ServiceWithDependency>();
 
-        Assert.That(service.Simple, Is.SameAs(root.GetService<SimpleService>()));
+        Assert.That(service.Simple, Is.SameAs(root.GetRequiredService<SimpleService>()));
     }
 
     [Test]
@@ -658,7 +658,7 @@ public class ServiceCollectionTests
         ServiceCollection childCollection = new();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.GetService<ServiceProvider>(), Is.SameAs(child));
+        Assert.That(child.GetRequiredService<ServiceProvider>(), Is.SameAs(child));
     }
 
     [Test]
@@ -674,12 +674,12 @@ public class ServiceCollectionTests
         childCollection.AddSingleton(childInstance);
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.GetService<SimpleService>(), Is.SameAs(childInstance));
-        Assert.That(root.GetService<SimpleService>(), Is.SameAs(rootInstance));
+        Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(childInstance));
+        Assert.That(root.GetRequiredService<SimpleService>(), Is.SameAs(rootInstance));
     }
 
     [Test]
-    public void ChildContainer_TryGetService_FallsBackToParent()
+    public void ChildContainer_GetService_FallsBackToParent()
     {
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton<SimpleService>();
@@ -688,11 +688,11 @@ public class ServiceCollectionTests
         ServiceCollection childCollection = new();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.TryGetService<SimpleService>(), Is.SameAs(root.GetService<SimpleService>()));
+        Assert.That(child.GetService<SimpleService>(), Is.SameAs(root.GetRequiredService<SimpleService>()));
     }
 
     [Test]
-    public void ChildContainer_TryGetService_ReturnsNullIfNowhere()
+    public void ChildContainer_GetService_ReturnsNullIfNowhere()
     {
         ServiceCollection rootCollection = new();
         ServiceProvider root = rootCollection.BuildServiceProvider();
@@ -700,7 +700,7 @@ public class ServiceCollectionTests
         ServiceCollection childCollection = new();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.TryGetService<SimpleService>(), Is.Null);
+        Assert.That(child.GetService<SimpleService>(), Is.Null);
     }
 
     // --- Registration order independence ---
@@ -714,9 +714,9 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        ServiceWithDependency service = provider.GetService<ServiceWithDependency>();
+        ServiceWithDependency service = provider.GetRequiredService<ServiceWithDependency>();
 
-        Assert.That(service.Simple, Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
     // --- Double dispose ---
 
@@ -747,13 +747,13 @@ public class ServiceCollectionTests
         childCollection.AddSingleton<IMyService, MyServiceImpl>();
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(child.GetService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
+        Assert.That(child.GetRequiredService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
     }
 
-    // --- TryGetService during build ---
+    // --- GetService during build ---
 
     [Test]
-    public void TryGetService_DuringBuild_ResolvesRegisteredService()
+    public void GetService_DuringBuild_ResolvesRegisteredService()
     {
         ServiceCollection collection = new();
         collection.AddSingleton<SimpleService>();
@@ -761,24 +761,24 @@ public class ServiceCollectionTests
         SimpleService? captured = null;
         collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
         {
-            captured = sp.TryGetService<SimpleService>();
+            captured = sp.GetService<SimpleService>();
             return new AnotherService();
         });
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(captured, Is.SameAs(provider.GetService<SimpleService>()));
+        Assert.That(captured, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
-    public void TryGetService_DuringBuild_ReturnsNullForUnregistered()
+    public void GetService_DuringBuild_ReturnsNullForUnregistered()
     {
         ServiceCollection collection = new();
 
         SimpleService? captured = null;
         collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
         {
-            captured = sp.TryGetService<SimpleService>();
+            captured = sp.GetService<SimpleService>();
             return new AnotherService();
         });
 
@@ -814,7 +814,7 @@ public class ServiceCollectionTests
         first.Dispose();
 
         Assert.That(disposeCount, Is.EqualTo(1));
-        Assert.That(second.GetService<SimpleService>(), Is.Not.SameAs(first.GetService<SimpleService>()));
+        Assert.That(second.GetRequiredService<SimpleService>(), Is.Not.SameAs(first.GetRequiredService<SimpleService>()));
     }
 
     // --- Dispose order must be reverse creation order ---
@@ -859,7 +859,7 @@ public class ServiceCollectionTests
 
         ServiceProvider provider = collection.BuildServiceProvider();
 
-        Assert.That(provider.GetService<IMyService>(), Is.SameAs(lastInstance));
+        Assert.That(provider.GetRequiredService<IMyService>(), Is.SameAs(lastInstance));
 
         IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
         Assert.That(services, Has.Count.EqualTo(2));
@@ -892,6 +892,164 @@ public class ServiceCollectionTests
         Assert.That(capturedDuringBuild![0], Is.InstanceOf<MyServiceImpl>());
     }
 
+    // --- AddAlias guard ---
+
+    [Test]
+    public void AddAlias_WithoutPriorRegistration_Throws()
+    {
+        ServiceCollection collection = new();
+
+        Assert.Throws<InvalidOperationException>(() => collection.AddAlias<IMyService, MyServiceImpl>());
+    }
+
+    // --- GetServices child→parent fallback ---
+
+    [Test]
+    public void GetServices_ChildFallsBackToParent_WhenTypeNotInChild()
+    {
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton<IMyService, MyServiceImpl>();
+        parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton<SimpleService>();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        IReadOnlyList<IMyService> services = child.GetServices<IMyService>();
+
+        Assert.That(services, Has.Count.EqualTo(2));
+        Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
+    }
+
+    // --- OnActivation for non-last-wins Instance ---
+
+    [Test]
+    public void OnActivation_CalledForAllInstances_IncludingNonLastWins()
+    {
+        ServiceCollection collection = new();
+        List<object> activated = new();
+        collection.OnActivation(obj => activated.Add(obj));
+
+        SimpleService first = new();
+        SimpleService second = new();
+        collection.AddSingleton(first);
+        collection.AddSingleton(second);
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Has.Count.EqualTo(2));
+        Assert.That(activated, Has.Count.EqualTo(2));
+        Assert.That(activated, Contains.Item(first));
+        Assert.That(activated, Contains.Item(second));
+    }
+
+    // --- OnDispose per-build snapshot isolation ---
+
+    [Test]
+    public void OnDispose_SnapshotAtBuildTime_SecondProviderHasBothCallbacks()
+    {
+        ServiceCollection collection = new();
+        int firstCallbackCount = 0;
+        int secondCallbackCount = 0;
+        collection.OnDispose(_ => firstCallbackCount++);
+
+        // Build first before adding the second callback
+        ServiceProvider first = collection.BuildServiceProvider();
+
+        collection.OnDispose(_ => secondCallbackCount++);
+
+        // Build second after adding the second callback
+        ServiceProvider second = collection.BuildServiceProvider();
+
+        first.Dispose();
+
+        // First provider was built with only one callback
+        Assert.That(firstCallbackCount, Is.EqualTo(1));
+        Assert.That(secondCallbackCount, Is.EqualTo(0));
+
+        second.Dispose();
+
+        // Second provider was built with both callbacks — firstCallbackCount gets another increment
+        Assert.That(firstCallbackCount, Is.EqualTo(2));
+        Assert.That(secondCallbackCount, Is.EqualTo(1));
+    }
+
+    // --- Dispose ordering: OnDispose fires before IDisposable.Dispose ---
+
+    [Test]
+    public void Dispose_OnDisposeCallbackFiresBeforeServiceDispose()
+    {
+        List<string> order = new();
+        DisposableOrderTracker tracker = new(order, "service");
+
+        ServiceCollection collection = new();
+        collection.AddSingleton(tracker);
+        collection.OnDispose(_ => order.Add("OnDispose"));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        // Ensure the service is resolved so it participates in disposal
+        provider.GetRequiredService<DisposableOrderTracker>();
+        provider.Dispose();
+
+        Assert.That(order[0], Is.EqualTo("OnDispose"));
+        Assert.That(order[1], Is.EqualTo("service"));
+    }
+
+    // --- Dispose of service registered via AddSingleton<IFoo, DisposableFoo>() ---
+
+    [Test]
+    public void Dispose_ImplementationRegisteredViaAlias_IsDisposed()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IDisposableFoo, DisposableFooImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        IDisposableFoo service = provider.GetRequiredService<IDisposableFoo>();
+
+        provider.Dispose();
+
+        Assert.That(((DisposableFooImpl)service).Disposed, Is.True);
+    }
+
+    // --- Circular detection in ResolveNonLastDescriptor ---
+
+    [Test]
+    public void GetServices_NonLastWinsFactory_CircularViaLastWins_ThrowsOrReturnsStable()
+    {
+        ServiceCollection collection = new();
+
+        // Register a non-last-wins factory for IMyService that requests CircularServiceA,
+        // and CircularServiceA depends on CircularServiceB which depends on CircularServiceA.
+        // The circular dependency is in the type-constructor graph, detected at build time.
+        collection.AddSingleton<CircularServiceA>();
+        collection.AddSingleton<CircularServiceB>();
+        collection.AddSingleton<IMyService>((ServiceProvider sp) =>
+        {
+            sp.GetRequiredService<CircularServiceA>();
+            return new MyServiceImpl();
+        });
+        collection.AddSingleton<IMyService>((ServiceProvider _) => new AnotherServiceImpl());
+
+        // Circular in constructor graph is detected during BuildServiceProvider
+        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+    }
+
+    // --- Null factory in ResolveNonLastDescriptor ---
+
+    [Test]
+    public void GetServices_NonLastWinsFactory_ReturnsNull_Throws()
+    {
+        ServiceCollection collection = new();
+
+        collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService>)(_ => null!));
+        collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService>)(_ => new SimpleService()));
+
+        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+    }
+
     // --- Aliased services must not be double-disposed ---
 
     [Test]
@@ -908,6 +1066,80 @@ public class ServiceCollectionTests
 
         // The same instance sits in two slots; Dispose() must be called exactly once
         Assert.That(instance.DisposeCallCount, Is.EqualTo(1));
+    }
+
+    // --- IEnumerable<T> resolution (TDD red: not implemented yet) ---
+
+    [Test]
+    public void GetRequiredService_IEnumerable_ReturnsAllRegistrations()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IEnumerable<IMyService> services = provider.GetRequiredService<IEnumerable<IMyService>>();
+
+        Assert.That(services, Is.Not.Null);
+        Assert.That(services.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void GetService_IEnumerable_NeverReturnsNull()
+    {
+        ServiceCollection collection = new();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IEnumerable<IMyService>? services = provider.GetService<IEnumerable<IMyService>>();
+
+        // IEnumerable<T> resolution never returns null — empty if nothing registered
+        Assert.That(services, Is.Not.Null);
+        Assert.That(services!.Count(), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void GetService_IEnumerable_ReturnsEmptyWhenNothingRegistered()
+    {
+        ServiceCollection collection = new();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IEnumerable<IMyService>? services = provider.GetService<IEnumerable<IMyService>>();
+
+        Assert.That(services, Is.Not.Null);
+        Assert.That(services!.Any(), Is.False);
+    }
+
+    [Test]
+    public void ChildContainer_GetRequiredService_IEnumerable_FallsBackToParent()
+    {
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton<IMyService, MyServiceImpl>();
+        parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        IEnumerable<IMyService> services = child.GetRequiredService<IEnumerable<IMyService>>();
+
+        Assert.That(services.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void ConstructorInjection_IEnumerable_ReceivesAllRegistrations()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+        collection.AddSingleton<ServiceWithEnumerableDependency>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        ServiceWithEnumerableDependency service = provider.GetRequiredService<ServiceWithEnumerableDependency>();
+
+        Assert.That(service.Services, Is.Not.Null);
+        Assert.That(service.Services.Count(), Is.EqualTo(2));
     }
 }
 
@@ -975,5 +1207,44 @@ public class CountingDisposable : IDisposable, IDisposableAlias
     public void Dispose()
     {
         DisposeCallCount++;
+    }
+}
+
+public class DisposableOrderTracker : IDisposable
+{
+    private readonly List<string> _log;
+    private readonly string _name;
+
+    public DisposableOrderTracker(List<string> log, string name)
+    {
+        _log = log;
+        _name = name;
+    }
+
+    public void Dispose()
+    {
+        _log.Add(_name);
+    }
+}
+
+public interface IDisposableFoo;
+
+public class DisposableFooImpl : IDisposableFoo, IDisposable
+{
+    public bool Disposed { get; private set; }
+
+    public void Dispose()
+    {
+        Disposed = true;
+    }
+}
+
+public class ServiceWithEnumerableDependency
+{
+    public IEnumerable<IMyService> Services { get; }
+
+    public ServiceWithEnumerableDependency(IEnumerable<IMyService> services)
+    {
+        Services = services;
     }
 }

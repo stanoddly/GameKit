@@ -15,9 +15,9 @@ public abstract class GameComponent
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetService<T>() where T : class
+    public T GetRequiredService<T>() where T : class
     {
-        return World.ServiceProvider.GetService<T>();
+        return World.ServiceProvider.GetRequiredService<T>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

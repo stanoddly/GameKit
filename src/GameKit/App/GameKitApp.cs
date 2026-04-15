@@ -15,17 +15,17 @@ public class GameKitApp : IGameKitApp
         _updatables = updatables;
     }
 
-    public T GetService<T>() where T : class
+    public T GetRequiredService<T>() where T : class
     {
-        return ServiceProvider.GetService<T>();
+        return ServiceProvider.GetRequiredService<T>();
     }
 
     public int Run()
     {
-        GameKitFrameContext frameContext = ServiceProvider.GetService<GameKitFrameContext>();
-        EventService eventService = ServiceProvider.GetService<EventService>();
-        AppControl appControl = ServiceProvider.GetService<AppControl>();
-        IRenderManager rootRenderer = ServiceProvider.GetService<IRenderManager>();
+        GameKitFrameContext frameContext = ServiceProvider.GetRequiredService<GameKitFrameContext>();
+        EventService eventService = ServiceProvider.GetRequiredService<EventService>();
+        AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
+        IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
 
         for (int i = _startables.Count - 1; i >= 0; i--)
         {
