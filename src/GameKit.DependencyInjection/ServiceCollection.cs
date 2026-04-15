@@ -42,7 +42,6 @@ public class ServiceCollection
         RegisterDescriptor(type, descriptor);
     }
 
-
     public void OnStart(Action<ServiceProvider> action)
     {
         _onStartActions.Add(action);

@@ -17,7 +17,7 @@ enum InterceptionKind
 
 readonly record struct ExtractionResult(InterceptionInfo? Interception, DiagnosticInfo? Diagnostic);
 
-readonly record struct DiagnosticInfo(string Id, string Message, string FilePath, int Line, int Column);
+readonly record struct DiagnosticInfo(string Id, string Message, string FilePath, int Line, int Column, int EndLine, int EndColumn);
 
 readonly record struct InterceptionInfo(
     InterceptionKind Kind,
@@ -70,7 +70,7 @@ public class InterceptorGenerator : IIncrementalGenerator
                             default,
                             new LinePositionSpan(
                                 new LinePosition(diag.Line, diag.Column),
-                                new LinePosition(diag.Line, diag.Column)))));
+                                new LinePosition(diag.EndLine, diag.EndColumn)))));
                 }
 
                 if (result.Interception is { } interception)
@@ -398,7 +398,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             return implicitCtor;
         }
 
-        // Multiple constructors — don't intercept, let runtime throw
+        // Multiple constructors — callers emit a GK0002 diagnostic
         return null;
     }
 
@@ -410,7 +410,9 @@ public class InterceptorGenerator : IIncrementalGenerator
             message,
             span.Path,
             span.StartLinePosition.Line,
-            span.StartLinePosition.Character);
+            span.StartLinePosition.Character,
+            span.EndLinePosition.Line,
+            span.EndLinePosition.Character);
     }
 
     private static string GenerateInterceptors(ImmutableArray<InterceptionInfo> interceptions)
