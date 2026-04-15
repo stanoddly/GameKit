@@ -387,8 +387,11 @@ public class ServiceCollection
 
         List<object> instances = new(group.Count);
 
-        foreach (ServiceDescriptor descriptor in group)
+        for (int i = 0; i < group.Count; i++)
         {
+            ServiceDescriptor descriptor = group[i];
+            bool isLastWins = i == group.Count - 1;
+
             switch (descriptor.Kind)
             {
                 case ServiceDescriptorKind.Instance:
@@ -398,26 +401,33 @@ public class ServiceCollection
                 }
                 case ServiceDescriptorKind.TypedFactory:
                 {
-                    int id = ServiceTypeId.GetId(descriptor.ServiceType);
-                    object? existing = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
-
-                    if (existing != null)
-                    {
-                        instances.Add(existing);
-                    }
-                    else
+                    if (isLastWins)
                     {
                         Resolve(descriptor, provider, parent, descriptorMap, resolving);
+                        int id = ServiceTypeId.GetId(descriptor.ServiceType);
                         object? resolved = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
                         if (resolved != null)
                         {
                             instances.Add(resolved);
                         }
                     }
+                    else
+                    {
+                        object? instance = ResolveNonLastDescriptor(descriptor, provider, parent, descriptorMap, resolving);
+                        if (instance != null)
+                        {
+                            instances.Add(instance);
+                        }
+                    }
                     break;
                 }
                 case ServiceDescriptorKind.Alias:
                 {
+                    if (descriptorMap.TryGetValue(descriptor.AliasSource!, out ServiceDescriptor? sourceDescriptor))
+                    {
+                        Resolve(sourceDescriptor, provider, parent, descriptorMap, resolving);
+                    }
+
                     int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
                     object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
                     source ??= parent?.TryGetService(descriptor.AliasSource!);

@@ -837,6 +837,61 @@ public class ServiceCollectionTests
         Assert.That(disposeLog, Is.EqualTo(new[] { "C", "B", "A" }));
     }
 
+    // --- Bug: GetServices called during build must not corrupt the last-wins factory slot ---
+
+    [Test]
+    public void GetServices_CalledDuringBuild_LastWinsFactoryResolvesToLastInstance()
+    {
+        ServiceCollection collection = new();
+        MyServiceImpl firstInstance = new();
+        AnotherServiceImpl lastInstance = new();
+
+        // Registered first so it is resolved before IMyService in the main build loop,
+        // ensuring GetServices<IMyService> fires while the last-wins slot is still empty.
+        collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
+        {
+            sp.GetServices<IMyService>();
+            return new AnotherService();
+        });
+
+        collection.AddSingleton<IMyService>((ServiceProvider _) => firstInstance);
+        collection.AddSingleton<IMyService>((ServiceProvider _) => lastInstance);
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetService<IMyService>(), Is.SameAs(lastInstance));
+
+        IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
+        Assert.That(services, Has.Count.EqualTo(2));
+        Assert.That(services[0], Is.SameAs(firstInstance));
+        Assert.That(services[1], Is.SameAs(lastInstance));
+    }
+
+    // --- Bug: GetServices called during build must resolve alias sources eagerly ---
+
+    [Test]
+    public void GetServices_CalledDuringBuild_IncludesAliasSource()
+    {
+        ServiceCollection collection = new();
+        IReadOnlyList<IMyService>? capturedDuringBuild = null;
+
+        // Registered first so it is resolved before MyServiceImpl in the main build loop,
+        // ensuring GetServices<IMyService> fires while the alias source is still unresolved.
+        collection.AddSingleton<AnotherService>((ServiceProvider sp) =>
+        {
+            capturedDuringBuild = sp.GetServices<IMyService>();
+            return new AnotherService();
+        });
+
+        collection.AddSingleton<MyServiceImpl>();
+        collection.AddAlias<IMyService, MyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(capturedDuringBuild, Has.Count.EqualTo(1));
+        Assert.That(capturedDuringBuild![0], Is.InstanceOf<MyServiceImpl>());
+    }
+
     // --- Bug: Aliased services must not be double-disposed ---
 
     [Test]
