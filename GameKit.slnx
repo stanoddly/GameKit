@@ -10,6 +10,8 @@
     <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
     <Project Path="src/GameKit.SdlangCompileTask/GameKit.SdlangCompileTask.csproj" />
     <Project Path="src/GameKit.ShaderCommon/GameKit.ShaderCommon.csproj" />
+    <Project Path="src/GameKit.DependencyInjection/GameKit.DependencyInjection.csproj" />
+    <Project Path="src/GameKit.DependencyInjection.Generator/GameKit.DependencyInjection.Generator.csproj" />
     <Project Path="src/GameKit.Pencuil/GameKit.Pencuil.csproj" />
     <Project Path="src/GameKit.Utils/GameKit.Utils.csproj" />
     <Project Path="src/GameKit/GameKit.csproj" />
@@ -22,6 +24,7 @@
     <Project Path="tests/GameKit.Content.Tests/GameKit.Content.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileLib.Tests/GameKit.SdlangCompileLib.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileTask.Tests/GameKit.SdlangCompileTask.Tests.csproj" />
+    <Project Path="tests/GameKit.DependencyInjection.Tests/GameKit.DependencyInjection.Tests.csproj" />
     <Project Path="tests/GameKit.Tests/GameKit.Tests.csproj" />
   </Folder>
   <Folder Name="/tutorials/">
@@ -33,5 +36,11 @@
     <Project Path="tutorials/GameKit.Tutorials.ImageLoading/GameKit.Tutorials.ImageLoading.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StencilBuffer/GameKit.Tutorials.StencilBuffer.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Gamepad/GameKit.Tutorials.Gamepad.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.Hotbar/GameKit.Tutorials.Hotbar.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.Instancing/GameKit.Tutorials.Instancing.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.WindowConfiguration/GameKit.Tutorials.WindowConfiguration.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/GameKit.DependencyInjection.Benchmarks/GameKit.DependencyInjection.Benchmarks.csproj" />
   </Folder>
 </Solution>
