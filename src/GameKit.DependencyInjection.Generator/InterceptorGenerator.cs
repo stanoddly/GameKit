@@ -545,8 +545,10 @@ public class InterceptorGenerator : IIncrementalGenerator
 
     private static string BuildConstructorArgExpression(string paramTypeFullName)
     {
-        if (paramTypeFullName.StartsWith(IEnumerablePrefix) && paramTypeFullName.EndsWith(">"))
+        if (paramTypeFullName.StartsWith(IEnumerablePrefix))
         {
+            // Strip the IEnumerable< prefix and its matching closing >
+            // Must handle nested generics like IEnumerable<IDictionary<string, int>>
             string elementType = paramTypeFullName.Substring(
                 IEnumerablePrefix.Length,
                 paramTypeFullName.Length - IEnumerablePrefix.Length - 1);
@@ -664,7 +666,7 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         string elementType = info.ServiceTypeFullName!;
         sb.AppendLine($"        {info.InterceptsLocationAttribute}");
-        sb.AppendLine($"        public static global::System.Collections.Generic.IEnumerable<{elementType}>? GetService_{index}<T>(");
+        sb.AppendLine($"        public static global::System.Collections.Generic.IEnumerable<{elementType}> GetService_{index}<T>(");
         sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceProvider provider)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");

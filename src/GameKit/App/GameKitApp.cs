@@ -15,7 +15,7 @@ public class GameKitApp : IGameKitApp
         _updatables = updatables;
     }
 
-    public T GetService<T>() where T : class
+    public T GetRequiredService<T>() where T : class
     {
         return ServiceProvider.GetRequiredService<T>();
     }

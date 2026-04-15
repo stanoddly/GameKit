@@ -22,11 +22,11 @@ public abstract class ViewComponent<TViewModel> : GameComponent, IView where TVi
     protected override void OnAttach()
     {
         ViewModel = GetSibling<TViewModel>();
-        GetService<ViewRegistry>().Add(this);
+        GetRequiredService<ViewRegistry>().Add(this);
     }
 
     protected override void OnDetach()
     {
-        GetService<ViewRegistry>().Remove(this);
+        GetRequiredService<ViewRegistry>().Remove(this);
     }
 }
