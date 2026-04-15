@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace GameKit.DependencyInjection;
 
 public class ServiceCollection
@@ -7,7 +5,7 @@ public class ServiceCollection
     private readonly HashSet<Type> _registeredTypes = new();
     private readonly Dictionary<Type, List<ServiceDescriptor>> _serviceGroups = new();
     private readonly List<Action<object>> _activationCallbacks = new();
-    private readonly List<Action<ServiceProvider>> _onStartGeneratedActions = new();
+    private readonly List<Action<ServiceProvider>> _onStartActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
 
     public void AddSingleton<T>() where T : class
@@ -37,18 +35,16 @@ public class ServiceCollection
             $"AddSingleton<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public void AddSingletonGenerated<T>(Func<ServiceProvider, object> factory) where T : class
+    public void AddSingleton<T>(Func<ServiceProvider, T> factory) where T : class
     {
         Type type = typeof(T);
         ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactory(type, factory);
         RegisterDescriptor(type, descriptor);
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public void OnStartGenerated(Action<ServiceProvider> action)
+    public void OnStart(Action<ServiceProvider> action)
     {
-        _onStartGeneratedActions.Add(action);
+        _onStartActions.Add(action);
     }
 
     public void AddAlias<TService, TImplementation>()
@@ -140,7 +136,8 @@ public class ServiceCollection
         // Set build-time resolvers so generated factories can trigger on-demand resolution
         provider.SetBuildTimeResolver(
             type => ResolveServiceByType(type, provider, parent, descriptorMap, resolving),
-            type => TryResolveServiceByType(type, provider, parent, descriptorMap, resolving));
+            type => TryResolveServiceByType(type, provider, parent, descriptorMap, resolving),
+            type => ResolveServiceCollectionByType(type, provider, parent, descriptorMap, resolving));
 
         // Resolve all last-wins descriptors (their instances go into the services array)
         foreach (KeyValuePair<Type, ServiceDescriptor> entry in descriptorMap)
@@ -200,13 +197,13 @@ public class ServiceCollection
         provider.SetServiceCollections(serviceCollections);
 
         // Fire OnStart callbacks
-        foreach (Action<ServiceProvider> action in _onStartGeneratedActions)
+        foreach (Action<ServiceProvider> action in _onStartActions)
         {
             action(provider);
         }
 
         // Clear build-time resolvers — after build, all singletons are resolved
-        provider.SetBuildTimeResolver(null, null);
+        provider.SetBuildTimeResolver(null, null, null);
 
         return provider;
     }
@@ -374,6 +371,66 @@ public class ServiceCollection
         }
 
         return parent?.TryGetService(type);
+    }
+
+    private object[] ResolveServiceCollectionByType(
+        Type type,
+        ServiceProvider provider,
+        ServiceProvider? parent,
+        Dictionary<Type, ServiceDescriptor> descriptorMap,
+        HashSet<Type> resolving)
+    {
+        if (!_serviceGroups.TryGetValue(type, out List<ServiceDescriptor>? group))
+        {
+            return Array.Empty<object>();
+        }
+
+        List<object> instances = new(group.Count);
+
+        foreach (ServiceDescriptor descriptor in group)
+        {
+            switch (descriptor.Kind)
+            {
+                case ServiceDescriptorKind.Instance:
+                {
+                    instances.Add(descriptor.Instance!);
+                    break;
+                }
+                case ServiceDescriptorKind.TypedFactory:
+                {
+                    int id = ServiceTypeId.GetId(descriptor.ServiceType);
+                    object? existing = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+
+                    if (existing != null)
+                    {
+                        instances.Add(existing);
+                    }
+                    else
+                    {
+                        Resolve(descriptor, provider, parent, descriptorMap, resolving);
+                        object? resolved = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+                        if (resolved != null)
+                        {
+                            instances.Add(resolved);
+                        }
+                    }
+                    break;
+                }
+                case ServiceDescriptorKind.Alias:
+                {
+                    int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
+                    object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
+                    source ??= parent?.TryGetService(descriptor.AliasSource!);
+                    if (source != null)
+                    {
+                        instances.Add(source);
+                    }
+                    break;
+                }
+            }
+        }
+
+        return instances.ToArray();
     }
 
     private void InvokeActivationCallbacks(object instance)

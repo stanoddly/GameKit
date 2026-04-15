@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize;
 
@@ -11,6 +12,12 @@ public abstract class GameComponent
     public bool HasOwner()
     {
         return InternalOwner != null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T GetService<T>() where T : class
+    {
+        return World.ServiceProvider.GetService<T>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,6 +1,5 @@
 using GameKit;
 using GameKit.App;
-using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
@@ -14,13 +13,13 @@ static class Program
         var builder = new GameKitAppBuilder()
             .UseDefaultRenderManager();
 
-        builder.RegisterInstance(new AppConfig
+        builder.AddSingleton(new AppConfig
         {
             Size = (800, 600),
             Title = "Window Configuration Demo"
         });
 
-        builder.RegisterType<NullRenderPhase<DefaultRenderContext>>().As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         builder.OnStart((IWindow window) =>
         {

@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,6 +13,10 @@
       <ProjectReference Include="..\GameKit\GameKit.csproj" />
       <ProjectReference Include="..\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+      <ProjectReference Include="..\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <!-- Import the task's props and targets files -->

@@ -6,12 +6,17 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PublishAot>true</PublishAot>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit.Pencuil\GameKit.Pencuil.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

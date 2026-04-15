@@ -1,33 +1,31 @@
-using GameKit.Common;
+using GameKit.DependencyInjection;
 
 namespace GameKit.App;
 
 public class GameKitApp : IGameKitApp
 {
-    public IServiceProvider ServiceProvider { get; }
+    public ServiceProvider ServiceProvider { get; }
     private readonly List<IStartable> _startables;
     private readonly List<IUpdatable> _updatables;
-    private readonly List<IDisposable> _disposables;
 
-    public GameKitApp(IServiceProvider serviceProvider, List<IStartable> startables, List<IUpdatable> updatables, List<IDisposable> disposables)
+    public GameKitApp(ServiceProvider serviceProvider, List<IStartable> startables, List<IUpdatable> updatables)
     {
         ServiceProvider = serviceProvider;
         _startables = startables;
         _updatables = updatables;
-        _disposables = disposables;
     }
 
-    public TService GetMandatoryService<TService>()
+    public T GetService<T>() where T : class
     {
-        return ServiceProvider.GetMandatoryService<TService>();
+        return ServiceProvider.GetService<T>();
     }
 
     public int Run()
     {
-        GameKitFrameContext frameContext = ServiceProvider.GetMandatoryService<GameKitFrameContext>();
-        EventService eventService = ServiceProvider.GetMandatoryService<EventService>();
-        AppControl appControl = ServiceProvider.GetMandatoryService<AppControl>();
-        IRenderManager rootRenderer = ServiceProvider.GetMandatoryService<IRenderManager>();
+        GameKitFrameContext frameContext = ServiceProvider.GetService<GameKitFrameContext>();
+        EventService eventService = ServiceProvider.GetService<EventService>();
+        AppControl appControl = ServiceProvider.GetService<AppControl>();
+        IRenderManager rootRenderer = ServiceProvider.GetService<IRenderManager>();
 
         for (int i = _startables.Count - 1; i >= 0; i--)
         {
@@ -58,9 +56,6 @@ public class GameKitApp : IGameKitApp
 
     public void Dispose()
     {
-        for (int i = _disposables.Count - 1; i >= 0; i--)
-        {
-            _disposables[i].Dispose();
-        }
+        ServiceProvider.Dispose();
     }
 }

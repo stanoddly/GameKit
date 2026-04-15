@@ -1,10 +1,10 @@
+using GameKit.DependencyInjection;
+
 namespace GameKit.App;
 
 public interface IGameKitApp : IDisposable
 {
-    IServiceProvider ServiceProvider { get; }
-    
-    TService GetMandatoryService<TService>();
-    
+    ServiceProvider ServiceProvider { get; }
+    T GetService<T>() where T : class;
     int Run();
 }

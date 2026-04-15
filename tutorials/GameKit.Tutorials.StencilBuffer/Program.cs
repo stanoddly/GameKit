@@ -11,9 +11,9 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 
-        builder
-            .RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Stencil Buffer" });
-        builder.RegisterFunc<StencilBufferRenderer>(StencilBufferRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Stencil Buffer" });
+        builder.AddSingleton<StencilBufferRenderer>(StencilBufferRenderer.Create);
+        builder.AddAlias<IRenderPhase<DefaultRenderContext>, StencilBufferRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

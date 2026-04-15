@@ -13,8 +13,9 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 
-        builder.RegisterInstance(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
-        builder.RegisterFunc<DepthOnlyRenderer>(DepthOnlyRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
+        builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
+        builder.AddAlias<IRenderPhase<DefaultRenderContext>, DepthOnlyRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

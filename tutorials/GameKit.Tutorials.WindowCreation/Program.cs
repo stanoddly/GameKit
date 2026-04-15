@@ -12,8 +12,8 @@ static class Program
             //.AddContentFromProjectDirectory("_Content")
             .UseDefaultRenderManager();
 
-        builder.RegisterInstance(new AppConfig { Size = (1280, 720), Title = "Game" });
-        builder.RegisterType<NullRenderPhase<DefaultRenderContext>>().As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Game" });
+        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

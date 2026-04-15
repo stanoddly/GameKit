@@ -7,8 +7,11 @@ public class ServiceProvider : IDisposable
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
     private Func<Type, object>? _buildTimeResolver;
     private Func<Type, object?>? _buildTimeTryResolver;
+    private Func<Type, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
     private Dictionary<Type, object[]>? _serviceCollections;
+    // Tracks slot indices in the order services were first stored, for reverse-order disposal
+    private readonly List<int> _creationOrder = new();
 
     internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
@@ -22,10 +25,11 @@ public class ServiceProvider : IDisposable
         _serviceCollections = collections;
     }
 
-    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver)
+    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver, Func<Type, object[]>? collectionResolver)
     {
         _buildTimeResolver = resolver;
         _buildTimeTryResolver = tryResolver;
+        _buildTimeCollectionResolver = collectionResolver;
     }
 
     internal int ServicesLength => _services.Length;
@@ -42,6 +46,12 @@ public class ServiceProvider : IDisposable
             object?[] resized = new object?[Math.Max(id + 1, _services.Length * 2)];
             Array.Copy(_services, resized, _services.Length);
             _services = resized;
+        }
+
+        // Record each slot index the first time it is populated, to support reverse-order disposal
+        if (_services[id] == null)
+        {
+            _creationOrder.Add(id);
         }
 
         _services[id] = service;
@@ -81,6 +91,17 @@ public class ServiceProvider : IDisposable
             for (int i = 0; i < items.Length; i++)
             {
                 typed[i] = (T)items[i];
+            }
+            return typed;
+        }
+
+        if (_buildTimeCollectionResolver != null)
+        {
+            object[] resolved = _buildTimeCollectionResolver(typeof(T));
+            T[] typed = new T[resolved.Length];
+            for (int i = 0; i < resolved.Length; i++)
+            {
+                typed[i] = (T)resolved[i];
             }
             return typed;
         }
@@ -154,9 +175,14 @@ public class ServiceProvider : IDisposable
             callback(this);
         }
 
-        foreach (object? service in _services)
+        // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
+        HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
+        for (int i = _creationOrder.Count - 1; i >= 0; i--)
         {
-            if (service is IDisposable disposable && !ReferenceEquals(service, this))
+            object? service = _services[_creationOrder[i]];
+            if (service is IDisposable disposable
+                && !ReferenceEquals(service, this)
+                && alreadyDisposed.Add(service))
             {
                 disposable.Dispose();
             }

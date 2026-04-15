@@ -11,9 +11,9 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 
-        builder
-            .RegisterInstance(new AppConfig { Size = (800, 600), Title = "Instancing Demo" });
-        builder.RegisterFunc<InstancingRenderer>(InstancingRenderer.Create).As<IRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Instancing Demo" });
+        builder.AddSingleton<InstancingRenderer>(InstancingRenderer.Create);
+        builder.AddAlias<IRenderPhase<DefaultRenderContext>, InstancingRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
