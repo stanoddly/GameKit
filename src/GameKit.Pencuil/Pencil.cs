@@ -99,14 +99,10 @@ public class Pencil
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
 
-    public Pencil(IFontSystem fontSystem, GuiStyle guiStyle)
+    public Pencil(IFontSystem fontSystem, GuiStyle guiStyle, AppConfig appConfig)
     {
         _fontSystem = fontSystem;
         Style = guiStyle;
-    }
-
-    public Pencil(IFontSystem fontSystem, GuiStyle guiStyle, AppConfig appConfig) : this(fontSystem, guiStyle)
-    {
         if (appConfig.Size is { } size)
         {
             _viewportWidth = (int)size.Width;
