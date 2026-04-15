@@ -8,7 +8,7 @@ public static class GameKitAppBuilderExtensions
 {
     public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IRenderContext
     {
-        builder.AddSingletonGenerated<IRenderManager>(sp => new DefaultRenderManager<TRenderContext>(
+        builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<TRenderContext>(
             sp.GetService<GpuMemorySystem>(),
             sp.GetService<IRenderContextProvider<TRenderContext>>(),
             sp.GetServices<IRenderPhase<TRenderContext>>()));
@@ -18,7 +18,7 @@ public static class GameKitAppBuilderExtensions
     public static GameKitAppBuilder UseDefaultRenderManager(this GameKitAppBuilder builder)
     {
         builder.AddSingleton<IRenderContextProvider<DefaultRenderContext>, DefaultRenderContextProvider>();
-        builder.AddSingletonGenerated<IRenderManager>(sp => new DefaultRenderManager<DefaultRenderContext>(
+        builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<DefaultRenderContext>(
             sp.GetService<GpuMemorySystem>(),
             sp.GetService<IRenderContextProvider<DefaultRenderContext>>(),
             sp.GetServices<IRenderPhase<DefaultRenderContext>>()));

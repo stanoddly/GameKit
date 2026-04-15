@@ -129,13 +129,7 @@ public class ServiceCollectionTests
         Assert.DoesNotThrow(() => collection.AddSingleton<SimpleService>());
     }
 
-    [Test]
-    public void AddSingleton_MultipleConstructors_ThrowsNotIntercepted()
-    {
-        ServiceCollection collection = new();
-
-        Assert.Throws<InvalidOperationException>(() => collection.AddSingleton<MultiConstructorService>());
-    }
+    // AddSingleton with multiple constructors is now a compile-time error (GK0002)
 
     [Test]
     public void AddSingleton_MissingDependency_Throws()
@@ -740,19 +734,6 @@ public class ServiceCollectionTests
         Assert.That(disposeCount, Is.EqualTo(1));
     }
 
-    // --- AddSingleton<T>(Delegate) validation ---
-
-    [Test]
-    public void AddSingleton_Factory_WrongReturnType_ThrowsAtResolution()
-    {
-        ServiceCollection collection = new();
-        collection.AddSingleton<SimpleService>(() => new AnotherService());
-
-        ServiceProvider provider = collection.BuildServiceProvider();
-
-        Assert.Throws<InvalidCastException>(() => provider.GetService<SimpleService>());
-    }
-
     // --- Parent-child alias ---
 
     [Test]
@@ -835,6 +816,44 @@ public class ServiceCollectionTests
         Assert.That(disposeCount, Is.EqualTo(1));
         Assert.That(second.GetService<SimpleService>(), Is.Not.SameAs(first.GetService<SimpleService>()));
     }
+
+    // --- Bug: Dispose order must be reverse creation order ---
+
+    [Test]
+    public void Dispose_DisposesServicesInReverseCreationOrder()
+    {
+        List<string> disposeLog = new();
+
+        ServiceCollection collection = new();
+        // Register A, then B, then C — creation order is A, B, C
+        collection.AddSingleton<TrackingDisposableA>(new TrackingDisposableA(disposeLog));
+        collection.AddSingleton<TrackingDisposableB>(new TrackingDisposableB(disposeLog));
+        collection.AddSingleton<TrackingDisposableC>(new TrackingDisposableC(disposeLog));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        provider.Dispose();
+
+        // Expected: reverse creation order C, B, A
+        Assert.That(disposeLog, Is.EqualTo(new[] { "C", "B", "A" }));
+    }
+
+    // --- Bug: Aliased services must not be double-disposed ---
+
+    [Test]
+    public void Dispose_AliasedService_DisposedExactlyOnce()
+    {
+        CountingDisposable instance = new();
+
+        ServiceCollection collection = new();
+        collection.AddSingleton<CountingDisposable>(instance);
+        collection.AddAlias<IDisposableAlias, CountingDisposable>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        provider.Dispose();
+
+        // The same instance sits in two slots; Dispose() must be called exactly once
+        Assert.That(instance.DisposeCallCount, Is.EqualTo(1));
+    }
 }
 
 public class ServiceNeedingProvider
@@ -844,5 +863,62 @@ public class ServiceNeedingProvider
     public ServiceNeedingProvider(ServiceProvider provider)
     {
         Provider = provider;
+    }
+}
+
+public interface IDisposableAlias;
+
+public class TrackingDisposableA : IDisposable
+{
+    private readonly List<string> _log;
+
+    public TrackingDisposableA(List<string> log)
+    {
+        _log = log;
+    }
+
+    public void Dispose()
+    {
+        _log.Add("A");
+    }
+}
+
+public class TrackingDisposableB : IDisposable
+{
+    private readonly List<string> _log;
+
+    public TrackingDisposableB(List<string> log)
+    {
+        _log = log;
+    }
+
+    public void Dispose()
+    {
+        _log.Add("B");
+    }
+}
+
+public class TrackingDisposableC : IDisposable
+{
+    private readonly List<string> _log;
+
+    public TrackingDisposableC(List<string> log)
+    {
+        _log = log;
+    }
+
+    public void Dispose()
+    {
+        _log.Add("C");
+    }
+}
+
+public class CountingDisposable : IDisposable, IDisposableAlias
+{
+    public int DisposeCallCount { get; private set; }
+
+    public void Dispose()
+    {
+        DisposeCallCount++;
     }
 }

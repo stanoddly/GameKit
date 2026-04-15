@@ -17,7 +17,7 @@ public static class PencuilExtensions
         builder.AddSingleton<Pencil>();
         builder.AddSingleton<ViewRegistry>();
         builder.AddSingleton<PencuilRenderer>();
-        builder.AddSingletonGenerated<IRenderPhase<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
+        builder.AddSingleton<IRenderPhase<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
             sp.GetService<Pencil>(),
             sp.GetService<ViewRegistry>(),
             sp.GetService<PencuilRenderer>(),

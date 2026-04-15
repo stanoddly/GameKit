@@ -12,9 +12,10 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
-            <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
-                  OutputItemType="Analyzer"
-                  ReferenceOutputAssembly="false" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <!-- Reference the SdlangCompileTask project -->

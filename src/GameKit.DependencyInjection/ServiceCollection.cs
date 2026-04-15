@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace GameKit.DependencyInjection;
 
 public class ServiceCollection
@@ -7,7 +5,7 @@ public class ServiceCollection
     private readonly HashSet<Type> _registeredTypes = new();
     private readonly Dictionary<Type, List<ServiceDescriptor>> _serviceGroups = new();
     private readonly List<Action<object>> _activationCallbacks = new();
-    private readonly List<Action<ServiceProvider>> _onStartGeneratedActions = new();
+    private readonly List<Action<ServiceProvider>> _onStartActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
 
     public void AddSingleton<T>() where T : class
@@ -37,18 +35,17 @@ public class ServiceCollection
             $"AddSingleton<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public void AddSingletonGenerated<T>(Func<ServiceProvider, object> factory) where T : class
+    public void AddSingleton<T>(Func<ServiceProvider, T> factory) where T : class
     {
         Type type = typeof(T);
         ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactory(type, factory);
         RegisterDescriptor(type, descriptor);
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public void OnStartGenerated(Action<ServiceProvider> action)
+
+    public void OnStart(Action<ServiceProvider> action)
     {
-        _onStartGeneratedActions.Add(action);
+        _onStartActions.Add(action);
     }
 
     public void AddAlias<TService, TImplementation>()
@@ -201,7 +198,7 @@ public class ServiceCollection
         provider.SetServiceCollections(serviceCollections);
 
         // Fire OnStart callbacks
-        foreach (Action<ServiceProvider> action in _onStartGeneratedActions)
+        foreach (Action<ServiceProvider> action in _onStartActions)
         {
             action(provider);
         }

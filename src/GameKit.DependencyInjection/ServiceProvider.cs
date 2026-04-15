@@ -10,6 +10,8 @@ public class ServiceProvider : IDisposable
     private Func<Type, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
     private Dictionary<Type, object[]>? _serviceCollections;
+    // Tracks slot indices in the order services were first stored, for reverse-order disposal
+    private readonly List<int> _creationOrder = new();
 
     internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
@@ -44,6 +46,12 @@ public class ServiceProvider : IDisposable
             object?[] resized = new object?[Math.Max(id + 1, _services.Length * 2)];
             Array.Copy(_services, resized, _services.Length);
             _services = resized;
+        }
+
+        // Record each slot index the first time it is populated, to support reverse-order disposal
+        if (_services[id] == null)
+        {
+            _creationOrder.Add(id);
         }
 
         _services[id] = service;
@@ -167,9 +175,14 @@ public class ServiceProvider : IDisposable
             callback(this);
         }
 
-        foreach (object? service in _services)
+        // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
+        HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
+        for (int i = _creationOrder.Count - 1; i >= 0; i--)
         {
-            if (service is IDisposable disposable && !ReferenceEquals(service, this))
+            object? service = _services[_creationOrder[i]];
+            if (service is IDisposable disposable
+                && !ReferenceEquals(service, this)
+                && alreadyDisposed.Add(service))
             {
                 disposable.Dispose();
             }

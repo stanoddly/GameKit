@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -13,6 +14,10 @@ enum InterceptionKind
     AddSingletonFactory,
     OnStart
 }
+
+readonly record struct ExtractionResult(InterceptionInfo? Interception, DiagnosticInfo? Diagnostic);
+
+readonly record struct DiagnosticInfo(string Id, string Message, string FilePath, int Line, int Column);
 
 readonly record struct InterceptionInfo(
     InterceptionKind Kind,
@@ -32,22 +37,54 @@ public class InterceptorGenerator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<InterceptionInfo> interceptions = context.SyntaxProvider.CreateSyntaxProvider(
+        IncrementalValuesProvider<ExtractionResult?> results = context.SyntaxProvider.CreateSyntaxProvider(
             predicate: static (node, _) => IsCandidateInvocation(node),
             transform: static (ctx, ct) => ExtractInterception(ctx, ct)
-        ).Where(static r => r is not null)
-         .Select(static (r, _) => r!.Value);
+        ).Where(static r => r is not null);
 
-        IncrementalValueProvider<ImmutableArray<InterceptionInfo>> collected = interceptions.Collect();
+        IncrementalValueProvider<ImmutableArray<ExtractionResult?>> collected = results.Collect();
 
-        context.RegisterSourceOutput(collected, static (spc, interceptions) =>
+        context.RegisterSourceOutput(collected, static (spc, items) =>
         {
-            if (interceptions.IsEmpty)
+            ImmutableArray<InterceptionInfo>.Builder interceptions = ImmutableArray.CreateBuilder<InterceptionInfo>();
+
+            foreach (ExtractionResult? item in items)
+            {
+                if (item is not { } result)
+                {
+                    continue;
+                }
+
+                if (result.Diagnostic is { } diag)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        new DiagnosticDescriptor(
+                            diag.Id,
+                            "GameKit.DependencyInjection",
+                            diag.Message,
+                            "GameKit.DependencyInjection",
+                            DiagnosticSeverity.Error,
+                            isEnabledByDefault: true),
+                        Location.Create(
+                            diag.FilePath,
+                            default,
+                            new LinePositionSpan(
+                                new LinePosition(diag.Line, diag.Column),
+                                new LinePosition(diag.Line, diag.Column)))));
+                }
+
+                if (result.Interception is { } interception)
+                {
+                    interceptions.Add(interception);
+                }
+            }
+
+            if (interceptions.Count == 0)
             {
                 return;
             }
 
-            string source = GenerateInterceptors(interceptions);
+            string source = GenerateInterceptors(interceptions.ToImmutable());
             spc.AddSource("ServiceCollectionInterceptors.g.cs", source);
         });
     }
@@ -75,7 +112,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         return methodName is "AddSingleton" or "OnStart";
     }
 
-    private static InterceptionInfo? ExtractInterception(GeneratorSyntaxContext context, CancellationToken ct)
+    private static ExtractionResult? ExtractInterception(GeneratorSyntaxContext context, CancellationToken ct)
     {
         InvocationExpressionSyntax invocation = (InvocationExpressionSyntax)context.Node;
 
@@ -106,13 +143,14 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         if (methodName == "OnStart")
         {
-            return ExtractOnStart(methodSymbol, invocation, context, interceptableLocation, ct);
+            InterceptionInfo? onStart = ExtractOnStart(methodSymbol, invocation, context, interceptableLocation, ct);
+            return onStart is { } info ? new ExtractionResult(info, null) : null;
         }
 
         return null;
     }
 
-    private static InterceptionInfo? ExtractAddSingleton(
+    private static ExtractionResult? ExtractAddSingleton(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
@@ -124,51 +162,57 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 1
             && methodSymbol.Parameters[0].Type.ToDisplayString() == "System.Delegate")
         {
-            return ExtractDelegateInterception(
+            string serviceTypeFullName = methodSymbol.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            InterceptionInfo? result = ExtractDelegateInterception(
                 InterceptionKind.AddSingletonFactory,
                 invocation,
                 context,
                 interceptableLocation,
-                ct);
+                ct,
+                serviceTypeFullName);
+            return result is { } info ? new ExtractionResult(info, null) : null;
         }
 
         // AddSingleton<T>() — single type param, no args
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 0)
         {
-            return ExtractAddSingletonType(methodSymbol, interceptableLocation);
+            return ExtractAddSingletonType(methodSymbol, invocation, interceptableLocation);
         }
 
         // AddSingleton<TService, TImpl>() — two type params, no args
         if (methodSymbol.TypeArguments.Length == 2 && methodSymbol.Parameters.Length == 0)
         {
-            return ExtractAddSingletonWithAlias(methodSymbol, interceptableLocation);
+            return ExtractAddSingletonWithAlias(methodSymbol, invocation, interceptableLocation);
         }
 
         return null;
     }
 
-    private static InterceptionInfo? ExtractAddSingletonType(
+    private static ExtractionResult? ExtractAddSingletonType(
         IMethodSymbol methodSymbol,
+        InvocationExpressionSyntax invocation,
         InterceptableLocation interceptableLocation)
     {
         ITypeSymbol implType = methodSymbol.TypeArguments[0];
 
         if (implType is not INamedTypeSymbol implNamedType)
         {
-            return null;
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
+                $"AddSingleton<{implType.Name}>() cannot be used with an open generic type parameter. Use AddSingleton<{implType.Name}>(Func<ServiceProvider, {implType.Name}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSinglePublicConstructor(implNamedType);
         if (constructor == null)
         {
-            return null;
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
+                $"AddSingleton<{implType.Name}>() requires exactly one public constructor."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
             .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
 
-        return new InterceptionInfo(
+        return new ExtractionResult(new InterceptionInfo(
             InterceptionKind.AddSingleton,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -177,11 +221,12 @@ public class InterceptorGenerator : IIncrementalGenerator
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
             false
-        );
+        ), null);
     }
 
-    private static InterceptionInfo? ExtractAddSingletonWithAlias(
+    private static ExtractionResult? ExtractAddSingletonWithAlias(
         IMethodSymbol methodSymbol,
+        InvocationExpressionSyntax invocation,
         InterceptableLocation interceptableLocation)
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
@@ -189,20 +234,22 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         if (implType is not INamedTypeSymbol implNamedType)
         {
-            return null;
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
+                $"AddSingleton<{serviceType.Name}, {implType.Name}>() cannot be used with open generic type parameters. Use AddSingleton<{serviceType.Name}>(Func<ServiceProvider, {serviceType.Name}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSinglePublicConstructor(implNamedType);
         if (constructor == null)
         {
-            return null;
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
+                $"AddSingleton<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one public constructor."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
             .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
             .ToImmutableArray();
 
-        return new InterceptionInfo(
+        return new ExtractionResult(new InterceptionInfo(
             InterceptionKind.AddSingletonWithAlias,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -211,7 +258,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
             false
-        );
+        ), null);
     }
 
     private static InterceptionInfo? ExtractOnStart(
@@ -231,7 +278,8 @@ public class InterceptorGenerator : IIncrementalGenerator
             invocation,
             context,
             interceptableLocation,
-            ct);
+            ct,
+            null);
     }
 
     private static InterceptionInfo? ExtractDelegateInterception(
@@ -239,7 +287,8 @@ public class InterceptorGenerator : IIncrementalGenerator
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
         InterceptableLocation interceptableLocation,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? serviceTypeFullName)
     {
         if (invocation.ArgumentList.Arguments.Count != 1)
         {
@@ -268,7 +317,7 @@ public class InterceptorGenerator : IIncrementalGenerator
                 interceptableLocation.GetInterceptsLocationAttributeSyntax(),
                 null,
                 new EquatableArray<string>(ImmutableArray<string>.Empty),
-                null,
+                serviceTypeFullName,
                 delegateTypeStr,
                 new EquatableArray<string>(paramTypes),
                 returnsVoid
@@ -323,7 +372,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
-            null,
+            serviceTypeFullName,
             methodDelegateTypeStr,
             new EquatableArray<string>(methodParamTypes),
             methodReturnsVoid
@@ -351,6 +400,17 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         // Multiple constructors — don't intercept, let runtime throw
         return null;
+    }
+
+    private static DiagnosticInfo CreateDiagnostic(InvocationExpressionSyntax invocation, string id, string message)
+    {
+        FileLinePositionSpan span = invocation.SyntaxTree.GetLineSpan(invocation.Span);
+        return new DiagnosticInfo(
+            id,
+            message,
+            span.Path,
+            span.StartLinePosition.Line,
+            span.StartLinePosition.Character);
     }
 
     private static string GenerateInterceptors(ImmutableArray<InterceptionInfo> interceptions)
@@ -410,7 +470,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
-        sb.Append($"            collection.AddSingletonGenerated<T>(static sp => new {info.ImplementationTypeFullName}(");
+        sb.Append($"            collection.AddSingleton<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
         for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
         {
@@ -433,7 +493,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            where TService : class");
         sb.AppendLine($"            where TImplementation : class, TService");
         sb.AppendLine($"        {{");
-        sb.Append($"            collection.AddSingletonGenerated<{info.ServiceTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+        sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
         for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
         {
@@ -457,7 +517,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            where T : class");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
-        sb.Append($"            collection.AddSingletonGenerated<T>(sp => (object)typedFactory(");
+        sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(sp => typedFactory(");
 
         for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
         {
@@ -480,7 +540,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            global::System.Delegate action)");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            {info.DelegateTypeFullName} typedAction = ({info.DelegateTypeFullName})action;");
-        sb.AppendLine($"            collection.OnStartGenerated(sp => typedAction(");
+        sb.AppendLine($"            collection.OnStart(sp => typedAction(");
 
         for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
         {
