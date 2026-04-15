@@ -258,7 +258,7 @@ public class ServiceCollection
 
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
                 object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
-                source ??= parent?.TryGetService(descriptor.AliasSource!);
+                source ??= parent?.GetService(descriptor.AliasSource!);
 
                 if (source == null)
                 {
@@ -300,7 +300,7 @@ public class ServiceCollection
             {
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
                 object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
-                return source ?? parent?.TryGetService(descriptor.AliasSource!);
+                return source ?? parent?.GetService(descriptor.AliasSource!);
             }
 
             default:
@@ -335,7 +335,7 @@ public class ServiceCollection
             }
         }
 
-        service = parent?.TryGetService(type);
+        service = parent?.GetService(type);
         if (service != null)
         {
             return service;
@@ -370,7 +370,7 @@ public class ServiceCollection
             }
         }
 
-        return parent?.TryGetService(type);
+        return parent?.GetService(type);
     }
 
     private object[] ResolveServiceCollectionByType(
@@ -430,7 +430,7 @@ public class ServiceCollection
 
                     int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
                     object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
-                    source ??= parent?.TryGetService(descriptor.AliasSource!);
+                    source ??= parent?.GetService(descriptor.AliasSource!);
                     if (source != null)
                     {
                         instances.Add(source);

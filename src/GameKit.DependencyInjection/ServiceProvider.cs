@@ -57,7 +57,7 @@ public class ServiceProvider : IDisposable
         _services[id] = service;
     }
 
-    public T GetService<T>() where T : class
+    public T GetRequiredService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
@@ -77,7 +77,7 @@ public class ServiceProvider : IDisposable
 
         if (_parent != null)
         {
-            return _parent.GetService<T>();
+            return _parent.GetRequiredService<T>();
         }
 
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
@@ -114,7 +114,7 @@ public class ServiceProvider : IDisposable
         return Array.Empty<T>();
     }
 
-    public T? TryGetService<T>() where T : class
+    public T? GetService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
@@ -134,13 +134,13 @@ public class ServiceProvider : IDisposable
 
         if (_parent != null)
         {
-            return _parent.TryGetService<T>();
+            return _parent.GetService<T>();
         }
 
         return null;
     }
 
-    internal object? TryGetService(Type type)
+    internal object? GetService(Type type)
     {
         int id = ServiceTypeId.GetId(type);
 
@@ -155,7 +155,7 @@ public class ServiceProvider : IDisposable
 
         if (_parent != null)
         {
-            return _parent.TryGetService(type);
+            return _parent.GetService(type);
         }
 
         return null;

@@ -67,7 +67,7 @@ public class GetServiceBenchmark
     [Benchmark(Description = "GameKit.DependencyInjection")]
     public Top19 GameKitDI()
     {
-        return _gameKitProvider.GetService<Top19>();
+        return _gameKitProvider.GetRequiredService<Top19>();
     }
 
     [Benchmark(Description = "MEDI", Baseline = true)]
@@ -104,16 +104,16 @@ public class GetServiceManyBenchmark
     {
         // Resolve a mix of services across all tiers to simulate real access patterns
         int hash = 0;
-        hash ^= _gameKitProvider.GetService<Leaf00>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Leaf10>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Chain05>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Chain15>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Fan03>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Fan13>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Diamond05>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Diamond15>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Top05>().GetHashCode();
-        hash ^= _gameKitProvider.GetService<Top19>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Leaf00>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Leaf10>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Chain05>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Chain15>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Fan03>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Fan13>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Diamond05>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Diamond15>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Top05>().GetHashCode();
+        hash ^= _gameKitProvider.GetRequiredService<Top19>().GetHashCode();
         return hash;
     }
 
