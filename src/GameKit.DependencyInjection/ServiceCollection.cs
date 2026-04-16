@@ -108,25 +108,18 @@ public class ServiceCollection
     {
         // Build descriptorMap: last-wins descriptor per type (last element in each group)
         Dictionary<Type, ServiceDescriptor> descriptorMap = new();
-        int maxId = ServiceTypeId<ServiceProvider>.Id;
 
         foreach (KeyValuePair<Type, List<ServiceDescriptor>> entry in _serviceGroups)
         {
             ServiceDescriptor lastDescriptor = entry.Value[entry.Value.Count - 1];
             descriptorMap[entry.Key] = lastDescriptor;
-            int id = ServiceTypeId.GetId(entry.Key);
-            if (id > maxId)
-            {
-                maxId = id;
-            }
         }
 
-        object?[] services = new object?[maxId + 1];
         List<Action<ServiceProvider>> disposeCallbacks = new(_disposeCallbacks);
-        ServiceProvider provider = new ServiceProvider(services, parent, disposeCallbacks);
+        ServiceProvider provider = new ServiceProvider(parent, disposeCallbacks);
 
         // Register ServiceProvider itself
-        services[ServiceTypeId<ServiceProvider>.Id] = provider;
+        provider.SetService(ServiceTypeId<ServiceProvider>.Id, provider);
 
         // Cache of resolved instances keyed by descriptor, for non-last-wins descriptors
         Dictionary<ServiceDescriptor, object> resolvedInstances = new();
@@ -175,7 +168,7 @@ public class ServiceCollection
                 if (i == group.Count - 1)
                 {
                     int slotId = ServiceTypeId.GetId(descriptor.ServiceType);
-                    object? slotInstance = slotId < provider.ServicesLength ? provider.GetServiceByIndex(slotId) : null;
+                    object? slotInstance = provider.GetServiceByIndex(slotId);
                     if (slotInstance != null)
                     {
                         instances.Add(slotInstance);
@@ -205,6 +198,8 @@ public class ServiceCollection
         // Clear build-time resolvers — after build, all singletons are resolved
         provider.SetBuildTimeResolver(null, null, null);
 
+        provider.FreezeServices();
+
         return provider;
     }
 
@@ -217,7 +212,7 @@ public class ServiceCollection
     {
         int id = ServiceTypeId.GetId(descriptor.ServiceType);
 
-        if (id < provider.ServicesLength && provider.GetServiceByIndex(id) != null)
+        if (provider.GetServiceByIndex(id) != null)
         {
             return;
         }
@@ -257,7 +252,7 @@ public class ServiceCollection
                 }
 
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
+                object? source = provider.GetServiceByIndex(sourceId);
                 source ??= parent?.GetService(descriptor.AliasSource!);
 
                 if (source == null)
@@ -299,7 +294,7 @@ public class ServiceCollection
             case ServiceDescriptorKind.Alias:
             {
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
+                object? source = provider.GetServiceByIndex(sourceId);
                 return source ?? parent?.GetService(descriptor.AliasSource!);
             }
 
@@ -318,7 +313,7 @@ public class ServiceCollection
         HashSet<Type> resolving)
     {
         int id = ServiceTypeId.GetId(type);
-        object? service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+        object? service = provider.GetServiceByIndex(id);
 
         if (service != null)
         {
@@ -328,7 +323,7 @@ public class ServiceCollection
         if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
         {
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
-            service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+            service = provider.GetServiceByIndex(id);
             if (service != null)
             {
                 return service;
@@ -353,7 +348,7 @@ public class ServiceCollection
         HashSet<Type> resolving)
     {
         int id = ServiceTypeId.GetId(type);
-        object? service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+        object? service = provider.GetServiceByIndex(id);
 
         if (service != null)
         {
@@ -363,7 +358,7 @@ public class ServiceCollection
         if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
         {
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
-            service = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+            service = provider.GetServiceByIndex(id);
             if (service != null)
             {
                 return service;
@@ -405,7 +400,7 @@ public class ServiceCollection
                     {
                         Resolve(descriptor, provider, parent, descriptorMap, resolving);
                         int id = ServiceTypeId.GetId(descriptor.ServiceType);
-                        object? resolved = id < provider.ServicesLength ? provider.GetServiceByIndex(id) : null;
+                        object? resolved = provider.GetServiceByIndex(id);
                         if (resolved != null)
                         {
                             instances.Add(resolved);
@@ -429,7 +424,7 @@ public class ServiceCollection
                     }
 
                     int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                    object? source = sourceId < provider.ServicesLength ? provider.GetServiceByIndex(sourceId) : null;
+                    object? source = provider.GetServiceByIndex(sourceId);
                     source ??= parent?.GetService(descriptor.AliasSource!);
                     if (source != null)
                     {
