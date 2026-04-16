@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace GameKit.DependencyInjection;
 
+/// <summary>An immutable, singleton-only service container produced by <see cref="ServiceCollection.BuildServiceProvider()"/>.</summary>
 public class ServiceProvider : IDisposable
 {
     // Flat array indexed by service ID (sequential, domain-scoped from ServiceTypeId).
@@ -96,6 +97,10 @@ public class ServiceProvider : IDisposable
         _pending[id] = service;
     }
 
+    /// <summary>Returns the singleton instance registered for <typeparamref name="T"/>, throwing if the type is not registered.</summary>
+    /// <typeparam name="T">The service type to resolve.</typeparam>
+    /// <returns>The registered singleton instance of <typeparamref name="T"/>.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="T"/> is not registered in this provider or any parent provider.</exception>
     public T GetRequiredService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
@@ -132,6 +137,13 @@ public class ServiceProvider : IDisposable
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
     }
 
+    /// <summary>Returns all instances registered under <typeparamref name="T"/> as an <see cref="IReadOnlyList{T}"/>.</summary>
+    /// <typeparam name="T">The service type to resolve.</typeparam>
+    /// <returns>
+    /// A <c>T[]</c> built at <see cref="ServiceCollection.BuildServiceProvider()"/> time and returned directly — no allocation or copy on each call.
+    /// Returns an empty list if no services of type <typeparamref name="T"/> are registered.
+    /// Falls back to the parent provider if one is set.
+    /// </returns>
     public IReadOnlyList<T> GetServices<T>() where T : class
     {
         if (_serviceCollections != null)
@@ -167,6 +179,9 @@ public class ServiceProvider : IDisposable
         return Array.Empty<T>();
     }
 
+    /// <summary>Returns the singleton instance registered for <typeparamref name="T"/>, or <see langword="null"/> if the type is not registered.</summary>
+    /// <typeparam name="T">The service type to resolve.</typeparam>
+    /// <returns>The registered singleton instance of <typeparamref name="T"/>, or <see langword="null"/> if not registered.</returns>
     public T? GetService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
@@ -228,6 +243,8 @@ public class ServiceProvider : IDisposable
         return null;
     }
 
+    /// <summary>Fires <c>OnDispose</c> callbacks, then disposes all <see cref="IDisposable"/> services in reverse creation order.</summary>
+    /// <remarks>Services aliased to multiple types are disposed exactly once — deduplication is done by reference, so aliases do not cause double disposal.</remarks>
     public void Dispose()
     {
         if (_disposed)

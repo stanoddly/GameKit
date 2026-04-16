@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace GameKit.DependencyInjection;
 
+/// <summary>Collects service registrations and builds a <see cref="ServiceProvider"/> with all singletons eagerly resolved.</summary>
 public class ServiceCollection
 {
     private readonly HashSet<Type> _registeredTypes = new();
@@ -10,12 +11,21 @@ public class ServiceCollection
     private readonly List<Action<ServiceProvider>> _onStartActions = new();
     private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
 
+    /// <summary>Registers <typeparamref name="T"/> as a singleton, constructing it via its single public constructor with dependencies resolved from the provider.</summary>
+    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. The type argument must be a named concrete type — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because <typeparamref name="T"/> is a type parameter at the call site.</exception>
     public void AddSingleton<T>() where T : class
     {
         throw new InvalidOperationException(
             $"AddSingleton<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
+    /// <summary>Registers <typeparamref name="TImplementation"/> under the service type <typeparamref name="TService"/>, constructing it via its single public constructor.</summary>
+    /// <typeparam name="TService">The service type (interface or base class) under which the implementation is resolved.</typeparam>
+    /// <typeparam name="TImplementation">The concrete type to construct. Must be a named concrete type at the call site, not a type parameter.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. Both type arguments must be named concrete types — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because either type argument is a type parameter at the call site.</exception>
     public void AddSingleton<TService, TImplementation>()
         where TService : class
         where TImplementation : class, TService
@@ -24,6 +34,9 @@ public class ServiceCollection
             $"AddSingleton<{typeof(TService).Name}, {typeof(TImplementation).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
+    /// <summary>Registers an already-constructed instance as the singleton for <typeparamref name="T"/>.</summary>
+    /// <typeparam name="T">The service type under which the instance is registered.</typeparam>
+    /// <param name="instance">The pre-constructed instance to register.</param>
     public void AddSingleton<T>(T instance) where T : class
     {
         Type type = typeof(T);
@@ -31,12 +44,29 @@ public class ServiceCollection
         RegisterDescriptor(type, descriptor);
     }
 
+    /// <summary>Registers a factory delegate for <typeparamref name="T"/> whose parameters are resolved as services from the provider.</summary>
+    /// <typeparam name="T">The service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
+    /// <param name="factory">A static method group or lambda whose parameter types are all registered services.</param>
+    /// <remarks>This overload is intercepted by the source generator at each call site. The type argument must be a named concrete type — passing a type parameter prevents interception and causes the method to throw at runtime. Use the <see cref="AddSingleton{T}(Func{ServiceProvider,T})"/> overload when <typeparamref name="T"/> is a type parameter.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because <typeparamref name="T"/> is a type parameter at the call site.</exception>
     public void AddSingleton<T>(Delegate factory) where T : class
     {
         throw new InvalidOperationException(
             $"AddSingleton<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
+    /// <summary>Registers a typed factory delegate that receives the <see cref="ServiceProvider"/> directly and returns the singleton instance for <typeparamref name="T"/>.</summary>
+    /// <typeparam name="T">The service type to register.</typeparam>
+    /// <param name="factory">A delegate that receives the <see cref="ServiceProvider"/> and returns the constructed instance.</param>
+    /// <example>
+    /// <code>
+    /// services.AddSingleton&lt;WorldMap&gt;(static sp =&gt;
+    /// {
+    ///     MapLoader loader = sp.GetRequiredService&lt;MapLoader&gt;();
+    ///     return loader.LoadDefault();
+    /// });
+    /// </code>
+    /// </example>
     public void AddSingleton<T>(Func<ServiceProvider, T> factory) where T : class
     {
         Type type = typeof(T);
@@ -44,11 +74,17 @@ public class ServiceCollection
         RegisterDescriptor(type, descriptor);
     }
 
+    /// <summary>Registers a callback that runs after all services are constructed but before the provider is frozen.</summary>
+    /// <param name="action">The callback to invoke with the fully constructed <see cref="ServiceProvider"/>.</param>
     public void OnStart(Action<ServiceProvider> action)
     {
         _onStartActions.Add(action);
     }
 
+    /// <summary>Makes <typeparamref name="TService"/> resolve to the same instance as the already-registered <typeparamref name="TImplementation"/>.</summary>
+    /// <typeparam name="TService">The alias service type (interface or base class) to register.</typeparam>
+    /// <typeparam name="TImplementation">The concrete type whose existing instance will be shared. Must already be registered.</typeparam>
+    /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="TImplementation"/> has not been registered before calling this method.</exception>
     public void AddAlias<TService, TImplementation>()
         where TService : class
         where TImplementation : class, TService
@@ -75,37 +111,56 @@ public class ServiceCollection
         group.Add(descriptor);
     }
 
+    /// <summary>Registers a callback invoked each time any service instance is first created, receiving the raw instance as <see langword="object"/>.</summary>
+    /// <param name="callback">The callback to invoke with each newly created service instance.</param>
     public void OnActivation(Action<object> callback)
     {
         _activationCallbacks.Add(callback);
     }
 
+    /// <summary>Registers a callback whose parameters are resolved as services, invoked after all services are constructed but before the provider is frozen.</summary>
+    /// <param name="action">A delegate whose parameter types are all registered services.</param>
+    /// <remarks>This overload is intercepted by the source generator at each call site. The delegate argument must be resolvable at compile time — otherwise the method throws at runtime.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because the delegate is not resolvable at compile time.</exception>
     public void OnStart(Delegate action)
     {
         throw new InvalidOperationException(
             "OnStart() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
+    /// <summary>Registers a callback invoked at the start of <see cref="ServiceProvider.Dispose"/>, before any service <c>Dispose</c> calls.</summary>
+    /// <param name="callback">The callback to invoke with the <see cref="ServiceProvider"/> being disposed.</param>
     public void OnDispose(Action<ServiceProvider> callback)
     {
         _disposeCallbacks.Add(callback);
     }
 
+    /// <summary>Returns <see langword="true"/> if the specified type has been registered at least once.</summary>
+    /// <param name="type">The service type to check.</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> is registered; otherwise <see langword="false"/>.</returns>
     public bool IsRegistered(Type type)
     {
         return _registeredTypes.Contains(type);
     }
 
+    /// <summary>Returns <see langword="true"/> if <typeparamref name="T"/> has been registered at least once.</summary>
+    /// <typeparam name="T">The service type to check.</typeparam>
+    /// <returns><see langword="true"/> if <typeparamref name="T"/> is registered; otherwise <see langword="false"/>.</returns>
     public bool IsRegistered<T>()
     {
         return _registeredTypes.Contains(typeof(T));
     }
 
+    /// <summary>Resolves all services, fires <c>OnStart</c> callbacks, freezes the provider, and returns it.</summary>
+    /// <returns>The fully constructed and frozen <see cref="ServiceProvider"/>.</returns>
     public ServiceProvider BuildServiceProvider()
     {
         return BuildServiceProvider(null);
     }
 
+    /// <summary>Resolves all services, fires <c>OnStart</c> callbacks, freezes the provider, and returns it; resolution falls back to <paramref name="parent"/> when a type is not registered locally.</summary>
+    /// <param name="parent">An optional parent provider used as a fallback for types not registered in this collection.</param>
+    /// <returns>The fully constructed and frozen <see cref="ServiceProvider"/>.</returns>
     public ServiceProvider BuildServiceProvider(ServiceProvider? parent)
     {
         // Build descriptorMap: last-wins descriptor per type (last element in each group)
