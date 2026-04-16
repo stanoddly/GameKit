@@ -1,8 +1,11 @@
+using System.Collections.Frozen;
+
 namespace GameKit.DependencyInjection;
 
 public class ServiceProvider : IDisposable
 {
-    private object?[] _services;
+    private FrozenDictionary<int, object> _services = FrozenDictionary<int, object>.Empty;
+    private Dictionary<int, object>? _pending;
     private readonly ServiceProvider? _parent;
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
     private Func<Type, object>? _buildTimeResolver;
@@ -13,11 +16,11 @@ public class ServiceProvider : IDisposable
     // Tracks slot indices in the order services were first stored, for reverse-order disposal
     private readonly List<int> _creationOrder = new();
 
-    internal ServiceProvider(object?[] services, ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
+    internal ServiceProvider(ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
-        _services = services;
         _parent = parent;
         _disposeCallbacks = disposeCallbacks;
+        _pending = new Dictionary<int, object>();
     }
 
     internal void SetServiceCollections(Dictionary<Type, object[]> collections)
@@ -32,42 +35,49 @@ public class ServiceProvider : IDisposable
         _buildTimeCollectionResolver = collectionResolver;
     }
 
-    internal int ServicesLength => _services.Length;
-
-    internal object? GetServiceByIndex(int id)
+    internal void FreezeServices()
     {
-        return _services[id];
+        _services = _pending!.ToFrozenDictionary();
+        _pending = null;
+    }
+
+    internal object? GetServiceById(int id)
+    {
+        if (_services.TryGetValue(id, out object? frozen))
+        {
+            return frozen;
+        }
+
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
+        {
+            return pending;
+        }
+
+        return null;
     }
 
     internal void SetService(int id, object service)
     {
-        if (id >= _services.Length)
-        {
-            object?[] resized = new object?[Math.Max(id + 1, _services.Length * 2)];
-            Array.Copy(_services, resized, _services.Length);
-            _services = resized;
-        }
-
-        // Record each slot index the first time it is populated, to support reverse-order disposal
-        if (_services[id] == null)
+        if (!_pending!.ContainsKey(id))
         {
             _creationOrder.Add(id);
         }
 
-        _services[id] = service;
+        _pending[id] = service;
     }
 
     public T GetRequiredService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
-        if (id < _services.Length)
+        if (_services.TryGetValue(id, out object? frozen))
         {
-            object? service = _services[id];
-            if (service != null)
-            {
-                return (T)service;
-            }
+            return (T)frozen;
+        }
+
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
+        {
+            return (T)pending;
         }
 
         if (_buildTimeResolver != null)
@@ -118,13 +128,14 @@ public class ServiceProvider : IDisposable
     {
         int id = ServiceTypeId<T>.Id;
 
-        if (id < _services.Length)
+        if (_services.TryGetValue(id, out object? frozen))
         {
-            object? service = _services[id];
-            if (service != null)
-            {
-                return (T)service;
-            }
+            return (T)frozen;
+        }
+
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
+        {
+            return (T)pending;
         }
 
         if (_buildTimeTryResolver != null)
@@ -144,13 +155,14 @@ public class ServiceProvider : IDisposable
     {
         int id = ServiceTypeId.GetId(type);
 
-        if (id < _services.Length)
+        if (_services.TryGetValue(id, out object? frozen))
         {
-            object? service = _services[id];
-            if (service != null)
-            {
-                return service;
-            }
+            return frozen;
+        }
+
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
+        {
+            return pending;
         }
 
         if (_parent != null)
@@ -179,7 +191,8 @@ public class ServiceProvider : IDisposable
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
         for (int i = _creationOrder.Count - 1; i >= 0; i--)
         {
-            object? service = _services[_creationOrder[i]];
+            object? service = _services.GetValueOrDefault(_creationOrder[i])
+                ?? _pending?.GetValueOrDefault(_creationOrder[i]);
             if (service is IDisposable disposable
                 && !ReferenceEquals(service, this)
                 && alreadyDisposed.Add(service))
