@@ -191,7 +191,8 @@ public class ServiceProvider : IDisposable
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
         for (int i = _creationOrder.Count - 1; i >= 0; i--)
         {
-            object? service = _services.GetValueOrDefault(_creationOrder[i]);
+            object? service = _services.GetValueOrDefault(_creationOrder[i])
+                ?? _pending?.GetValueOrDefault(_creationOrder[i]);
             if (service is IDisposable disposable
                 && !ReferenceEquals(service, this)
                 && alreadyDisposed.Add(service))
