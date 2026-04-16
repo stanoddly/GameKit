@@ -1,8 +1,10 @@
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace GameKit.Common;
 
+// Not thread-safe. Callers must ensure GetId is not invoked concurrently with itself.
+// The generic TypeIdMap<TDomain, T>.Id field caches its result in a static readonly int,
+// so steady-state lookups never touch the dictionary — only first-time ID assignment does.
 public class TypeIdMap<TDomain> where TDomain : TypeIdMap<TDomain>
 {
     protected TypeIdMap() { }
@@ -10,7 +12,6 @@ public class TypeIdMap<TDomain> where TDomain : TypeIdMap<TDomain>
     private static int _nextId;
     private static readonly Dictionary<Type, int> Lookup = new();
 
-    [MethodImpl(MethodImplOptions.Synchronized)]
     public static int GetId(Type type)
     {
         ref int value = ref CollectionsMarshal.GetValueRefOrAddDefault(Lookup, type, out bool exists);
