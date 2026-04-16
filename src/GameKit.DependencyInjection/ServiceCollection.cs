@@ -132,7 +132,6 @@ public class ServiceCollection
             type => TryResolveServiceByType(type, provider, parent, descriptorMap, resolving),
             type => ResolveServiceCollectionByType(type, provider, parent, descriptorMap, resolving));
 
-        // Resolve all last-wins descriptors (their instances go into the services array)
         foreach (KeyValuePair<Type, ServiceDescriptor> entry in descriptorMap)
         {
             Resolve(entry.Value, provider, parent, descriptorMap, resolving);
@@ -164,7 +163,6 @@ public class ServiceCollection
             for (int i = 0; i < group.Count; i++)
             {
                 ServiceDescriptor descriptor = group[i];
-                // Last-wins descriptor: retrieve from services array
                 if (i == group.Count - 1)
                 {
                     int slotId = ServiceTypeId.GetId(descriptor.ServiceType);
