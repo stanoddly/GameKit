@@ -41,7 +41,7 @@ public class ServiceProvider : IDisposable
         _pending = null;
     }
 
-    internal object? GetServiceByIndex(int id)
+    internal object? GetServiceById(int id)
     {
         if (_services.TryGetValue(id, out object? frozen))
         {

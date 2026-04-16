@@ -166,7 +166,7 @@ public class ServiceCollection
                 if (i == group.Count - 1)
                 {
                     int slotId = ServiceTypeId.GetId(descriptor.ServiceType);
-                    object? slotInstance = provider.GetServiceByIndex(slotId);
+                    object? slotInstance = provider.GetServiceById(slotId);
                     if (slotInstance != null)
                     {
                         instances.Add(slotInstance);
@@ -196,6 +196,7 @@ public class ServiceCollection
         // Clear build-time resolvers — after build, all singletons are resolved
         provider.SetBuildTimeResolver(null, null, null);
 
+        // Freeze after OnStart so callbacks can still trigger lazy resolution via SetService.
         provider.FreezeServices();
 
         return provider;
@@ -210,7 +211,7 @@ public class ServiceCollection
     {
         int id = ServiceTypeId.GetId(descriptor.ServiceType);
 
-        if (provider.GetServiceByIndex(id) != null)
+        if (provider.GetServiceById(id) != null)
         {
             return;
         }
@@ -250,7 +251,7 @@ public class ServiceCollection
                 }
 
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                object? source = provider.GetServiceByIndex(sourceId);
+                object? source = provider.GetServiceById(sourceId);
                 source ??= parent?.GetService(descriptor.AliasSource!);
 
                 if (source == null)
@@ -292,7 +293,7 @@ public class ServiceCollection
             case ServiceDescriptorKind.Alias:
             {
                 int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                object? source = provider.GetServiceByIndex(sourceId);
+                object? source = provider.GetServiceById(sourceId);
                 return source ?? parent?.GetService(descriptor.AliasSource!);
             }
 
@@ -311,7 +312,7 @@ public class ServiceCollection
         HashSet<Type> resolving)
     {
         int id = ServiceTypeId.GetId(type);
-        object? service = provider.GetServiceByIndex(id);
+        object? service = provider.GetServiceById(id);
 
         if (service != null)
         {
@@ -321,7 +322,7 @@ public class ServiceCollection
         if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
         {
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
-            service = provider.GetServiceByIndex(id);
+            service = provider.GetServiceById(id);
             if (service != null)
             {
                 return service;
@@ -346,7 +347,7 @@ public class ServiceCollection
         HashSet<Type> resolving)
     {
         int id = ServiceTypeId.GetId(type);
-        object? service = provider.GetServiceByIndex(id);
+        object? service = provider.GetServiceById(id);
 
         if (service != null)
         {
@@ -356,7 +357,7 @@ public class ServiceCollection
         if (descriptorMap.TryGetValue(type, out ServiceDescriptor? descriptor))
         {
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
-            service = provider.GetServiceByIndex(id);
+            service = provider.GetServiceById(id);
             if (service != null)
             {
                 return service;
@@ -398,7 +399,7 @@ public class ServiceCollection
                     {
                         Resolve(descriptor, provider, parent, descriptorMap, resolving);
                         int id = ServiceTypeId.GetId(descriptor.ServiceType);
-                        object? resolved = provider.GetServiceByIndex(id);
+                        object? resolved = provider.GetServiceById(id);
                         if (resolved != null)
                         {
                             instances.Add(resolved);
@@ -422,7 +423,7 @@ public class ServiceCollection
                     }
 
                     int sourceId = ServiceTypeId.GetId(descriptor.AliasSource!);
-                    object? source = provider.GetServiceByIndex(sourceId);
+                    object? source = provider.GetServiceById(sourceId);
                     source ??= parent?.GetService(descriptor.AliasSource!);
                     if (source != null)
                     {
