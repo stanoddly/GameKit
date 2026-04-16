@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- `docs/class-registration.md` - DI container registration patterns
+- `docs/class-registration.md` - ServiceCollection/ServiceProvider API: registration overloads, source generator requirements, lifecycle, aliases, multi-registration
 - `docs/static-factory-methods.md` - Static Create() method pattern
 - `docs/componentize.md` - GameKit.Componentize setup and usage
 - `docs/components.md` - GameWorld, GameObject, GameComponent lifecycle, Services<T>, UpdateSystem
