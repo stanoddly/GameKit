@@ -363,6 +363,38 @@ public class ServiceCollectionTests
         Assert.That(services, Has.Count.EqualTo(2));
     }
 
+    // GetServices<T>() returns a cached T[] directly (see ServiceProvider._serviceCollections).
+    // These two tests lock in the zero-alloc invariant — regression would silently re-allocate.
+
+    [Test]
+    public void GetServices_ReturnsSameInstanceAcrossCalls()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<IMyService> first = provider.GetServices<IMyService>();
+        IReadOnlyList<IMyService> second = provider.GetServices<IMyService>();
+
+        Assert.That(second, Is.SameAs(first));
+    }
+
+    [Test]
+    public void GetServices_ReturnsRuntimeTypedArray()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IReadOnlyList<IMyService> services = provider.GetServices<IMyService>();
+
+        // Runtime type must be IMyService[] so Unsafe.As<T[]> is sound, not object[]
+        Assert.That(services.GetType(), Is.EqualTo(typeof(IMyService[])));
+    }
+
     [Test]
     public void GetServices_FactoryCalledOncePerRegistration()
     {

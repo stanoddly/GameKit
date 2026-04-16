@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace GameKit.DependencyInjection;
 
 public class ServiceCollection
@@ -154,7 +156,8 @@ public class ServiceCollection
         }
 
         // Build service collections for GetServices<T>() from pre-resolved instances
-        Dictionary<Type, object[]> serviceCollections = new();
+        // Keyed by ServiceTypeId.GetId(type); values are T[] arrays created via Array.CreateInstance
+        Dictionary<int, Array> serviceCollections = new();
         foreach (KeyValuePair<Type, List<ServiceDescriptor>> entry in _serviceGroups)
         {
             List<ServiceDescriptor> group = entry.Value;
@@ -182,7 +185,21 @@ public class ServiceCollection
                 }
             }
 
-            serviceCollections[entry.Key] = instances.ToArray();
+            // Array.CreateInstance(T, n) produces a real T[] at runtime. Populating via an
+            // object[] view avoids Array.SetValue's reflection path; covariance store-checks
+            // still apply but all instances are guaranteed to be T. The reason this is stored
+            // as Array and not object[] is so ServiceProvider.GetServices<T>() can return it
+            // directly via Unsafe.As<T[]> with zero allocation. If this is ever "simplified"
+            // to object[] storage, GetServices<T> must allocate + copy on every call.
+            Array arr = Array.CreateInstance(entry.Key, instances.Count);
+            object[] arrAsObjects = Unsafe.As<object[]>(arr);
+            for (int i = 0; i < instances.Count; i++)
+            {
+                arrAsObjects[i] = instances[i];
+            }
+
+            int collectionId = ServiceTypeId.GetId(entry.Key);
+            serviceCollections[collectionId] = arr;
         }
 
         provider.SetServiceCollections(serviceCollections);
