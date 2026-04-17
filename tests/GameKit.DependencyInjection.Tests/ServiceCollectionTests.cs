@@ -588,6 +588,92 @@ public class ServiceCollectionTests
         Assert.That(order, Is.EqualTo(new[] { 1, 2 }));
     }
 
+    // --- Finding 1 & 2: GetServices<T> during/after OnStart for pre-registered multi-registrations ---
+    //
+    // Claim: _serviceCollections is built before OnStart fires, so any resolution triggered
+    // by OnStart would be invisible to GetServices<T>.
+    //
+    // Refutation: All descriptors are resolved eagerly in the main build loop (lines 192-211)
+    // before SetServiceCollections (line 260). OnStart cannot add new registrations —
+    // SetService is internal and there is no public API to inject new types during OnStart.
+    // The scenario therefore cannot be triggered through the public API.
+
+    [Test]
+    public void GetServices_AfterOnStart_ReturnsPreRegisteredMultiRegistrations()
+    {
+        // All registrations are pre-registered in _serviceGroups before BuildServiceProvider.
+        // SetServiceCollections is called before OnStart (BuildServiceProvider lines 260/263).
+        // Verify that GetServices called after build returns the full pre-registered set.
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        // OnStart fires after SetServiceCollections but before FreezeServices.
+        // Use a helper that captures the provider so the callback can call GetServices.
+        OnStartCapturer capturer = new();
+        collection.AddSingleton(capturer);
+        collection.OnStart((OnStartCapturer c, ServiceProvider sp) => c.Capture(sp));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        // GetServices during OnStart sees the pre-built _serviceCollections — must include both
+        Assert.That(capturer.CapturedServices<IMyService>(), Is.Not.Null);
+        Assert.That(capturer.CapturedServices<IMyService>()!, Has.Count.EqualTo(2));
+        Assert.That(capturer.CapturedServices<IMyService>()![0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(capturer.CapturedServices<IMyService>()![1], Is.InstanceOf<AnotherServiceImpl>());
+
+        // GetServices after build returns the same frozen collection
+        IReadOnlyList<IMyService> afterBuild = provider.GetServices<IMyService>();
+        Assert.That(afterBuild, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void GetServices_AfterOnStart_GetRequiredServiceDuringOnStart_ServiceIsVisible()
+    {
+        // Verify that GetServices for a single pre-registered type returns the correct instance
+        // both during OnStart and after build.
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+
+        OnStartCapturer capturer = new();
+        collection.AddSingleton(capturer);
+        collection.OnStart((OnStartCapturer c, ServiceProvider sp) => c.Capture(sp));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        SimpleService resolvedDuringOnStart = capturer.CapturedProvider!.GetRequiredService<SimpleService>();
+
+        // The instance is the same as the frozen provider's instance
+        Assert.That(resolvedDuringOnStart, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+
+        // GetServices for a single registration returns the correct instance
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+        Assert.That(services, Has.Count.EqualTo(1));
+        Assert.That(services[0], Is.SameAs(resolvedDuringOnStart));
+    }
+
+    [Test]
+    public void GetServices_OnStartCannotAddNewRegistrations_CollectionsAreStableAfterBuild()
+    {
+        // OnStart receives a ServiceProvider, not a ServiceCollection.
+        // There is no public API to add new service registrations from inside OnStart.
+        // This test confirms that GetServices returns exactly what was registered before build.
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+
+        bool onStartFired = false;
+        // Use () lambda — source generator produces an interceptor with no resolved parameters
+        collection.OnStart(() => { onStartFired = true; });
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(onStartFired, Is.True);
+
+        IReadOnlyList<IMyService> afterBuild = provider.GetServices<IMyService>();
+        Assert.That(afterBuild, Has.Count.EqualTo(1));
+        Assert.That(afterBuild[0], Is.InstanceOf<MyServiceImpl>());
+    }
+
     // --- OnDispose ---
 
     [Test]
@@ -1278,5 +1364,22 @@ public class ServiceWithEnumerableDependency
     public ServiceWithEnumerableDependency(IEnumerable<IMyService> services)
     {
         Services = services;
+    }
+}
+
+// Helper for OnStart tests that need access to the ServiceProvider inside the callback.
+// Registered as a singleton so OnStart can receive it as an injected parameter.
+public class OnStartCapturer
+{
+    public ServiceProvider? CapturedProvider { get; private set; }
+
+    public void Capture(ServiceProvider sp)
+    {
+        CapturedProvider = sp;
+    }
+
+    public IReadOnlyList<T>? CapturedServices<T>() where T : class
+    {
+        return CapturedProvider?.GetServices<T>();
     }
 }

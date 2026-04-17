@@ -257,9 +257,12 @@ public class ServiceCollection
             serviceCollections[collectionId] = arr;
         }
 
+        // Invariant: by this point every descriptor has been eagerly resolved into _pending
+        // above, so serviceCollections is complete for every registered type. OnStart callbacks
+        // below can only read through the public ServiceProvider API — there is no supported
+        // path to add a new registration during OnStart, so freezing collections here is safe.
         provider.SetServiceCollections(serviceCollections);
 
-        // Fire OnStart callbacks
         foreach (Action<ServiceProvider> action in _onStartActions)
         {
             action(provider);
@@ -268,7 +271,9 @@ public class ServiceCollection
         // Clear build-time resolvers — after build, all singletons are resolved
         provider.SetBuildTimeResolver(null, null, null);
 
-        // Freeze after OnStart so callbacks can still trigger lazy resolution via SetService.
+        // FreezeServices snapshots _pending into the flat _services array for O(1) lookup.
+        // Ordering relative to OnStart is not load-bearing (OnStart only reads), but freezing
+        // last keeps the build-time and runtime resolution paths consistent for callbacks.
         provider.FreezeServices();
 
         return provider;
