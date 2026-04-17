@@ -1,3 +1,5 @@
+using GameKit.DependencyInjection;
+
 namespace GameKit.Componentize.Tests;
 
 public class SiblingCapturingComponent : GameComponent
@@ -45,7 +47,7 @@ public class GameObjectBuilderTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld();
+        _world = new GameWorld(ServiceProvider.Empty);
     }
 
     [Test]

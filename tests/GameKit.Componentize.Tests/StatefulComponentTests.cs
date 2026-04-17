@@ -1,3 +1,5 @@
+using GameKit.DependencyInjection;
+
 namespace GameKit.Componentize.Tests;
 
 public class TestStatefulComponent : StatefulComponent<TestStatefulComponent, TestStatefulComponent.TestState>
@@ -39,7 +41,7 @@ public class StatefulComponentTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld();
+        _world = new GameWorld(ServiceProvider.Empty);
         _gameObject = _world.CreateGameObject();
     }
 
