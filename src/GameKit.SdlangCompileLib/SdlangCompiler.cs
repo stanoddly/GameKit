@@ -137,7 +137,7 @@ public class SdlangCompiler
         List<string> args = new List<string>
         {
             filePath.FullName,
-            "-warnings-disable", "39001,39013",
+            "-warnings-disable", "39001,39013,39029",
             "-reflection-json", reflectionFile.FullName
         };
 
