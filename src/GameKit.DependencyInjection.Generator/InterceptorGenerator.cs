@@ -620,7 +620,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             {
                 sb.Append(", ");
             }
-            sb.Append($"sp.GetRequiredService<{info.DelegateParameterTypes[j]}>()");
+            sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
         }
 
         sb.AppendLine("));");
@@ -643,7 +643,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             {
                 sb.Append(", ");
             }
-            sb.Append($"sp.GetRequiredService<{info.DelegateParameterTypes[j]}>()");
+            sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
         }
 
         sb.AppendLine("));");
