@@ -588,6 +588,67 @@ public class ServiceCollectionTests
         Assert.That(order, Is.EqualTo(new[] { 1, 2 }));
     }
 
+    [Test]
+    public void GetServices_DuringOnStart_ReturnsAllMultiRegistrations()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<IMyService, AnotherServiceImpl>();
+
+        OnStartCapturer capturer = new();
+        collection.AddSingleton(capturer);
+        collection.OnStart((OnStartCapturer c, ServiceProvider sp) => c.Capture(sp));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(capturer.CapturedServices<IMyService>(), Is.Not.Null);
+        Assert.That(capturer.CapturedServices<IMyService>()!, Has.Count.EqualTo(2));
+        Assert.That(capturer.CapturedServices<IMyService>()![0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(capturer.CapturedServices<IMyService>()![1], Is.InstanceOf<AnotherServiceImpl>());
+
+        IReadOnlyList<IMyService> afterBuild = provider.GetServices<IMyService>();
+        Assert.That(afterBuild, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void GetRequiredService_DuringOnStart_ReturnsSameInstanceAsAfterBuild()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+
+        OnStartCapturer capturer = new();
+        collection.AddSingleton(capturer);
+        collection.OnStart((OnStartCapturer c, ServiceProvider sp) => c.Capture(sp));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        SimpleService resolvedDuringOnStart = capturer.CapturedProvider!.GetRequiredService<SimpleService>();
+
+        Assert.That(resolvedDuringOnStart, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+        Assert.That(services, Has.Count.EqualTo(1));
+        Assert.That(services[0], Is.SameAs(resolvedDuringOnStart));
+    }
+
+    [Test]
+    public void GetServices_AfterOnStart_ReturnsExactlyPreRegisteredSet()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+
+        bool onStartFired = false;
+        collection.OnStart(() => { onStartFired = true; });
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(onStartFired, Is.True);
+
+        IReadOnlyList<IMyService> afterBuild = provider.GetServices<IMyService>();
+        Assert.That(afterBuild, Has.Count.EqualTo(1));
+        Assert.That(afterBuild[0], Is.InstanceOf<MyServiceImpl>());
+    }
+
     // --- OnDispose ---
 
     [Test]
@@ -1278,5 +1339,22 @@ public class ServiceWithEnumerableDependency
     public ServiceWithEnumerableDependency(IEnumerable<IMyService> services)
     {
         Services = services;
+    }
+}
+
+// Helper for OnStart tests that need access to the ServiceProvider inside the callback.
+// Registered as a singleton so OnStart can receive it as an injected parameter.
+public class OnStartCapturer
+{
+    public ServiceProvider? CapturedProvider { get; private set; }
+
+    public void Capture(ServiceProvider sp)
+    {
+        CapturedProvider = sp;
+    }
+
+    public IReadOnlyList<T>? CapturedServices<T>() where T : class
+    {
+        return CapturedProvider?.GetServices<T>();
     }
 }
