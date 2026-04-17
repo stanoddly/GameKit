@@ -468,7 +468,7 @@ public class SdlangCompiler
         try
         {
             string json = File.ReadAllText(metadataFile.FullName);
-            ShaderMetadataDto? metadata = JsonSerializer.Deserialize<ShaderMetadataDto>(json);
+            ShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
 
             if (metadata?.SourceHash == null) return false;
 
