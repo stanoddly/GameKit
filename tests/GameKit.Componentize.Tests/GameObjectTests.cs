@@ -1,3 +1,5 @@
+using GameKit.DependencyInjection;
+
 namespace GameKit.Componentize.Tests;
 
 public class TestComponent : GameComponent
@@ -46,7 +48,7 @@ public class GameObjectTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld();
+        _world = new GameWorld(ServiceProvider.Empty);
         _gameObject = _world.CreateGameObject();
     }
 

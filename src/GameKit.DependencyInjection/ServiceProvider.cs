@@ -25,11 +25,20 @@ public class ServiceProvider : IDisposable
     // Tracks slot indices in the order services were first stored, for reverse-order disposal
     private readonly List<int> _creationOrder = new();
 
+    public static ServiceProvider Empty { get; } = CreateEmpty();
+
     internal ServiceProvider(ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
     {
         _parent = parent;
         _disposeCallbacks = disposeCallbacks;
         _pending = new Dictionary<int, object>();
+    }
+
+    private static ServiceProvider CreateEmpty()
+    {
+        ServiceProvider provider = new ServiceProvider(null, new List<Action<ServiceProvider>>());
+        provider.FreezeServices();
+        return provider;
     }
 
     internal void SetServiceCollections(Dictionary<int, Array> collections)
