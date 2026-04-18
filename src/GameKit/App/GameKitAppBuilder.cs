@@ -70,11 +70,11 @@ public class GameKitAppBuilder : ServiceCollection
 
     public IGameKitApp Build()
     {
-        if (!IsRegistered(typeof(GameKitConfig)))
+        if (!IsRegistered<GameKitConfig>())
         {
             AddSingleton(new GameKitConfig());
         }
-        if (!IsRegistered(typeof(AppConfig)))
+        if (!IsRegistered<AppConfig>())
         {
             AddSingleton(new AppConfig());
         }
@@ -124,7 +124,7 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
 
-        if (!IsRegistered(typeof(IContentLoader<Image>)))
+        if (!IsRegistered<IContentLoader<Image>>())
         {
             AddSingleton<IContentLoader<Image>, SdlImageLoader>();
         }

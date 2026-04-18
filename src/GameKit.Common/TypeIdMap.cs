@@ -1,27 +1,22 @@
-using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
 
 namespace GameKit.Common;
 
-// Not thread-safe. Callers must ensure GetId is not invoked concurrently with itself.
-// The generic TypeIdMap<TDomain, T>.Id field caches its result in a static readonly int,
-// so steady-state lookups never touch the dictionary — only first-time ID assignment does.
+// Lazy<int> defers the Interlocked.Increment until after GetOrAdd picks a winner, so
+// racing factory calls only allocate throwaway Lazy wrappers — the counter advances
+// exactly once per type and IDs stay contiguous.
 public class TypeIdMap<TDomain> where TDomain : TypeIdMap<TDomain>
 {
     protected TypeIdMap() { }
 
     private static int _nextId;
-    private static readonly Dictionary<Type, int> Lookup = new();
+    private static readonly ConcurrentDictionary<Type, Lazy<int>> Lookup = new();
+    private static readonly Func<Type, Lazy<int>> LazyFactory =
+        static _ => new Lazy<int>(static () => Interlocked.Increment(ref _nextId) - 1);
 
     public static int GetId(Type type)
     {
-        ref int value = ref CollectionsMarshal.GetValueRefOrAddDefault(Lookup, type, out bool exists);
-
-        if (!exists)
-        {
-            value = _nextId++;
-        }
-
-        return value;
+        return Lookup.GetOrAdd(type, LazyFactory).Value;
     }
 }
 
