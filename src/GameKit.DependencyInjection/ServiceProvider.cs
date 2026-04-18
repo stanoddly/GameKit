@@ -13,9 +13,9 @@ public class ServiceProvider : IDisposable
     private Dictionary<int, object>? _pending;
     private readonly ServiceProvider? _parent;
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
-    private Func<Type, object>? _buildTimeResolver;
-    private Func<Type, object?>? _buildTimeTryResolver;
-    private Func<Type, object[]>? _buildTimeCollectionResolver;
+    private Func<int, object>? _buildTimeResolver;
+    private Func<int, object?>? _buildTimeTryResolver;
+    private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
     // Values are real T[] instances built via Array.CreateInstance (see ServiceCollection).
     // GetServices<T>() recovers the typed array via Unsafe.As<T[]> and returns it directly
@@ -46,7 +46,7 @@ public class ServiceProvider : IDisposable
         _serviceCollections = collections;
     }
 
-    internal void SetBuildTimeResolver(Func<Type, object>? resolver, Func<Type, object?>? tryResolver, Func<Type, object[]>? collectionResolver)
+    internal void SetBuildTimeResolver(Func<int, object>? resolver, Func<int, object?>? tryResolver, Func<int, object[]>? collectionResolver)
     {
         _buildTimeResolver = resolver;
         _buildTimeTryResolver = tryResolver;
@@ -96,6 +96,18 @@ public class ServiceProvider : IDisposable
         return null;
     }
 
+    // Walks the parent chain when an id isn't found locally — used for alias source
+    // resolution against a parent provider during BuildServiceProvider.
+    internal object? GetServiceByIdInChain(int id)
+    {
+        object? service = GetServiceById(id);
+        if (service != null)
+        {
+            return service;
+        }
+        return _parent?.GetServiceByIdInChain(id);
+    }
+
     internal void SetService(int id, object service)
     {
         if (!_pending!.ContainsKey(id))
@@ -135,7 +147,7 @@ public class ServiceProvider : IDisposable
 
         if (_buildTimeResolver != null)
         {
-            return (T)_buildTimeResolver(typeof(T));
+            return (T)_buildTimeResolver(id);
         }
 
         if (_parent != null)
@@ -171,7 +183,7 @@ public class ServiceProvider : IDisposable
 
         if (_buildTimeCollectionResolver != null)
         {
-            object[] resolved = _buildTimeCollectionResolver(typeof(T));
+            object[] resolved = _buildTimeCollectionResolver(ServiceTypeId<T>.Id);
             T[] typed = new T[resolved.Length];
             for (int i = 0; i < resolved.Length; i++)
             {
@@ -214,39 +226,12 @@ public class ServiceProvider : IDisposable
 
         if (_buildTimeTryResolver != null)
         {
-            return (T?)_buildTimeTryResolver(typeof(T));
+            return (T?)_buildTimeTryResolver(id);
         }
 
         if (_parent != null)
         {
             return _parent.GetService<T>();
-        }
-
-        return null;
-    }
-
-    internal object? GetService(Type type)
-    {
-        int id = ServiceTypeId.GetId(type);
-
-        object?[]? services = _services;
-        if (services != null)
-        {
-            if (id < services.Length)
-            {
-                return services[id];
-            }
-            return null;
-        }
-
-        if (_pending != null && _pending.TryGetValue(id, out object? pending))
-        {
-            return pending;
-        }
-
-        if (_parent != null)
-        {
-            return _parent.GetService(type);
         }
 
         return null;

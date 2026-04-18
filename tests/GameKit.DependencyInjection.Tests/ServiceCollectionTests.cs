@@ -481,7 +481,6 @@ public class ServiceCollectionTests
         collection.AddSingleton<SimpleService>();
 
         Assert.That(collection.IsRegistered<SimpleService>(), Is.True);
-        Assert.That(collection.IsRegistered(typeof(SimpleService)), Is.True);
     }
 
     [Test]
