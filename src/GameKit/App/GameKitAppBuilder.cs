@@ -122,6 +122,7 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<VirtualFileSystem>(() => _fileSystemBuilder.Create());
 
         AddSingleton<UpdateSystem>();
+        AddAlias<ITickRegistrar, UpdateSystem>();
         AddSingleton<TimerSystem>();
 
         if (!IsRegistered<IContentLoader<Image>>())

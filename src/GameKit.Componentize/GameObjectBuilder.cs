@@ -43,7 +43,7 @@ public class GameObjectBuilder
         {
             component.InternalOwner = gameObject;
             component.OnAttach();
-            _world.NotifyComponentAttached(gameObject, component);
+            component.NotifyAttached();
         }
 
         foreach (GameComponent component in components)
