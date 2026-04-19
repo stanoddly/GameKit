@@ -132,100 +132,100 @@ public class GameWorldTests
     }
 
     [Test]
-    public void Resolve_ExposedComponent_ReturnsComponent()
+    public void Get_AddedComponent_Returns()
     {
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.Expose<TestComponent>(component);
+        _world.GlobalComponents.Add<TestComponent>(component);
 
-        TestComponent resolved = _world.Resolve<TestComponent>();
+        TestComponent resolved = _world.GlobalComponents.Get<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(component));
     }
 
     [Test]
-    public void TryResolve_ExposedComponent_ReturnsComponent()
+    public void TryGet_AddedComponent_Returns()
     {
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.Expose<TestComponent>(component);
+        _world.GlobalComponents.Add<TestComponent>(component);
 
-        TestComponent? resolved = _world.TryResolve<TestComponent>();
+        TestComponent? resolved = _world.GlobalComponents.TryGet<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(component));
     }
 
     [Test]
-    public void TryResolve_NothingExposed_ReturnsNull()
+    public void TryGet_NothingAdded_ReturnsNull()
     {
-        TestComponent? resolved = _world.TryResolve<TestComponent>();
+        TestComponent? resolved = _world.GlobalComponents.TryGet<TestComponent>();
 
         Assert.That(resolved, Is.Null);
     }
 
     [Test]
-    public void Resolve_NothingExposed_Throws()
+    public void Get_NothingAdded_Throws()
     {
-        Assert.Throws<InvalidOperationException>(() => _world.Resolve<TestComponent>());
+        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Get<TestComponent>());
     }
 
     [Test]
-    public void Expose_DuplicateType_Throws()
+    public void Add_DuplicateType_Throws()
     {
         GameObject gameObject = _world.CreateGameObject();
         TestComponent first = new TestComponent();
         TestComponent second = new TestComponent();
         gameObject.Attach(first);
         gameObject.Attach(second);
-        _world.Expose<TestComponent>(first);
+        _world.GlobalComponents.Add<TestComponent>(first);
 
-        Assert.Throws<InvalidOperationException>(() => _world.Expose<TestComponent>(second));
+        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Add<TestComponent>(second));
     }
 
     [Test]
-    public void Revoke_ExposedComponent_RemovesFromResolution()
+    public void Remove_AddedComponent_RemovesFromRegistry()
     {
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.Expose<TestComponent>(component);
-        _world.Revoke<TestComponent>(component);
+        _world.GlobalComponents.Add<TestComponent>(component);
+        _world.GlobalComponents.Remove<TestComponent>(component);
 
-        Assert.That(_world.TryResolve<TestComponent>(), Is.Null);
+        Assert.That(_world.GlobalComponents.TryGet<TestComponent>(), Is.Null);
     }
 
     [Test]
-    public void Revoke_WrongComponent_Throws()
+    public void Remove_WrongComponent_Throws()
     {
         GameObject gameObject = _world.CreateGameObject();
-        TestComponent exposed = new TestComponent();
+        TestComponent registered = new TestComponent();
         TestComponent other = new TestComponent();
-        gameObject.Attach(exposed);
+        gameObject.Attach(registered);
         gameObject.Attach(other);
-        _world.Expose<TestComponent>(exposed);
+        _world.GlobalComponents.Add<TestComponent>(registered);
 
-        Assert.Throws<InvalidOperationException>(() => _world.Revoke<TestComponent>(other));
+        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Remove<TestComponent>(other));
     }
 
     [Test]
-    public void Revoke_NothingExposed_Throws()
+    public void Remove_NothingAdded_Throws()
     {
         TestComponent component = new TestComponent();
 
-        Assert.Throws<InvalidOperationException>(() => _world.Revoke<TestComponent>(component));
+        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Remove<TestComponent>(component));
     }
 
     [Test]
-    public void Expose_DerivedAsBase_ResolvesAsBase()
+    public void Add_DerivedAsBase_GetReturnsAsBase()
     {
         GameObject gameObject = _world.CreateGameObject();
         DerivedTestComponent derived = new DerivedTestComponent();
         gameObject.Attach(derived);
-        _world.Expose<TestComponent>(derived);
+        _world.GlobalComponents.Add<TestComponent>(derived);
 
-        TestComponent resolved = _world.Resolve<TestComponent>();
+        TestComponent resolved = _world.GlobalComponents.Get<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(derived));
     }
