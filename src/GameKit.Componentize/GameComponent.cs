@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize;
 
@@ -17,7 +16,13 @@ public abstract class GameComponent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetRequiredService<T>() where T : class
     {
-        return World.ServiceProvider.GetRequiredService<T>();
+        return Owner.GetRequiredService<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? GetService<T>() where T : class
+    {
+        return Owner.GetService<T>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

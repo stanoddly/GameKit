@@ -48,7 +48,11 @@ public class GameObjectTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld(ServiceProvider.Empty);
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton<GlobalComponentRegistry>(_ => new GlobalComponentRegistry());
+        services.AddSingleton<GameWorld>(sp => new GameWorld(sp));
+        ServiceProvider provider = services.BuildServiceProvider();
+        _world = provider.GetRequiredService<GameWorld>();
         _gameObject = _world.CreateGameObject();
     }
 
@@ -383,13 +387,7 @@ public class GameObjectTests
         Assert.DoesNotThrow(() => _gameObject.DetachAll());
     }
 
-    [Test]
-    public void World_AfterRemove_Throws()
-    {
-        _world.RemoveGameObject(_gameObject);
 
-        Assert.Throws<InvalidOperationException>(() => { GameWorld w = _gameObject.World; });
-    }
 
     [Test]
     public void Attach_CallsOnReady()

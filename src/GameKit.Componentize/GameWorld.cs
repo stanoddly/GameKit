@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using GameKit.Collections;
 using GameKit.DependencyInjection;
 
@@ -8,7 +7,6 @@ public class GameWorld
 {
     private readonly ServiceProvider _serviceProvider;
     private DenseSlotMap<Handle<GameObject>, GameObject> _gameObjects = new();
-    private Dictionary<Type, GameComponent>? _exposed;
 
     public GameWorld(ServiceProvider serviceProvider)
     {
@@ -19,7 +17,7 @@ public class GameWorld
 
     public GameObject CreateGameObject()
     {
-        GameObject gameObject = new GameObject(this);
+        GameObject gameObject = new GameObject(_serviceProvider);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);
         gameObject.Handle = handle;
         return gameObject;
@@ -27,7 +25,7 @@ public class GameWorld
 
     internal GameObject CreateGameObject(List<GameComponent> components)
     {
-        GameObject gameObject = new GameObject(this, components);
+        GameObject gameObject = new GameObject(_serviceProvider, components);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);
         gameObject.Handle = handle;
         return gameObject;
@@ -64,46 +62,6 @@ public class GameWorld
     public void RemoveGameObject(GameObject gameObject)
     {
         RemoveGameObject(gameObject.Handle);
-    }
-
-    public void Expose<T>(T component) where T : GameComponent
-    {
-        _exposed ??= new();
-
-        if (!_exposed.TryAdd(typeof(T), component))
-        {
-            throw new InvalidOperationException($"A component of type {typeof(T).Name} is already exposed.");
-        }
-    }
-
-    public void Revoke<T>(T component) where T : GameComponent
-    {
-        if (_exposed == null || !_exposed.TryGetValue(typeof(T), out GameComponent? existing) || existing != component)
-        {
-            throw new InvalidOperationException($"Component is not exposed as {typeof(T).Name}.");
-        }
-
-        _exposed.Remove(typeof(T));
-    }
-
-    public T Resolve<T>() where T : GameComponent
-    {
-        if (_exposed != null && _exposed.TryGetValue(typeof(T), out GameComponent? component))
-        {
-            return Unsafe.As<GameComponent, T>(ref component);
-        }
-
-        throw new InvalidOperationException($"No component exposed as {typeof(T).Name}.");
-    }
-
-    public T? TryResolve<T>() where T : GameComponent
-    {
-        if (_exposed != null && _exposed.TryGetValue(typeof(T), out GameComponent? component))
-        {
-            return Unsafe.As<GameComponent, T>(ref component);
-        }
-
-        return null;
     }
 
 }

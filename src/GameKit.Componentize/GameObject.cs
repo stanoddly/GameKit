@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using GameKit.Collections;
+using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize;
 
@@ -17,18 +19,17 @@ public class GameObject: IEnumerable<GameComponent>
     internal Handle<GameObject> Handle { get; set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
-    private GameWorld? _world;
-    public GameWorld World => _world ?? throw new InvalidOperationException("GameObject has been removed and has no World.");
-    private List<GameComponent> _components = new();
+    public ServiceProvider ServiceProvider;
+    private readonly List<GameComponent> _components = new();
 
-    internal GameObject(GameWorld world)
+    internal GameObject(ServiceProvider serviceProvider)
     {
-        _world = world;
+        ServiceProvider = serviceProvider;
     }
 
-    internal GameObject(GameWorld world, List<GameComponent> components)
+    internal GameObject(ServiceProvider serviceProvider, List<GameComponent> components)
     {
-        _world = world;
+        ServiceProvider = serviceProvider;
         _components = components;
     }
 
@@ -190,6 +191,18 @@ public class GameObject: IEnumerable<GameComponent>
             yield return _components[i];
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T GetRequiredService<T>() where T : class
+    {
+        return ServiceProvider.GetRequiredService<T>();
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? GetService<T>() where T : class
+    {
+        return ServiceProvider.GetService<T>();
+    }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
@@ -206,7 +219,6 @@ public class GameObject: IEnumerable<GameComponent>
         Removed?.Invoke(this);
         Removed = null;
         State = GameObjectState.Removed;
-        _world = null;
     }
 
     private void TeardownComponent(GameComponent component)
