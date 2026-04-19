@@ -14,6 +14,18 @@ public abstract class GameComponent
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T GetRequiredService<T>() where T : class
+    {
+        return Owner.GetRequiredService<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? GetService<T>() where T : class
+    {
+        return Owner.GetService<T>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TComponent GetSibling<TComponent>() where TComponent: GameComponent
     {
         return Owner.Get<TComponent>();
