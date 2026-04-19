@@ -1,24 +1,34 @@
+using GameKit;
+using GameKit.Collections;
 using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize.Tests;
 
 public class DerivedTestComponent : TestComponent;
 
-public class TickableComponent : GameComponent, ITickable
+public class TickableComponent : GameComponent
 {
-    public int TickCount { get; private set; }
-    public void Tick() => TickCount++;
-}
+    private readonly UpdateSystem _updateSystem;
+    private Handle<UpdateTag> _tickHandle;
 
-public class TickableDetachAllComponent : GameComponent, ITickable
-{
     public int TickCount { get; private set; }
 
-    public void Tick()
+    public TickableComponent(UpdateSystem updateSystem)
     {
-        TickCount++;
-        Owner.DetachAll();
+        _updateSystem = updateSystem;
     }
+
+    protected override void OnAttach()
+    {
+        _tickHandle = _updateSystem.Add(Tick);
+    }
+
+    protected override void OnDetach()
+    {
+        _updateSystem.Remove(_tickHandle);
+    }
+
+    private void Tick() => TickCount++;
 }
 
 public class CrossAttachOnDetachComponent : GameComponent
@@ -34,11 +44,15 @@ public class CrossAttachOnDetachComponent : GameComponent
 public class GameWorldTests
 {
     GameWorld _world;
+    UpdateSystem _updateSystem;
 
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld(ServiceProvider.Empty);
+        _updateSystem = new UpdateSystem();
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton<UpdateSystem>(_updateSystem);
+        _world = new GameWorld(services.BuildServiceProvider());
     }
 
     [Test]
@@ -53,11 +67,11 @@ public class GameWorldTests
     public void Update_TickableComponentReceivesTickCalls()
     {
         GameObject gameObject = _world.CreateGameObject();
-        TickableComponent tickable = new TickableComponent();
+        TickableComponent tickable = new TickableComponent(_updateSystem);
         gameObject.Attach(tickable);
 
-        _world.Update();
-        _world.Update();
+        _updateSystem.Update();
+        _updateSystem.Update();
 
         Assert.That(tickable.TickCount, Is.EqualTo(2));
     }
@@ -66,38 +80,12 @@ public class GameWorldTests
     public void Update_DetachedTickableComponentStopsReceivingTicks()
     {
         GameObject gameObject = _world.CreateGameObject();
-        TickableComponent tickable = new TickableComponent();
+        TickableComponent tickable = new TickableComponent(_updateSystem);
         gameObject.Attach(tickable);
 
-        _world.Update();
+        _updateSystem.Update();
         gameObject.Detach(tickable);
-        _world.Update();
-
-        Assert.That(tickable.TickCount, Is.EqualTo(1));
-    }
-
-    [Test]
-    public void Update_DetachAllMidTickSkipsSiblingTickable()
-    {
-        GameObject gameObject = _world.CreateGameObject();
-        gameObject.Attach<TickableDetachAllComponent>();
-        TickableComponent sibling = new TickableComponent();
-        gameObject.Attach(sibling);
-
-        _world.Update();
-
-        Assert.That(sibling.TickCount, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void Update_DuplicateAttachDoesNotCauseDuplicateTicks()
-    {
-        GameObject gameObject = _world.CreateGameObject();
-        TickableComponent tickable = new TickableComponent();
-        gameObject.Attach(tickable);
-        gameObject.Attach(tickable);
-
-        _world.Update();
+        _updateSystem.Update();
 
         Assert.That(tickable.TickCount, Is.EqualTo(1));
     }

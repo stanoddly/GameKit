@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit.Componentize\GameKit.Componentize.csproj" />
+      <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
     </ItemGroup>
 
 </Project>
