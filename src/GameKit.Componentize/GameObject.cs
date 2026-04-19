@@ -57,7 +57,6 @@ public class GameObject: IEnumerable<GameComponent>
         component.InternalOwner = this;
         _components.Add(component);
         component.OnAttach();
-        World.NotifyComponentAttached(this, component);
         component.OnReady();
         return component;
     }
@@ -213,7 +212,6 @@ public class GameObject: IEnumerable<GameComponent>
     private void TeardownComponent(GameComponent component)
     {
         component.OnDetach();
-        World.NotifyComponentDetached(this, component);
         component.InternalOwner = null;
     }
 }
