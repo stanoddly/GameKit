@@ -57,16 +57,37 @@ public class ServiceProvider : IDisposable
     {
         Dictionary<int, object> pending = _pending!;
 
-        int maxId = -1;
+        // Determine the child's own max id.
+        int childMaxId = -1;
         foreach (KeyValuePair<int, object> kvp in pending)
         {
-            if (kvp.Key > maxId)
+            if (kvp.Key > childMaxId)
             {
-                maxId = kvp.Key;
+                childMaxId = kvp.Key;
             }
         }
 
-        object?[] services = maxId >= 0 ? new object?[maxId + 1] : Array.Empty<object?>();
+        // Parent is already frozen; its _services array is the fully-flattened ancestor
+        // state. One level up is sufficient — ancestors are already baked into it.
+        object?[]? parentServices = _parent?._services;
+        int parentMaxId = parentServices != null ? parentServices.Length - 1 : -1;
+
+        int flatMaxId = childMaxId > parentMaxId ? childMaxId : parentMaxId;
+
+        object?[] services = flatMaxId >= 0 ? new object?[flatMaxId + 1] : Array.Empty<object?>();
+
+        // Copy parent slots first; child slots overlay them below (child wins on collision).
+        // Parent slots are NOT added to _creationOrder — ownership stays with the parent.
+        if (parentServices != null)
+        {
+            for (int i = 0; i < parentServices.Length; i++)
+            {
+                services[i] = parentServices[i];
+            }
+        }
+
+        // Overlay child's own pending slots; these are already tracked in _creationOrder
+        // (populated by SetService during build), so no _creationOrder mutation is needed here.
         foreach (KeyValuePair<int, object> kvp in pending)
         {
             services[kvp.Key] = kvp.Value;
@@ -74,6 +95,25 @@ public class ServiceProvider : IDisposable
 
         _services = services;
         _pending = null;
+
+        // Merge parent's service collections into the child's — child entries take precedence
+        // (child's own collection for a given id fully replaces parent's, matching the
+        // all-or-nothing fallback semantics on the hot path). Only fill gaps the child left.
+        Dictionary<int, Array>? parentCollections = _parent?._serviceCollections;
+        if (parentCollections != null)
+        {
+            // _serviceCollections may be null if the child had no multi-registrations.
+            if (_serviceCollections == null)
+            {
+                _serviceCollections = new Dictionary<int, Array>(parentCollections.Count);
+            }
+
+            foreach (KeyValuePair<int, Array> kvp in parentCollections)
+            {
+                // TryAdd: child's entry wins; parent fills only the gaps.
+                _serviceCollections.TryAdd(kvp.Key, kvp.Value);
+            }
+        }
     }
 
     internal object? GetServiceById(int id)
@@ -121,7 +161,7 @@ public class ServiceProvider : IDisposable
     /// <summary>Returns the singleton instance registered for <typeparamref name="T"/>, throwing if the type is not registered.</summary>
     /// <typeparam name="T">The service type to resolve.</typeparam>
     /// <returns>The registered singleton instance of <typeparamref name="T"/>.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="T"/> is not registered in this provider or any parent provider.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="T"/> is not registered in this provider or any ancestor provider.</exception>
     public T GetRequiredService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
@@ -129,6 +169,8 @@ public class ServiceProvider : IDisposable
         object?[]? services = _services;
         if (services != null)
         {
+            // Frozen path: _services is the fully-flattened ancestor-to-child array built at
+            // FreezeServices() time. Single bounds-check + index — no parent traversal.
             if (id < services.Length)
             {
                 object? frozen = services[id];
@@ -139,8 +181,12 @@ public class ServiceProvider : IDisposable
                     return Unsafe.As<T>(frozen);
                 }
             }
+
+            throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
         }
-        else if (_pending != null && _pending.TryGetValue(id, out object? pending))
+
+        // Unfrozen (build-time) path.
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
         {
             return Unsafe.As<T>(pending);
         }
@@ -150,11 +196,6 @@ public class ServiceProvider : IDisposable
             return (T)_buildTimeResolver(id);
         }
 
-        if (_parent != null)
-        {
-            return _parent.GetRequiredService<T>();
-        }
-
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
     }
 
@@ -162,14 +203,15 @@ public class ServiceProvider : IDisposable
     /// <typeparam name="T">The service type to resolve.</typeparam>
     /// <returns>
     /// A <c>T[]</c> built at <see cref="ServiceCollection.BuildServiceProvider()"/> time and returned directly — no allocation or copy on each call.
-    /// Returns an empty list if no services of type <typeparamref name="T"/> are registered.
-    /// Falls back to the parent provider if one is set.
+    /// After freeze, <c>_serviceCollections</c> is the fully-merged ancestor-to-child map (child wins), so no parent traversal occurs here.
+    /// Returns an empty list if no services of type <typeparamref name="T"/> are registered in this provider or any ancestor.
     /// </returns>
     public IReadOnlyList<T> GetServices<T>() where T : class
     {
+        int id = ServiceTypeId<T>.Id;
+
         if (_serviceCollections != null)
         {
-            int id = ServiceTypeId<T>.Id;
             // GetValueRefOrNullRef avoids the out-param dance of TryGetValue.
             ref Array arr = ref CollectionsMarshal.GetValueRefOrNullRef(_serviceCollections, id);
             if (!Unsafe.IsNullRef(ref arr))
@@ -181,9 +223,10 @@ public class ServiceProvider : IDisposable
             }
         }
 
+        // Unfrozen (build-time) path.
         if (_buildTimeCollectionResolver != null)
         {
-            object[] resolved = _buildTimeCollectionResolver(ServiceTypeId<T>.Id);
+            object[] resolved = _buildTimeCollectionResolver(id);
             T[] typed = new T[resolved.Length];
             for (int i = 0; i < resolved.Length; i++)
             {
@@ -192,17 +235,12 @@ public class ServiceProvider : IDisposable
             return typed;
         }
 
-        if (_parent != null)
-        {
-            return _parent.GetServices<T>();
-        }
-
         return Array.Empty<T>();
     }
 
     /// <summary>Returns the singleton instance registered for <typeparamref name="T"/>, or <see langword="null"/> if the type is not registered.</summary>
     /// <typeparam name="T">The service type to resolve.</typeparam>
-    /// <returns>The registered singleton instance of <typeparamref name="T"/>, or <see langword="null"/> if not registered.</returns>
+    /// <returns>The registered singleton instance of <typeparamref name="T"/>, or <see langword="null"/> if not registered in this provider or any ancestor.</returns>
     public T? GetService<T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
@@ -210,6 +248,8 @@ public class ServiceProvider : IDisposable
         object?[]? services = _services;
         if (services != null)
         {
+            // Frozen path: _services is the fully-flattened ancestor-to-child array.
+            // Single bounds-check + index — no parent traversal.
             if (id < services.Length)
             {
                 object? frozen = services[id];
@@ -218,8 +258,12 @@ public class ServiceProvider : IDisposable
                     return Unsafe.As<T>(frozen);
                 }
             }
+
+            return null;
         }
-        else if (_pending != null && _pending.TryGetValue(id, out object? pending))
+
+        // Unfrozen (build-time) path.
+        if (_pending != null && _pending.TryGetValue(id, out object? pending))
         {
             return Unsafe.As<T>(pending);
         }
@@ -227,11 +271,6 @@ public class ServiceProvider : IDisposable
         if (_buildTimeTryResolver != null)
         {
             return (T?)_buildTimeTryResolver(id);
-        }
-
-        if (_parent != null)
-        {
-            return _parent.GetService<T>();
         }
 
         return null;
