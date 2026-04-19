@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using GameKit.Collections;
 using GameKit.DependencyInjection;
 
@@ -18,17 +19,17 @@ public class GameObject: IEnumerable<GameComponent>
     internal Handle<GameObject> Handle { get; set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
-    internal ServiceProvider? InternalServiceProvider;
-    private List<GameComponent> _components = new();
+    public ServiceProvider ServiceProvider;
+    private readonly List<GameComponent> _components = new();
 
     internal GameObject(ServiceProvider serviceProvider)
     {
-        InternalServiceProvider = serviceProvider;
+        ServiceProvider = serviceProvider;
     }
 
     internal GameObject(ServiceProvider serviceProvider, List<GameComponent> components)
     {
-        InternalServiceProvider = serviceProvider;
+        ServiceProvider = serviceProvider;
         _components = components;
     }
 
@@ -190,6 +191,18 @@ public class GameObject: IEnumerable<GameComponent>
             yield return _components[i];
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T GetRequiredService<T>() where T : class
+    {
+        return ServiceProvider.GetRequiredService<T>();
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? GetService<T>() where T : class
+    {
+        return ServiceProvider.GetService<T>();
+    }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
@@ -206,7 +219,6 @@ public class GameObject: IEnumerable<GameComponent>
         Removed?.Invoke(this);
         Removed = null;
         State = GameObjectState.Removed;
-        InternalServiceProvider = null;
     }
 
     private void TeardownComponent(GameComponent component)

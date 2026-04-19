@@ -387,13 +387,7 @@ public class GameObjectTests
         Assert.DoesNotThrow(() => _gameObject.DetachAll());
     }
 
-    [Test]
-    public void World_AfterRemove_Throws()
-    {
-        _world.RemoveGameObject(_gameObject);
 
-        Assert.Throws<InvalidOperationException>(() => { GameWorld w = _gameObject.World; });
-    }
 
     [Test]
     public void Attach_CallsOnReady()
