@@ -45,6 +45,7 @@ public class GameWorldTests
 {
     GameWorld _world;
     UpdateSystem _updateSystem;
+    GlobalComponentRegistry _globalComponents;
 
     [SetUp]
     public void Setup()
@@ -52,7 +53,11 @@ public class GameWorldTests
         _updateSystem = new UpdateSystem();
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<UpdateSystem>(_updateSystem);
-        _world = new GameWorld(services.BuildServiceProvider());
+        services.AddSingleton<GlobalComponentRegistry>(_ => new GlobalComponentRegistry());
+        services.AddSingleton<GameWorld>(sp => new GameWorld(sp));
+        ServiceProvider provider = services.BuildServiceProvider();
+        _world = provider.GetRequiredService<GameWorld>();
+        _globalComponents = provider.GetRequiredService<GlobalComponentRegistry>();
     }
 
     [Test]
@@ -137,9 +142,9 @@ public class GameWorldTests
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.GlobalComponents.Add<TestComponent>(component);
+        _globalComponents.Add<TestComponent>(component);
 
-        TestComponent resolved = _world.GlobalComponents.Get<TestComponent>();
+        TestComponent resolved = _globalComponents.Get<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(component));
     }
@@ -150,9 +155,9 @@ public class GameWorldTests
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.GlobalComponents.Add<TestComponent>(component);
+        _globalComponents.Add<TestComponent>(component);
 
-        TestComponent? resolved = _world.GlobalComponents.TryGet<TestComponent>();
+        TestComponent? resolved = _globalComponents.TryGet<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(component));
     }
@@ -160,7 +165,7 @@ public class GameWorldTests
     [Test]
     public void TryGet_NothingAdded_ReturnsNull()
     {
-        TestComponent? resolved = _world.GlobalComponents.TryGet<TestComponent>();
+        TestComponent? resolved = _globalComponents.TryGet<TestComponent>();
 
         Assert.That(resolved, Is.Null);
     }
@@ -168,7 +173,7 @@ public class GameWorldTests
     [Test]
     public void Get_NothingAdded_Throws()
     {
-        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Get<TestComponent>());
+        Assert.Throws<InvalidOperationException>(() => _globalComponents.Get<TestComponent>());
     }
 
     [Test]
@@ -179,9 +184,9 @@ public class GameWorldTests
         TestComponent second = new TestComponent();
         gameObject.Attach(first);
         gameObject.Attach(second);
-        _world.GlobalComponents.Add<TestComponent>(first);
+        _globalComponents.Add<TestComponent>(first);
 
-        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Add<TestComponent>(second));
+        Assert.Throws<InvalidOperationException>(() => _globalComponents.Add<TestComponent>(second));
     }
 
     [Test]
@@ -190,10 +195,10 @@ public class GameWorldTests
         GameObject gameObject = _world.CreateGameObject();
         TestComponent component = new TestComponent();
         gameObject.Attach(component);
-        _world.GlobalComponents.Add<TestComponent>(component);
-        _world.GlobalComponents.Remove<TestComponent>(component);
+        _globalComponents.Add<TestComponent>(component);
+        _globalComponents.Remove<TestComponent>(component);
 
-        Assert.That(_world.GlobalComponents.TryGet<TestComponent>(), Is.Null);
+        Assert.That(_globalComponents.TryGet<TestComponent>(), Is.Null);
     }
 
     [Test]
@@ -204,9 +209,9 @@ public class GameWorldTests
         TestComponent other = new TestComponent();
         gameObject.Attach(registered);
         gameObject.Attach(other);
-        _world.GlobalComponents.Add<TestComponent>(registered);
+        _globalComponents.Add<TestComponent>(registered);
 
-        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Remove<TestComponent>(other));
+        Assert.Throws<InvalidOperationException>(() => _globalComponents.Remove<TestComponent>(other));
     }
 
     [Test]
@@ -214,7 +219,7 @@ public class GameWorldTests
     {
         TestComponent component = new TestComponent();
 
-        Assert.Throws<InvalidOperationException>(() => _world.GlobalComponents.Remove<TestComponent>(component));
+        Assert.Throws<InvalidOperationException>(() => _globalComponents.Remove<TestComponent>(component));
     }
 
     [Test]
@@ -223,9 +228,9 @@ public class GameWorldTests
         GameObject gameObject = _world.CreateGameObject();
         DerivedTestComponent derived = new DerivedTestComponent();
         gameObject.Attach(derived);
-        _world.GlobalComponents.Add<TestComponent>(derived);
+        _globalComponents.Add<TestComponent>(derived);
 
-        TestComponent resolved = _world.GlobalComponents.Get<TestComponent>();
+        TestComponent resolved = _globalComponents.Get<TestComponent>();
 
         Assert.That(resolved, Is.SameAs(derived));
     }

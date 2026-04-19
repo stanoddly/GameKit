@@ -11,16 +11,13 @@ public class GameWorld
     public GameWorld(ServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        GlobalComponents = new GlobalComponentRegistry();
     }
 
     internal ServiceProvider ServiceProvider => _serviceProvider;
 
-    public GlobalComponentRegistry GlobalComponents { get; }
-
     public GameObject CreateGameObject()
     {
-        GameObject gameObject = new GameObject(this);
+        GameObject gameObject = new GameObject(_serviceProvider);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);
         gameObject.Handle = handle;
         return gameObject;
@@ -28,7 +25,7 @@ public class GameWorld
 
     internal GameObject CreateGameObject(List<GameComponent> components)
     {
-        GameObject gameObject = new GameObject(this, components);
+        GameObject gameObject = new GameObject(_serviceProvider, components);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);
         gameObject.Handle = handle;
         return gameObject;

@@ -48,7 +48,11 @@ public class GameObjectTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld(ServiceProvider.Empty);
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton<GlobalComponentRegistry>(_ => new GlobalComponentRegistry());
+        services.AddSingleton<GameWorld>(sp => new GameWorld(sp));
+        ServiceProvider provider = services.BuildServiceProvider();
+        _world = provider.GetRequiredService<GameWorld>();
         _gameObject = _world.CreateGameObject();
     }
 
