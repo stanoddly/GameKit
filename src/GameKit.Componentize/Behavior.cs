@@ -1,6 +1,6 @@
 namespace GameKit.Componentize;
 
-public abstract class Behavior<TSelf>: OwnedComponent
+public abstract class Behavior<TSelf>: GameComponent
     where TSelf: Behavior<TSelf>
 {
     protected TSelf ReplaceState(TSelf gameState)

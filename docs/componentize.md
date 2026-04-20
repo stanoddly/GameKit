@@ -6,7 +6,7 @@ A component-based game architecture: GameObjects hold GameComponents, components
 
 ### GameObject
 
-Container for components. Stores components in a list — multiple components of the same type can coexist. Implements `IEnumerable<GameComponent>`.
+Container for components. Stores components in a list — multiple components of the same type can coexist. Implements `IEnumerable<ComponentBase>`.
 
 ```csharp
 // Batch creation with two-phase lifecycle
@@ -36,27 +36,14 @@ dude.DetachAll();
 
 Collection initializer syntax is also supported via `Add<T>()`.
 
-### GameComponent and OwnedComponent
+### GameComponent and ComponentBase
 
 Two base classes are available:
 
-**`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls.
+**`GameComponent`** — standard base. Caches the owner and service provider at attach time and exposes them as `Owner` and `ServiceProvider` properties. Provides parameterless lifecycle overrides and sibling helpers.
 
 ```csharp
 public class MyComponent : GameComponent
-{
-    // setup self-contained state; cache services in fields if needed after attach
-    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
-
-    // cleanup
-    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
-}
-```
-
-**`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach time and exposes them as `Owner` and `ServiceProvider` properties. Provides parameterless lifecycle overrides and sibling helpers.
-
-```csharp
-public class MyComponent : OwnedComponent
 {
     // setup self-contained state (sibling OnAttach may not have run yet)
     protected override void OnAttach()  { }
@@ -69,7 +56,20 @@ public class MyComponent : OwnedComponent
 }
 ```
 
-**Sibling access** (requires `OwnedComponent`, delegates to Owner):
+**`ComponentBase`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls. Use only when you explicitly don't want owner/sibling access.
+
+```csharp
+public class MyComponent : ComponentBase
+{
+    // setup self-contained state; cache services in fields if needed after attach
+    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
+
+    // cleanup
+    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
+}
+```
+
+**Sibling access** (requires `GameComponent`, delegates to Owner):
 
 | Method | Behavior |
 |---|---|
@@ -78,7 +78,7 @@ public class MyComponent : OwnedComponent
 | `AttachSibling<T>(t)` | Attach instance |
 | `DetachSibling<T>()` | Detach first match |
 
-**Other members on `OwnedComponent`:**
+**Other members on `GameComponent`:**
 - `HasOwner()` — returns true if attached to a GameObject
 - `Owner` — the owning `GameObject`; throws if unattached
 - `ServiceProvider` — the `GameKit.DependencyInjection.ServiceProvider`; throws if unattached
@@ -99,7 +99,7 @@ world.RemoveGameObject(obj);
 
 ## Behaviors (State Machines)
 
-`Behavior<TSelf>` extends `OwnedComponent`. Each behavior type defines a state machine slot on its GameObject. Only one concrete behavior per slot exists at a time.
+`Behavior<TSelf>` extends `GameComponent`. Each behavior type defines a state machine slot on its GameObject. Only one concrete behavior per slot exists at a time.
 
 ```csharp
 // Define the slot
@@ -154,7 +154,7 @@ Services<GameWorld>.Instance
 **Storage-backed component** — component owns a handle into an external storage, creates on attach, removes on detach:
 
 ```csharp
-public class DynamicBodyComponent : OwnedComponent
+public class DynamicBodyComponent : GameComponent
 {
     private Handle<DynamicBodyTag> _handle;
 

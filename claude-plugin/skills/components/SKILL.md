@@ -132,25 +132,13 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 player.Detach<HealthComponent>();
 ```
 
-### GameComponent and OwnedComponent
+### GameComponent and ComponentBase
 
 Two base classes are available:
 
-**`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls.
+**`GameComponent`** — standard base. Caches the owner and service provider at attach time. Provides parameterless lifecycle overrides, sibling helpers, and `Owner`/`ServiceProvider`/`World`/`GetRequiredService`/`HasOwner()`.
 ```csharp
 public class MyComponent : GameComponent
-{
-    // Self-contained setup. Cache services in fields if needed after attach.
-    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
-
-    // Cleanup subscriptions and resources.
-    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
-}
-```
-
-**`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach time. Provides parameterless lifecycle overrides, sibling helpers, and `Owner`/`ServiceProvider`/`World`/`GetRequiredService`/`HasOwner()`.
-```csharp
-public class MyComponent : OwnedComponent
 {
     // Self-contained setup. Sibling OnAttach may not have run yet.
     protected override void OnAttach() { }
@@ -163,9 +151,21 @@ public class MyComponent : OwnedComponent
 }
 ```
 
+**`ComponentBase`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls. Use only when you explicitly don't want owner/sibling access.
+```csharp
+public class MyComponent : ComponentBase
+{
+    // Self-contained setup. Cache services in fields if needed after attach.
+    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
+
+    // Cleanup subscriptions and resources.
+    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
+}
+```
+
 When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` run immediately in sequence.
 
-**Sibling access** (requires `OwnedComponent`):
+**Sibling access** (requires `GameComponent`):
 - `GetSibling<T>()` — get or throw
 - `TryGetSibling<T>()` — get or null
 - `AttachSibling<T>(t)` — attach instance
@@ -225,7 +225,7 @@ Services<GameWorld>.Instance
 
 Updates are **not automatic**. Components register with `UpdateSystem` explicitly:
 ```csharp
-public class MovementComponent : OwnedComponent
+public class MovementComponent : GameComponent
 {
     private Handle<UpdateTag> _updateHandle;
 
@@ -274,7 +274,7 @@ protected override void OnDetach()
 
 Component owns a handle into external storage, creates on attach, removes on detach:
 ```csharp
-public class DynamicBodyComponent : OwnedComponent
+public class DynamicBodyComponent : GameComponent
 {
     private Handle<DynamicBodyTag> _handle;
 
@@ -293,7 +293,7 @@ public class DynamicBodyComponent : OwnedComponent
 
 ## Inter-Component Communication
 
-Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`. `GetSibling` requires `OwnedComponent`:
+Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`. `GetSibling` requires `GameComponent`:
 ```csharp
 protected override void OnReady()
 {

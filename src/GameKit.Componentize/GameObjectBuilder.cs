@@ -8,19 +8,19 @@ namespace GameKit.Componentize;
 public class GameObjectBuilder
 {
     private readonly GameWorld _world;
-    private List<GameComponent>? _components;
+    private List<ComponentBase>? _components;
 
     internal GameObjectBuilder(GameWorld world)
     {
         _world = world;
     }
 
-    public GameObjectBuilder With<TComponent>() where TComponent : GameComponent, new()
+    public GameObjectBuilder With<TComponent>() where TComponent : ComponentBase, new()
     {
         return With(new TComponent());
     }
 
-    public GameObjectBuilder With<TComponent>(TComponent component) where TComponent : GameComponent
+    public GameObjectBuilder With<TComponent>(TComponent component) where TComponent : ComponentBase
     {
         _components ??= new();
         _components.Add(component);
@@ -34,17 +34,17 @@ public class GameObjectBuilder
     /// </summary>
     public GameObject Build()
     {
-        List<GameComponent> components = _components ?? new();
+        List<ComponentBase> components = _components ?? new();
         _components = null;
 
         GameObject gameObject = _world.CreateGameObject(components);
 
-        foreach (GameComponent component in components)
+        foreach (ComponentBase component in components)
         {
             component.OnAttach(gameObject, gameObject.ServiceProvider);
         }
 
-        foreach (GameComponent component in components)
+        foreach (ComponentBase component in components)
         {
             component.OnReady(gameObject, gameObject.ServiceProvider);
         }

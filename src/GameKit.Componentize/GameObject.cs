@@ -13,31 +13,31 @@ public enum GameObjectState : byte
     Removed
 }
 
-public class GameObject: IEnumerable<GameComponent>
+public class GameObject: IEnumerable<ComponentBase>
 {
     internal Handle<GameObject> Handle { get; set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
     internal readonly ServiceProvider ServiceProvider;
-    private readonly List<GameComponent> _components = new();
+    private readonly List<ComponentBase> _components = new();
 
     internal GameObject(ServiceProvider serviceProvider)
     {
         ServiceProvider = serviceProvider;
     }
 
-    internal GameObject(ServiceProvider serviceProvider, List<GameComponent> components)
+    internal GameObject(ServiceProvider serviceProvider, List<ComponentBase> components)
     {
         ServiceProvider = serviceProvider;
         _components = components;
     }
 
-    public TComponent Attach<TComponent>() where TComponent: GameComponent, new()
+    public TComponent Attach<TComponent>() where TComponent: ComponentBase, new()
     {
         return Attach(new TComponent());
     }
 
-    public TComponent AttachIfMissing<TComponent>() where TComponent: GameComponent, new()
+    public TComponent AttachIfMissing<TComponent>() where TComponent: ComponentBase, new()
     {
         TComponent? existing = TryGet<TComponent>();
         if (existing == null)
@@ -47,7 +47,7 @@ public class GameObject: IEnumerable<GameComponent>
         return existing;
     }
 
-    public TComponent Attach<TComponent>(TComponent component) where TComponent: GameComponent
+    public TComponent Attach<TComponent>(TComponent component) where TComponent: ComponentBase
     {
         if (State != GameObjectState.Alive)
         {
@@ -63,12 +63,12 @@ public class GameObject: IEnumerable<GameComponent>
 
 
     // Convenience method to be able to use []
-    public void Add<TComponent>(TComponent component) where TComponent : GameComponent
+    public void Add<TComponent>(TComponent component) where TComponent : ComponentBase
     {
         Attach(component);
     }
 
-    public void Detach<TComponent>() where TComponent: GameComponent
+    public void Detach<TComponent>() where TComponent: ComponentBase
     {
         if (State != GameObjectState.Alive)
         {
@@ -86,7 +86,7 @@ public class GameObject: IEnumerable<GameComponent>
         }
     }
 
-    public void DetachAll<TComponent>() where TComponent: GameComponent
+    public void DetachAll<TComponent>() where TComponent: ComponentBase
     {
         if (State != GameObjectState.Alive)
         {
@@ -103,7 +103,7 @@ public class GameObject: IEnumerable<GameComponent>
         }
     }
 
-    public void Detach(GameComponent component)
+    public void Detach(ComponentBase component)
     {
         if (State != GameObjectState.Alive)
         {
@@ -133,18 +133,18 @@ public class GameObject: IEnumerable<GameComponent>
             return;
         }
 
-        GameComponent[] snapshot = _components.ToArray();
+        ComponentBase[] snapshot = _components.ToArray();
         _components.Clear();
 
-        foreach (GameComponent component in snapshot)
+        foreach (ComponentBase component in snapshot)
         {
             TeardownComponent(component);
         }
     }
 
-    public TComponent Get<TComponent>() where TComponent: GameComponent
+    public TComponent Get<TComponent>() where TComponent: ComponentBase
     {
-        foreach (GameComponent component in _components)
+        foreach (ComponentBase component in _components)
         {
             if (component is TComponent specificComponent)
             {
@@ -154,10 +154,10 @@ public class GameObject: IEnumerable<GameComponent>
 
         throw new ComponentNotFound(typeof(TComponent).Name);
     }
-    
-    public TComponent? TryGet<TComponent>() where TComponent: GameComponent
+
+    public TComponent? TryGet<TComponent>() where TComponent: ComponentBase
     {
-        foreach (GameComponent component in _components)
+        foreach (ComponentBase component in _components)
         {
             if (component is TComponent specificComponent)
             {
@@ -168,10 +168,10 @@ public class GameObject: IEnumerable<GameComponent>
         return null;
     }
 
-    public List<TComponent> GetComponents<TComponent>() where TComponent: GameComponent
+    public List<TComponent> GetComponents<TComponent>() where TComponent: ComponentBase
     {
         List<TComponent> components = new();
-        foreach (GameComponent component in _components)
+        foreach (ComponentBase component in _components)
         {
             if (component is TComponent specificComponent)
             {
@@ -182,14 +182,14 @@ public class GameObject: IEnumerable<GameComponent>
     }
 
 
-    public IEnumerator<GameComponent> GetEnumerator()
+    public IEnumerator<ComponentBase> GetEnumerator()
     {
         for (int i = 0; i < _components.Count; i++)
         {
             yield return _components[i];
         }
     }
-    
+
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
@@ -207,7 +207,7 @@ public class GameObject: IEnumerable<GameComponent>
         State = GameObjectState.Removed;
     }
 
-    private void TeardownComponent(GameComponent component)
+    private void TeardownComponent(ComponentBase component)
     {
         component.OnDetach(this, ServiceProvider);
     }

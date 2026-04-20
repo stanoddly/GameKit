@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize;
 
@@ -11,8 +10,8 @@ public abstract class StatefulComponent<TSelf, TState> : GameComponent
 
     protected StatefulComponent(TState initialState) => _state = initialState;
 
-    protected internal override void OnAttach(GameObject owner, ServiceProvider services) => _state.Enter(Unsafe.As<TSelf>(this));
-    protected internal override void OnDetach(GameObject owner, ServiceProvider services) => _state.Exit(Unsafe.As<TSelf>(this));
+    protected override void OnAttach() => _state.Enter(Unsafe.As<TSelf>(this));
+    protected override void OnDetach() => _state.Exit(Unsafe.As<TSelf>(this));
 
     protected TState ChangeState(TState newState)
     {

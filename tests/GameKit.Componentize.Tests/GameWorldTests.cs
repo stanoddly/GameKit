@@ -6,7 +6,7 @@ namespace GameKit.Componentize.Tests;
 
 public class DerivedTestComponent : TestComponent;
 
-public class TickableComponent : GameComponent
+public class TickableComponent : ComponentBase
 {
     private readonly UpdateSystem _updateSystem;
     private Handle<UpdateTag> _tickHandle;
@@ -31,7 +31,7 @@ public class TickableComponent : GameComponent
     private void Tick() => TickCount++;
 }
 
-public class CrossAttachOnDetachComponent : GameComponent
+public class CrossAttachOnDetachComponent : ComponentBase
 {
     public GameObject? Target { get; set; }
 

@@ -39,46 +39,19 @@ player.Detach<HealthComponent>();
 gameWorld.RemoveGameObject(player); // Detaches all components
 ```
 
-### GameComponent and OwnedComponent
+### GameComponent and ComponentBase
 
 There are two base classes for components:
 
-- **`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields.
-- **`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach, exposes `Owner`, `ServiceProvider`, sibling helpers, `World`, and `GetRequiredService`. Provides parameterless `OnAttach()` / `OnReady()` / `OnDetach()` overrides.
+- **`GameComponent`** — standard base. Caches the owner and service provider at attach, exposes `Owner`, `ServiceProvider`, sibling helpers, `World`, and `GetRequiredService`. Provides parameterless `OnAttach()` / `OnReady()` / `OnDetach()` overrides.
+- **`ComponentBase`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields.
 
-Use `OwnedComponent` when your component needs to access siblings, services, or its owner after the lifecycle hooks complete. Use plain `GameComponent` when you only need the parameters during attach/detach and can store what you need in fields yourself.
+Use `GameComponent` for most components. Use `ComponentBase` only when you explicitly don't want owner/sibling access — for example, a component that only needs to interact during its lifecycle hooks and caches what it needs in its own fields.
 
-#### GameComponent (plain)
+#### GameComponent
 
 ```csharp
 public class MovementComponent : GameComponent
-{
-    private Handle<UpdateTag> _updateHandle;
-    private UpdateSystem _updateSystem;
-
-    protected override void OnAttach(GameObject owner, ServiceProvider services)
-    {
-        // Cache services you need past attach
-        _updateSystem = services.GetRequiredService<UpdateSystem>();
-        _updateHandle = _updateSystem.Add(Update);
-    }
-
-    protected override void OnDetach(GameObject owner, ServiceProvider services)
-    {
-        _updateSystem.Remove(_updateHandle);
-    }
-
-    private void Update()
-    {
-        // Called each frame
-    }
-}
-```
-
-#### OwnedComponent
-
-```csharp
-public class MovementComponent : OwnedComponent
 {
     private Handle<UpdateTag> _updateHandle;
 
@@ -105,6 +78,33 @@ public class MovementComponent : OwnedComponent
 }
 ```
 
+#### ComponentBase
+
+```csharp
+public class MovementComponent : ComponentBase
+{
+    private Handle<UpdateTag> _updateHandle;
+    private UpdateSystem _updateSystem;
+
+    protected override void OnAttach(GameObject owner, ServiceProvider services)
+    {
+        // Cache services you need past attach
+        _updateSystem = services.GetRequiredService<UpdateSystem>();
+        _updateHandle = _updateSystem.Add(Update);
+    }
+
+    protected override void OnDetach(GameObject owner, ServiceProvider services)
+    {
+        _updateSystem.Remove(_updateHandle);
+    }
+
+    private void Update()
+    {
+        // Called each frame
+    }
+}
+```
+
 Lifecycle hooks:
 
 - **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. When using `GameObjectBuilder`, sibling `OnAttach` may not have run yet.
@@ -115,7 +115,7 @@ When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` 
 
 ## Services Access
 
-`OwnedComponent` provides `GetRequiredService<T>()` and `GetService<T>()` delegating to the cached `ServiceProvider`. For plain `GameComponent`, capture services from the `services` parameter in `OnAttach` and store them in fields.
+`GameComponent` provides `GetRequiredService<T>()` and `GetService<T>()` delegating to the cached `ServiceProvider`. For `ComponentBase`, capture services from the `services` parameter in `OnAttach` and store them in fields.
 
 ## Update Registration
 
@@ -139,7 +139,7 @@ The handle must be stored to unregister later.
 
 ## Sibling Components
 
-Sibling access requires `OwnedComponent`:
+Sibling access requires `GameComponent`:
 
 ```csharp
 // Get sibling (throws if not found)
@@ -195,8 +195,8 @@ builder.WithUnitComponents(pos).With<ArcherAIComponent>().Build();
 
 ## Key Points
 
-- `GameComponent` receives `GameObject` and `ServiceProvider` as lifecycle parameters; cache what you need in fields
-- `OwnedComponent` caches owner and services, providing sibling helpers, `World`, and `GetRequiredService`
+- `GameComponent` caches owner and services, providing sibling helpers, `World`, and `GetRequiredService`
+- `ComponentBase` receives `GameObject` and `ServiceProvider` as lifecycle parameters; cache what you need in fields
 - Use `GameObjectBuilder` when creating GameObjects with interdependent components
 - `Attach` on a live GameObject returns the attached component
 - Updates require manual registration with `UpdateSystem`

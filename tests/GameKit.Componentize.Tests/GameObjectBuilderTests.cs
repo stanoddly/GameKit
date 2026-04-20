@@ -2,7 +2,7 @@ using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize.Tests;
 
-public class SiblingCapturingComponent : OwnedComponent
+public class SiblingCapturingComponent : GameComponent
 {
     public TestComponent? SiblingDuringOnAttach { get; private set; }
     public TestComponent? SiblingDuringOnReady { get; private set; }
@@ -18,7 +18,7 @@ public class SiblingCapturingComponent : OwnedComponent
     }
 }
 
-public class LifecycleOrderComponent : GameComponent
+public class LifecycleOrderComponent : ComponentBase
 {
     public List<string> Log { get; }
 
