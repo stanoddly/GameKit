@@ -132,11 +132,25 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 player.Detach<HealthComponent>();
 ```
 
-### GameComponent
+### GameComponent and OwnedComponent
 
-Base class with lifecycle hooks:
+Two base classes are available:
+
+**`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls.
 ```csharp
 public class MyComponent : GameComponent
+{
+    // Self-contained setup. Cache services in fields if needed after attach.
+    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
+
+    // Cleanup subscriptions and resources.
+    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
+}
+```
+
+**`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach time. Provides parameterless lifecycle overrides, sibling helpers, and `Owner`/`ServiceProvider`/`World`/`GetRequiredService`/`HasOwner()`.
+```csharp
+public class MyComponent : OwnedComponent
 {
     // Self-contained setup. Sibling OnAttach may not have run yet.
     protected override void OnAttach() { }
@@ -151,7 +165,7 @@ public class MyComponent : GameComponent
 
 When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` run immediately in sequence.
 
-**Sibling access:**
+**Sibling access** (requires `OwnedComponent`):
 - `GetSibling<T>()` — get or throw
 - `TryGetSibling<T>()` — get or null
 - `AttachSibling<T>(t)` — attach instance
@@ -211,7 +225,7 @@ Services<GameWorld>.Instance
 
 Updates are **not automatic**. Components register with `UpdateSystem` explicitly:
 ```csharp
-public class MovementComponent : GameComponent
+public class MovementComponent : OwnedComponent
 {
     private Handle<UpdateTag> _updateHandle;
 
@@ -248,11 +262,11 @@ public class PlayerMovingBehavior : PlayerBehavior { }
 ```csharp
 protected override void OnAttach()
 {
-    Owner.Attach(new DigBlockHighlighterComponent());
+    AttachSibling(new DigBlockHighlighterComponent());
 }
 protected override void OnDetach()
 {
-    Owner.Detach<DigBlockHighlighterComponent>();
+    DetachSibling<DigBlockHighlighterComponent>();
 }
 ```
 
@@ -260,7 +274,7 @@ protected override void OnDetach()
 
 Component owns a handle into external storage, creates on attach, removes on detach:
 ```csharp
-public class DynamicBodyComponent : GameComponent
+public class DynamicBodyComponent : OwnedComponent
 {
     private Handle<DynamicBodyTag> _handle;
 
@@ -279,7 +293,7 @@ public class DynamicBodyComponent : GameComponent
 
 ## Inter-Component Communication
 
-Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`:
+Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`. `GetSibling` requires `OwnedComponent`:
 ```csharp
 protected override void OnReady()
 {

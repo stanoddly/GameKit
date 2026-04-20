@@ -6,8 +6,8 @@ public static class GameObjectExtensions
 {
     extension(GameObject gameObject)
     {
-        public GameWorld World => gameObject.GetRequiredService<GameWorld>();
+        public GameWorld World => gameObject.ServiceProvider.GetRequiredService<GameWorld>();
 
-        public GlobalComponentRegistry GlobalComponents => gameObject.GetRequiredService<GlobalComponentRegistry>();
+        public GlobalComponentRegistry GlobalComponents => gameObject.ServiceProvider.GetRequiredService<GlobalComponentRegistry>();
     }
 }

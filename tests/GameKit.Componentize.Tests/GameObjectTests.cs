@@ -2,7 +2,7 @@ using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize.Tests;
 
-public class TestComponent : GameComponent
+public class TestComponent : OwnedComponent
 {
     public string Value { get; set; } = "test";
     public bool OnAttachCalled { get; private set; }
@@ -30,7 +30,7 @@ public class TestComponent2 : GameComponent
     public int Number { get; set; } = 42;
 }
 
-public class StateCapturingComponent : GameComponent
+public class StateCapturingComponent : OwnedComponent
 {
     public Action<StateCapturingComponent>? CaptureAction { get; set; }
 

@@ -18,12 +18,12 @@ public class TickableComponent : GameComponent
         _updateSystem = updateSystem;
     }
 
-    protected override void OnAttach()
+    protected override void OnAttach(GameObject owner, ServiceProvider services)
     {
         _tickHandle = _updateSystem.Add(Tick);
     }
 
-    protected override void OnDetach()
+    protected override void OnDetach(GameObject owner, ServiceProvider services)
     {
         _updateSystem.Remove(_tickHandle);
     }
@@ -35,7 +35,7 @@ public class CrossAttachOnDetachComponent : GameComponent
 {
     public GameObject? Target { get; set; }
 
-    protected override void OnDetach()
+    protected override void OnDetach(GameObject owner, ServiceProvider services)
     {
         Target?.Attach<TestComponent>();
     }

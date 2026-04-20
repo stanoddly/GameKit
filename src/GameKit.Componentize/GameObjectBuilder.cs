@@ -41,13 +41,12 @@ public class GameObjectBuilder
 
         foreach (GameComponent component in components)
         {
-            component.InternalOwner = gameObject;
-            component.OnAttach();
+            component.OnAttach(gameObject, gameObject.ServiceProvider);
         }
 
         foreach (GameComponent component in components)
         {
-            component.OnReady();
+            component.OnReady(gameObject, gameObject.ServiceProvider);
         }
 
         return gameObject;

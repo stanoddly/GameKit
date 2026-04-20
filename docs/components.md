@@ -39,34 +39,33 @@ player.Detach<HealthComponent>();
 gameWorld.RemoveGameObject(player); // Detaches all components
 ```
 
-### GameComponent
+### GameComponent and OwnedComponent
 
-Base class for all components. Override lifecycle hooks:
+There are two base classes for components:
 
-- **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. When using `GameObjectBuilder`, sibling `OnAttach` may not have run yet.
-- **`OnReady`** — all siblings are attached and their `OnAttach` has completed. Safe to resolve sibling references and subscribe to sibling events.
-- **`OnDetach`** — component is being removed. Clean up subscriptions and resources.
+- **`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields.
+- **`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach, exposes `Owner`, `ServiceProvider`, sibling helpers, `World`, and `GetRequiredService`. Provides parameterless `OnAttach()` / `OnReady()` / `OnDetach()` overrides.
 
-When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` are called immediately in sequence.
+Use `OwnedComponent` when your component needs to access siblings, services, or its owner after the lifecycle hooks complete. Use plain `GameComponent` when you only need the parameters during attach/detach and can store what you need in fields yourself.
+
+#### GameComponent (plain)
 
 ```csharp
 public class MovementComponent : GameComponent
 {
     private Handle<UpdateTag> _updateHandle;
+    private UpdateSystem _updateSystem;
 
-    protected override void OnAttach()
+    protected override void OnAttach(GameObject owner, ServiceProvider services)
     {
-        _updateHandle = Services<UpdateSystem>.Instance.Add(Update);
+        // Cache services you need past attach
+        _updateSystem = services.GetRequiredService<UpdateSystem>();
+        _updateHandle = _updateSystem.Add(Update);
     }
 
-    protected override void OnReady()
+    protected override void OnDetach(GameObject owner, ServiceProvider services)
     {
-        // Safe to access siblings here
-    }
-
-    protected override void OnDetach()
-    {
-        Services<UpdateSystem>.Instance.Remove(_updateHandle);
+        _updateSystem.Remove(_updateHandle);
     }
 
     private void Update()
@@ -76,19 +75,47 @@ public class MovementComponent : GameComponent
 }
 ```
 
-## Services Access
-
-Components access registered services via `Services<T>.Instance`:
+#### OwnedComponent
 
 ```csharp
-protected override void OnAttach()
+public class MovementComponent : OwnedComponent
 {
-    IKeyboardService keyboard = Services<IKeyboardService>.Instance;
-    keyboard.KeyDown += OnKeyDown;
+    private Handle<UpdateTag> _updateHandle;
+
+    protected override void OnAttach()
+    {
+        _updateHandle = GetRequiredService<UpdateSystem>().Add(Update);
+    }
+
+    protected override void OnReady()
+    {
+        // Safe to access siblings here
+        HealthComponent health = GetSibling<HealthComponent>();
+    }
+
+    protected override void OnDetach()
+    {
+        GetRequiredService<UpdateSystem>().Remove(_updateHandle);
+    }
+
+    private void Update()
+    {
+        // Called each frame
+    }
 }
 ```
 
-**Note:** `Services<T>` caches the instance on first access. The service must be registered before any component accesses it.
+Lifecycle hooks:
+
+- **`OnAttach`** — component is placed on the GameObject. Set up self-contained state. When using `GameObjectBuilder`, sibling `OnAttach` may not have run yet.
+- **`OnReady`** — all siblings are attached and their `OnAttach` has completed. Safe to resolve sibling references and subscribe to sibling events.
+- **`OnDetach`** — component is being removed. Clean up subscriptions and resources.
+
+When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` are called immediately in sequence.
+
+## Services Access
+
+`OwnedComponent` provides `GetRequiredService<T>()` and `GetService<T>()` delegating to the cached `ServiceProvider`. For plain `GameComponent`, capture services from the `services` parameter in `OnAttach` and store them in fields.
 
 ## Update Registration
 
@@ -99,12 +126,12 @@ private Handle<UpdateTag> _updateHandle;
 
 protected override void OnAttach()
 {
-    _updateHandle = Services<UpdateSystem>.Instance.Add(Update);
+    _updateHandle = GetRequiredService<UpdateSystem>().Add(Update);
 }
 
 protected override void OnDetach()
 {
-    Services<UpdateSystem>.Instance.Remove(_updateHandle);
+    GetRequiredService<UpdateSystem>().Remove(_updateHandle);
 }
 ```
 
@@ -112,7 +139,7 @@ The handle must be stored to unregister later.
 
 ## Sibling Components
 
-Access other components on the same GameObject:
+Sibling access requires `OwnedComponent`:
 
 ```csharp
 // Get sibling (throws if not found)
@@ -168,9 +195,9 @@ builder.WithUnitComponents(pos).With<ArcherAIComponent>().Build();
 
 ## Key Points
 
-- Components have explicit lifecycle via `OnAttach`/`OnReady`/`OnDetach`
+- `GameComponent` receives `GameObject` and `ServiceProvider` as lifecycle parameters; cache what you need in fields
+- `OwnedComponent` caches owner and services, providing sibling helpers, `World`, and `GetRequiredService`
 - Use `GameObjectBuilder` when creating GameObjects with interdependent components
 - `Attach` on a live GameObject returns the attached component
 - Updates require manual registration with `UpdateSystem`
-- Use `Services<T>.Instance` to access registered services
 - Always clean up subscriptions in `OnDetach`

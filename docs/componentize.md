@@ -36,12 +36,27 @@ dude.DetachAll();
 
 Collection initializer syntax is also supported via `Add<T>()`.
 
-### GameComponent
+### GameComponent and OwnedComponent
 
-Base class. Has an `Owner` (the parent GameObject) and lifecycle hooks.
+Two base classes are available:
+
+**`GameComponent`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls.
 
 ```csharp
 public class MyComponent : GameComponent
+{
+    // setup self-contained state; cache services in fields if needed after attach
+    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
+
+    // cleanup
+    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
+}
+```
+
+**`OwnedComponent`** — extends `GameComponent`. Caches the owner and service provider at attach time and exposes them as `Owner` and `ServiceProvider` properties. Provides parameterless lifecycle overrides and sibling helpers.
+
+```csharp
+public class MyComponent : OwnedComponent
 {
     // setup self-contained state (sibling OnAttach may not have run yet)
     protected override void OnAttach()  { }
@@ -54,7 +69,7 @@ public class MyComponent : GameComponent
 }
 ```
 
-**Sibling access** (delegates to Owner):
+**Sibling access** (requires `OwnedComponent`, delegates to Owner):
 
 | Method | Behavior |
 |---|---|
@@ -63,8 +78,12 @@ public class MyComponent : GameComponent
 | `AttachSibling<T>(t)` | Attach instance |
 | `DetachSibling<T>()` | Detach first match |
 
-**Other members:**
+**Other members on `OwnedComponent`:**
 - `HasOwner()` — returns true if attached to a GameObject
+- `Owner` — the owning `GameObject`; throws if unattached
+- `ServiceProvider` — the `GameKit.DependencyInjection.ServiceProvider`; throws if unattached
+- `World` — shorthand for `ServiceProvider.GetRequiredService<GameWorld>()`
+- `GetRequiredService<T>()` / `GetService<T>()` — service lookup
 
 ### GameWorld
 
@@ -80,7 +99,7 @@ world.RemoveGameObject(obj);
 
 ## Behaviors (State Machines)
 
-`Behavior<TSelf>` extends GameComponent. Each behavior type defines a state machine slot on its GameObject. Only one concrete behavior per slot exists at a time.
+`Behavior<TSelf>` extends `OwnedComponent`. Each behavior type defines a state machine slot on its GameObject. Only one concrete behavior per slot exists at a time.
 
 ```csharp
 // Define the slot
@@ -98,11 +117,11 @@ public class PlayerMovingBehavior : PlayerBehavior { ... }
 ```csharp
 protected override void OnAttach()
 {
-    Owner.Attach(new DigBlockHighlighterComponent());
+    AttachSibling(new DigBlockHighlighterComponent());
 }
 protected override void OnDetach()
 {
-    Owner.Detach<DigBlockHighlighterComponent>();
+    DetachSibling<DigBlockHighlighterComponent>();
 }
 ```
 
@@ -135,19 +154,19 @@ Services<GameWorld>.Instance
 **Storage-backed component** — component owns a handle into an external storage, creates on attach, removes on detach:
 
 ```csharp
-public class DynamicBodyComponent : GameComponent
+public class DynamicBodyComponent : OwnedComponent
 {
     private Handle<DynamicBodyTag> _handle;
 
     protected override void OnAttach()
     {
-        _handle = Services<DynamicBodiesStorage>.Instance.Create(
+        _handle = GetRequiredService<DynamicBodiesStorage>().Create(
             GetSibling<TransformComponent>(), Radius, Speed);
     }
 
     protected override void OnDetach()
     {
-        Services<DynamicBodiesStorage>.Instance.Remove(_handle);
+        GetRequiredService<DynamicBodiesStorage>().Remove(_handle);
     }
 }
 ```

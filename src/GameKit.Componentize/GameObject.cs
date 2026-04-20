@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 using GameKit.Collections;
 using GameKit.DependencyInjection;
 
@@ -19,7 +18,7 @@ public class GameObject: IEnumerable<GameComponent>
     internal Handle<GameObject> Handle { get; set; }
     public GameObjectState State { get; private set; }
     public event Action<GameObject>? Removed;
-    public ServiceProvider ServiceProvider;
+    internal readonly ServiceProvider ServiceProvider;
     private readonly List<GameComponent> _components = new();
 
     internal GameObject(ServiceProvider serviceProvider)
@@ -55,10 +54,9 @@ public class GameObject: IEnumerable<GameComponent>
             throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
         }
 
-        component.InternalOwner = this;
         _components.Add(component);
-        component.OnAttach();
-        component.OnReady();
+        component.OnAttach(this, ServiceProvider);
+        component.OnReady(this, ServiceProvider);
         return component;
     }
 
@@ -192,18 +190,6 @@ public class GameObject: IEnumerable<GameComponent>
         }
     }
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetRequiredService<T>() where T : class
-    {
-        return ServiceProvider.GetRequiredService<T>();
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? GetService<T>() where T : class
-    {
-        return ServiceProvider.GetService<T>();
-    }
-
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
@@ -223,7 +209,6 @@ public class GameObject: IEnumerable<GameComponent>
 
     private void TeardownComponent(GameComponent component)
     {
-        component.OnDetach();
-        component.InternalOwner = null;
+        component.OnDetach(this, ServiceProvider);
     }
 }

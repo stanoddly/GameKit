@@ -2,7 +2,7 @@ using GameKit.DependencyInjection;
 
 namespace GameKit.Componentize.Tests;
 
-public class SiblingCapturingComponent : GameComponent
+public class SiblingCapturingComponent : OwnedComponent
 {
     public TestComponent? SiblingDuringOnAttach { get; private set; }
     public TestComponent? SiblingDuringOnReady { get; private set; }
@@ -29,12 +29,12 @@ public class LifecycleOrderComponent : GameComponent
 
     public string Name { get; set; } = "";
 
-    protected override void OnAttach()
+    protected override void OnAttach(GameObject owner, ServiceProvider services)
     {
         Log.Add($"{Name}:OnAttach");
     }
 
-    protected override void OnReady()
+    protected override void OnReady(GameObject owner, ServiceProvider services)
     {
         Log.Add($"{Name}:OnReady");
     }
