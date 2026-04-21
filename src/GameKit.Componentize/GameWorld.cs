@@ -23,7 +23,7 @@ public class GameWorld
         return gameObject;
     }
 
-    internal GameObject CreateGameObject(List<GameComponent> components)
+    internal GameObject CreateGameObject(List<ComponentBase> components)
     {
         GameObject gameObject = new GameObject(_serviceProvider, components);
         Handle<GameObject> handle = _gameObjects.Add(gameObject);

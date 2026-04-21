@@ -25,7 +25,7 @@ public class TestComponent : GameComponent
     }
 }
 
-public class TestComponent2 : GameComponent
+public class TestComponent2 : ComponentBase
 {
     public int Number { get; set; } = 42;
 }

@@ -2,7 +2,7 @@ using GameKit.Componentize;
 
 namespace GameKit.Pencuil;
 
-public abstract class ViewComponent<TViewModel> : GameComponent, IView where TViewModel : GameComponent, IViewModel
+public abstract class ViewComponent<TViewModel> : GameComponent, IView where TViewModel : ComponentBase, IViewModel
 {
     protected TViewModel ViewModel { get; private set; } = default!;
 

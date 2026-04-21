@@ -10,8 +10,8 @@ public abstract class StatefulComponent<TSelf, TState> : GameComponent
 
     protected StatefulComponent(TState initialState) => _state = initialState;
 
-    protected internal override void OnAttach() => _state.Enter(Unsafe.As<TSelf>(this));
-    protected internal override void OnDetach() => _state.Exit(Unsafe.As<TSelf>(this));
+    protected override void OnAttach() => _state.Enter(Unsafe.As<TSelf>(this));
+    protected override void OnDetach() => _state.Exit(Unsafe.As<TSelf>(this));
 
     protected TState ChangeState(TState newState)
     {

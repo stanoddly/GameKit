@@ -18,7 +18,7 @@ public class SiblingCapturingComponent : GameComponent
     }
 }
 
-public class LifecycleOrderComponent : GameComponent
+public class LifecycleOrderComponent : ComponentBase
 {
     public List<string> Log { get; }
 
@@ -29,12 +29,12 @@ public class LifecycleOrderComponent : GameComponent
 
     public string Name { get; set; } = "";
 
-    protected override void OnAttach()
+    protected override void OnAttach(GameObject owner, ServiceProvider services)
     {
         Log.Add($"{Name}:OnAttach");
     }
 
-    protected override void OnReady()
+    protected override void OnReady(GameObject owner, ServiceProvider services)
     {
         Log.Add($"{Name}:OnReady");
     }

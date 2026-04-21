@@ -132,9 +132,11 @@ HealthComponent? health = player.TryGet<HealthComponent>();
 player.Detach<HealthComponent>();
 ```
 
-### GameComponent
+### GameComponent and ComponentBase
 
-Base class with lifecycle hooks:
+Two base classes are available:
+
+**`GameComponent`** — standard base. Caches the owner and service provider at attach time. Provides parameterless lifecycle overrides, sibling helpers, and `Owner`/`ServiceProvider`/`World`/`GetRequiredService`/`HasOwner()`.
 ```csharp
 public class MyComponent : GameComponent
 {
@@ -149,9 +151,21 @@ public class MyComponent : GameComponent
 }
 ```
 
+**`ComponentBase`** — minimal base. Lifecycle hooks receive `GameObject` and `ServiceProvider` as parameters. No cached fields or owner access between calls. Use only when you explicitly don't want owner/sibling access.
+```csharp
+public class MyComponent : ComponentBase
+{
+    // Self-contained setup. Cache services in fields if needed after attach.
+    protected override void OnAttach(GameObject owner, ServiceProvider services) { }
+
+    // Cleanup subscriptions and resources.
+    protected override void OnDetach(GameObject owner, ServiceProvider services) { }
+}
+```
+
 When attaching to a live GameObject via `Attach`, both `OnAttach` and `OnReady` run immediately in sequence.
 
-**Sibling access:**
+**Sibling access** (requires `GameComponent`):
 - `GetSibling<T>()` — get or throw
 - `TryGetSibling<T>()` — get or null
 - `AttachSibling<T>(t)` — attach instance
@@ -248,11 +262,11 @@ public class PlayerMovingBehavior : PlayerBehavior { }
 ```csharp
 protected override void OnAttach()
 {
-    Owner.Attach(new DigBlockHighlighterComponent());
+    AttachSibling(new DigBlockHighlighterComponent());
 }
 protected override void OnDetach()
 {
-    Owner.Detach<DigBlockHighlighterComponent>();
+    DetachSibling<DigBlockHighlighterComponent>();
 }
 ```
 
@@ -279,7 +293,7 @@ public class DynamicBodyComponent : GameComponent
 
 ## Inter-Component Communication
 
-Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`:
+Use native C# events. Wire in `OnAttach` or `OnReady`, unwire in `OnDetach`. `GetSibling` requires `GameComponent`:
 ```csharp
 protected override void OnReady()
 {
