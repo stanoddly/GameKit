@@ -244,13 +244,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         // AddSingleton<T>() — single type param, no args
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 0)
         {
-            return ExtractAddSingletonType(methodSymbol, invocation, interceptableLocation);
+            return ExtractAddSingletonType(methodSymbol, invocation, context, interceptableLocation);
         }
 
         // AddSingleton<TService, TImpl>() — two type params, no args
         if (methodSymbol.TypeArguments.Length == 2 && methodSymbol.Parameters.Length == 0)
         {
-            return ExtractAddSingletonWithAlias(methodSymbol, invocation, interceptableLocation);
+            return ExtractAddSingletonWithAlias(methodSymbol, invocation, context, interceptableLocation);
         }
 
         return null;
@@ -259,6 +259,7 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static ExtractionResult? ExtractAddSingletonType(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
+        GeneratorSyntaxContext context,
         InterceptableLocation interceptableLocation)
     {
         ITypeSymbol implType = methodSymbol.TypeArguments[0];
@@ -269,11 +270,11 @@ public class InterceptorGenerator : IIncrementalGenerator
                 $"AddSingleton<{implType.Name}>() cannot be used with an open generic type parameter. Use AddSingleton<{implType.Name}>(Func<ServiceProvider, {implType.Name}>) instead."));
         }
 
-        IMethodSymbol? constructor = GetSinglePublicConstructor(implNamedType);
+        IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"AddSingleton<{implType.Name}>() requires exactly one public constructor."));
+                $"AddSingleton<{implType.Name}>() requires exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -295,6 +296,7 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static ExtractionResult? ExtractAddSingletonWithAlias(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
+        GeneratorSyntaxContext context,
         InterceptableLocation interceptableLocation)
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
@@ -306,11 +308,11 @@ public class InterceptorGenerator : IIncrementalGenerator
                 $"AddSingleton<{serviceType.Name}, {implType.Name}>() cannot be used with open generic type parameters. Use AddSingleton<{serviceType.Name}>(Func<ServiceProvider, {serviceType.Name}>) instead."));
         }
 
-        IMethodSymbol? constructor = GetSinglePublicConstructor(implNamedType);
+        IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"AddSingleton<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one public constructor."));
+                $"AddSingleton<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -447,22 +449,22 @@ public class InterceptorGenerator : IIncrementalGenerator
         );
     }
 
-    private static IMethodSymbol? GetSinglePublicConstructor(INamedTypeSymbol type)
+    private static IMethodSymbol? GetSingleAccessibleConstructor(INamedTypeSymbol type, SemanticModel semanticModel, int position)
     {
-        IMethodSymbol[] publicConstructors = type.InstanceConstructors
-            .Where(c => c.DeclaredAccessibility == Accessibility.Public)
+        IMethodSymbol[] accessibleConstructors = type.InstanceConstructors
+            .Where(c => semanticModel.IsAccessible(position, c))
             .ToArray();
 
-        if (publicConstructors.Length == 1)
+        if (accessibleConstructors.Length == 1)
         {
-            return publicConstructors[0];
+            return accessibleConstructors[0];
         }
 
         // Allow implicit parameterless constructor
-        if (publicConstructors.Length == 0)
+        if (accessibleConstructors.Length == 0)
         {
             IMethodSymbol? implicitCtor = type.InstanceConstructors
-                .FirstOrDefault(c => c.IsImplicitlyDeclared && c.Parameters.Length == 0);
+                .FirstOrDefault(c => c.IsImplicitlyDeclared && c.Parameters.Length == 0 && semanticModel.IsAccessible(position, c));
             return implicitCtor;
         }
 

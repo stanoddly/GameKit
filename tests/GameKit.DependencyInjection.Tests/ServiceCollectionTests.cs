@@ -12,6 +12,16 @@ public class MyServiceImpl : IMyService;
 
 public class AnotherServiceImpl : IMyService;
 
+public class InternalConstructorMyServiceImpl : IMyService
+{
+    public SimpleService Simple { get; }
+
+    internal InternalConstructorMyServiceImpl(SimpleService simple)
+    {
+        Simple = simple;
+    }
+}
+
 public interface IUnrelated;
 
 public class ServiceWithDependency
@@ -32,6 +42,26 @@ public class ServiceWithTwoDependencies
     public ServiceWithTwoDependencies(SimpleService simple, AnotherService another)
     {
         Simple = simple;
+        Another = another;
+    }
+}
+
+public class ServiceWithInternalConstructor
+{
+    public SimpleService Simple { get; }
+
+    internal ServiceWithInternalConstructor(SimpleService simple)
+    {
+        Simple = simple;
+    }
+}
+
+public class ServiceWithProtectedInternalConstructor
+{
+    public AnotherService Another { get; }
+
+    protected internal ServiceWithProtectedInternalConstructor(AnotherService another)
+    {
         Another = another;
     }
 }
@@ -116,6 +146,34 @@ public class ServiceCollectionTests
         ServiceWithTwoDependencies service = provider.GetRequiredService<ServiceWithTwoDependencies>();
 
         Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+        Assert.That(service.Another, Is.SameAs(provider.GetRequiredService<AnotherService>()));
+    }
+
+    [Test]
+    public void AddSingleton_WithInternalConstructor_ResolvesService()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<ServiceWithInternalConstructor>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        ServiceWithInternalConstructor service = provider.GetRequiredService<ServiceWithInternalConstructor>();
+
+        Assert.That(service.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+    }
+
+    [Test]
+    public void AddSingleton_WithProtectedInternalConstructor_ResolvesService()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<AnotherService>();
+        collection.AddSingleton<ServiceWithProtectedInternalConstructor>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        ServiceWithProtectedInternalConstructor service = provider.GetRequiredService<ServiceWithProtectedInternalConstructor>();
+
         Assert.That(service.Another, Is.SameAs(provider.GetRequiredService<AnotherService>()));
     }
 
@@ -247,6 +305,21 @@ public class ServiceCollectionTests
 
         // TImpl is NOT separately registered — only TService is
         Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<MyServiceImpl>());
+    }
+
+    [Test]
+    public void AddSingleton_WithAlias_InternalConstructor_ResolvesViaInterface()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<IMyService, InternalConstructorMyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        IMyService service = provider.GetRequiredService<IMyService>();
+
+        Assert.That(service, Is.InstanceOf<InternalConstructorMyServiceImpl>());
+        Assert.That(((InternalConstructorMyServiceImpl)service).Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
     }
 
     [Test]
