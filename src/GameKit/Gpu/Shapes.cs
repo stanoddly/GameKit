@@ -246,9 +246,42 @@ public static class PositionColorShapes
             new(new Vector3(-1.0f, 0.0f, -1.0f), new Color(255, 255, 255, 255)),
         ];
         HorizontalQuadLines = horizontalQuadLines;
+
+        ImmutableArray<PositionColorVertex> cubeLines =
+        [
+            new(new Vector3(-1, -1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1, -1, -1), new Color(255, 255, 255, 255)),
+
+            new(new Vector3(-1,  1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1,  1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1,  1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1,  1, -1), new Color(255, 255, 255, 255)),
+
+            new(new Vector3(-1, -1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1,  1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1, -1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3( 1,  1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1, -1,  1), new Color(255, 255, 255, 255)),
+            new(new Vector3(-1,  1,  1), new Color(255, 255, 255, 255)),
+        ];
+        CubeLines = cubeLines;
     }
 
     public static readonly Shape<PositionColorVertex> HorizontalQuadLines;
+
+    public static readonly Shape<PositionColorVertex> CubeLines;
 }
 
 public static class PositionShapes
@@ -268,6 +301,37 @@ public static class PositionShapes
         Cube = PositionTextureNormalShapes.Cube.Reshape(RecreateShape);
         HorizontalQuad = PositionTextureNormalShapes.HorizontalQuad.Reshape(RecreateShape);
         VerticalQuad = PositionTextureNormalShapes.VerticalQuad.Reshape(RecreateShape);
+
+        ImmutableArray<PositionVertex> cubeLines =
+        [
+            new(new Vector3(-1, -1, -1)),
+            new(new Vector3( 1, -1, -1)),
+            new(new Vector3( 1, -1, -1)),
+            new(new Vector3( 1, -1,  1)),
+            new(new Vector3( 1, -1,  1)),
+            new(new Vector3(-1, -1,  1)),
+            new(new Vector3(-1, -1,  1)),
+            new(new Vector3(-1, -1, -1)),
+
+            new(new Vector3(-1,  1, -1)),
+            new(new Vector3( 1,  1, -1)),
+            new(new Vector3( 1,  1, -1)),
+            new(new Vector3( 1,  1,  1)),
+            new(new Vector3( 1,  1,  1)),
+            new(new Vector3(-1,  1,  1)),
+            new(new Vector3(-1,  1,  1)),
+            new(new Vector3(-1,  1, -1)),
+
+            new(new Vector3(-1, -1, -1)),
+            new(new Vector3(-1,  1, -1)),
+            new(new Vector3( 1, -1, -1)),
+            new(new Vector3( 1,  1, -1)),
+            new(new Vector3( 1, -1,  1)),
+            new(new Vector3( 1,  1,  1)),
+            new(new Vector3(-1, -1,  1)),
+            new(new Vector3(-1,  1,  1)),
+        ];
+        CubeLines = cubeLines;
     }
 
     public static readonly Shape<PositionVertex> Cube;
@@ -275,5 +339,7 @@ public static class PositionShapes
     public static readonly Shape<PositionVertex> HorizontalQuad;
 
     public static readonly Shape<PositionVertex> VerticalQuad;
+
+    public static readonly Shape<PositionVertex> CubeLines;
 }
 
