@@ -610,7 +610,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
         }
 
-        sb.AppendLine("), typeof(T));");
+        sb.AppendLine("));");
         sb.AppendLine($"        }}");
     }
 
@@ -629,7 +629,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            where TService : class");
         sb.AppendLine($"            where TImplementation : class, TService");
         sb.AppendLine($"        {{");
-        sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+        sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}, {info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
         for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
         {
@@ -640,7 +640,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
         }
 
-        sb.AppendLine($"), typeof(TImplementation));");
+        sb.AppendLine($"));");
         sb.AppendLine($"        }}");
     }
 
@@ -671,7 +671,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
         }
 
-        sb.AppendLine("), typeof(T));");
+        sb.AppendLine("));");
         sb.AppendLine($"        }}");
     }
 

@@ -50,17 +50,17 @@ internal class ServiceDescriptor
         };
     }
 
-    // Used by the source generator when the service type and implementation type differ
-    // (AddSingleton<TService, TImpl>()) so that activation/disposal callbacks receive
-    // typeof(TImpl) rather than typeof(TService).
-    public static ServiceDescriptor ForTypedFactoryWithConcreteType<TService>(
-        Func<ServiceProvider, TService> typedFactory,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type concreteType) where TService : class
+    // Used when the service type and implementation type differ (AddSingleton<TService, TImpl>(...))
+    // so that activation/disposal callbacks receive typeof(TImpl) rather than typeof(TService).
+    public static ServiceDescriptor ForTypedFactoryWithConcreteType<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
+        Func<ServiceProvider, TImpl> typedFactory)
+        where TService : class
+        where TImpl : class, TService
     {
         return new ServiceDescriptor(ServiceTypeId<TService>.Id, typeof(TService), ServiceDescriptorKind.TypedFactory)
         {
             TypedFactory = typedFactory,
-            ConcreteType = concreteType
+            ConcreteType = typeof(TImpl)
         };
     }
 

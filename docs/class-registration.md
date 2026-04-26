@@ -91,6 +91,20 @@ Use when:
 
 ---
 
+### `AddSingleton<TService, TImpl>(Func<ServiceProvider, TImpl> factory)`
+
+Registers a typed factory that produces `TImpl` instances under the service type `TService`. Activation and disposal callbacks receive `typeof(TImpl)` rather than `typeof(TService)`. No source generator required.
+
+```csharp
+services.AddSingleton<IRenderer, SpriteRenderer>(static sp =>
+    new SpriteRenderer(sp.GetRequiredService<GpuDevice>()));
+```
+
+Use when:
+- The service type is an interface or base class but the concrete implementation type should drive activation/disposal callbacks (e.g. for `EventBus.Subscribe` interface discovery).
+
+---
+
 ### `AddAlias<TService, TImplementation>()`
 
 Makes `TService` resolve to the same instance as the already-registered `TImplementation`. No source generator required.

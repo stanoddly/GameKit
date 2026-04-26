@@ -56,22 +56,18 @@ public class ServiceCollection
     }
 
     /// <summary>
-    /// Registers a typed factory with an explicit concrete implementation type, used when the factory type parameter
-    /// is a service interface or base class rather than the concrete type. Activation and disposal callbacks receive
-    /// <paramref name="concreteType"/> rather than <typeparamref name="TService"/>.
+    /// Registers a typed factory that produces <typeparamref name="TImpl"/> instances under the service type
+    /// <typeparamref name="TService"/>. Activation and disposal callbacks receive <c>typeof(TImpl)</c>.
     /// </summary>
-    /// <typeparam name="TService">The service type to register (interface or base class).</typeparam>
+    /// <typeparam name="TService">The service type (interface or base class) under which the instance is resolved.</typeparam>
+    /// <typeparam name="TImpl">The concrete implementation type produced by <paramref name="factory"/>.</typeparam>
     /// <param name="factory">A delegate that receives the <see cref="ServiceProvider"/> and returns the constructed instance.</param>
-    /// <param name="concreteType">
-    /// The concrete implementation type produced by <paramref name="factory"/>. Must carry
-    /// <see cref="DynamicallyAccessedMemberTypes.Interfaces"/> at the call site so the trimmer
-    /// preserves interface metadata for activation/disposal callbacks.
-    /// </param>
-    public void AddSingleton<TService>(
-        Func<ServiceProvider, TService> factory,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type concreteType) where TService : class
+    public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
+        Func<ServiceProvider, TImpl> factory)
+        where TService : class
+        where TImpl : class, TService
     {
-        ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactoryWithConcreteType(factory, concreteType);
+        ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactoryWithConcreteType<TService, TImpl>(factory);
         RegisterDescriptor(ServiceTypeId<TService>.Id, descriptor);
     }
 
