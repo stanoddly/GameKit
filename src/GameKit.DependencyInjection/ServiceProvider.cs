@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -13,6 +14,8 @@ public class ServiceProvider : IDisposable
     private Dictionary<int, object>? _pending;
     private readonly ServiceProvider? _parent;
     private readonly List<Action<ServiceProvider>> _disposeCallbacks;
+    private List<ServiceActivationCallback>? _activationCallbacks;
+    private List<ServiceDisposalCallback>? _disposalCallbacks;
     private Func<int, object>? _buildTimeResolver;
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
@@ -22,8 +25,10 @@ public class ServiceProvider : IDisposable
     // as IReadOnlyList<T> — zero allocation, zero copy. Do NOT switch to object[] storage:
     // that would force a per-call T[] allocation + element copy on every GetServices call.
     private Dictionary<int, Array>? _serviceCollections;
-    // Tracks slot indices in the order services were first stored, for reverse-order disposal
+    // Tracks slot indices in the order services were first stored, for reverse-order disposal.
+    // Parallel list _creationTypes records the concrete type for each slot, enabling typed disposal callbacks.
     private readonly List<int> _creationOrder = new();
+    private readonly List<Type> _creationTypes = new();
 
     public static ServiceProvider Empty { get; } = CreateEmpty();
 
@@ -51,6 +56,46 @@ public class ServiceProvider : IDisposable
         _buildTimeResolver = resolver;
         _buildTimeTryResolver = tryResolver;
         _buildTimeCollectionResolver = collectionResolver;
+    }
+
+    internal void SetCallbacks(List<ServiceActivationCallback>? activationCallbacks, List<ServiceDisposalCallback>? disposalCallbacks)
+    {
+        _activationCallbacks = activationCallbacks;
+        _disposalCallbacks = disposalCallbacks;
+    }
+
+    // Invokes all registered typed activation callbacks for a newly created singleton.
+    // The [DynamicallyAccessedMembers] annotation on type preserves interface metadata
+    // when called from generator-emitted code via typeof(T) where T carries the annotation.
+    internal void RunActivationCallbacks(
+        object instance,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    {
+        if (_activationCallbacks == null)
+        {
+            return;
+        }
+
+        foreach (ServiceActivationCallback callback in _activationCallbacks)
+        {
+            callback(instance, type, this);
+        }
+    }
+
+    // Invokes all registered typed disposal callbacks for a singleton being disposed.
+    internal void RunDisposalCallbacks(
+        object instance,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    {
+        if (_disposalCallbacks == null)
+        {
+            return;
+        }
+
+        foreach (ServiceDisposalCallback callback in _disposalCallbacks)
+        {
+            callback(instance, type, this);
+        }
     }
 
     internal void FreezeServices()
@@ -153,6 +198,22 @@ public class ServiceProvider : IDisposable
         if (!_pending!.ContainsKey(id))
         {
             _creationOrder.Add(id);
+            // Placeholder type; overwritten by SetServiceWithType when type is known.
+            _creationTypes.Add(service.GetType());
+        }
+
+        _pending[id] = service;
+    }
+
+    internal void SetServiceWithType(
+        int id,
+        object service,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type concreteType)
+    {
+        if (!_pending!.ContainsKey(id))
+        {
+            _creationOrder.Add(id);
+            _creationTypes.Add(concreteType);
         }
 
         _pending[id] = service;
@@ -162,7 +223,7 @@ public class ServiceProvider : IDisposable
     /// <typeparam name="T">The service type to resolve.</typeparam>
     /// <returns>The registered singleton instance of <typeparamref name="T"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="T"/> is not registered in this provider or any ancestor provider.</exception>
-    public T GetRequiredService<T>() where T : class
+    public T GetRequiredService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
@@ -206,7 +267,7 @@ public class ServiceProvider : IDisposable
     /// After freeze, <c>_serviceCollections</c> is the fully-merged ancestor-to-child map (child wins), so no parent traversal occurs here.
     /// Returns an empty list if no services of type <typeparamref name="T"/> are registered in this provider or any ancestor.
     /// </returns>
-    public IReadOnlyList<T> GetServices<T>() where T : class
+    public IReadOnlyList<T> GetServices<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
@@ -241,7 +302,7 @@ public class ServiceProvider : IDisposable
     /// <summary>Returns the singleton instance registered for <typeparamref name="T"/>, or <see langword="null"/> if the type is not registered.</summary>
     /// <typeparam name="T">The service type to resolve.</typeparam>
     /// <returns>The registered singleton instance of <typeparamref name="T"/>, or <see langword="null"/> if not registered in this provider or any ancestor.</returns>
-    public T? GetService<T>() where T : class
+    public T? GetService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         int id = ServiceTypeId<T>.Id;
 
@@ -312,9 +373,22 @@ public class ServiceProvider : IDisposable
                 service = _pending?.GetValueOrDefault(slot);
             }
 
-            if (service is IDisposable disposable
-                && !ReferenceEquals(service, this)
-                && alreadyDisposed.Add(service))
+            if (service == null || ReferenceEquals(service, this))
+            {
+                continue;
+            }
+
+            if (!alreadyDisposed.Add(service))
+            {
+                continue;
+            }
+
+            // Disposal callbacks fire before IDisposable.Dispose so callers can still use the
+            // service (e.g. unsubscribe from event buses) while it is operational.
+            Type serviceType = _creationTypes[i];
+            RunDisposalCallbacks(service, serviceType);
+
+            if (service is IDisposable disposable)
             {
                 disposable.Dispose();
             }

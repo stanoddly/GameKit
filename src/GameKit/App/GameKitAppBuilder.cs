@@ -1,6 +1,6 @@
 using GameKit.Content;
 using GameKit.DependencyInjection;
-using GameKit.Encs;
+using GameKit.Events;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Shaders;

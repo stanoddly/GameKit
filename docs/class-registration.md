@@ -160,6 +160,32 @@ services.OnDispose(sp =>
 
 ---
 
+### Activation and disposal callbacks
+
+`AddActivationCallback(ServiceActivationCallback callback)` registers a typed callback that runs after each singleton is constructed. For pre-constructed instances registered with `AddSingleton<T>(T instance)`, it runs when the provider is built.
+
+`AddDisposalCallback(ServiceDisposalCallback callback)` registers a typed callback that runs during `ServiceProvider.Dispose()`, immediately before the service's own `IDisposable.Dispose()` call if it has one.
+
+Both delegates receive:
+
+- `object instance` - the singleton instance.
+- `Type type` - the concrete implementation type. This parameter is annotated with `DynamicallyAccessedMemberTypes.Interfaces`.
+- `ServiceProvider provider` - the provider that owns the service.
+
+Activation callbacks run in the order services are constructed. Disposal callbacks run in reverse construction order, matching service disposal. Multiple callbacks of the same kind run in registration order for each service.
+
+The annotated `Type` parameter is important for NativeAOT and trimming. Generator-emitted registrations pass a `typeof(T)` value from an annotated generic type parameter into the callback path, so consumers can inspect interface metadata without falling back to `instance.GetType()`. This is what allows integrations such as `GameKit.Events.AddEvents()` to discover `IEventHandler<T>` implementations in an AOT-clean way.
+
+```csharp
+services.AddActivationCallback(static (instance, type, provider) =>
+{
+    ILogger logger = provider.GetRequiredService<ILogger>();
+    logger.Log($"Activated {type.Name}");
+});
+```
+
+---
+
 ### `IsRegistered(Type)` / `IsRegistered<T>()`
 
 Returns `true` if the type has been registered at least once.

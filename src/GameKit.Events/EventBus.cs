@@ -2,34 +2,37 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace GameKit.Encs;
+namespace GameKit.Events;
 
 internal static class ComponentTypeHelper
 {
     private static readonly Dictionary<Type, List<int>> Cache = new();
 
-    // To avoid trimming
-    // https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/prepare-libraries-for-trimming?pivots=dotnet-8-0#dynamicallyaccessedmembers
-    internal static List<int> GetComponentTypeHandledEventArgs<TComponent>(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TComponent obj
-    ) where TComponent: notnull
+    internal static List<int> GetComponentTypeHandledEventArgs(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        Type objectType = obj.GetType();
-        ref List<int>? items = ref CollectionsMarshal.GetValueRefOrAddDefault(Cache, objectType, out bool exists);
+        ref List<int>? items = ref CollectionsMarshal.GetValueRefOrAddDefault(Cache, type, out bool exists);
 
         if (exists)
         {
             return items!;
         }
 
-        items = [];
+        items = new List<int>();
 
-        foreach (var whateverInterface in objectType.GetInterfaces())
+        foreach (Type candidateInterface in type.GetInterfaces())
         {
-            if (!whateverInterface.IsGenericType) continue;
-            if (whateverInterface.GetGenericTypeDefinition() != typeof(IEventHandler<>)) continue;
+            if (!candidateInterface.IsGenericType)
+            {
+                continue;
+            }
 
-            Type[] genericArguments = whateverInterface.GetGenericArguments();
+            if (candidateInterface.GetGenericTypeDefinition() != typeof(IEventHandler<>))
+            {
+                continue;
+            }
+
+            Type[] genericArguments = candidateInterface.GetGenericArguments();
             Type eventArgsType = genericArguments[0];
             int typeId = TypeId.GetId(eventArgsType);
             items.Add(typeId);
@@ -44,9 +47,17 @@ public class EventBus
     // TODO: this can be a slot map, but a slot map should work with uint first
     private readonly Dictionary<int, List<object>> _eventHandlersPerType = new();
 
-    public void Subscribe<TSubscriber>(TSubscriber obj) where TSubscriber: notnull
+    public void Subscribe<TSubscriber>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TSubscriber instance) where TSubscriber : notnull
     {
-        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
+        Subscribe(instance, typeof(TSubscriber));
+    }
+
+    public void Subscribe(
+        object instance,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    {
+        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(type);
 
         foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
         {
@@ -56,11 +67,11 @@ public class EventBus
             {
                 value = new List<object>();
             }
-            
-            value.Add(obj);
+
+            value.Add(instance);
         }
     }
-    
+
     public void Subscribe<TEventArgs>(IEventHandler<TEventArgs> obj)
     {
         int id = TypeId<TEventArgs>.Id;
@@ -70,14 +81,14 @@ public class EventBus
         {
             value = new List<object>();
         }
-            
+
         value.Add(obj);
     }
-    
+
     public void Unsubscribe<TEventArgs>(IEventHandler<TEventArgs> obj)
     {
         int id = TypeId<TEventArgs>.Id;
-        
+
         if (!_eventHandlersPerType.TryGetValue(id, out List<object>? value))
         {
             return;
@@ -86,17 +97,25 @@ public class EventBus
         value.Remove(obj);
     }
 
-    public void Unsubscribe<TSubscriber>(TSubscriber obj) where TSubscriber: notnull
+    public void Unsubscribe<TSubscriber>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TSubscriber instance) where TSubscriber : notnull
     {
-        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(obj);
-        foreach (var whateverInterface in componentTypeHandledEventArgs)
+        Unsubscribe(instance, typeof(TSubscriber));
+    }
+
+    public void Unsubscribe(
+        object instance,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
+    {
+        List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(type);
+        foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
         {
-            if (!_eventHandlersPerType.TryGetValue(whateverInterface, out List<object>? value))
+            if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? value))
             {
                 continue;
             }
 
-            value.Remove(obj);
+            value.Remove(instance);
         }
     }
 
@@ -104,7 +123,10 @@ public class EventBus
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out var subscriptions)) return;
+        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        {
+            return;
+        }
 
         foreach (object obj in subscriptions)
         {
@@ -112,12 +134,15 @@ public class EventBus
             eventHandler.Process(args);
         }
     }
-    
+
     public void PublishEvents<TEventArgs>(ReadOnlySpan<TEventArgs> args)
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out var subscriptions)) return;
+        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        {
+            return;
+        }
 
         foreach (TEventArgs arg in args)
         {
@@ -128,12 +153,15 @@ public class EventBus
             }
         }
     }
-    
+
     public void PublishEvents<TEventArgs>(List<TEventArgs> args)
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out var subscriptions)) return;
+        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        {
+            return;
+        }
 
         foreach (TEventArgs arg in args)
         {

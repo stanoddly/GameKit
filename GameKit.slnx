@@ -4,7 +4,7 @@
     <Project Path="src/GameKit.Collections/GameKit.Collections.csproj" />
     <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
-    <Project Path="src/GameKit.Encs/GameKit.Encs.csproj" />
+    <Project Path="src/GameKit.Events/GameKit.Events.csproj" />
     <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />
     <Project Path="src/GameKit.SdlangCompileLib/GameKit.SdlangCompileLib.csproj" />
     <Project Path="src/GameKit.SdlangCompilerCli/GameKit.SdlangCompilerCli.csproj" />
@@ -25,6 +25,7 @@
     <Project Path="tests/GameKit.SdlangCompileLib.Tests/GameKit.SdlangCompileLib.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileTask.Tests/GameKit.SdlangCompileTask.Tests.csproj" />
     <Project Path="tests/GameKit.DependencyInjection.Tests/GameKit.DependencyInjection.Tests.csproj" />
+    <Project Path="tests/GameKit.Events.Tests/GameKit.Events.Tests.csproj" />
     <Project Path="tests/GameKit.Tests/GameKit.Tests.csproj" />
   </Folder>
   <Folder Name="/tutorials/">
