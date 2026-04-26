@@ -131,56 +131,27 @@ services.OnStart((SceneLoader loader) => loader.LoadInitialScene());
 
 ---
 
-### `OnActivation(Action<object> callback)`
+### `OnActivated(ServiceActivatedCallback callback)`
 
-Registers a callback invoked each time any service instance is first created. Receives the raw `object`. No source generator required.
+Registers a callback invoked immediately after each singleton is constructed. For pre-constructed instances registered with `AddSingleton<T>(T instance)`, it runs when the provider is built.
 
-```csharp
-services.OnActivation(instance =>
-{
-    if (instance is ILoggable loggable)
-    {
-        loggable.SetLogger(logger);
-    }
-});
-```
+### `OnDisposing(ServiceDisposingCallback callback)`
 
----
-
-### `OnDispose(Action<ServiceProvider> callback)`
-
-Registers a callback invoked at the start of `ServiceProvider.Dispose()`, before individual service `Dispose` calls. No source generator required.
-
-```csharp
-services.OnDispose(sp =>
-{
-    sp.GetRequiredService<NetworkManager>().Shutdown();
-});
-```
-
----
-
-### Activation and disposal callbacks
-
-`AddActivationCallback(ServiceActivationCallback callback)` registers a typed callback that runs after each singleton is constructed. For pre-constructed instances registered with `AddSingleton<T>(T instance)`, it runs when the provider is built.
-
-`AddDisposalCallback(ServiceDisposalCallback callback)` registers a typed callback that runs during `ServiceProvider.Dispose()`, immediately before the service's own `IDisposable.Dispose()` call if it has one.
+Registers a callback invoked during `ServiceProvider.Dispose()`, immediately before the service's own `IDisposable.Dispose()` call if it has one.
 
 Both delegates receive:
 
-- `object instance` - the singleton instance.
-- `Type type` - the concrete implementation type. This parameter is annotated with `DynamicallyAccessedMemberTypes.Interfaces`.
-- `ServiceProvider provider` - the provider that owns the service.
+- `object instance` — the singleton instance.
+- `Type type` — the concrete implementation type. Annotated with `DynamicallyAccessedMemberTypes.Interfaces`.
 
-Activation callbacks run in the order services are constructed. Disposal callbacks run in reverse construction order, matching service disposal. Multiple callbacks of the same kind run in registration order for each service.
+`OnActivated` callbacks fire in the order services are constructed. `OnDisposing` callbacks fire in reverse construction order, matching service disposal. Multiple callbacks of the same kind run in registration order for each service.
 
 The annotated `Type` parameter is important for NativeAOT and trimming. Generator-emitted registrations pass a `typeof(T)` value from an annotated generic type parameter into the callback path, so consumers can inspect interface metadata without falling back to `instance.GetType()`. This is what allows integrations such as `GameKit.Events.AddEvents()` to discover `IEventHandler<T>` implementations in an AOT-clean way.
 
 ```csharp
-services.AddActivationCallback(static (instance, type, provider) =>
+services.OnActivated(static (instance, type) =>
 {
-    ILogger logger = provider.GetRequiredService<ILogger>();
-    logger.Log($"Activated {type.Name}");
+    Console.WriteLine($"Activated {type.Name}");
 });
 ```
 
@@ -254,16 +225,16 @@ Returns an empty list if no services of type `T` are registered. Falls back to t
 
 ### `Dispose()`
 
-Runs `OnDispose` callbacks, then disposes every registered service that implements `IDisposable` in reverse creation order. Services that are aliased to multiple types are disposed exactly once (deduplicated by reference).
+Walks every registered service in reverse creation order. For each one, `OnDisposing` callbacks fire first, then the service's own `IDisposable.Dispose()` runs if it implements `IDisposable`. Services that are aliased to multiple types are disposed exactly once (deduplicated by reference).
 
 ## Lifecycle
 
-1. **Registration** — call `AddSingleton`, `AddAlias`, `OnStart`, `OnActivation`, `OnDispose` on `ServiceCollection`.
-2. **`BuildServiceProvider`** — all services are instantiated in dependency order; `OnActivation` callbacks fire per instance.
+1. **Registration** — call `AddSingleton`, `AddAlias`, `OnStart`, `OnActivated`, `OnDisposing` on `ServiceCollection`.
+2. **`BuildServiceProvider`** — all services are instantiated in dependency order; `OnActivated` callbacks fire per instance.
 3. **`OnStart` callbacks** — fire in registration order after all services exist.
 4. **Freeze** — the provider becomes immutable; build-time resolvers are cleared.
 5. **Runtime resolution** — `GetRequiredService`, `GetService`, `GetServices` serve from the frozen flat array.
-6. **`Dispose`** — `OnDispose` callbacks fire first, then services are disposed in reverse creation order.
+6. **`Dispose`** — for each service in reverse creation order: `OnDisposing` callbacks fire, then `IDisposable.Dispose()` runs.
 
 ## Multi-Registration and `GetServices<T>`
 

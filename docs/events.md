@@ -44,6 +44,6 @@ EventBus eventBus = provider.GetRequiredService<EventBus>();
 eventBus.PublishEvent(new DamageEvent(5));
 ```
 
-`AddEvents()` registers `EventBus` as a singleton, then wires activation and disposal callbacks. When the provider builds, each singleton is inspected for `IEventHandler<TEventArgs>` interfaces and automatically subscribed. When the provider is disposed, those same services are unsubscribed before their own `Dispose()` methods run.
+`AddEvents()` constructs an `EventBus`, registers it as a singleton, and wires `OnActivated` to `eventBus.Subscribe` and `OnDisposing` to `eventBus.Unsubscribe`. When the provider builds, each singleton is inspected for `IEventHandler<TEventArgs>` interfaces and automatically subscribed. When the provider is disposed, those same services are unsubscribed before their own `Dispose()` methods run.
 
 The integration uses the callback's annotated `Type` parameter instead of `instance.GetType()`, preserving interface metadata for NativeAOT and trimming.

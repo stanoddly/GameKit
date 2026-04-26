@@ -8,11 +8,9 @@ public class ServiceCollection
 {
     private readonly HashSet<int> _registeredTypeIds = new();
     private readonly Dictionary<int, List<ServiceDescriptor>> _serviceGroups = new();
-    private readonly List<Action<object>> _activationCallbacks = new();
     private readonly List<Action<ServiceProvider>> _onStartActions = new();
-    private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
-    private readonly List<ServiceActivationCallback> _typedActivationCallbacks = new();
-    private readonly List<ServiceDisposalCallback> _typedDisposalCallbacks = new();
+    private readonly List<ServiceActivatedCallback> _activatedCallbacks = new();
+    private readonly List<ServiceDisposingCallback> _disposingCallbacks = new();
 
     /// <summary>Registers <typeparamref name="T"/> as a singleton, constructing it via its single public constructor with dependencies resolved from the provider.</summary>
     /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
@@ -132,13 +130,6 @@ public class ServiceCollection
         group.Add(descriptor);
     }
 
-    /// <summary>Registers a callback invoked each time any service instance is first created, receiving the raw instance as <see langword="object"/>.</summary>
-    /// <param name="callback">The callback to invoke with each newly created service instance.</param>
-    public void OnActivation(Action<object> callback)
-    {
-        _activationCallbacks.Add(callback);
-    }
-
     /// <summary>Registers a callback whose parameters are resolved as services, invoked after all services are constructed but before the provider is frozen.</summary>
     /// <param name="action">A delegate whose parameter types are all registered services.</param>
     /// <remarks>This overload is intercepted by the source generator at each call site. The delegate argument must be resolvable at compile time — otherwise the method throws at runtime.</remarks>
@@ -149,33 +140,25 @@ public class ServiceCollection
             "OnStart() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    /// <summary>Registers a callback invoked at the start of <see cref="ServiceProvider.Dispose"/>, before any service <c>Dispose</c> calls.</summary>
-    /// <param name="callback">The callback to invoke with the <see cref="ServiceProvider"/> being disposed.</param>
-    public void OnDispose(Action<ServiceProvider> callback)
-    {
-        _disposeCallbacks.Add(callback);
-    }
-
     /// <summary>
-    /// Registers a typed callback invoked immediately after each singleton is constructed (or, for pre-constructed
-    /// instances, when the provider is built). The <paramref name="callback"/> receives the instance, its concrete
-    /// implementation type, and the <see cref="ServiceProvider"/>.
+    /// Registers a callback invoked immediately after each singleton is constructed (or, for pre-constructed
+    /// instances, when the provider is built). The callback receives the instance and its concrete implementation type.
     /// </summary>
     /// <param name="callback">The callback to invoke for each activated singleton.</param>
-    public void AddActivationCallback(ServiceActivationCallback callback)
+    public void OnActivated(ServiceActivatedCallback callback)
     {
-        _typedActivationCallbacks.Add(callback);
+        _activatedCallbacks.Add(callback);
     }
 
     /// <summary>
-    /// Registers a typed callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
+    /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
     /// immediately before that service's own <see cref="IDisposable.Dispose"/> call. Services are visited
     /// in reverse creation order.
     /// </summary>
     /// <param name="callback">The callback to invoke for each singleton being disposed.</param>
-    public void AddDisposalCallback(ServiceDisposalCallback callback)
+    public void OnDisposing(ServiceDisposingCallback callback)
     {
-        _typedDisposalCallbacks.Add(callback);
+        _disposingCallbacks.Add(callback);
     }
 
     /// <summary>Returns <see langword="true"/> if <typeparamref name="T"/> has been registered at least once.</summary>
@@ -207,14 +190,13 @@ public class ServiceCollection
             descriptorMap[entry.Key] = lastDescriptor;
         }
 
-        List<Action<ServiceProvider>> disposeCallbacks = new(_disposeCallbacks);
-        ServiceProvider provider = new ServiceProvider(parent, disposeCallbacks);
+        ServiceProvider provider = new ServiceProvider(parent);
 
-        List<ServiceActivationCallback>? typedActivationCallbacks =
-            _typedActivationCallbacks.Count > 0 ? new List<ServiceActivationCallback>(_typedActivationCallbacks) : null;
-        List<ServiceDisposalCallback>? typedDisposalCallbacks =
-            _typedDisposalCallbacks.Count > 0 ? new List<ServiceDisposalCallback>(_typedDisposalCallbacks) : null;
-        provider.SetCallbacks(typedActivationCallbacks, typedDisposalCallbacks);
+        List<ServiceActivatedCallback>? activatedCallbacks =
+            _activatedCallbacks.Count > 0 ? new List<ServiceActivatedCallback>(_activatedCallbacks) : null;
+        List<ServiceDisposingCallback>? disposingCallbacks =
+            _disposingCallbacks.Count > 0 ? new List<ServiceDisposingCallback>(_disposingCallbacks) : null;
+        provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
         provider.SetService(ServiceTypeId<ServiceProvider>.Id, provider);
@@ -338,8 +320,7 @@ public class ServiceCollection
             {
                 object instance = descriptor.Instance!;
                 provider.SetServiceWithType(id, instance, descriptor.ConcreteType!);
-                InvokeActivationCallbacks(instance);
-                provider.RunActivationCallbacks(instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 break;
             }
 
@@ -354,8 +335,7 @@ public class ServiceCollection
                 object instance = descriptor.TypedFactory!(provider)
                     ?? throw new InvalidOperationException("Factory delegate returned null.");
                 provider.SetServiceWithType(id, instance, descriptor.ConcreteType!);
-                InvokeActivationCallbacks(instance);
-                provider.RunActivationCallbacks(instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 resolving.Remove(id);
                 break;
             }
@@ -399,8 +379,7 @@ public class ServiceCollection
             case ServiceDescriptorKind.Instance:
             {
                 object instance = descriptor.Instance!;
-                InvokeActivationCallbacks(instance);
-                provider.RunActivationCallbacks(instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 return instance;
             }
 
@@ -408,8 +387,7 @@ public class ServiceCollection
             {
                 object instance = descriptor.TypedFactory!(provider)
                     ?? throw new InvalidOperationException("Factory delegate returned null.");
-                InvokeActivationCallbacks(instance);
-                provider.RunActivationCallbacks(instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 return instance;
             }
 
@@ -556,13 +534,5 @@ public class ServiceCollection
         }
 
         return instances.ToArray();
-    }
-
-    private void InvokeActivationCallbacks(object instance)
-    {
-        foreach (Action<object> callback in _activationCallbacks)
-        {
-            callback(instance);
-        }
     }
 }

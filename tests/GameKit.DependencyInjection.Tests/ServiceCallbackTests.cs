@@ -37,13 +37,13 @@ public sealed class CallbackDisposableService : IDisposable
 public sealed class ServiceCallbackTests
 {
     [Test]
-    public void AddActivationCallback_FiresOncePerSingleton_WithInstanceAndConcreteType()
+    public void OnActivated_FiresOncePerSingleton_WithInstanceAndConcreteType()
     {
         List<(object Instance, Type Type)> activations = new();
         CallbackInstanceService instanceService = new();
 
         ServiceCollection collection = new();
-        collection.AddActivationCallback((instance, type, sp) => activations.Add((instance, type)));
+        collection.OnActivated((instance, type) => activations.Add((instance, type)));
         collection.AddSingleton<CallbackConcreteService>();
         collection.AddSingleton<IServiceCallbackContract, CallbackImplementationService>();
         collection.AddSingleton<CallbackFactoryService>(static sp => new CallbackFactoryService());
@@ -63,13 +63,13 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void AddActivationCallback_MultipleCallbacks_FireInRegistrationOrder()
+    public void OnActivated_MultipleCallbacks_FireInRegistrationOrder()
     {
         List<string> calls = new();
 
         ServiceCollection collection = new();
-        collection.AddActivationCallback((instance, type, sp) => calls.Add("first"));
-        collection.AddActivationCallback((instance, type, sp) => calls.Add("second"));
+        collection.OnActivated((instance, type) => calls.Add("first"));
+        collection.OnActivated((instance, type) => calls.Add("second"));
         collection.AddSingleton<CallbackConcreteService>();
 
         collection.BuildServiceProvider();
@@ -78,12 +78,12 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void AddActivationCallback_FiresDuringBuild_EvenBeforeExplicitResolve()
+    public void OnActivated_FiresDuringBuild_EvenBeforeExplicitResolve()
     {
         List<Type> activations = new();
 
         ServiceCollection collection = new();
-        collection.AddActivationCallback((instance, type, sp) => activations.Add(type));
+        collection.OnActivated((instance, type) => activations.Add(type));
         collection.AddSingleton<CallbackConcreteService>();
 
         ServiceProvider provider = collection.BuildServiceProvider();
@@ -94,14 +94,14 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void AddDisposalCallback_FiresBeforeOwnDispose()
+    public void OnDisposing_FiresBeforeOwnDispose()
     {
         List<string> events = new();
 
         ServiceCollection collection = new();
         collection.AddSingleton<List<string>>(events);
         collection.AddSingleton<CallbackDisposableService>();
-        collection.AddDisposalCallback((instance, type, sp) =>
+        collection.OnDisposing((instance, type) =>
         {
             if (instance is CallbackDisposableService disposableService)
             {
@@ -119,14 +119,14 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void AddDisposalCallback_FiresInReverseConstructionOrder()
+    public void OnDisposing_FiresInReverseConstructionOrder()
     {
         List<string> calls = new();
 
         ServiceCollection collection = new();
         collection.AddSingleton<CallbackFirstService>();
         collection.AddSingleton<CallbackSecondService>();
-        collection.AddDisposalCallback((instance, type, sp) => calls.Add(type.Name));
+        collection.OnDisposing((instance, type) => calls.Add(type.Name));
 
         collection.BuildServiceProvider().Dispose();
 

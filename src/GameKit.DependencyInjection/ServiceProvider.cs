@@ -13,9 +13,8 @@ public class ServiceProvider : IDisposable
     private object?[]? _services;
     private Dictionary<int, object>? _pending;
     private readonly ServiceProvider? _parent;
-    private readonly List<Action<ServiceProvider>> _disposeCallbacks;
-    private List<ServiceActivationCallback>? _activationCallbacks;
-    private List<ServiceDisposalCallback>? _disposalCallbacks;
+    private List<ServiceActivatedCallback>? _activatedCallbacks;
+    private List<ServiceDisposingCallback>? _disposingCallbacks;
     private Func<int, object>? _buildTimeResolver;
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
@@ -32,16 +31,15 @@ public class ServiceProvider : IDisposable
 
     public static ServiceProvider Empty { get; } = CreateEmpty();
 
-    internal ServiceProvider(ServiceProvider? parent, List<Action<ServiceProvider>> disposeCallbacks)
+    internal ServiceProvider(ServiceProvider? parent)
     {
         _parent = parent;
-        _disposeCallbacks = disposeCallbacks;
         _pending = new Dictionary<int, object>();
     }
 
     private static ServiceProvider CreateEmpty()
     {
-        ServiceProvider provider = new ServiceProvider(null, new List<Action<ServiceProvider>>());
+        ServiceProvider provider = new ServiceProvider(null);
         provider.FreezeServices();
         return provider;
     }
@@ -58,43 +56,41 @@ public class ServiceProvider : IDisposable
         _buildTimeCollectionResolver = collectionResolver;
     }
 
-    internal void SetCallbacks(List<ServiceActivationCallback>? activationCallbacks, List<ServiceDisposalCallback>? disposalCallbacks)
+    internal void SetCallbacks(List<ServiceActivatedCallback>? activatedCallbacks, List<ServiceDisposingCallback>? disposingCallbacks)
     {
-        _activationCallbacks = activationCallbacks;
-        _disposalCallbacks = disposalCallbacks;
+        _activatedCallbacks = activatedCallbacks;
+        _disposingCallbacks = disposingCallbacks;
     }
 
-    // Invokes all registered typed activation callbacks for a newly created singleton.
     // The [DynamicallyAccessedMembers] annotation on type preserves interface metadata
     // when called from generator-emitted code via typeof(T) where T carries the annotation.
-    internal void RunActivationCallbacks(
+    internal void RunActivatedCallbacks(
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        if (_activationCallbacks == null)
+        if (_activatedCallbacks == null)
         {
             return;
         }
 
-        foreach (ServiceActivationCallback callback in _activationCallbacks)
+        foreach (ServiceActivatedCallback callback in _activatedCallbacks)
         {
-            callback(instance, type, this);
+            callback(instance, type);
         }
     }
 
-    // Invokes all registered typed disposal callbacks for a singleton being disposed.
-    internal void RunDisposalCallbacks(
+    internal void RunDisposingCallbacks(
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        if (_disposalCallbacks == null)
+        if (_disposingCallbacks == null)
         {
             return;
         }
 
-        foreach (ServiceDisposalCallback callback in _disposalCallbacks)
+        foreach (ServiceDisposingCallback callback in _disposingCallbacks)
         {
-            callback(instance, type, this);
+            callback(instance, type);
         }
     }
 
@@ -337,7 +333,7 @@ public class ServiceProvider : IDisposable
         return null;
     }
 
-    /// <summary>Fires <c>OnDispose</c> callbacks, then disposes all <see cref="IDisposable"/> services in reverse creation order.</summary>
+    /// <summary>Fires <c>OnDisposing</c> callbacks per instance, then disposes all <see cref="IDisposable"/> services in reverse creation order.</summary>
     /// <remarks>Services aliased to multiple types are disposed exactly once — deduplication is done by reference, so aliases do not cause double disposal.</remarks>
     public void Dispose()
     {
@@ -347,11 +343,6 @@ public class ServiceProvider : IDisposable
         }
 
         _disposed = true;
-
-        foreach (Action<ServiceProvider> callback in _disposeCallbacks)
-        {
-            callback(this);
-        }
 
         // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
@@ -383,10 +374,10 @@ public class ServiceProvider : IDisposable
                 continue;
             }
 
-            // Disposal callbacks fire before IDisposable.Dispose so callers can still use the
+            // Disposing callbacks fire before IDisposable.Dispose so callers can still use the
             // service (e.g. unsubscribe from event buses) while it is operational.
             Type serviceType = _creationTypes[i];
-            RunDisposalCallbacks(service, serviceType);
+            RunDisposingCallbacks(service, serviceType);
 
             if (service is IDisposable disposable)
             {
