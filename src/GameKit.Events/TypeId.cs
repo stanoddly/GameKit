@@ -1,6 +1,6 @@
 using GameKit.Common;
 
-namespace GameKit.Encs;
+namespace GameKit.Events;
 
 internal class TypeId : TypeIdMap<TypeId>;
 

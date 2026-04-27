@@ -473,9 +473,9 @@ public class ServiceCollectionTests
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
-        // Register the same service type twice; both instances must go through OnActivation
+        // Register the same service type twice; both instances must go through OnActivated
         collection.AddSingleton<SimpleService>(() => new SimpleService());
         collection.AddSingleton<SimpleService>(() => new SimpleService());
 
@@ -483,7 +483,7 @@ public class ServiceCollectionTests
         IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
 
         Assert.That(services, Has.Count.EqualTo(2));
-        // Every instance returned by GetServices must have triggered OnActivation
+        // Every instance returned by GetServices must have triggered OnActivated
         Assert.That(activated, Has.Count.EqualTo(2));
         Assert.That(activated, Contains.Item(services[0]));
         Assert.That(activated, Contains.Item(services[1]));
@@ -564,14 +564,14 @@ public class ServiceCollectionTests
         Assert.That(collection.IsRegistered<SimpleService>(), Is.False);
     }
 
-    // --- OnActivation ---
+    // --- OnActivated ---
 
     [Test]
-    public void OnActivation_CalledForEachInstance()
+    public void OnActivated_CalledForEachInstance()
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
         collection.AddSingleton<SimpleService>();
         collection.AddSingleton<AnotherService>();
@@ -584,11 +584,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void OnActivation_CalledForInstanceRegistration()
+    public void OnActivated_CalledForInstanceRegistration()
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
         SimpleService instance = new();
         collection.AddSingleton(instance);
@@ -600,11 +600,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void OnActivation_CalledForFactoryRegistration()
+    public void OnActivated_CalledForFactoryRegistration()
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
         collection.AddSingleton<SimpleService>(() => new SimpleService());
 
@@ -615,11 +615,11 @@ public class ServiceCollectionTests
     }
 
     [Test]
-    public void OnActivation_NotCalledForAlias()
+    public void OnActivated_NotCalledForAlias()
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
         collection.AddSingleton<IMyService, MyServiceImpl>();
 
@@ -719,37 +719,6 @@ public class ServiceCollectionTests
         IReadOnlyList<IMyService> afterBuild = provider.GetServices<IMyService>();
         Assert.That(afterBuild, Has.Count.EqualTo(1));
         Assert.That(afterBuild[0], Is.InstanceOf<MyServiceImpl>());
-    }
-
-    // --- OnDispose ---
-
-    [Test]
-    public void OnDispose_CalledOnDispose()
-    {
-        ServiceCollection collection = new();
-        bool disposed = false;
-        collection.OnDispose(_ => disposed = true);
-
-        ServiceProvider provider = collection.BuildServiceProvider();
-
-        Assert.That(disposed, Is.False);
-
-        provider.Dispose();
-
-        Assert.That(disposed, Is.True);
-    }
-
-    [Test]
-    public void OnDispose_ReceivesServiceProvider()
-    {
-        ServiceCollection collection = new();
-        ServiceProvider? received = null;
-        collection.OnDispose(sp => received = sp);
-
-        ServiceProvider provider = collection.BuildServiceProvider();
-        provider.Dispose();
-
-        Assert.That(received, Is.SameAs(provider));
     }
 
     [Test]
@@ -889,14 +858,15 @@ public class ServiceCollectionTests
     public void Dispose_CalledTwice_OnlyFiresCallbacksOnce()
     {
         ServiceCollection collection = new();
-        int disposeCount = 0;
-        collection.OnDispose(_ => disposeCount++);
+        int disposingCount = 0;
+        collection.AddSingleton<SimpleService>();
+        collection.OnDisposing((_, _) => disposingCount++);
 
         ServiceProvider provider = collection.BuildServiceProvider();
         provider.Dispose();
         provider.Dispose();
 
-        Assert.That(disposeCount, Is.EqualTo(1));
+        Assert.That(disposingCount, Is.EqualTo(1));
     }
 
     // --- Parent-child alias ---
@@ -969,8 +939,8 @@ public class ServiceCollectionTests
     public void BuildServiceProvider_Twice_ProducesIndependentProviders()
     {
         ServiceCollection collection = new();
-        int disposeCount = 0;
-        collection.OnDispose(_ => disposeCount++);
+        int disposingCount = 0;
+        collection.OnDisposing((_, _) => disposingCount++);
         collection.AddSingleton<SimpleService>();
 
         ServiceProvider first = collection.BuildServiceProvider();
@@ -978,7 +948,7 @@ public class ServiceCollectionTests
 
         first.Dispose();
 
-        Assert.That(disposeCount, Is.EqualTo(1));
+        Assert.That(disposingCount, Is.EqualTo(1));
         Assert.That(second.GetRequiredService<SimpleService>(), Is.Not.SameAs(first.GetRequiredService<SimpleService>()));
     }
 
@@ -1088,14 +1058,14 @@ public class ServiceCollectionTests
         Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
     }
 
-    // --- OnActivation for non-last-wins Instance ---
+    // --- OnActivated for non-last-wins Instance ---
 
     [Test]
-    public void OnActivation_CalledForAllInstances_IncludingNonLastWins()
+    public void OnActivated_CalledForAllInstances_IncludingNonLastWins()
     {
         ServiceCollection collection = new();
         List<object> activated = new();
-        collection.OnActivation(obj => activated.Add(obj));
+        collection.OnActivated((obj, _) => activated.Add(obj));
 
         SimpleService first = new();
         SimpleService second = new();
@@ -1111,20 +1081,21 @@ public class ServiceCollectionTests
         Assert.That(activated, Contains.Item(second));
     }
 
-    // --- OnDispose per-build snapshot isolation ---
+    // --- OnDisposing per-build snapshot isolation ---
 
     [Test]
-    public void OnDispose_SnapshotAtBuildTime_SecondProviderHasBothCallbacks()
+    public void OnDisposing_SnapshotAtBuildTime_SecondProviderHasBothCallbacks()
     {
         ServiceCollection collection = new();
         int firstCallbackCount = 0;
         int secondCallbackCount = 0;
-        collection.OnDispose(_ => firstCallbackCount++);
+        collection.AddSingleton<SimpleService>();
+        collection.OnDisposing((_, _) => firstCallbackCount++);
 
         // Build first before adding the second callback
         ServiceProvider first = collection.BuildServiceProvider();
 
-        collection.OnDispose(_ => secondCallbackCount++);
+        collection.OnDisposing((_, _) => secondCallbackCount++);
 
         // Build second after adding the second callback
         ServiceProvider second = collection.BuildServiceProvider();
@@ -1142,24 +1113,30 @@ public class ServiceCollectionTests
         Assert.That(secondCallbackCount, Is.EqualTo(1));
     }
 
-    // --- Dispose ordering: OnDispose fires before IDisposable.Dispose ---
+    // --- Dispose ordering: OnDisposing fires before IDisposable.Dispose ---
 
     [Test]
-    public void Dispose_OnDisposeCallbackFiresBeforeServiceDispose()
+    public void Dispose_OnDisposingCallbackFiresBeforeServiceDispose()
     {
         List<string> order = new();
         DisposableOrderTracker tracker = new(order, "service");
 
         ServiceCollection collection = new();
         collection.AddSingleton(tracker);
-        collection.OnDispose(_ => order.Add("OnDispose"));
+        collection.OnDisposing((instance, _) =>
+        {
+            if (instance is DisposableOrderTracker)
+            {
+                order.Add("OnDisposing");
+            }
+        });
 
         ServiceProvider provider = collection.BuildServiceProvider();
         // Ensure the service is resolved so it participates in disposal
         provider.GetRequiredService<DisposableOrderTracker>();
         provider.Dispose();
 
-        Assert.That(order[0], Is.EqualTo("OnDispose"));
+        Assert.That(order[0], Is.EqualTo("OnDisposing"));
         Assert.That(order[1], Is.EqualTo("service"));
     }
 

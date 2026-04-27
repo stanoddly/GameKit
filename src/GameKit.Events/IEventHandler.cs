@@ -1,4 +1,4 @@
-namespace GameKit.Encs;
+namespace GameKit.Events;
 
 public interface IEventHandler<TEventArgs>
 {

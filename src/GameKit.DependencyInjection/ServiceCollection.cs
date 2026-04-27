@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace GameKit.DependencyInjection;
@@ -7,15 +8,15 @@ public class ServiceCollection
 {
     private readonly HashSet<int> _registeredTypeIds = new();
     private readonly Dictionary<int, List<ServiceDescriptor>> _serviceGroups = new();
-    private readonly List<Action<object>> _activationCallbacks = new();
     private readonly List<Action<ServiceProvider>> _onStartActions = new();
-    private readonly List<Action<ServiceProvider>> _disposeCallbacks = new();
+    private readonly List<ServiceActivatedCallback> _activatedCallbacks = new();
+    private readonly List<ServiceDisposingCallback> _disposingCallbacks = new();
 
     /// <summary>Registers <typeparamref name="T"/> as a singleton, constructing it via its single public constructor with dependencies resolved from the provider.</summary>
     /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
     /// <remarks>This overload is intercepted by the source generator at each call site. The type argument must be a named concrete type — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
     /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because <typeparamref name="T"/> is a type parameter at the call site.</exception>
-    public void AddSingleton<T>() where T : class
+    public void AddSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         throw new InvalidOperationException(
             $"AddSingleton<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
@@ -26,7 +27,7 @@ public class ServiceCollection
     /// <typeparam name="TImplementation">The concrete type to construct. Must be a named concrete type at the call site, not a type parameter.</typeparam>
     /// <remarks>This overload is intercepted by the source generator at each call site. Both type arguments must be named concrete types — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
     /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because either type argument is a type parameter at the call site.</exception>
-    public void AddSingleton<TService, TImplementation>()
+    public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImplementation>()
         where TService : class
         where TImplementation : class, TService
     {
@@ -37,7 +38,7 @@ public class ServiceCollection
     /// <summary>Registers an already-constructed instance as the singleton for <typeparamref name="T"/>.</summary>
     /// <typeparam name="T">The service type under which the instance is registered.</typeparam>
     /// <param name="instance">The pre-constructed instance to register.</param>
-    public void AddSingleton<T>(T instance) where T : class
+    public void AddSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(T instance) where T : class
     {
         ServiceDescriptor descriptor = ServiceDescriptor.ForInstance(instance);
         RegisterDescriptor(ServiceTypeId<T>.Id, descriptor);
@@ -48,10 +49,26 @@ public class ServiceCollection
     /// <param name="factory">A static method group or lambda whose parameter types are all registered services.</param>
     /// <remarks>This overload is intercepted by the source generator at each call site. The type argument must be a named concrete type — passing a type parameter prevents interception and causes the method to throw at runtime. Use the <see cref="AddSingleton{T}(Func{ServiceProvider,T})"/> overload when <typeparamref name="T"/> is a type parameter.</remarks>
     /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because <typeparamref name="T"/> is a type parameter at the call site.</exception>
-    public void AddSingleton<T>(Delegate factory) where T : class
+    public void AddSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Delegate factory) where T : class
     {
         throw new InvalidOperationException(
             $"AddSingleton<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+    }
+
+    /// <summary>
+    /// Registers a typed factory that produces <typeparamref name="TImpl"/> instances under the service type
+    /// <typeparamref name="TService"/>. Activation and disposal callbacks receive <c>typeof(TImpl)</c>.
+    /// </summary>
+    /// <typeparam name="TService">The service type (interface or base class) under which the instance is resolved.</typeparam>
+    /// <typeparam name="TImpl">The concrete implementation type produced by <paramref name="factory"/>.</typeparam>
+    /// <param name="factory">A delegate that receives the <see cref="ServiceProvider"/> and returns the constructed instance.</param>
+    public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
+        Func<ServiceProvider, TImpl> factory)
+        where TService : class
+        where TImpl : class, TService
+    {
+        ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactoryWithConcreteType<TService, TImpl>(factory);
+        RegisterDescriptor(ServiceTypeId<TService>.Id, descriptor);
     }
 
     /// <summary>Registers a typed factory delegate that receives the <see cref="ServiceProvider"/> directly and returns the singleton instance for <typeparamref name="T"/>.</summary>
@@ -66,7 +83,7 @@ public class ServiceCollection
     /// });
     /// </code>
     /// </example>
-    public void AddSingleton<T>(Func<ServiceProvider, T> factory) where T : class
+    public void AddSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T> factory) where T : class
     {
         ServiceDescriptor descriptor = ServiceDescriptor.ForTypedFactory(factory);
         RegisterDescriptor(ServiceTypeId<T>.Id, descriptor);
@@ -109,13 +126,6 @@ public class ServiceCollection
         group.Add(descriptor);
     }
 
-    /// <summary>Registers a callback invoked each time any service instance is first created, receiving the raw instance as <see langword="object"/>.</summary>
-    /// <param name="callback">The callback to invoke with each newly created service instance.</param>
-    public void OnActivation(Action<object> callback)
-    {
-        _activationCallbacks.Add(callback);
-    }
-
     /// <summary>Registers a callback whose parameters are resolved as services, invoked after all services are constructed but before the provider is frozen.</summary>
     /// <param name="action">A delegate whose parameter types are all registered services.</param>
     /// <remarks>This overload is intercepted by the source generator at each call site. The delegate argument must be resolvable at compile time — otherwise the method throws at runtime.</remarks>
@@ -126,11 +136,25 @@ public class ServiceCollection
             "OnStart() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    /// <summary>Registers a callback invoked at the start of <see cref="ServiceProvider.Dispose"/>, before any service <c>Dispose</c> calls.</summary>
-    /// <param name="callback">The callback to invoke with the <see cref="ServiceProvider"/> being disposed.</param>
-    public void OnDispose(Action<ServiceProvider> callback)
+    /// <summary>
+    /// Registers a callback invoked immediately after each singleton is constructed (or, for pre-constructed
+    /// instances, when the provider is built). The callback receives the instance and its concrete implementation type.
+    /// </summary>
+    /// <param name="callback">The callback to invoke for each activated singleton.</param>
+    public void OnActivated(ServiceActivatedCallback callback)
     {
-        _disposeCallbacks.Add(callback);
+        _activatedCallbacks.Add(callback);
+    }
+
+    /// <summary>
+    /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
+    /// immediately before that service's own <see cref="IDisposable.Dispose"/> call. Services are visited
+    /// in reverse creation order.
+    /// </summary>
+    /// <param name="callback">The callback to invoke for each singleton being disposed.</param>
+    public void OnDisposing(ServiceDisposingCallback callback)
+    {
+        _disposingCallbacks.Add(callback);
     }
 
     /// <summary>Returns <see langword="true"/> if <typeparamref name="T"/> has been registered at least once.</summary>
@@ -162,8 +186,13 @@ public class ServiceCollection
             descriptorMap[entry.Key] = lastDescriptor;
         }
 
-        List<Action<ServiceProvider>> disposeCallbacks = new(_disposeCallbacks);
-        ServiceProvider provider = new ServiceProvider(parent, disposeCallbacks);
+        ServiceProvider provider = new ServiceProvider(parent);
+
+        List<ServiceActivatedCallback>? activatedCallbacks =
+            _activatedCallbacks.Count > 0 ? new List<ServiceActivatedCallback>(_activatedCallbacks) : null;
+        List<ServiceDisposingCallback>? disposingCallbacks =
+            _disposingCallbacks.Count > 0 ? new List<ServiceDisposingCallback>(_disposingCallbacks) : null;
+        provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
         provider.SetService(ServiceTypeId<ServiceProvider>.Id, provider);
@@ -286,8 +315,8 @@ public class ServiceCollection
             case ServiceDescriptorKind.Instance:
             {
                 object instance = descriptor.Instance!;
-                provider.SetService(id, instance);
-                InvokeActivationCallbacks(instance);
+                provider.SetServiceWithType(id, instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 break;
             }
 
@@ -301,8 +330,8 @@ public class ServiceCollection
 
                 object instance = descriptor.TypedFactory!(provider)
                     ?? throw new InvalidOperationException("Factory delegate returned null.");
-                provider.SetService(id, instance);
-                InvokeActivationCallbacks(instance);
+                provider.SetServiceWithType(id, instance, descriptor.ConcreteType!);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 resolving.Remove(id);
                 break;
             }
@@ -326,6 +355,8 @@ public class ServiceCollection
                         $"Cannot resolve alias {descriptor.ServiceType.Name}: source type {descriptor.AliasSourceName} is not registered.");
                 }
 
+                // Aliases share the source instance — use SetService (no type tracking needed;
+                // the source descriptor already owns the typed activation/disposal records).
                 provider.SetService(id, source);
                 break;
             }
@@ -344,7 +375,7 @@ public class ServiceCollection
             case ServiceDescriptorKind.Instance:
             {
                 object instance = descriptor.Instance!;
-                InvokeActivationCallbacks(instance);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 return instance;
             }
 
@@ -352,7 +383,7 @@ public class ServiceCollection
             {
                 object instance = descriptor.TypedFactory!(provider)
                     ?? throw new InvalidOperationException("Factory delegate returned null.");
-                InvokeActivationCallbacks(instance);
+                provider.RunActivatedCallbacks(instance, descriptor.ConcreteType!);
                 return instance;
             }
 
@@ -499,13 +530,5 @@ public class ServiceCollection
         }
 
         return instances.ToArray();
-    }
-
-    private void InvokeActivationCallbacks(object instance)
-    {
-        foreach (Action<object> callback in _activationCallbacks)
-        {
-            callback(instance);
-        }
     }
 }

@@ -1,6 +1,5 @@
 using GameKit.Content;
 using GameKit.DependencyInjection;
-using GameKit.Encs;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Shaders;
@@ -16,8 +15,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        EventBus eventBus = new();
-        OnActivation(obj =>
+        OnActivated((obj, _) =>
         {
             if (obj is IStartable startable)
             {
@@ -27,11 +25,7 @@ public class GameKitAppBuilder : ServiceCollection
             {
                 _updatables.Add(updatable);
             }
-
-            eventBus.Subscribe(obj);
         });
-
-        AddSingleton(eventBus);
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
