@@ -6,18 +6,8 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
-    </PropertyGroup>
-
-    <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,7 +24,6 @@
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false" />
       <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
-      <ProjectReference Include="..\GameKit.Events\GameKit.Events.csproj" />
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>
 
