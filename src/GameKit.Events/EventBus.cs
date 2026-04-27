@@ -44,8 +44,15 @@ internal static class ComponentTypeHelper
 
 public class EventBus
 {
-    // TODO: this can be a slot map, but a slot map should work with uint first
-    private readonly Dictionary<int, List<object>> _eventHandlersPerType = new();
+    private readonly List<List<object>?> _eventHandlersPerType = new();
+
+    private void EnsureCapacity(int id)
+    {
+        while (_eventHandlersPerType.Count <= id)
+        {
+            _eventHandlersPerType.Add(null);
+        }
+    }
 
     public void Subscribe<TSubscriber>(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TSubscriber instance) where TSubscriber : notnull
@@ -61,40 +68,30 @@ public class EventBus
 
         foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
         {
-            ref List<object>? value = ref CollectionsMarshal.GetValueRefOrAddDefault(_eventHandlersPerType, eventArgsTypeId, out bool exists);
-
-            if (!exists || value == null)
-            {
-                value = new List<object>();
-            }
-
-            value.Add(instance);
+            EnsureCapacity(eventArgsTypeId);
+            _eventHandlersPerType[eventArgsTypeId] ??= new List<object>();
+            _eventHandlersPerType[eventArgsTypeId]!.Add(instance);
         }
     }
 
     public void Subscribe<TEventArgs>(IEventHandler<TEventArgs> obj)
     {
         int id = TypeId<TEventArgs>.Id;
-        ref List<object>? value = ref CollectionsMarshal.GetValueRefOrAddDefault(_eventHandlersPerType, id, out bool exists);
-
-        if (!exists || value == null)
-        {
-            value = new List<object>();
-        }
-
-        value.Add(obj);
+        EnsureCapacity(id);
+        _eventHandlersPerType[id] ??= new List<object>();
+        _eventHandlersPerType[id]!.Add(obj);
     }
 
     public void Unsubscribe<TEventArgs>(IEventHandler<TEventArgs> obj)
     {
         int id = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(id, out List<object>? value))
+        if (id >= _eventHandlersPerType.Count)
         {
             return;
         }
 
-        value.Remove(obj);
+        _eventHandlersPerType[id]?.Remove(obj);
     }
 
     public void Unsubscribe<TSubscriber>(
@@ -110,12 +107,12 @@ public class EventBus
         List<int> componentTypeHandledEventArgs = ComponentTypeHelper.GetComponentTypeHandledEventArgs(type);
         foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
         {
-            if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? value))
+            if (eventArgsTypeId >= _eventHandlersPerType.Count)
             {
                 continue;
             }
 
-            value.Remove(instance);
+            _eventHandlersPerType[eventArgsTypeId]?.Remove(instance);
         }
     }
 
@@ -123,7 +120,14 @@ public class EventBus
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        if (eventArgsTypeId >= _eventHandlersPerType.Count)
+        {
+            return;
+        }
+
+        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
+
+        if (subscriptions == null)
         {
             return;
         }
@@ -139,7 +143,14 @@ public class EventBus
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        if (eventArgsTypeId >= _eventHandlersPerType.Count)
+        {
+            return;
+        }
+
+        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
+
+        if (subscriptions == null)
         {
             return;
         }
@@ -158,7 +169,14 @@ public class EventBus
     {
         int eventArgsTypeId = TypeId<TEventArgs>.Id;
 
-        if (!_eventHandlersPerType.TryGetValue(eventArgsTypeId, out List<object>? subscriptions))
+        if (eventArgsTypeId >= _eventHandlersPerType.Count)
+        {
+            return;
+        }
+
+        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
+
+        if (subscriptions == null)
         {
             return;
         }
