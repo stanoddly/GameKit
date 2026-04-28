@@ -23,7 +23,7 @@
         <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Content\shaders\compiled\" />
+      <Folder Include="Content\shaders\.generated\" />
     </ItemGroup>
 
     <!-- Import the task's props and targets files -->

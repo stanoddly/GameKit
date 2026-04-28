@@ -33,11 +33,11 @@
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
     <ItemGroup>
-        <Content Remove="Content\shaders\compiled\**\*" />
-        <None Remove="Content\shaders\compiled\**\*" />
-        <EmbeddedResource Include="Content\shaders\compiled\**\*">
+        <Content Remove="Content\shaders\.generated\**\*" />
+        <None Remove="Content\shaders\.generated\**\*" />
+        <EmbeddedResource Include="Content\shaders\.generated\**\*">
             <WithCulture>false</WithCulture>
-            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/compiled/','shaders/compiled/').Replace('\','/'))</LogicalName>
+            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/.generated/','shaders/.generated/').Replace('\','/'))</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
 

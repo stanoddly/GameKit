@@ -405,7 +405,7 @@ FodyWeavers.xsd
 .python
 
 # Shaders
-compiled/
+**/.generated/
 
 # Agents
 .tasks/

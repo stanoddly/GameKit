@@ -23,6 +23,7 @@ public class ShaderBindingValidationException(string message) : Exception(messag
 
 public class SdlangCompiler
 {
+    private const string GeneratedShaderDirectory = ".generated";
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
     private static readonly string SlangVersion = GetSlangVersion();
     
@@ -491,7 +492,7 @@ public class SdlangCompiler
     private static void CompileShader(FileInfo filePath, bool force = false)
     {
         DirectoryInfo parentDir = filePath.Directory!;
-        DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, "compiled"));
+        DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, GeneratedShaderDirectory));
 
         string currentHash = CalculateFileHash(filePath);
 
