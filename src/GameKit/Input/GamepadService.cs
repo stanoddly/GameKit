@@ -176,11 +176,11 @@ public class GamepadService : IGamepadService
             Vector2 originalLeftStickState = gamepad.LeftStick;
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (originalLeftStickState.X == value)
+            if (originalLeftStickState.X == normalizedValue)
             {
                 return;
             }
-            
+
             gamepad.LeftStick = originalLeftStickState with { X = normalizedValue };
             LeftStickMotion?.Invoke(gamepad, gamepad.LeftStick);
         }
@@ -189,11 +189,11 @@ public class GamepadService : IGamepadService
             Vector2 originalLeftStickState = gamepad.LeftStick;
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (originalLeftStickState.Y == value)
+            if (originalLeftStickState.Y == normalizedValue)
             {
                 return;
             }
-            
+
             gamepad.LeftStick = originalLeftStickState with { Y = normalizedValue };
             LeftStickMotion?.Invoke(gamepad, gamepad.LeftStick);
         }
@@ -202,11 +202,11 @@ public class GamepadService : IGamepadService
             Vector2 originalRightStickState = gamepad.RightStick;
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (originalRightStickState.X == value)
+            if (originalRightStickState.X == normalizedValue)
             {
                 return;
             }
-            
+
             gamepad.RightStick = originalRightStickState with { X = normalizedValue };
             RightStickMotion?.Invoke(gamepad, gamepad.RightStick);
         }
@@ -215,7 +215,7 @@ public class GamepadService : IGamepadService
             Vector2 originalRightStickState = gamepad.RightStick;
 
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (originalRightStickState.Y == value)
+            if (originalRightStickState.Y == normalizedValue)
             {
                 return;
             }
