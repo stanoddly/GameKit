@@ -129,7 +129,9 @@ public class SdlangCompilerTests
     public void TearDown()
     {
         if (Directory.Exists(_testDir))
+        {
             Directory.Delete(_testDir, recursive: true);
+        }
     }
 
     [Test]
@@ -145,7 +147,7 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         // Assert
-        string metadataPath = Path.Combine(_testDir, "compiled", "test_shader.metadata.json");
+        string metadataPath = Path.Combine(_testDir, ".generated", "test_shader.metadata.json");
         Assert.That(File.Exists(metadataPath), Is.True, "Metadata file should be created");
 
         string json = File.ReadAllText(metadataPath);
@@ -167,7 +169,7 @@ public class SdlangCompilerTests
         SdlangCompiler compiler = new SdlangCompiler();
         compiler.Compile([shaderPath], force: true);
 
-        string metadataPath = Path.Combine(_testDir, "compiled", "valid_vertex.metadata.json");
+        string metadataPath = Path.Combine(_testDir, ".generated", "valid_vertex.metadata.json");
         Assert.That(File.Exists(metadataPath), Is.True);
     }
 
@@ -180,7 +182,7 @@ public class SdlangCompilerTests
         SdlangCompiler compiler = new SdlangCompiler();
         compiler.Compile([shaderPath], force: true);
 
-        string metadataPath = Path.Combine(_testDir, "compiled", "valid_fragment.metadata.json");
+        string metadataPath = Path.Combine(_testDir, ".generated", "valid_fragment.metadata.json");
         Assert.That(File.Exists(metadataPath), Is.True);
     }
 
@@ -192,7 +194,7 @@ public class SdlangCompilerTests
 
         SdlangCompiler compiler = new SdlangCompiler();
 
-        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+        ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
 
         Assert.That(ex.Message, Does.Contain("space 0"));
@@ -208,7 +210,7 @@ public class SdlangCompilerTests
 
         SdlangCompiler compiler = new SdlangCompiler();
 
-        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+        ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
 
         Assert.That(ex.Message, Does.Contain("space 3"));
@@ -224,7 +226,7 @@ public class SdlangCompilerTests
 
         SdlangCompiler compiler = new SdlangCompiler();
 
-        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+        ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
 
         Assert.That(ex.Message, Does.Contain("space 0"));
@@ -239,7 +241,7 @@ public class SdlangCompilerTests
 
         SdlangCompiler compiler = new SdlangCompiler();
 
-        var ex = Assert.Throws<ShaderBindingValidationException>(() =>
+        ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
 
         Assert.That(ex.Message, Does.Contain("index"));

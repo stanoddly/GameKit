@@ -8,14 +8,14 @@ Guide to writing and using shaders with GameKit. Shaders are written in Slang an
 Content/shaders/
 ├── vertex.slang          # Source shader files
 ├── fragment.slang
-└── compiled/             # Generated at build time
+└── .generated/           # Generated at build time
     ├── vertex.spv
     ├── vertex.metadata.json
     ├── fragment.spv
     └── fragment.metadata.json
 ```
 
-Shaders are automatically compiled during build. The build system generates SPIR-V binaries and metadata files in the `compiled/` directory.
+Shaders are automatically compiled during build. The build system generates SPIR-V binaries and metadata files in the `.generated/` directory.
 
 ## Basic Vertex Shader
 
