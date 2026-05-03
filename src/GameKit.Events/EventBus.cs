@@ -42,7 +42,7 @@ internal static class ComponentTypeHelper
     }
 }
 
-public class EventBus
+internal class EventBus : IEventBus
 {
     private readonly List<List<object>?> _eventHandlersPerType = new();
 

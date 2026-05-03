@@ -18,7 +18,7 @@ public sealed class DamageEventHandler : IEventHandler<DamageEvent>
 }
 ```
 
-`EventBus` exposes:
+`IEventBus` exposes:
 
 - `Subscribe<TSubscriber>(TSubscriber instance)` - discovers every `IEventHandler<TEventArgs>` interface implemented by `TSubscriber` and subscribes the instance for each event type.
 - `Subscribe(object instance, Type type)` - the AOT-friendly path used by DI callbacks when an annotated type is already available.
@@ -39,11 +39,11 @@ services.AddEvents();
 services.AddSingleton<DamageEventHandler>();
 
 ServiceProvider provider = services.BuildServiceProvider();
-EventBus eventBus = provider.GetRequiredService<EventBus>();
+IEventBus eventBus = provider.GetRequiredService<IEventBus>();
 
 eventBus.PublishEvent(new DamageEvent(5));
 ```
 
-`AddEvents()` constructs an `EventBus`, registers it as a singleton, and wires `OnActivated` to `eventBus.Subscribe` and `OnDisposing` to `eventBus.Unsubscribe`. When the provider builds, each singleton is inspected for `IEventHandler<TEventArgs>` interfaces and automatically subscribed. When the provider is disposed, those same services are unsubscribed before their own `Dispose()` methods run.
+`AddEvents()` registers the event bus implementation when it is not already registered, aliases it as `IEventBus`, and wires `OnActivated` to `eventBus.Subscribe` and `OnDisposing` to `eventBus.Unsubscribe`. Calling `AddEvents()` multiple times is safe; it will not register duplicate callbacks. When the provider builds, each singleton is inspected for `IEventHandler<TEventArgs>` interfaces and automatically subscribed. When the provider is disposed, those same services are unsubscribed before their own `Dispose()` methods run.
 
 The integration uses the callback's annotated `Type` parameter instead of `instance.GetType()`, preserving interface metadata for NativeAOT and trimming.
