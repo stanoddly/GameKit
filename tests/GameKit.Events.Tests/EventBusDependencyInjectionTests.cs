@@ -99,13 +99,31 @@ public sealed class EventBusDependencyInjectionTests
         services.AddSingleton<TestEventHandler>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        EventBus eventBus = provider.GetRequiredService<EventBus>();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
         TestEventHandler handler = provider.GetRequiredService<TestEventHandler>();
 
         eventBus.PublishEvent(new TestEvent(42));
 
         Assert.That(handler.ProcessCount, Is.EqualTo(1));
         Assert.That(handler.LastValue, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void AddEvents_CalledMultipleTimes_RegistersEventBusOnce()
+    {
+        ServiceCollection services = new();
+        services.AddEvents();
+        services.AddEvents();
+        services.AddSingleton<TestEventHandler>();
+
+        ServiceProvider provider = services.BuildServiceProvider();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
+        TestEventHandler handler = provider.GetRequiredService<TestEventHandler>();
+
+        eventBus.PublishEvent(new TestEvent(42));
+
+        Assert.That(provider.GetServices<IEventBus>(), Has.Count.EqualTo(1));
+        Assert.That(handler.ProcessCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -116,7 +134,7 @@ public sealed class EventBusDependencyInjectionTests
         services.AddSingleton<MultiEventHandler>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        EventBus eventBus = provider.GetRequiredService<EventBus>();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
         MultiEventHandler handler = provider.GetRequiredService<MultiEventHandler>();
 
         eventBus.PublishEvent(new TestEvent(1));
@@ -134,7 +152,7 @@ public sealed class EventBusDependencyInjectionTests
         services.AddSingleton<PlainSubscriberCandidate>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        EventBus eventBus = provider.GetRequiredService<EventBus>();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
         PlainSubscriberCandidate candidate = provider.GetRequiredService<PlainSubscriberCandidate>();
 
         Assert.DoesNotThrow(() => eventBus.PublishEvent(new TestEvent(1)));
@@ -149,7 +167,7 @@ public sealed class EventBusDependencyInjectionTests
         services.AddSingleton<DisposableEventHandler>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        EventBus eventBus = provider.GetRequiredService<EventBus>();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
         DisposableEventHandler handler = provider.GetRequiredService<DisposableEventHandler>();
 
         eventBus.PublishEvent(new TestEvent(1));
@@ -172,7 +190,7 @@ public sealed class EventBusDependencyInjectionTests
         services.AddSingleton<SecondOrderedEventHandler>();
 
         ServiceProvider provider = services.BuildServiceProvider();
-        EventBus eventBus = provider.GetRequiredService<EventBus>();
+        IEventBus eventBus = provider.GetRequiredService<IEventBus>();
 
         eventBus.PublishEvent(new TestEvent(1));
 
