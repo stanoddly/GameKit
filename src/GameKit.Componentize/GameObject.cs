@@ -133,13 +133,16 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        ComponentBase[] snapshot = _components.ToArray();
-        _components.Clear();
-
-        foreach (ComponentBase component in snapshot)
+        if (State == GameObjectState.Alive)
         {
-            TeardownComponent(component);
+            State = GameObjectState.Removing;
         }
+
+        for (int i = _components.Count - 1; i >= 0; i--)
+        {
+            TeardownComponent(_components[i]);
+        }
+        _components.Clear();
     }
 
     public TComponent Get<TComponent>() where TComponent: ComponentBase

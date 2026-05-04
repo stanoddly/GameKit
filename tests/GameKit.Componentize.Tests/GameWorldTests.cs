@@ -41,6 +41,33 @@ public class CrossAttachOnDetachComponent : ComponentBase
     }
 }
 
+public class SiblingObservingDetachComponent : GameComponent
+{
+    public TestComponent? SiblingSeenDuringDetach { get; private set; }
+
+    protected override void OnDetach()
+    {
+        SiblingSeenDuringDetach = TryGetSibling<TestComponent>();
+    }
+}
+
+public class SelfAttachDuringDetachComponent : GameComponent
+{
+    public Exception? Caught { get; private set; }
+
+    protected override void OnDetach()
+    {
+        try
+        {
+            Owner.Attach<TestComponent2>();
+        }
+        catch (Exception ex)
+        {
+            Caught = ex;
+        }
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -134,6 +161,29 @@ public class GameWorldTests
 
         Assert.DoesNotThrow(() => objectA.DetachAll());
         Assert.That(objectB.TryGet<TestComponent>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void DetachAll_SiblingsVisibleDuringOnDetach()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent sibling = gameObject.Attach<TestComponent>();
+        SiblingObservingDetachComponent observer = gameObject.Attach<SiblingObservingDetachComponent>();
+
+        _world.RemoveGameObject(gameObject);
+
+        Assert.That(observer.SiblingSeenDuringDetach, Is.SameAs(sibling));
+    }
+
+    [Test]
+    public void DetachAll_AttachOnSameOwnerDuringOnDetach_Throws()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        SelfAttachDuringDetachComponent component = gameObject.Attach<SelfAttachDuringDetachComponent>();
+
+        _world.RemoveGameObject(gameObject);
+
+        Assert.That(component.Caught, Is.InstanceOf<InvalidOperationException>());
     }
 
     [Test]
