@@ -137,7 +137,7 @@ public class GameWorldTests
     }
 
     [Test]
-    public void RemoveGameObject_RemovedEventFiredAfterDetachAll()
+    public void RemoveGameObject_RemovedEventFiredAfterComponentsDetached()
     {
         GameObject gameObject = _world.CreateGameObject();
         gameObject.Attach<TestComponent>();
@@ -151,7 +151,7 @@ public class GameWorldTests
     }
 
     [Test]
-    public void DetachAll_OnDetachAttachingToOtherGameObject_DoesNotThrow()
+    public void RemoveGameObject_OnDetachAttachingToOtherGameObject_DoesNotThrow()
     {
         GameObject objectA = _world.CreateGameObject();
         GameObject objectB = _world.CreateGameObject();
@@ -159,12 +159,12 @@ public class GameWorldTests
         objectA.Attach(new CrossAttachOnDetachComponent { Target = objectB });
         objectA.Attach<TestComponent>();
 
-        Assert.DoesNotThrow(() => objectA.DetachAll());
+        Assert.DoesNotThrow(() => _world.RemoveGameObject(objectA));
         Assert.That(objectB.TryGet<TestComponent>(), Is.Not.Null);
     }
 
     [Test]
-    public void DetachAll_SiblingsVisibleDuringOnDetach()
+    public void RemoveGameObject_SiblingsVisibleDuringOnDetach()
     {
         GameObject gameObject = _world.CreateGameObject();
         TestComponent sibling = gameObject.Attach<TestComponent>();
@@ -176,7 +176,7 @@ public class GameWorldTests
     }
 
     [Test]
-    public void DetachAll_AttachOnSameOwnerDuringOnDetach_Throws()
+    public void RemoveGameObject_AttachOnSameOwnerDuringOnDetach_Throws()
     {
         GameObject gameObject = _world.CreateGameObject();
         SelfAttachDuringDetachComponent component = gameObject.Attach<SelfAttachDuringDetachComponent>();

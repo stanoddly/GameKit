@@ -121,7 +121,7 @@ public class GameObject: IEnumerable<ComponentBase>
         }
     }
 
-    public void DetachAll()
+    internal void DetachAllForRemoval()
     {
         if (State == GameObjectState.Removed)
         {
@@ -133,15 +133,11 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        if (State == GameObjectState.Alive)
-        {
-            State = GameObjectState.Removing;
-        }
-
         for (int i = _components.Count - 1; i >= 0; i--)
         {
             TeardownComponent(_components[i]);
         }
+
         _components.Clear();
     }
 
