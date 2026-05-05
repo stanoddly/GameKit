@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.ExceptionServices;
 using GameKit.Collections;
 using GameKit.DependencyInjection;
 
@@ -133,16 +134,29 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        try
+        List<Exception> exceptions = new();
+        for (int i = _components.Count - 1; i >= 0; i--)
         {
-            for (int i = _components.Count - 1; i >= 0; i--)
+            try
             {
                 TeardownComponent(_components[i]);
             }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
         }
-        finally
+
+        _components.Clear();
+
+        if (exceptions.Count == 1)
         {
-            _components.Clear();
+            ExceptionDispatchInfo.Capture(exceptions[0]).Throw();
+        }
+
+        if (exceptions.Count > 1)
+        {
+            throw new AggregateException(exceptions);
         }
     }
 

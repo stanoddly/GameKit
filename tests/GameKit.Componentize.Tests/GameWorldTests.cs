@@ -76,6 +76,24 @@ public class UncaughtSelfAttachDuringDetachComponent : GameComponent
     }
 }
 
+public class ThrowingDetachComponent : GameComponent
+{
+    private readonly Exception _exception;
+
+    public bool OnDetachCalled { get; private set; }
+
+    public ThrowingDetachComponent(Exception exception)
+    {
+        _exception = exception;
+    }
+
+    protected override void OnDetach()
+    {
+        OnDetachCalled = true;
+        throw _exception;
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -208,6 +226,24 @@ public class GameWorldTests
         Assert.That(gameObject.Count(), Is.EqualTo(0));
         Assert.That(component.HasOwner(), Is.False);
         Assert.That(removedEventFired, Is.True);
+    }
+
+    [Test]
+    public void RemoveGameObject_OnDetachException_ContinuesDetachingRemainingComponents()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        ThrowingDetachComponent first = gameObject.Attach(new ThrowingDetachComponent(new InvalidOperationException()));
+        ThrowingDetachComponent second = gameObject.Attach(new ThrowingDetachComponent(new NotSupportedException()));
+
+        AggregateException? exception = Assert.Throws<AggregateException>(() => _world.RemoveGameObject(gameObject));
+
+        Assert.That(first.OnDetachCalled, Is.True);
+        Assert.That(second.OnDetachCalled, Is.True);
+        Assert.That(first.HasOwner(), Is.False);
+        Assert.That(second.HasOwner(), Is.False);
+        Assert.That(gameObject.State, Is.EqualTo(GameObjectState.Removed));
+        Assert.That(gameObject.Count(), Is.EqualTo(0));
+        Assert.That(exception?.InnerExceptions, Has.Count.EqualTo(2));
     }
 
     [Test]
