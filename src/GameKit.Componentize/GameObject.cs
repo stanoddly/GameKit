@@ -134,7 +134,7 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        List<Exception> exceptions = new();
+        List<Exception>? exceptions = null;
         for (int i = _components.Count - 1; i >= 0; i--)
         {
             try
@@ -143,21 +143,24 @@ public class GameObject: IEnumerable<ComponentBase>
             }
             catch (Exception ex)
             {
+                exceptions ??= new List<Exception>();
                 exceptions.Add(ex);
             }
         }
 
         _components.Clear();
 
+        if (exceptions == null)
+        {
+            return;
+        }
+
         if (exceptions.Count == 1)
         {
             ExceptionDispatchInfo.Capture(exceptions[0]).Throw();
         }
 
-        if (exceptions.Count > 1)
-        {
-            throw new AggregateException(exceptions);
-        }
+        throw new AggregateException(exceptions);
     }
 
     public TComponent Get<TComponent>() where TComponent: ComponentBase
