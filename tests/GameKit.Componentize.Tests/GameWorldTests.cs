@@ -68,6 +68,14 @@ public class SelfAttachDuringDetachComponent : GameComponent
     }
 }
 
+public class UncaughtSelfAttachDuringDetachComponent : GameComponent
+{
+    protected override void OnDetach()
+    {
+        Owner.Attach<TestComponent2>();
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -184,6 +192,22 @@ public class GameWorldTests
         _world.RemoveGameObject(gameObject);
 
         Assert.That(component.Caught, Is.InstanceOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public void RemoveGameObject_UncaughtOnDetachException_StillMarksGameObjectRemoved()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        UncaughtSelfAttachDuringDetachComponent component = gameObject.Attach<UncaughtSelfAttachDuringDetachComponent>();
+        bool removedEventFired = false;
+        gameObject.Removed += _ => removedEventFired = true;
+
+        Assert.Throws<InvalidOperationException>(() => _world.RemoveGameObject(gameObject));
+
+        Assert.That(gameObject.State, Is.EqualTo(GameObjectState.Removed));
+        Assert.That(gameObject.Count(), Is.EqualTo(0));
+        Assert.That(component.HasOwner(), Is.False);
+        Assert.That(removedEventFired, Is.True);
     }
 
     [Test]

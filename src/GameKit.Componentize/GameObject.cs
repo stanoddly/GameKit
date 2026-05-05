@@ -133,12 +133,17 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        for (int i = _components.Count - 1; i >= 0; i--)
+        try
         {
-            TeardownComponent(_components[i]);
+            for (int i = _components.Count - 1; i >= 0; i--)
+            {
+                TeardownComponent(_components[i]);
+            }
         }
-
-        _components.Clear();
+        finally
+        {
+            _components.Clear();
+        }
     }
 
     public TComponent Get<TComponent>() where TComponent: ComponentBase
