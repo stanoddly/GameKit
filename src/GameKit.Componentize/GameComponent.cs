@@ -101,9 +101,15 @@ public abstract class GameComponent : ComponentBase
 
     protected internal sealed override void OnDetach(GameObject owner, ServiceProvider services)
     {
-        OnDetach();
-        _owner = null;
-        _serviceProvider = null;
+        try
+        {
+            OnDetach();
+        }
+        finally
+        {
+            _owner = null;
+            _serviceProvider = null;
+        }
     }
 
     protected virtual void OnAttach()

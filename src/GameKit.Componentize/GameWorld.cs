@@ -54,8 +54,14 @@ public class GameWorld
         {
             _gameObjects.Remove(handle);
             gameObject.NotifyRemoving();
-            gameObject.DetachAll();
-            gameObject.NotifyRemoved();
+            try
+            {
+                gameObject.DetachAllForRemoval();
+            }
+            finally
+            {
+                gameObject.NotifyRemoved();
+            }
         }
     }
 

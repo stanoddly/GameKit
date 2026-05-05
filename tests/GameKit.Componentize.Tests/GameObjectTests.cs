@@ -378,18 +378,6 @@ public class GameObjectTests
     }
 
     [Test]
-    public void DetachAll_AfterRemove_DoesNotThrow()
-    {
-        _gameObject.Attach<TestComponent>();
-
-        _world.RemoveGameObject(_gameObject);
-
-        Assert.DoesNotThrow(() => _gameObject.DetachAll());
-    }
-
-
-
-    [Test]
     public void Attach_CallsOnReady()
     {
         _gameObject.Attach<TestComponent>();

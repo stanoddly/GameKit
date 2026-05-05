@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.ExceptionServices;
 using GameKit.Collections;
 using GameKit.DependencyInjection;
 
@@ -121,7 +122,7 @@ public class GameObject: IEnumerable<ComponentBase>
         }
     }
 
-    public void DetachAll()
+    internal void DetachAllForRemoval()
     {
         if (State == GameObjectState.Removed)
         {
@@ -133,13 +134,33 @@ public class GameObject: IEnumerable<ComponentBase>
             return;
         }
 
-        ComponentBase[] snapshot = _components.ToArray();
+        List<Exception>? exceptions = null;
+        for (int i = _components.Count - 1; i >= 0; i--)
+        {
+            try
+            {
+                TeardownComponent(_components[i]);
+            }
+            catch (Exception ex)
+            {
+                exceptions ??= new List<Exception>();
+                exceptions.Add(ex);
+            }
+        }
+
         _components.Clear();
 
-        foreach (ComponentBase component in snapshot)
+        if (exceptions == null)
         {
-            TeardownComponent(component);
+            return;
         }
+
+        if (exceptions.Count == 1)
+        {
+            ExceptionDispatchInfo.Capture(exceptions[0]).Throw();
+        }
+
+        throw new AggregateException(exceptions);
     }
 
     public TComponent Get<TComponent>() where TComponent: ComponentBase

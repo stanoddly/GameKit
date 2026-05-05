@@ -41,6 +41,59 @@ public class CrossAttachOnDetachComponent : ComponentBase
     }
 }
 
+public class SiblingObservingDetachComponent : GameComponent
+{
+    public TestComponent? SiblingSeenDuringDetach { get; private set; }
+
+    protected override void OnDetach()
+    {
+        SiblingSeenDuringDetach = TryGetSibling<TestComponent>();
+    }
+}
+
+public class SelfAttachDuringDetachComponent : GameComponent
+{
+    public Exception? Caught { get; private set; }
+
+    protected override void OnDetach()
+    {
+        try
+        {
+            Owner.Attach<TestComponent2>();
+        }
+        catch (Exception ex)
+        {
+            Caught = ex;
+        }
+    }
+}
+
+public class UncaughtSelfAttachDuringDetachComponent : GameComponent
+{
+    protected override void OnDetach()
+    {
+        Owner.Attach<TestComponent2>();
+    }
+}
+
+public class ThrowingDetachComponent : GameComponent
+{
+    private readonly Exception _exception;
+
+    public bool OnDetachCalled { get; private set; }
+
+    public ThrowingDetachComponent(Exception exception)
+    {
+        _exception = exception;
+    }
+
+    protected override void OnDetach()
+    {
+        OnDetachCalled = true;
+        throw _exception;
+    }
+}
+
 public class GameWorldTests
 {
     GameWorld _world;
@@ -110,7 +163,7 @@ public class GameWorldTests
     }
 
     [Test]
-    public void RemoveGameObject_RemovedEventFiredAfterDetachAll()
+    public void RemoveGameObject_RemovedEventFiredAfterComponentsDetached()
     {
         GameObject gameObject = _world.CreateGameObject();
         gameObject.Attach<TestComponent>();
@@ -124,7 +177,7 @@ public class GameWorldTests
     }
 
     [Test]
-    public void DetachAll_OnDetachAttachingToOtherGameObject_DoesNotThrow()
+    public void RemoveGameObject_OnDetachAttachingToOtherGameObject_DoesNotThrow()
     {
         GameObject objectA = _world.CreateGameObject();
         GameObject objectB = _world.CreateGameObject();
@@ -132,8 +185,65 @@ public class GameWorldTests
         objectA.Attach(new CrossAttachOnDetachComponent { Target = objectB });
         objectA.Attach<TestComponent>();
 
-        Assert.DoesNotThrow(() => objectA.DetachAll());
+        Assert.DoesNotThrow(() => _world.RemoveGameObject(objectA));
         Assert.That(objectB.TryGet<TestComponent>(), Is.Not.Null);
+    }
+
+    [Test]
+    public void RemoveGameObject_SiblingsVisibleDuringOnDetach()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        TestComponent sibling = gameObject.Attach<TestComponent>();
+        SiblingObservingDetachComponent observer = gameObject.Attach<SiblingObservingDetachComponent>();
+
+        _world.RemoveGameObject(gameObject);
+
+        Assert.That(observer.SiblingSeenDuringDetach, Is.SameAs(sibling));
+    }
+
+    [Test]
+    public void RemoveGameObject_AttachOnSameOwnerDuringOnDetach_Throws()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        SelfAttachDuringDetachComponent component = gameObject.Attach<SelfAttachDuringDetachComponent>();
+
+        _world.RemoveGameObject(gameObject);
+
+        Assert.That(component.Caught, Is.InstanceOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public void RemoveGameObject_UncaughtOnDetachException_StillMarksGameObjectRemoved()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        UncaughtSelfAttachDuringDetachComponent component = gameObject.Attach<UncaughtSelfAttachDuringDetachComponent>();
+        bool removedEventFired = false;
+        gameObject.Removed += _ => removedEventFired = true;
+
+        Assert.Throws<InvalidOperationException>(() => _world.RemoveGameObject(gameObject));
+
+        Assert.That(gameObject.State, Is.EqualTo(GameObjectState.Removed));
+        Assert.That(gameObject.Count(), Is.EqualTo(0));
+        Assert.That(component.HasOwner(), Is.False);
+        Assert.That(removedEventFired, Is.True);
+    }
+
+    [Test]
+    public void RemoveGameObject_OnDetachException_ContinuesDetachingRemainingComponents()
+    {
+        GameObject gameObject = _world.CreateGameObject();
+        ThrowingDetachComponent first = gameObject.Attach(new ThrowingDetachComponent(new InvalidOperationException()));
+        ThrowingDetachComponent second = gameObject.Attach(new ThrowingDetachComponent(new NotSupportedException()));
+
+        AggregateException? exception = Assert.Throws<AggregateException>(() => _world.RemoveGameObject(gameObject));
+
+        Assert.That(first.OnDetachCalled, Is.True);
+        Assert.That(second.OnDetachCalled, Is.True);
+        Assert.That(first.HasOwner(), Is.False);
+        Assert.That(second.HasOwner(), Is.False);
+        Assert.That(gameObject.State, Is.EqualTo(GameObjectState.Removed));
+        Assert.That(gameObject.Count(), Is.EqualTo(0));
+        Assert.That(exception?.InnerExceptions, Has.Count.EqualTo(2));
     }
 
     [Test]
