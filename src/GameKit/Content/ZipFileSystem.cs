@@ -125,24 +125,26 @@ public class ZipFileSystem : VirtualFileSystem
         return new ZipFileSystem(archive);
     }
     
-    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    public override bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result)
     {
         ThrowIfDisposed();
 
         string normalizedPath = NormalizePath(path);
 
-        if (_filesByDirectory.TryGetValue(normalizedPath, out var files))
+        if (_filesByDirectory.TryGetValue(normalizedPath, out List<ZipFile>? files))
         {
             // Create an array of VirtualFile and return it as a span
-            VirtualFile[] result = new VirtualFile[files.Count];
+            VirtualFile[] virtualFiles = new VirtualFile[files.Count];
             for (int i = 0; i < files.Count; i++)
             {
-                result[i] = files[i];
+                virtualFiles[i] = files[i];
             }
-            return result;
+            result = virtualFiles;
+            return true;
         }
 
-        return Array.Empty<VirtualFile>();
+        result = Array.Empty<VirtualFile>();
+        return _directoriesByParent.ContainsKey(normalizedPath);
     }
 
     public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
@@ -230,8 +232,10 @@ public class ZipFileSystem : VirtualFileSystem
     
     private static string NormalizePath(ReadOnlySpan<char> path)
     {
-        if (path.IsEmpty)
+        if (path.IsEmpty || path.SequenceEqual("."))
+        {
             return string.Empty;
+        }
 
         // Replace backslashes with forward slashes and trim leading/trailing slashes
         return path.ToString().Replace('\\', '/').Trim('/');

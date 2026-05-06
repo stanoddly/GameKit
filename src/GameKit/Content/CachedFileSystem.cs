@@ -15,9 +15,9 @@ public sealed class CachedFileSystem: VirtualFileSystem
         _sourceVirtualFileSystem = sourceVirtualFileSystem;
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    public override bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result)
     {
-        return _dictFileSystem.GetFiles(path);
+        return _dictFileSystem.TryGetFiles(path, out result);
     }
 
     public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
@@ -58,8 +58,10 @@ public sealed class CachedFileSystem: VirtualFileSystem
             }
         }
 
-        var frozenDirectories = resultDirectories.ToFrozenDictionary(item => item.Item1, item => item.Item2);
-        var frozenFiles = resultFiles.ToFrozenDictionary(item => item.Item1, item => item.Item2);
+        FrozenDictionary<string, ImmutableArray<string>> frozenDirectories =
+            resultDirectories.ToFrozenDictionary(item => item.Item1, item => item.Item2);
+        FrozenDictionary<string, ImmutableArray<VirtualFile>> frozenFiles =
+            resultFiles.ToFrozenDictionary(item => item.Item1, item => item.Item2);
 
         return new CachedFileSystem(source, new DictFileSystem(frozenFiles, frozenDirectories));
     }

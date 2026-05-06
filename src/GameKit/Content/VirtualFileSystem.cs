@@ -10,13 +10,23 @@ public abstract class VirtualFile
 
 public abstract class VirtualFileSystem: IDisposable
 {
-    public abstract ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path);
+    public abstract bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result);
     public abstract bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result);
     public abstract bool TryGetFile(ReadOnlySpan<char> path, [NotNullWhen(true)] out VirtualFile? file);
 
+    public ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    {
+        if (TryGetFiles(path, out ReadOnlySpan<VirtualFile> files))
+        {
+            return files;
+        }
+
+        throw new DirectoryNotFoundException(path.ToString());
+    }
+
     public ReadOnlySpan<string> GetDirectories(ReadOnlySpan<char> path)
     {
-        if (TryGetDirectories(path, out var directories))
+        if (TryGetDirectories(path, out ReadOnlySpan<string> directories))
         {
             return directories;
         }

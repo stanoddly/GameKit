@@ -11,13 +11,21 @@ public sealed class CompositeFileSystem: VirtualFileSystem
         _fileSystems = fileSystems.ToList();
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    public override bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result)
     {
         Dictionary<string, VirtualFile> files = new();
+        bool foundFiles = false;
 
         foreach (VirtualFileSystem fileSystem in _fileSystems)
         {
-            ReadOnlySpan<VirtualFile> fileSystemFiles = fileSystem.GetFiles(path);
+            bool found = fileSystem.TryGetFiles(path, out ReadOnlySpan<VirtualFile> fileSystemFiles);
+
+            if (!found)
+            {
+                continue;
+            }
+
+            foundFiles = true;
 
             foreach (VirtualFile fileSystemFile in fileSystemFiles)
             {
@@ -25,7 +33,14 @@ public sealed class CompositeFileSystem: VirtualFileSystem
             }
         }
 
-        return files.Values.ToArray();
+        if (!foundFiles)
+        {
+            result = Array.Empty<VirtualFile>();
+            return false;
+        }
+
+        result = files.Values.ToArray();
+        return true;
     }
 
     public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
@@ -74,7 +89,7 @@ public sealed class CompositeFileSystem: VirtualFileSystem
     {
         List<Exception> exceptions = new List<Exception>();
     
-        foreach (var disposable in _fileSystems)
+        foreach (VirtualFileSystem disposable in _fileSystems)
         {
             try
             {
