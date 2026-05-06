@@ -31,12 +31,12 @@ public interface IWindow : IDisposable
     /// Intended for editor and tooling workflows. While this method is running, GameKit does not update,
     /// render, process input services, or advance timers.
     /// </summary>
-    FileDialogResult ShowModalOpenFileDialog(OpenFileDialogOptions options);
+    FileDialogResult ShowModalOpenFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null, bool allowMany = false);
 
     /// <summary>
     /// Shows a native modal file-save dialog and blocks GameKit execution until the dialog completes.
     /// Intended for editor and tooling workflows. While this method is running, GameKit does not update,
     /// render, process input services, or advance timers.
     /// </summary>
-    FileDialogResult ShowModalSaveFileDialog(SaveFileDialogOptions options);
+    FileDialogResult ShowModalSaveFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null);
 }

@@ -173,26 +173,30 @@ internal class Window : IWindow
         }
     }
 
-    public FileDialogResult ShowModalOpenFileDialog(OpenFileDialogOptions options)
+    public FileDialogResult ShowModalOpenFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null, bool allowMany = false)
     {
-        ArgumentNullException.ThrowIfNull(options);
-
-        return _frameContext.PauseForModalOperation(() => ShowModalFileDialog(
-            options.Filters,
-            options.DefaultLocation,
-            options.AllowMany,
-            FileDialogKind.Open));
+        _frameContext.Pause();
+        try
+        {
+            return ShowModalFileDialog(filters ?? Array.Empty<FileDialogFilter>(), defaultLocation, allowMany, FileDialogKind.Open);
+        }
+        finally
+        {
+            _frameContext.Resume();
+        }
     }
 
-    public FileDialogResult ShowModalSaveFileDialog(SaveFileDialogOptions options)
+    public FileDialogResult ShowModalSaveFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null)
     {
-        ArgumentNullException.ThrowIfNull(options);
-
-        return _frameContext.PauseForModalOperation(() => ShowModalFileDialog(
-            options.Filters,
-            options.DefaultLocation,
-            false,
-            FileDialogKind.Save));
+        _frameContext.Pause();
+        try
+        {
+            return ShowModalFileDialog(filters ?? Array.Empty<FileDialogFilter>(), defaultLocation, false, FileDialogKind.Save);
+        }
+        finally
+        {
+            _frameContext.Resume();
+        }
     }
 
     private unsafe FileDialogResult ShowModalFileDialog(

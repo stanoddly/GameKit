@@ -84,8 +84,7 @@ public class FileDialogsView : View<FileDialogsViewModel>
         CursorState state = DrawButton(pencil, x, y, "Open file");
         if (state == CursorState.Clicked)
         {
-            FileDialogResult result = _window.ShowModalOpenFileDialog(new OpenFileDialogOptions(
-                []));
+            FileDialogResult result = _window.ShowModalOpenFileDialog();
 
             if (result.Status == FileDialogStatus.Accepted && result.Paths.Count > 0)
             {
@@ -109,8 +108,7 @@ public class FileDialogsView : View<FileDialogsViewModel>
         CursorState state = DrawButton(pencil, x, y, "Save file");
         if (state == CursorState.Clicked)
         {
-            FileDialogResult result = _window.ShowModalSaveFileDialog(new SaveFileDialogOptions(
-                []));
+            FileDialogResult result = _window.ShowModalSaveFileDialog();
 
             if (result.Status == FileDialogStatus.Accepted && result.Paths.Count > 0)
             {

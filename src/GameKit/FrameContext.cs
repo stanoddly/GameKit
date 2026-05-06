@@ -18,6 +18,7 @@ public class GameKitFrameContext: FrameContext
     // 100 ms = 0.1 seconds maximum delta time
     private const double MaxDeltaTime = 0.100;
     private ulong _pausedNanoseconds;
+    private ulong _pauseStartNanoseconds;
     
     internal GameKitFrameContext()
     {
@@ -47,19 +48,15 @@ public class GameKitFrameContext: FrameContext
         FrameNumber += 1;
     }
 
-    internal T PauseForModalOperation<T>(Func<T> operation)
+    internal void Pause()
     {
-        ulong pauseStartNanoseconds = SDL3.SDL_GetTicksNS();
+        _pauseStartNanoseconds = SDL3.SDL_GetTicksNS();
+    }
 
-        try
-        {
-            return operation();
-        }
-        finally
-        {
-            ulong pauseEndNanoseconds = SDL3.SDL_GetTicksNS();
-            _pausedNanoseconds += pauseEndNanoseconds - pauseStartNanoseconds;
-        }
+    internal void Resume()
+    {
+        ulong pauseEndNanoseconds = SDL3.SDL_GetTicksNS();
+        _pausedNanoseconds += pauseEndNanoseconds - _pauseStartNanoseconds;
     }
 }
 
