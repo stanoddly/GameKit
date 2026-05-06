@@ -1,0 +1,157 @@
+using GameKit.Common;
+using GameKit.Gpu;
+using GameKit.Pencuil;
+using GameKit.Text;
+
+namespace GameKit.Tutorials.FileDialogs;
+
+public class FileDialogsViewModel : IViewModel
+{
+    public bool IsDirty { get; set; } = true;
+
+    private string _loadedFilename = "none";
+    private string _savedFilename = "none";
+
+    public string LoadedFilename
+    {
+        get
+        {
+            return _loadedFilename;
+        }
+        set
+        {
+            if (_loadedFilename != value)
+            {
+                _loadedFilename = value;
+                IsDirty = true;
+            }
+        }
+    }
+
+    public string SavedFilename
+    {
+        get
+        {
+            return _savedFilename;
+        }
+        set
+        {
+            if (_savedFilename != value)
+            {
+                _savedFilename = value;
+                IsDirty = true;
+            }
+        }
+    }
+}
+
+public class FileDialogsView : View<FileDialogsViewModel>
+{
+    private const int ButtonWidth = 180;
+    private const int ButtonHeight = 48;
+    private const int ContentWidth = 720;
+    private const int ButtonGap = 86;
+    private const int ValueGap = 16;
+
+    private static readonly Color BackgroundColor = new(28, 30, 34, 255);
+    private static readonly Color ButtonColor = new(62, 87, 121, 255);
+    private static readonly Color ButtonHoverColor = new(78, 112, 156, 255);
+    private static readonly Color TextColor = new(235, 238, 242, 255);
+    private readonly IWindow _window;
+    private readonly Font _font;
+
+    public FileDialogsView(FileDialogsViewModel viewModel, IWindow window, IFontSystem fontSystem)
+        : base(viewModel)
+    {
+        _window = window;
+        _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
+    }
+
+    public override void Build(Pencil pencil)
+    {
+        pencil.MoveTo(0, 0);
+        pencil.Panel(pencil.BottomRight.X, pencil.BottomRight.Y, BackgroundColor);
+
+        int startX = pencil.Center.X - ButtonWidth / 2;
+        int startY = pencil.Center.Y - ButtonHeight - ButtonGap / 2;
+
+        BuildOpenColumn(pencil, startX, startY);
+        BuildSaveColumn(pencil, startX, startY + ButtonHeight + ButtonGap);
+    }
+
+    private void BuildOpenColumn(Pencil pencil, int x, int y)
+    {
+        CursorState state = DrawButton(pencil, x, y, "Open file");
+        if (state == CursorState.Clicked)
+        {
+            FileDialogResult result = _window.ShowModalOpenFileDialog(new OpenFileDialogOptions(
+                []));
+
+            if (result.Status == FileDialogStatus.Accepted && result.Paths.Count > 0)
+            {
+                ViewModel.LoadedFilename = result.Paths[0];
+            }
+            else if (result.Status == FileDialogStatus.Canceled)
+            {
+                ViewModel.LoadedFilename = "canceled";
+            }
+            else
+            {
+                ViewModel.LoadedFilename = result.Error ?? "error";
+            }
+        }
+
+        DrawValue(pencil, y + ButtonHeight + ValueGap, ViewModel.LoadedFilename);
+    }
+
+    private void BuildSaveColumn(Pencil pencil, int x, int y)
+    {
+        CursorState state = DrawButton(pencil, x, y, "Save file");
+        if (state == CursorState.Clicked)
+        {
+            FileDialogResult result = _window.ShowModalSaveFileDialog(new SaveFileDialogOptions(
+                []));
+
+            if (result.Status == FileDialogStatus.Accepted && result.Paths.Count > 0)
+            {
+                ViewModel.SavedFilename = result.Paths[0];
+            }
+            else if (result.Status == FileDialogStatus.Canceled)
+            {
+                ViewModel.SavedFilename = "canceled";
+            }
+            else
+            {
+                ViewModel.SavedFilename = result.Error ?? "error";
+            }
+        }
+
+        DrawValue(pencil, y + ButtonHeight + ValueGap, ViewModel.SavedFilename);
+    }
+
+    private CursorState DrawButton(Pencil pencil, int x, int y, string text)
+    {
+        Rectangle area = new Rectangle(x, y, ButtonWidth, ButtonHeight);
+        Color color = area.Intersects(pencil.CursorPosition) ? ButtonHoverColor : ButtonColor;
+
+        pencil.MoveTo(x, y);
+        CursorState state = pencil.Panel(ButtonWidth, ButtonHeight, color);
+
+        IntVector2 textSize = pencil.MeasureText(text, _font);
+        pencil.MoveTo(
+            x + (ButtonWidth - textSize.X) / 2,
+            y + (ButtonHeight - textSize.Y) / 2);
+        pencil.Text(text, _font, TextColor);
+
+        return state;
+    }
+
+    private void DrawValue(Pencil pencil, int y, string text)
+    {
+        IntVector2 textSize = pencil.MeasureText(text, _font);
+        int x = pencil.Center.X - Math.Min(textSize.X, ContentWidth) / 2;
+
+        pencil.MoveTo(x, y);
+        pencil.Text(text, _font, TextColor);
+    }
+}

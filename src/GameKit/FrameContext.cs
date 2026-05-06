@@ -17,6 +17,7 @@ public class GameKitFrameContext: FrameContext
 {
     // 100 ms = 0.1 seconds maximum delta time
     private const double MaxDeltaTime = 0.100;
+    private ulong _pausedNanoseconds;
     
     internal GameKitFrameContext()
     {
@@ -25,8 +26,8 @@ public class GameKitFrameContext: FrameContext
     public void StartFrame()
     {
         ulong previousElapsedNanoseconds = ElapsedNanoseconds;
-        
-        ElapsedNanoseconds = SDL3.SDL_GetTicksNS();
+
+        ElapsedNanoseconds = SDL3.SDL_GetTicksNS() - _pausedNanoseconds;
 
         // Yup divide! No rounding, that would give wrong results!
         // Also divide by 100, because TimeSpan accepts "ticks", where 1 tick = nanoseconds / 100
@@ -44,6 +45,21 @@ public class GameKitFrameContext: FrameContext
         }
 
         FrameNumber += 1;
+    }
+
+    internal T PauseForModalOperation<T>(Func<T> operation)
+    {
+        ulong pauseStartNanoseconds = SDL3.SDL_GetTicksNS();
+
+        try
+        {
+            return operation();
+        }
+        finally
+        {
+            ulong pauseEndNanoseconds = SDL3.SDL_GetTicksNS();
+            _pausedNanoseconds += pauseEndNanoseconds - pauseStartNanoseconds;
+        }
     }
 }
 

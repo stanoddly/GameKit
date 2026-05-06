@@ -75,7 +75,7 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<GameKitFactory>();
 
-        AddSingleton<Window>((GameKitFactory factory, GpuDevice gpu, AppConfig config) => factory.CreateWindow(gpu, config));
+        AddSingleton<Window>((GameKitFactory factory, GpuDevice gpu, AppConfig config, GameKitFrameContext frameContext) => factory.CreateWindow(gpu, frameContext, config));
         AddAlias<IWindow, Window>();
 
         AddSingleton<GpuDevice>((GameKitFactory factory) => factory.CreateGpuDevice());

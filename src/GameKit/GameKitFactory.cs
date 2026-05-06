@@ -43,12 +43,12 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, AppConfig config)
+    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
     {
-        return CreateWindow(gpuDevice, config.Size, config.Title, config.Fullscreen);
+        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, Size<uint>? size = null, string? title = null, bool fullscreen = false)
+    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false)
     {
         EnsureSdlInitialized();
 
@@ -94,7 +94,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
+        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext);
     }
 
     internal GpuDevice CreateGpuDevice()

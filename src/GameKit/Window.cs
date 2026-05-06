@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
@@ -10,6 +12,7 @@ internal class Window : IWindow
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
+    private readonly GameKitFrameContext _frameContext;
     
     public uint Id { get; }
 
@@ -17,11 +20,12 @@ internal class Window : IWindow
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id)
+    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
+        _frameContext = frameContext;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -169,6 +173,132 @@ internal class Window : IWindow
         }
     }
 
+    public FileDialogResult ShowModalOpenFileDialog(OpenFileDialogOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return _frameContext.PauseForModalOperation(() => ShowModalFileDialog(
+            options.Filters,
+            options.DefaultLocation,
+            options.AllowMany,
+            FileDialogKind.Open));
+    }
+
+    public FileDialogResult ShowModalSaveFileDialog(SaveFileDialogOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return _frameContext.PauseForModalOperation(() => ShowModalFileDialog(
+            options.Filters,
+            options.DefaultLocation,
+            false,
+            FileDialogKind.Save));
+    }
+
+    private unsafe FileDialogResult ShowModalFileDialog(
+        IReadOnlyList<FileDialogFilter> filters,
+        string? defaultLocation,
+        bool allowMany,
+        FileDialogKind kind)
+    {
+        ArgumentNullException.ThrowIfNull(filters);
+
+        if (!SDL3.SDL_IsMainThread())
+        {
+            throw new GameKitException("File dialogs must be shown from the main thread.");
+        }
+
+        ModalFileDialogState state = new();
+        GCHandle stateHandle = GCHandle.Alloc(state);
+        IntPtr userdata = GCHandle.ToIntPtr(stateHandle);
+        NativeFileDialogFilters nativeFilters = new(filters);
+        IntPtr defaultLocationPointer = defaultLocation == null
+            ? IntPtr.Zero
+            : Marshal.StringToCoTaskMemUTF8(defaultLocation);
+
+        try
+        {
+            fixed (SDL_DialogFileFilter* filtersPointer = nativeFilters.Filters)
+            {
+                SDL_DialogFileFilter* actualFiltersPointer = nativeFilters.Filters.Length == 0 ? null : filtersPointer;
+
+                if (kind == FileDialogKind.Open)
+                {
+                    SDL3.SDL_ShowOpenFileDialog(
+                        &OnFileDialogCompleted,
+                        userdata,
+                        SdlWindow,
+                        actualFiltersPointer,
+                        nativeFilters.Filters.Length,
+                        (byte*)defaultLocationPointer,
+                        allowMany);
+                }
+                else
+                {
+                    SDL3.SDL_ShowSaveFileDialog(
+                        &OnFileDialogCompleted,
+                        userdata,
+                        SdlWindow,
+                        actualFiltersPointer,
+                        nativeFilters.Filters.Length,
+                        (byte*)defaultLocationPointer);
+                }
+
+                while (!state.IsCompleted)
+                {
+                    SDL3.SDL_PumpEvents();
+                    SDL3.SDL_Delay(10);
+                }
+            }
+
+            return state.GetResult();
+        }
+        finally
+        {
+            stateHandle.Free();
+            nativeFilters.Dispose();
+
+            if (defaultLocationPointer != IntPtr.Zero)
+            {
+                Marshal.FreeCoTaskMem(defaultLocationPointer);
+            }
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe void OnFileDialogCompleted(IntPtr userdata, byte** fileList, int filter)
+    {
+        GCHandle stateHandle = GCHandle.FromIntPtr(userdata);
+        ModalFileDialogState state = (ModalFileDialogState)stateHandle.Target!;
+        state.Complete(CreateFileDialogResult(fileList));
+    }
+
+    private static unsafe FileDialogResult CreateFileDialogResult(byte** fileList)
+    {
+        if (fileList == null)
+        {
+            string? error = SDL3.SDL_GetError();
+            return FileDialogResult.Failed(string.IsNullOrWhiteSpace(error) ? "File dialog failed." : error);
+        }
+
+        List<string> paths = new();
+        for (int i = 0; fileList[i] != null; i++)
+        {
+            string? path = Marshal.PtrToStringUTF8((IntPtr)fileList[i]);
+            if (path != null)
+            {
+                paths.Add(path);
+            }
+        }
+
+        if (paths.Count == 0)
+        {
+            return FileDialogResult.Canceled();
+        }
+
+        return FileDialogResult.Accepted(paths);
+    }
+
     public override int GetHashCode()
     {
         return Id.GetHashCode();
@@ -181,6 +311,91 @@ internal class Window : IWindow
             SDL3.SDL_ReleaseWindowFromGPUDevice(SdlGpuDevice, SdlWindow);
             SDL3.SDL_DestroyWindow(SdlWindow);
             SdlWindow = null;
+        }
+    }
+
+    private sealed class ModalFileDialogState
+    {
+        private readonly ManualResetEventSlim _completed = new();
+        private readonly object _lock = new();
+        private FileDialogResult _result = FileDialogResult.Failed("File dialog did not complete.");
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return _completed.IsSet;
+            }
+        }
+
+        public void Complete(FileDialogResult result)
+        {
+            lock (_lock)
+            {
+                _result = result;
+            }
+
+            _completed.Set();
+        }
+
+        public FileDialogResult GetResult()
+        {
+            lock (_lock)
+            {
+                return _result;
+            }
+        }
+    }
+
+    private enum FileDialogKind
+    {
+        Open,
+        Save
+    }
+
+    private sealed class NativeFileDialogFilters : IDisposable
+    {
+        private readonly List<IntPtr> _allocatedStrings = new();
+
+        public SDL_DialogFileFilter[] Filters { get; }
+
+        public unsafe NativeFileDialogFilters(IReadOnlyList<FileDialogFilter> filters)
+        {
+            ArgumentNullException.ThrowIfNull(filters);
+
+            Filters = new SDL_DialogFileFilter[filters.Count];
+
+            for (int i = 0; i < filters.Count; i++)
+            {
+                if (filters[i].Name == null)
+                {
+                    throw new ArgumentException("Filter name cannot be null.", nameof(filters));
+                }
+
+                if (filters[i].Pattern == null)
+                {
+                    throw new ArgumentException("Filter pattern cannot be null.", nameof(filters));
+                }
+
+                IntPtr namePointer = Marshal.StringToCoTaskMemUTF8(filters[i].Name);
+                IntPtr patternPointer = Marshal.StringToCoTaskMemUTF8(filters[i].Pattern);
+                _allocatedStrings.Add(namePointer);
+                _allocatedStrings.Add(patternPointer);
+
+                Filters[i] = new SDL_DialogFileFilter
+                {
+                    name = (byte*)namePointer,
+                    pattern = (byte*)patternPointer
+                };
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (IntPtr allocatedString in _allocatedStrings)
+            {
+                Marshal.FreeCoTaskMem(allocatedString);
+            }
         }
     }
 }
