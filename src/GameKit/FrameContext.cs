@@ -19,6 +19,7 @@ public class GameKitFrameContext: FrameContext
     private const double MaxDeltaTime = 0.100;
     private ulong _pausedNanoseconds;
     private ulong _pauseStartNanoseconds;
+    private bool _paused;
     
     internal GameKitFrameContext()
     {
@@ -26,6 +27,11 @@ public class GameKitFrameContext: FrameContext
 
     public void StartFrame()
     {
+        if (_paused)
+        {
+            return;
+        }
+
         ulong previousElapsedNanoseconds = ElapsedNanoseconds;
 
         ElapsedNanoseconds = SDL3.SDL_GetTicksNS() - _pausedNanoseconds;
@@ -50,13 +56,26 @@ public class GameKitFrameContext: FrameContext
 
     internal void Pause()
     {
+        if (_paused)
+        {
+            throw new InvalidOperationException("Frame context is already paused.");
+        }
+
         _pauseStartNanoseconds = SDL3.SDL_GetTicksNS();
+        _paused = true;
     }
 
     internal void Resume()
     {
+        if (!_paused)
+        {
+            throw new InvalidOperationException("Frame context is not paused.");
+        }
+
         ulong pauseEndNanoseconds = SDL3.SDL_GetTicksNS();
         _pausedNanoseconds += pauseEndNanoseconds - _pauseStartNanoseconds;
+        _pauseStartNanoseconds = 0;
+        _paused = false;
     }
 }
 
