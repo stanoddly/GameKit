@@ -48,19 +48,27 @@ public class DictFileSystem : VirtualFileSystem
         _directFilesSpanLookup = _directFilesLookup.GetAlternateLookup<ReadOnlySpan<char>>();
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    public override bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result)
     {
-        if (!_filesLookup.TryGetValue(path, out var files))
+        if (_filesLookup.TryGetValue(path, out ImmutableArray<VirtualFile> files))
         {
-            throw new DirectoryNotFoundException(path.ToString());
+            result = files.AsSpan();
+            return true;
         }
 
-        return files.AsSpan();
+        if (_directoriesLookup.ContainsKey(path))
+        {
+            result = Array.Empty<VirtualFile>();
+            return true;
+        }
+
+        result = Array.Empty<VirtualFile>();
+        return false;
     }
 
     public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
     {
-        if (_directoriesLookup.TryGetValue(path, out var directories))
+        if (_directoriesLookup.TryGetValue(path, out ImmutableArray<string> directories))
         {
             result = directories.AsSpan();
             return true;

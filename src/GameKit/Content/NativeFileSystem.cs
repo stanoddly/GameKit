@@ -68,21 +68,28 @@ public sealed class NativeFileSystem: VirtualFileSystem
         return relativePath.Replace(Path.DirectorySeparatorChar, '/');
     }
 
-    public override ReadOnlySpan<VirtualFile> GetFiles(ReadOnlySpan<char> path)
+    public override bool TryGetFiles(ReadOnlySpan<char> path, out ReadOnlySpan<VirtualFile> result)
     {
         string nativePath = FromVirtualToNativePath(path.ToString());
 
+        if (!Directory.Exists(nativePath))
+        {
+            result = Array.Empty<VirtualFile>();
+            return false;
+        }
+
         string[] filenames = Directory.GetFiles(nativePath);
-        VirtualFile[] result = new VirtualFile[filenames.Length];
+        VirtualFile[] files = new VirtualFile[filenames.Length];
 
         for (int i = 0; i < filenames.Length; i++)
         {
             string relativeFilename = Path.GetRelativePath(RootPath, filenames[i]);
             string virtualPath = FromRelativeToVirtualPath(relativeFilename);
-            result[i] = new NativeFile(virtualPath, filenames[i]);
+            files[i] = new NativeFile(virtualPath, filenames[i]);
         }
 
-        return result;
+        result = files;
+        return true;
     }
 
     public override bool TryGetDirectories(ReadOnlySpan<char> path, out ReadOnlySpan<string> result)
