@@ -25,4 +25,18 @@ public interface IWindow : IDisposable
     void SetFullscreenBorderless(bool fullscreen);
 
     void SetIcon(Image icon);
+
+    /// <summary>
+    /// Shows a native modal file-open dialog and blocks GameKit execution until the dialog completes.
+    /// Intended for editor and tooling workflows. While this method is running, GameKit does not update,
+    /// render, process input services, or advance timers.
+    /// </summary>
+    FileDialogResult ShowModalOpenFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null, bool allowMany = false);
+
+    /// <summary>
+    /// Shows a native modal file-save dialog and blocks GameKit execution until the dialog completes.
+    /// Intended for editor and tooling workflows. While this method is running, GameKit does not update,
+    /// render, process input services, or advance timers.
+    /// </summary>
+    FileDialogResult ShowModalSaveFileDialog(IReadOnlyList<FileDialogFilter>? filters = null, string? defaultLocation = null);
 }
