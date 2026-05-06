@@ -60,9 +60,18 @@ public class MouseMotionEventArgs
     public bool Consumed { get; set; }
 }
 
+public class MouseWheelEventArgs
+{
+    public Vector2 Delta { get; internal set; }
+    public Vector2 Position { get; internal set; }
+    public ulong Timestamp { get; internal set; }
+    public bool Consumed { get; set; }
+}
+
 public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
 public delegate void MouseButtonReleasedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
 public delegate void MouseMotionHandler(Mouse mouse, MouseMotionEventArgs eventArgs);
+public delegate void MouseWheelHandler(Mouse mouse, MouseWheelEventArgs eventArgs);
 
 public class MouseService : IMouseService
 {
@@ -71,10 +80,12 @@ public class MouseService : IMouseService
     // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
     private readonly MouseButtonEventArgs _buttonEventArgs = new();
     private readonly MouseMotionEventArgs _motionEventArgs = new();
+    private readonly MouseWheelEventArgs _wheelEventArgs = new();
 
     private readonly PriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
     private readonly PriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
     private readonly PriorityEventHandlers<MouseMotionHandler> _motionHandlers = new();
+    private readonly PriorityEventHandlers<MouseWheelHandler> _wheelHandlers = new();
 
     public event MouseButtonPressedHandler ButtonPress
     {
@@ -94,6 +105,12 @@ public class MouseService : IMouseService
         remove => _motionHandlers.Remove(value);
     }
 
+    public event MouseWheelHandler Wheel
+    {
+        add => _wheelHandlers.Add(0, value);
+        remove => _wheelHandlers.Remove(value);
+    }
+
     public void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler)
     {
         _buttonPressHandlers.Add(priority, handler);
@@ -107,6 +124,11 @@ public class MouseService : IMouseService
     public void SubscribeMotion(int priority, MouseMotionHandler handler)
     {
         _motionHandlers.Add(priority, handler);
+    }
+
+    public void SubscribeWheel(int priority, MouseWheelHandler handler)
+    {
+        _wheelHandlers.Add(priority, handler);
     }
 
     internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
@@ -175,6 +197,33 @@ public class MouseService : IMouseService
         foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
         {
             handler(mouse, _motionEventArgs);
+        }
+    }
+
+    internal void OnMouseWheelEvent(in SDL_MouseWheelEvent mouseWheelEvent)
+    {
+        SDL_MouseID mouseId = mouseWheelEvent.which;
+        Vector2 delta = new(mouseWheelEvent.x, mouseWheelEvent.y);
+        Vector2 position = new(mouseWheelEvent.mouse_x, mouseWheelEvent.mouse_y);
+        ulong timestamp = mouseWheelEvent.timestamp;
+
+        ref Mouse? mouse = ref CollectionsMarshal.GetValueRefOrAddDefault(_mice, mouseId, out bool exists);
+
+        if (!exists || mouse == null)
+        {
+            mouse = new Mouse(mouseId);
+        }
+
+        mouse.Position = position;
+
+        _wheelEventArgs.Delta = delta;
+        _wheelEventArgs.Position = position;
+        _wheelEventArgs.Timestamp = timestamp;
+        _wheelEventArgs.Consumed = false;
+
+        foreach ((_, MouseWheelHandler handler) in _wheelHandlers.GetSorted())
+        {
+            handler(mouse, _wheelEventArgs);
         }
     }
 }

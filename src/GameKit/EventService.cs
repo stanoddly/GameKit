@@ -67,6 +67,10 @@ public class EventService
                 {
                     _mouseService.OnMouseMotionEvent(evt.motion);
                 }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_WHEEL)
+                {
+                    _mouseService.OnMouseWheelEvent(evt.wheel);
+                }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
                     _window.OnPixelSizeChanged(evt.window.timestamp);
