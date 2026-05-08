@@ -92,8 +92,11 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<MouseService>((GameKitFactory factory) => factory.CreateMouseService());
         AddAlias<IMouseService, MouseService>();
 
-        AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, Window window, AppControl appControl) =>
-            factory.CreateEventService(keyboard, gamepad, mouse, window, appControl));
+        AddSingleton<TextInputService>((GameKitFactory factory, Window window) => factory.CreateTextInputService(window));
+        AddAlias<ITextInputService, TextInputService>();
+
+        AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, TextInputService textInput, Window window, AppControl appControl) =>
+            factory.CreateEventService(keyboard, gamepad, mouse, textInput, window, appControl));
 
         AddSingleton<IContentLoader<ShaderMetadata>, ShaderMetadataLoader>();
 

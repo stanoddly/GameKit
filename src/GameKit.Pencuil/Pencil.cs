@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using GameKit.Common;
 using GameKit.Gpu;
+using GameKit.Input;
 using GameKit.Sprites;
 using GameKit.Text;
 
@@ -98,6 +99,11 @@ public class Pencil
 
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
+
+    public int? FocusedControlId { get; private set; }
+    public bool HasFocus => FocusedControlId != null;
+    internal bool FocusClaimedThisFrame;
+    internal TextFieldEditingState? EditingState;
 
     public Pencil(IFontSystem fontSystem, GuiStyle guiStyle, AppConfig appConfig)
     {
@@ -241,6 +247,91 @@ public class Pencil
         return new IntVector2(size.Width, size.Height);
     }
 
+    public bool IsFocused(int id) => FocusedControlId == id;
+
+    internal void Focus(int id, string initialValue)
+    {
+        FocusedControlId = id;
+        FocusClaimedThisFrame = true;
+        EditingState = new TextFieldEditingState(initialValue);
+        Invalidate();
+    }
+
+    internal void Blur()
+    {
+        FocusedControlId = null;
+        EditingState = null;
+        Invalidate();
+    }
+
+    internal void InsertText(string text)
+    {
+        if (EditingState == null)
+        {
+            return;
+        }
+
+        EditingState.Buffer = EditingState.Buffer.Insert(EditingState.CursorPosition, text);
+        EditingState.CursorPosition += text.Length;
+        Invalidate();
+    }
+
+    internal bool HandleEditingKeyDown(Scancode scancode)
+    {
+        if (EditingState == null)
+        {
+            return false;
+        }
+
+        switch (scancode)
+        {
+            case Scancode.Backspace:
+                if (EditingState.CursorPosition > 0)
+                {
+                    EditingState.Buffer = EditingState.Buffer.Remove(EditingState.CursorPosition - 1, 1);
+                    EditingState.CursorPosition--;
+                }
+                break;
+            case Scancode.Delete:
+                if (EditingState.CursorPosition < EditingState.Buffer.Length)
+                {
+                    EditingState.Buffer = EditingState.Buffer.Remove(EditingState.CursorPosition, 1);
+                }
+                break;
+            case Scancode.Left:
+                if (EditingState.CursorPosition > 0)
+                {
+                    EditingState.CursorPosition--;
+                }
+                break;
+            case Scancode.Right:
+                if (EditingState.CursorPosition < EditingState.Buffer.Length)
+                {
+                    EditingState.CursorPosition++;
+                }
+                break;
+            case Scancode.Home:
+                EditingState.CursorPosition = 0;
+                break;
+            case Scancode.End:
+                EditingState.CursorPosition = EditingState.Buffer.Length;
+                break;
+            case Scancode.Return:
+            case Scancode.Return2:
+            case Scancode.KeypadEnter:
+                EditingState.Committed = true;
+                break;
+            case Scancode.Escape:
+                EditingState.Canceled = true;
+                break;
+            default:
+                return false;
+        }
+
+        Invalidate();
+        return true;
+    }
+
     internal bool HaveInstructionsChanged()
     {
         return
@@ -334,4 +425,98 @@ public static class PencilExtensions
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
+    public static bool TextField(this Pencil pencil, int id, ref string value, Font font, int width)
+    {
+        GuiStyle style = pencil.Style;
+        int padding = style.TextPadding;
+        IntVector2 textSize = pencil.MeasureText("Ay", font);
+        int height = textSize.Y + padding * 2;
+        IntVector2 size = new IntVector2(width, height);
+        IntVector2 position = pencil.CurrentPosition;
+        Rectangle area = new Rectangle(position, size);
+
+        bool isFocused = pencil.IsFocused(id);
+        bool committed = false;
+
+        if (isFocused && pencil.EditingState != null)
+        {
+            if (pencil.EditingState.Committed)
+            {
+                value = pencil.EditingState.Buffer;
+                committed = true;
+                pencil.Blur();
+                isFocused = false;
+            }
+            else if (pencil.EditingState.Canceled)
+            {
+                pencil.Blur();
+                isFocused = false;
+            }
+        }
+
+        if (pencil.CursorJustReleased && area.Intersects(pencil.CursorPosition))
+        {
+            if (!isFocused)
+            {
+                pencil.Focus(id, value);
+                isFocused = true;
+            }
+        }
+
+        Color bgColor = isFocused ? style.ActiveColor : style.Background;
+        pencil.AddRectangle(area, bgColor);
+
+        string displayText = isFocused && pencil.EditingState != null
+            ? pencil.EditingState.Buffer
+            : value;
+
+        IntVector2 textPosition = new IntVector2(position.X + padding, position.Y + padding);
+
+        if (displayText.Length > 0)
+        {
+            IntVector2 savedPosition = pencil.CurrentPosition;
+            pencil.CurrentPosition = textPosition;
+            pencil.Text(displayText, font, style.TextColor);
+            pencil.CurrentPosition = savedPosition;
+        }
+
+        if (isFocused && pencil.EditingState != null)
+        {
+            int cursorX;
+            if (pencil.EditingState.CursorPosition > 0 && displayText.Length > 0)
+            {
+                string beforeCursor = displayText[..pencil.EditingState.CursorPosition];
+                IntVector2 beforeSize = pencil.MeasureText(beforeCursor, font);
+                cursorX = textPosition.X + beforeSize.X;
+            }
+            else
+            {
+                cursorX = textPosition.X;
+            }
+
+            Rectangle cursorRect = new Rectangle(cursorX, position.Y + padding, 1, textSize.Y);
+            pencil.AddRectangle(cursorRect, style.TextColor);
+        }
+
+        pencil.AddClickTest(area);
+
+        pencil.CurrentSize = size;
+        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+
+        return committed;
+    }
+}
+
+internal class TextFieldEditingState
+{
+    public string Buffer;
+    public int CursorPosition;
+    public bool Committed;
+    public bool Canceled;
+
+    public TextFieldEditingState(string initialValue)
+    {
+        Buffer = initialValue;
+        CursorPosition = initialValue.Length;
+    }
 }
