@@ -100,7 +100,7 @@ public class Pencil
     public bool CursorJustReleased { get; set; }
     public bool CursorPressed { get; set; }
 
-    public object? FocusedControlId { get; private set; }
+    public int? FocusedControlId { get; private set; }
     public bool HasFocus => FocusedControlId != null;
     internal bool FocusClaimedThisFrame;
     internal TextFieldEditingState? EditingState;
@@ -247,9 +247,9 @@ public class Pencil
         return new IntVector2(size.Width, size.Height);
     }
 
-    public bool IsFocused(object id) => FocusedControlId != null && FocusedControlId.Equals(id);
+    public bool IsFocused(int id) => FocusedControlId == id;
 
-    internal void Focus(object id, string initialValue)
+    internal void Focus(int id, string initialValue)
     {
         FocusedControlId = id;
         FocusClaimedThisFrame = true;
@@ -425,7 +425,7 @@ public static class PencilExtensions
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
-    public static bool TextField(this Pencil pencil, object id, ref string value, Font font, int width)
+    public static bool TextField(this Pencil pencil, int id, ref string value, Font font, int width)
     {
         GuiStyle style = pencil.Style;
         int padding = style.TextPadding;

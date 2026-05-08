@@ -85,7 +85,7 @@ public class TextInputView : View<TextInputViewModel>
             pencil.Text("Name", _labelFont, LabelColor);
 
             string name = ViewModel.Name;
-            if (pencil.TextField("name", ref name, _font, 240))
+            if (pencil.TextField(0, ref name, _font, 240))
             {
                 ViewModel.Name = name;
             }
@@ -93,7 +93,7 @@ public class TextInputView : View<TextInputViewModel>
             pencil.Text("Width", _labelFont, LabelColor);
 
             string width = ViewModel.Width;
-            if (pencil.TextField("width", ref width, _font, 240))
+            if (pencil.TextField(1, ref width, _font, 240))
             {
                 ViewModel.Width = width;
             }
@@ -101,7 +101,7 @@ public class TextInputView : View<TextInputViewModel>
             pencil.Text("Height", _labelFont, LabelColor);
 
             string height = ViewModel.Height;
-            if (pencil.TextField("height", ref height, _font, 240))
+            if (pencil.TextField(2, ref height, _font, 240))
             {
                 ViewModel.Height = height;
             }
