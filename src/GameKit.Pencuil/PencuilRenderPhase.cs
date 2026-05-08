@@ -10,15 +10,18 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     private readonly Pencil _pencil;
     private readonly ViewRegistry _viewRegistry;
     private readonly PencuilRenderer _renderer;
+    private readonly ITextInputService _textInputService;
     private readonly bool _clearTarget;
+    private bool _textInputActive;
 
     public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IWindow window, PencuilOptions options)
+    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, IWindow window, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
         _renderer = renderer;
+        _textInputService = textInputService;
         _clearTarget = options.ClearTarget;
         Order = options.Order;
 
@@ -53,6 +56,23 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
         });
 
+        keyboardService.SubscribeKeyDown(options.InputOrder, (_, args) =>
+        {
+            if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode))
+            {
+                args.Consume();
+            }
+        });
+
+        textInputService.SubscribeTextInput(options.InputOrder, args =>
+        {
+            if (pencil.HasFocus)
+            {
+                pencil.InsertText(args.Text);
+                args.Consume();
+            }
+        });
+
         window.ResolutionChanged += args =>
         {
             pencil.UpdateViewport(args.NewSize.Width, args.NewSize.Height);
@@ -72,9 +92,16 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
         if (needsBuild)
         {
+            _pencil.FocusClaimedThisFrame = false;
+
             foreach (IView view in views)
             {
                 view.Build(_pencil);
+            }
+
+            if (_pencil.CursorJustReleased && _pencil.HasFocus && !_pencil.FocusClaimedThisFrame)
+            {
+                _pencil.Blur();
             }
 
             _pencil.NeedsUpdate = false;
@@ -85,6 +112,20 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
 
             _pencil.CycleInstructions();
+        }
+
+        bool hasFocus = _pencil.HasFocus;
+        if (hasFocus != _textInputActive)
+        {
+            if (hasFocus)
+            {
+                _textInputService.Start();
+            }
+            else
+            {
+                _textInputService.Stop();
+            }
+            _textInputActive = hasFocus;
         }
 
         _pencil.CursorJustReleased = false;

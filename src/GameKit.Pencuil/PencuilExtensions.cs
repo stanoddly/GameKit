@@ -22,6 +22,8 @@ public static class PencuilExtensions
             sp.GetRequiredService<ViewRegistry>(),
             sp.GetRequiredService<PencuilRenderer>(),
             sp.GetRequiredService<IMouseService>(),
+            sp.GetRequiredService<IKeyboardService>(),
+            sp.GetRequiredService<ITextInputService>(),
             sp.GetRequiredService<IWindow>(),
             sp.GetRequiredService<PencuilOptions>()));
         return builder;
