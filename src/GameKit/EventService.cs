@@ -8,14 +8,16 @@ public class EventService
     private readonly KeyboardService _keyboardService;
     private readonly GamepadService _gamepadService;
     private readonly MouseService _mouseService;
+    private readonly TextInputService _textInputService;
     private readonly Window _window;
     private readonly AppControl _appControl;
 
-    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, Window window, AppControl appControl)
+    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, Window window, AppControl appControl)
     {
         _keyboardService = keyboardService;
         _gamepadService = gamepadService;
         _mouseService = mouseService;
+        _textInputService = textInputService;
         _window = window;
         _appControl = appControl;
     }
@@ -70,6 +72,14 @@ public class EventService
                 else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_WHEEL)
                 {
                     _mouseService.OnMouseWheelEvent(evt.wheel);
+                }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_TEXT_INPUT)
+                {
+                    _textInputService.OnTextInputEvent(evt.text);
+                }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_TEXT_EDITING)
+                {
+                    _textInputService.OnTextEditingEvent(evt.edit);
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
