@@ -34,7 +34,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             {
                 if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
                 {
-                    args.Consumed = true;
+                    args.Consume();
                 }
             }
         });
@@ -48,7 +48,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
                 if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
                 {
-                    args.Consumed = true;
+                    args.Consume();
                 }
             }
         });

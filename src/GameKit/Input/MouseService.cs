@@ -49,7 +49,8 @@ public class MouseButtonEventArgs
     public MouseButton Button { get; internal set; }
     public Vector2 Position { get; internal set; }
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; set; }
+    public bool Consumed { get; internal set; }
+    public void Consume() { Consumed = true; }
 }
 
 public class MouseMotionEventArgs
@@ -57,7 +58,8 @@ public class MouseMotionEventArgs
     public Vector2 Position { get; internal set; }
     public Vector2 RelativeMotion { get; internal set; }
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; set; }
+    public bool Consumed { get; internal set; }
+    public void Consume() { Consumed = true; }
 }
 
 public class MouseWheelEventArgs
@@ -65,7 +67,8 @@ public class MouseWheelEventArgs
     public Vector2 Delta { get; internal set; }
     public Vector2 Position { get; internal set; }
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; set; }
+    public bool Consumed { get; internal set; }
+    public void Consume() { Consumed = true; }
 }
 
 public delegate void MouseButtonPressedHandler(Mouse mouse, MouseButtonEventArgs eventArgs);
@@ -159,6 +162,11 @@ public class MouseService : IMouseService
                 foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
                 {
                     handler(mouse, _buttonEventArgs);
+
+                    if (_buttonEventArgs.Consumed)
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -169,6 +177,11 @@ public class MouseService : IMouseService
             foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
             {
                 handler(mouse, _buttonEventArgs);
+
+                if (_buttonEventArgs.Consumed)
+                {
+                    break;
+                }
             }
         }
     }
@@ -197,6 +210,11 @@ public class MouseService : IMouseService
         foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
         {
             handler(mouse, _motionEventArgs);
+
+            if (_motionEventArgs.Consumed)
+            {
+                break;
+            }
         }
     }
 
@@ -224,6 +242,11 @@ public class MouseService : IMouseService
         foreach ((_, MouseWheelHandler handler) in _wheelHandlers.GetSorted())
         {
             handler(mouse, _wheelEventArgs);
+
+            if (_wheelEventArgs.Consumed)
+            {
+                break;
+            }
         }
     }
 }

@@ -8,7 +8,8 @@ public class KeyEventArgs
     public Scancode Scancode { get; internal set; }
     public VirtualKey Key { get; internal set; }
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; set; }
+    public bool Consumed { get; internal set; }
+    public void Consume() { Consumed = true; }
 }
 
 public delegate void KeyDownEventHandler(Keyboard keyboard, KeyEventArgs eventArgs);
@@ -84,6 +85,11 @@ public class KeyboardService : IKeyboardService
                 foreach ((_, KeyDownEventHandler handler) in _keyDownHandlers.GetSorted())
                 {
                     handler(keyboard, _keyEventArgs);
+
+                    if (_keyEventArgs.Consumed)
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -94,6 +100,11 @@ public class KeyboardService : IKeyboardService
             foreach ((_, KeyUpEventHandler handler) in _keyUpHandlers.GetSorted())
             {
                 handler(keyboard, _keyEventArgs);
+
+                if (_keyEventArgs.Consumed)
+                {
+                    break;
+                }
             }
         }
     }
