@@ -45,10 +45,10 @@ public class GameKitFactory: IDisposable
 
     internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
     {
-        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen);
+        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen, config.Resizable);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false)
+    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false)
     {
         EnsureSdlInitialized();
 
@@ -64,10 +64,21 @@ public class GameKitFactory: IDisposable
         }
 
         (uint width, uint height) = fullscreen ? (0, 0) : size ?? DefaultSize;
+        SDL_WindowFlags windowFlags = 0;
+        if (fullscreen)
+        {
+            windowFlags |= SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
+        }
+
+        if (resizable)
+        {
+            windowFlags |= SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+        }
+
         Pointer<SDL_Window> sdlWindow;
         unsafe
         {
-             sdlWindow= SDL3.SDL_CreateWindow(windowTitle, (int)width, (int)height, fullscreen ? SDL_WindowFlags.SDL_WINDOW_FULLSCREEN : 0);
+             sdlWindow = SDL3.SDL_CreateWindow(windowTitle, (int)width, (int)height, windowFlags);
         }
 
         if (sdlWindow.IsNull)
