@@ -1,6 +1,6 @@
-RWTexture2D<float4> outputTexture : register(u0, space0);
+RWTexture2D<float4> outputTexture : register(u0, space1);
 
-ConstantBuffer<float> time : register(b0, space1);
+ConstantBuffer<float> time : register(b0, space2);
 
 [numthreads(8, 8, 1)]
 [shader("compute")]

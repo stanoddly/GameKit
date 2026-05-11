@@ -195,40 +195,56 @@ public class SdlangCompiler
 
     private static void ValidateBindings(ShaderStageDto stage, List<ResourceBinding> bindings)
     {
-        // Determine expected spaces based on shader stage
-        // SDL GPU requires:
-        // - Vertex: textures/samplers/buffers in space 0, uniforms in space 1
-        // - Fragment: textures/samplers/buffers in space 2, uniforms in space 3
-        // - Compute: textures/samplers/buffers in space 0, uniforms in space 1
-        int expectedResourceSpace;
+        // Determine expected spaces based on shader stage.
+        // SDL GPU Vulkan backend descriptor set layout:
+        // - Vertex: readonly resources in space 0, uniforms in space 1
+        // - Fragment: readonly resources in space 2, uniforms in space 3
+        // - Compute: readonly resources in space 0, readwrite resources in space 1, uniforms in space 2
+        int expectedReadOnlyResourceSpace;
+        int expectedReadWriteResourceSpace;
         int expectedUniformSpace;
         string stageName;
 
         switch (stage)
         {
             case ShaderStageDto.Vertex:
-                expectedResourceSpace = 0;
+                expectedReadOnlyResourceSpace = 0;
+                expectedReadWriteResourceSpace = -1;
                 expectedUniformSpace = 1;
                 stageName = "vertex";
                 break;
             case ShaderStageDto.Fragment:
-                expectedResourceSpace = 2;
+                expectedReadOnlyResourceSpace = 2;
+                expectedReadWriteResourceSpace = -1;
                 expectedUniformSpace = 3;
                 stageName = "fragment";
                 break;
             case ShaderStageDto.Compute:
-                expectedResourceSpace = 0;
-                expectedUniformSpace = 1;
+                expectedReadOnlyResourceSpace = 0;
+                expectedReadWriteResourceSpace = 1;
+                expectedUniformSpace = 2;
                 stageName = "compute";
                 break;
             default:
                 throw new InvalidOperationException($"Unknown shader stage: {stage}");
         }
 
-        // Validate space for each binding
         foreach (ResourceBinding binding in bindings)
         {
-            int expectedSpace = binding.Type == ResourceType.UniformBuffer ? expectedUniformSpace : expectedResourceSpace;
+            int expectedSpace;
+            if (binding.Type == ResourceType.UniformBuffer)
+            {
+                expectedSpace = expectedUniformSpace;
+            }
+            else if (binding.Type == ResourceType.ReadWriteStorageTexture || binding.Type == ResourceType.ReadWriteStorageBuffer)
+            {
+                expectedSpace = expectedReadWriteResourceSpace;
+            }
+            else
+            {
+                expectedSpace = expectedReadOnlyResourceSpace;
+            }
+
             if (binding.Space != expectedSpace)
             {
                 throw new ShaderBindingValidationException(
