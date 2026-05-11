@@ -175,6 +175,38 @@ internal class GpuDevice : IGpuDevice
         }
     }
 
+    public Texture CreateTexture(ShortSize size, TextureFormat format, TextureUsage usage)
+    {
+        unsafe
+        {
+            SDL_GPUTextureUsageFlags sdlUsage = (SDL_GPUTextureUsageFlags)usage;
+
+            if (SDL3.SDL_GPUTextureSupportsFormat(SdlGpuDevice, (SDL_GPUTextureFormat)format, SDL_GPUTextureType.SDL_GPU_TEXTURETYPE_2D, sdlUsage) == false)
+            {
+                throw new ArgumentException($"Texture format '{format}' is not supported for usage '{usage}' on this GPU.", nameof(format));
+            }
+
+            SDL_GPUTextureCreateInfo info = new SDL_GPUTextureCreateInfo
+            {
+                usage = sdlUsage,
+                format = (SDL_GPUTextureFormat)format,
+                width = size.Width,
+                height = size.Height,
+                layer_count_or_depth = 1,
+                num_levels = 1,
+                sample_count = SDL_GPUSampleCount.SDL_GPU_SAMPLECOUNT_1
+            };
+
+            Pointer<SDL_GPUTexture> rawTexture = SDL3.SDL_CreateGPUTexture(SdlGpuDevice, &info);
+            SdlError.ThrowOnNull(rawTexture);
+
+            Texture texture = new UserTexture(this, rawTexture, size, format);
+            _textures.Add(texture);
+
+            return texture;
+        }
+    }
+
     public void RegisterTexture(Texture texture) => _textures.Add(texture);
 
     public void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer) => _vertexBuffers.Add(vertexBuffer);

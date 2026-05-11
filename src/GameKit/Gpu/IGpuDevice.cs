@@ -19,6 +19,8 @@ public interface IGpuDevice : IDisposable
     
     Texture CreateColorTargetTexture(ShortSize size, TextureFormat format);
 
+    Texture CreateTexture(ShortSize size, TextureFormat format, TextureUsage usage);
+
     void RegisterTexture(Texture texture);
 
     void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer);
