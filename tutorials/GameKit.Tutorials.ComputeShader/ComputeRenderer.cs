@@ -1,4 +1,5 @@
 using GameKit.Common;
+using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
 
@@ -44,10 +45,12 @@ public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static ComputeRenderer Create(
+        IContentLoader<ComputeShader> computeShaderLoader,
         ComputePipelineBuilder computePipelineBuilder,
         IGpuDevice gpuDevice)
     {
-        ComputePipeline computePipeline = computePipelineBuilder.Build("shaders/compute");
+        ComputeShader computeShader = computeShaderLoader.Load("shaders/compute");
+        ComputePipeline computePipeline = computePipelineBuilder.Build(computeShader);
 
         Texture outputTexture = gpuDevice.CreateTexture(
             new ShortSize(512, 512),
