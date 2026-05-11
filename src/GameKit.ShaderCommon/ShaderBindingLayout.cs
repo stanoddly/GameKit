@@ -36,7 +36,7 @@ public readonly record struct ShaderBindingLayout(
     }
 }
 
-public record struct ShaderBindingCounts(byte NumSamplers, byte NumStorageTextures, byte NumStorageBuffers);
+public record struct ShaderBindingCounts(byte NumSamplers, byte NumStorageTextures, byte NumStorageBuffers, byte NumReadWriteStorageTextures = 0, byte NumReadWriteStorageBuffers = 0);
 
 public record struct ShaderUniformSlotSizes(byte Slot0, byte Slot1, byte Slot2, byte Slot3);
 
@@ -56,16 +56,34 @@ public static class ShaderBindingLayoutValidator
     public static void ValidateBindingCounts(ShaderBindingCounts expectedCounts, ShaderBindingCounts realCounts)
     {
         if (expectedCounts.NumSamplers > realCounts.NumSamplers)
+        {
             throw new ShaderBindingLayoutValidationException(
                 $"Expected samplers ({expectedCounts.NumSamplers}) exceeds real samplers ({realCounts.NumSamplers})");
+        }
 
         if (expectedCounts.NumStorageTextures > realCounts.NumStorageTextures)
+        {
             throw new ShaderBindingLayoutValidationException(
                 $"Expected storage textures ({expectedCounts.NumStorageTextures}) exceeds real storage textures ({realCounts.NumStorageTextures})");
+        }
 
         if (expectedCounts.NumStorageBuffers > realCounts.NumStorageBuffers)
+        {
             throw new ShaderBindingLayoutValidationException(
                 $"Expected storage buffers ({expectedCounts.NumStorageBuffers}) exceeds real storage buffers ({realCounts.NumStorageBuffers})");
+        }
+
+        if (expectedCounts.NumReadWriteStorageTextures > realCounts.NumReadWriteStorageTextures)
+        {
+            throw new ShaderBindingLayoutValidationException(
+                $"Expected read-write storage textures ({expectedCounts.NumReadWriteStorageTextures}) exceeds real read-write storage textures ({realCounts.NumReadWriteStorageTextures})");
+        }
+
+        if (expectedCounts.NumReadWriteStorageBuffers > realCounts.NumReadWriteStorageBuffers)
+        {
+            throw new ShaderBindingLayoutValidationException(
+                $"Expected read-write storage buffers ({expectedCounts.NumReadWriteStorageBuffers}) exceeds real read-write storage buffers ({realCounts.NumReadWriteStorageBuffers})");
+        }
     }
 
     /// <summary>

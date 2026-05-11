@@ -8,9 +8,9 @@ public enum ShaderStage
 {
     [EnumMember(Value = "vertex")]
     Vertex = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-    
+
     [EnumMember(Value = "fragment")]
-    Fragment = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT
+    Fragment = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
 }
 
 
@@ -79,7 +79,7 @@ public class ShaderInstance
     public required string EntryPoint { get; init; }
 }
 
-public class ShaderMetadata
+public class GraphicsShaderMetadata
 {
     public required ShaderStage Stage { get; init; }
     public required ShaderBindingLayout BindingLayout { get; init; }

@@ -13,8 +13,11 @@ public interface ICommandBuffer: IDisposable
     void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     void BlitTextures(Texture source, Texture destination);
+    void PushComputeUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
     ICopyPass CreateCopyPass();
     IRenderPass CreateRenderPass(List<Texture> colorTargets, List<ColorTargetSettings> colorTargetSettings, Texture? depthBuffer, DepthBufferSettings depthBufferSettings);
+    IComputePass CreateComputePass(ReadOnlySpan<StorageTextureReadWriteBinding> readWriteStorageTextures, ReadOnlySpan<StorageBufferReadWriteBinding> readWriteStorageBuffers);
+    IComputePass CreateComputePass();
 }
 
 public class CommandBuffer: ICommandBuffer
@@ -181,11 +184,69 @@ public class CommandBuffer: ICommandBuffer
         }
     }
 
+    public void PushComputeUniformData<TType>(uint slot, TType variable) where TType : unmanaged
+    {
+        ThrowIfDisposed();
+        unsafe
+        {
+            IntPtr data = new IntPtr(Unsafe.AsPointer(ref variable));
+            uint size = (uint)Unsafe.SizeOf<TType>();
+            SDL3.SDL_PushGPUComputeUniformData(SdlGpuCommandBuffer, slot, data, size);
+        }
+    }
+
+    public IComputePass CreateComputePass(
+        ReadOnlySpan<StorageTextureReadWriteBinding> readWriteStorageTextures,
+        ReadOnlySpan<StorageBufferReadWriteBinding> readWriteStorageBuffers)
+    {
+        ThrowIfDisposed();
+        unsafe
+        {
+            SDL_GPUStorageTextureReadWriteBinding* textureBindings = stackalloc SDL_GPUStorageTextureReadWriteBinding[readWriteStorageTextures.Length];
+            for (int i = 0; i < readWriteStorageTextures.Length; i++)
+            {
+                textureBindings[i] = new SDL_GPUStorageTextureReadWriteBinding
+                {
+                    texture = readWriteStorageTextures[i].Texture.SdlGpuTexture,
+                    mip_level = readWriteStorageTextures[i].MipLevel,
+                    layer = readWriteStorageTextures[i].Layer,
+                    cycle = readWriteStorageTextures[i].Cycle
+                };
+            }
+
+            SDL_GPUStorageBufferReadWriteBinding* bufferBindings = stackalloc SDL_GPUStorageBufferReadWriteBinding[readWriteStorageBuffers.Length];
+            for (int i = 0; i < readWriteStorageBuffers.Length; i++)
+            {
+                bufferBindings[i] = new SDL_GPUStorageBufferReadWriteBinding
+                {
+                    buffer = readWriteStorageBuffers[i].Buffer.SdlBuffer,
+                    cycle = readWriteStorageBuffers[i].Cycle
+                };
+            }
+
+            SDL_GPUComputePass* computePass = SDL3.SDL_BeginGPUComputePass(
+                SdlGpuCommandBuffer,
+                textureBindings,
+                (uint)readWriteStorageTextures.Length,
+                bufferBindings,
+                (uint)readWriteStorageBuffers.Length);
+
+            return new ComputePass(computePass, (uint)readWriteStorageTextures.Length, (uint)readWriteStorageBuffers.Length);
+        }
+    }
+
+    public IComputePass CreateComputePass()
+    {
+        return CreateComputePass(
+            ReadOnlySpan<StorageTextureReadWriteBinding>.Empty,
+            ReadOnlySpan<StorageBufferReadWriteBinding>.Empty);
+    }
+
     private void AssignSlot(ref ShaderUniformSlotSizes slotSizes, uint slot, int size)
     {
-        if (slot > 4)
+        if (slot > 3)
         {
-            throw new ArgumentOutOfRangeException(nameof(slot), slot, "Slot must be between 0 and 4.");
+            throw new ArgumentOutOfRangeException(nameof(slot), slot, "Slot must be between 0 and 3.");
         }
 
         byte byteSize = (byte)size;

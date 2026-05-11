@@ -9,11 +9,11 @@ public class ShaderLoader: IContentLoader<Shader>
 {
     private const string GeneratedShaderDirectory = ".generated";
     private readonly GpuDevice _gpuDevice;
-    private readonly IContentLoader<ShaderMetadata> _shaderMetadataLoader;
+    private readonly IContentLoader<GraphicsShaderMetadata> _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
     private VirtualFileSystem _virtualFileSystem;
 
-    internal ShaderLoader(GpuDevice gpuDevice, IContentLoader<ShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ShaderLoader(GpuDevice gpuDevice, IContentLoader<GraphicsShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
     {
         _gpuDevice = gpuDevice;
         _shaderMetadataLoader = shaderMetadataLoader;
@@ -21,7 +21,7 @@ public class ShaderLoader: IContentLoader<Shader>
         _shaderFormats = _gpuDevice.GetSupportedShaderFormats();
     }
 
-    private Shader Load(string directory, ShaderMetadata shaderMetadata)
+    private Shader Load(string directory, GraphicsShaderMetadata shaderMetadata)
     {
         foreach (ShaderInstance shaderInstance in shaderMetadata.Shaders)
         {
@@ -44,7 +44,7 @@ public class ShaderLoader: IContentLoader<Shader>
 
         stream.ReadExactly(shaderCode);
         
-        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint);
+        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint + "\0");
 
         unsafe
         {
@@ -91,7 +91,7 @@ public class ShaderLoader: IContentLoader<Shader>
 
         string metadataFilename = Path.Combine(generatedDirectoryName, $"{name}.metadata.json");
 
-        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
+        GraphicsShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
 
         return Load(generatedDirectoryName, shaderMetadata);
     }

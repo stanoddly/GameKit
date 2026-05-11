@@ -4,51 +4,48 @@ using GameKit.ShaderCommon;
 
 namespace GameKit.Shaders;
 
-public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
+public class GraphicsShaderMetadataLoader : IContentLoader<GraphicsShaderMetadata>
 {
     private readonly VirtualFileSystem _fileSystem;
 
-    public ShaderMetadataLoader(VirtualFileSystem fileSystem)
+    public GraphicsShaderMetadataLoader(VirtualFileSystem fileSystem)
     {
         _fileSystem = fileSystem;
     }
 
-    public ShaderMetadata Load(ReadOnlySpan<char> path)
+    public GraphicsShaderMetadata Load(ReadOnlySpan<char> path)
     {
-        using Stream stream = _fileSystem.GetFile(path).Open();
-        // reflection free deserialization using DTO
-        ShaderMetadataDto? dtoMetadata = JsonSerializer.Deserialize(stream, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
+        ShaderMetadataDto dto = DeserializeDto(_fileSystem, path);
+        return ConvertDtoToMetadata(dto);
+    }
 
+    internal static ShaderMetadataDto DeserializeDto(VirtualFileSystem fileSystem, ReadOnlySpan<char> path)
+    {
+        using Stream stream = fileSystem.GetFile(path).Open();
+        ShaderMetadataDto? dtoMetadata = JsonSerializer.Deserialize(stream, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
         if (dtoMetadata == null)
         {
             throw new InvalidOperationException($"Failed to deserialize shader metadata from path: {path.ToString()}");
         }
-
-        return ConvertDtoToMetadata(dtoMetadata);
+        return dtoMetadata;
     }
 
-    private ShaderMetadata ConvertDtoToMetadata(ShaderMetadataDto dto)
+    private GraphicsShaderMetadata ConvertDtoToMetadata(ShaderMetadataDto dto)
     {
-        var shaders = new List<ShaderInstance>(dto.Shaders.Count);
-        foreach (var instanceDto in dto.Shaders)
+        if (dto.Stage == ShaderStageDto.Compute)
         {
-            shaders.Add(new ShaderInstance
-            {
-                Format = ConvertShaderFormat(instanceDto.Format),
-                Filename = instanceDto.Filename,
-                EntryPoint = instanceDto.EntryPoint
-            });
+            throw new ArgumentException("Cannot load compute shader metadata as graphics shader metadata");
         }
 
-        return new ShaderMetadata
+        return new GraphicsShaderMetadata
         {
             Stage = ConvertShaderStage(dto.Stage),
             BindingLayout = dto.BindingLayout,
-            Shaders = shaders
+            Shaders = ConvertShaderInstances(dto.Shaders)
         };
     }
 
-    private static ShaderFormat ConvertShaderFormat(ShaderFormatDto format) => format switch
+    internal static ShaderFormat ConvertShaderFormat(ShaderFormatDto format) => format switch
     {
         ShaderFormatDto.Private => ShaderFormat.Private,
         ShaderFormatDto.SpirV => ShaderFormat.SpirV,
@@ -58,6 +55,21 @@ public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
         ShaderFormatDto.MetalLib => ShaderFormat.MetalLib,
         _ => throw new InvalidOperationException($"Unknown shader format: {format}")
     };
+
+    internal static List<ShaderInstance> ConvertShaderInstances(List<ShaderInstanceDto> dtos)
+    {
+        List<ShaderInstance> shaders = new List<ShaderInstance>(dtos.Count);
+        foreach (ShaderInstanceDto instanceDto in dtos)
+        {
+            shaders.Add(new ShaderInstance
+            {
+                Format = ConvertShaderFormat(instanceDto.Format),
+                Filename = instanceDto.Filename,
+                EntryPoint = instanceDto.EntryPoint
+            });
+        }
+        return shaders;
+    }
 
     private static ShaderStage ConvertShaderStage(ShaderStageDto stage) => stage switch
     {

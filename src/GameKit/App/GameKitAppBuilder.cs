@@ -98,9 +98,9 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, TextInputService textInput, Window window, AppControl appControl) =>
             factory.CreateEventService(keyboard, gamepad, mouse, textInput, window, appControl));
 
-        AddSingleton<IContentLoader<ShaderMetadata>, ShaderMetadataLoader>();
+        AddSingleton<IContentLoader<GraphicsShaderMetadata>, GraphicsShaderMetadataLoader>();
 
-        AddSingleton<ShaderLoader>((GpuDevice gpuDevice, IContentLoader<ShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
+        AddSingleton<ShaderLoader>((GpuDevice gpuDevice, IContentLoader<GraphicsShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
             new ShaderLoader(gpuDevice, shaderMetadataLoader, virtualFileSystem));
         AddAlias<IContentLoader<Shader>, ShaderLoader>();
 
@@ -108,6 +108,15 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<GraphicsPipelineBuilder>((GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader) =>
             new GraphicsPipelineBuilder(gpuDevice, window, shaderLoader));
+
+        AddSingleton<IContentLoader<ComputeShaderMetadata>, ComputeShaderMetadataLoader>();
+
+        AddSingleton<ComputeShaderLoader>((GpuDevice gpuDevice, IContentLoader<ComputeShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
+            new ComputeShaderLoader(gpuDevice, shaderMetadataLoader, virtualFileSystem));
+        AddAlias<IContentLoader<ComputeShader>, ComputeShaderLoader>();
+
+        AddSingleton<ComputePipelineBuilder>((GpuDevice gpuDevice) =>
+            new ComputePipelineBuilder(gpuDevice));
 
         AddSingleton<GameKitFrameContext>((GameKitFactory factory) => factory.CreateFrameContext());
         AddAlias<FrameContext, GameKitFrameContext>();
