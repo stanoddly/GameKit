@@ -1,0 +1,56 @@
+using GameKit.Common;
+using GameKit.Gpu;
+using GameKit.RenderOrchestration;
+
+namespace GameKit.Tutorials.ComputeShader;
+
+public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
+{
+    private readonly ComputePipeline _computePipeline;
+    private readonly Texture _outputTexture;
+    private float _time;
+
+    public ComputeRenderer(ComputePipeline computePipeline, Texture outputTexture)
+    {
+        _computePipeline = computePipeline;
+        _outputTexture = outputTexture;
+    }
+
+    public void Render(DefaultRenderContext renderContext)
+    {
+        _time += 0.016f;
+
+        renderContext.CommandBuffer.PushComputeUniformData(0, _time);
+
+        StorageTextureReadWriteBinding textureBinding = new StorageTextureReadWriteBinding
+        {
+            Texture = _outputTexture
+        };
+
+        ReadOnlySpan<StorageTextureReadWriteBinding> textureBindings = [textureBinding];
+
+        using (IComputePass computePass = renderContext.CommandBuffer.CreateComputePass(
+            textureBindings,
+            ReadOnlySpan<StorageBufferReadWriteBinding>.Empty))
+        {
+            computePass.BindComputePipeline(_computePipeline);
+            computePass.Dispatch(512 / 8, 512 / 8, 1);
+        }
+
+        renderContext.CommandBuffer.BlitTextures(_outputTexture, renderContext.SwapchainTexture);
+    }
+
+    public static ComputeRenderer Create(
+        ComputePipelineBuilder computePipelineBuilder,
+        IGpuDevice gpuDevice)
+    {
+        ComputePipeline computePipeline = computePipelineBuilder.Build("shaders/compute");
+
+        Texture outputTexture = gpuDevice.CreateTexture(
+            new ShortSize(512, 512),
+            TextureFormat.R8G8B8A8Unorm,
+            TextureUsage.ComputeStorageWrite | TextureUsage.Sampler);
+
+        return new ComputeRenderer(computePipeline, outputTexture);
+    }
+}
