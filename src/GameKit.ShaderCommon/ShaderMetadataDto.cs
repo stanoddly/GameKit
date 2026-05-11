@@ -37,4 +37,39 @@ public enum ShaderFormatDto
 
 public record ShaderInstanceDto(ShaderFormatDto Format, string Filename, string EntryPoint);
 
-public record ShaderMetadataDto(ShaderStageDto Stage, ShaderBindingLayout BindingLayout, List<ShaderInstanceDto> Shaders, string SourceHash, string? SlangVersion, uint? ThreadCountX = null, uint? ThreadCountY = null, uint? ThreadCountZ = null);
+public record ShaderMetadataHeaderDto
+{
+    public required ShaderStageDto Stage { get; init; }
+    public required string SourceHash { get; init; }
+    public string? SlangVersion { get; init; }
+}
+
+public record VertexShaderMetadataDto
+{
+    public ShaderStageDto Stage { get; init; } = ShaderStageDto.Vertex;
+    public required ShaderBindingLayout BindingLayout { get; init; }
+    public required List<ShaderInstanceDto> Shaders { get; init; }
+    public required string SourceHash { get; init; }
+    public string? SlangVersion { get; init; }
+}
+
+public record FragmentShaderMetadataDto
+{
+    public ShaderStageDto Stage { get; init; } = ShaderStageDto.Fragment;
+    public required ShaderBindingLayout BindingLayout { get; init; }
+    public required List<ShaderInstanceDto> Shaders { get; init; }
+    public required string SourceHash { get; init; }
+    public string? SlangVersion { get; init; }
+}
+
+public record ComputeShaderMetadataDto
+{
+    public ShaderStageDto Stage { get; init; } = ShaderStageDto.Compute;
+    public required ShaderBindingLayout BindingLayout { get; init; }
+    public required List<ShaderInstanceDto> Shaders { get; init; }
+    public required string SourceHash { get; init; }
+    public string? SlangVersion { get; init; }
+    public required uint ThreadCountX { get; init; }
+    public required uint ThreadCountY { get; init; }
+    public required uint ThreadCountZ { get; init; }
+}

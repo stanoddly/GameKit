@@ -15,14 +15,27 @@ public class GraphicsShaderMetadataLoader : IContentLoader<GraphicsShaderMetadat
 
     public GraphicsShaderMetadata Load(ReadOnlySpan<char> path)
     {
-        ShaderMetadataDto dto = DeserializeDto(_fileSystem, path);
-        return ConvertDtoToMetadata(dto);
+        string json = ReadJson(_fileSystem, path);
+        ShaderMetadataHeaderDto header = DeserializeHeader(json, path);
+        return header.Stage switch
+        {
+            ShaderStageDto.Vertex => ConvertDtoToMetadata(DeserializeVertexDto(json, path)),
+            ShaderStageDto.Fragment => ConvertDtoToMetadata(DeserializeFragmentDto(json, path)),
+            ShaderStageDto.Compute => throw new ArgumentException("Cannot load compute shader metadata as graphics shader metadata"),
+            _ => throw new InvalidOperationException($"Unknown shader stage: {header.Stage}")
+        };
     }
 
-    internal static ShaderMetadataDto DeserializeDto(VirtualFileSystem fileSystem, ReadOnlySpan<char> path)
+    private static string ReadJson(VirtualFileSystem fileSystem, ReadOnlySpan<char> path)
     {
         using Stream stream = fileSystem.GetFile(path).Open();
-        ShaderMetadataDto? dtoMetadata = JsonSerializer.Deserialize(stream, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
+        using StreamReader reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    internal static ShaderMetadataHeaderDto DeserializeHeader(string json, ReadOnlySpan<char> path)
+    {
+        ShaderMetadataHeaderDto? dtoMetadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataHeaderDto);
         if (dtoMetadata == null)
         {
             throw new InvalidOperationException($"Failed to deserialize shader metadata from path: {path.ToString()}");
@@ -30,16 +43,51 @@ public class GraphicsShaderMetadataLoader : IContentLoader<GraphicsShaderMetadat
         return dtoMetadata;
     }
 
-    private GraphicsShaderMetadata ConvertDtoToMetadata(ShaderMetadataDto dto)
+    internal static VertexShaderMetadataDto DeserializeVertexDto(string json, ReadOnlySpan<char> path)
     {
-        if (dto.Stage == ShaderStageDto.Compute)
+        VertexShaderMetadataDto? dtoMetadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
+        if (dtoMetadata == null)
         {
-            throw new ArgumentException("Cannot load compute shader metadata as graphics shader metadata");
+            throw new InvalidOperationException($"Failed to deserialize vertex shader metadata from path: {path.ToString()}");
+        }
+        if (dtoMetadata.Stage != ShaderStageDto.Vertex)
+        {
+            throw new ArgumentException($"Expected vertex shader but got {dtoMetadata.Stage}");
         }
 
+        return dtoMetadata;
+    }
+
+    internal static FragmentShaderMetadataDto DeserializeFragmentDto(string json, ReadOnlySpan<char> path)
+    {
+        FragmentShaderMetadataDto? dtoMetadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+        if (dtoMetadata == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize fragment shader metadata from path: {path.ToString()}");
+        }
+        if (dtoMetadata.Stage != ShaderStageDto.Fragment)
+        {
+            throw new ArgumentException($"Expected fragment shader but got {dtoMetadata.Stage}");
+        }
+
+        return dtoMetadata;
+    }
+
+    private GraphicsShaderMetadata ConvertDtoToMetadata(VertexShaderMetadataDto dto)
+    {
         return new GraphicsShaderMetadata
         {
-            Stage = ConvertShaderStage(dto.Stage),
+            Stage = ShaderStage.Vertex,
+            BindingLayout = dto.BindingLayout,
+            Shaders = ConvertShaderInstances(dto.Shaders)
+        };
+    }
+
+    private GraphicsShaderMetadata ConvertDtoToMetadata(FragmentShaderMetadataDto dto)
+    {
+        return new GraphicsShaderMetadata
+        {
+            Stage = ShaderStage.Fragment,
             BindingLayout = dto.BindingLayout,
             Shaders = ConvertShaderInstances(dto.Shaders)
         };
@@ -71,10 +119,4 @@ public class GraphicsShaderMetadataLoader : IContentLoader<GraphicsShaderMetadat
         return shaders;
     }
 
-    private static ShaderStage ConvertShaderStage(ShaderStageDto stage) => stage switch
-    {
-        ShaderStageDto.Vertex => ShaderStage.Vertex,
-        ShaderStageDto.Fragment => ShaderStage.Fragment,
-        _ => throw new InvalidOperationException($"Unknown shader stage: {stage}")
-    };
 }

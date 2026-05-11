@@ -9,7 +9,10 @@ namespace GameKit.ShaderCommon;
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
     UseStringEnumConverter = true)]
-[JsonSerializable(typeof(ShaderMetadataDto))]
+[JsonSerializable(typeof(ShaderMetadataHeaderDto))]
+[JsonSerializable(typeof(VertexShaderMetadataDto))]
+[JsonSerializable(typeof(FragmentShaderMetadataDto))]
+[JsonSerializable(typeof(ComputeShaderMetadataDto))]
 [JsonSerializable(typeof(ShaderStageDto))]
 [JsonSerializable(typeof(ShaderFormatDto))]
 [JsonSerializable(typeof(ShaderInstanceDto))]

@@ -564,14 +564,47 @@ public class SdlangCompiler
         ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash,
         uint threadCountX = 0, uint threadCountY = 0, uint threadCountZ = 0)
     {
-        uint? tcX = threadCountX > 0 ? threadCountX : null;
-        uint? tcY = threadCountY > 0 ? threadCountY : null;
-        uint? tcZ = threadCountZ > 0 ? threadCountZ : null;
-        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash, SlangVersion, tcX, tcY, tcZ);
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
         using FileStream stream = metadataFile.Create();
-        JsonSerializer.Serialize(stream, metadata, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
+        switch (stage)
+        {
+            case ShaderStageDto.Vertex:
+                VertexShaderMetadataDto vertexMetadata = new VertexShaderMetadataDto
+                {
+                    BindingLayout = resources,
+                    Shaders = shaderInstances,
+                    SourceHash = fileHash,
+                    SlangVersion = SlangVersion
+                };
+                JsonSerializer.Serialize(stream, vertexMetadata, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
+                break;
+            case ShaderStageDto.Fragment:
+                FragmentShaderMetadataDto fragmentMetadata = new FragmentShaderMetadataDto
+                {
+                    BindingLayout = resources,
+                    Shaders = shaderInstances,
+                    SourceHash = fileHash,
+                    SlangVersion = SlangVersion
+                };
+                JsonSerializer.Serialize(stream, fragmentMetadata, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+                break;
+            case ShaderStageDto.Compute:
+                ComputeShaderMetadataDto computeMetadata = new ComputeShaderMetadataDto
+                {
+                    BindingLayout = resources,
+                    Shaders = shaderInstances,
+                    SourceHash = fileHash,
+                    SlangVersion = SlangVersion,
+                    ThreadCountX = threadCountX,
+                    ThreadCountY = threadCountY,
+                    ThreadCountZ = threadCountZ
+                };
+                JsonSerializer.Serialize(stream, computeMetadata, ShaderMetadataJsonContext.Default.ComputeShaderMetadataDto);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown shader stage: {stage}");
+        }
     }
 
     private static bool ShouldSkipCompilation(FileInfo filePath, DirectoryInfo outputDir, bool force)
@@ -586,7 +619,7 @@ public class SdlangCompiler
         try
         {
             string json = File.ReadAllText(metadataFile.FullName);
-            ShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
+            ShaderMetadataHeaderDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataHeaderDto);
 
             if (metadata?.SourceHash == null) return false;
 

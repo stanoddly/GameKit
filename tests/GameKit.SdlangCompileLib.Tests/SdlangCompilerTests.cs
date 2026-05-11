@@ -59,6 +59,19 @@ public class SdlangCompilerTests
                                                            }
                                                            """;
 
+    private const string ValidComputeShaderWithBindings = """
+                                                          RWTexture2D<float4> outputTexture : register(u0, space1);
+
+                                                          ConstantBuffer<float> time : register(b0, space2);
+
+                                                          [numthreads(8, 8, 1)]
+                                                          [shader("compute")]
+                                                          void main(uint3 dispatchThreadID : SV_DispatchThreadID)
+                                                          {
+                                                              outputTexture[dispatchThreadID.xy] = float4(time, 0.0, 0.0, 1.0);
+                                                          }
+                                                          """;
+
     private const string FragmentShaderWrongUniformSpace = """
                                                            struct FragmentInput {
                                                                float4 position : SV_Position;
@@ -152,12 +165,15 @@ public class SdlangCompilerTests
 
         string json = File.ReadAllText(metadataPath);
         
-        ShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataDto);
+        VertexShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
         Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
         Assert.That(metadata.SourceHash, Is.Not.Empty);
+
+        using JsonDocument document = JsonDocument.Parse(json);
+        Assert.That(document.RootElement.TryGetProperty("threadCountX", out JsonElement _), Is.False);
     }
 
     [Test]
@@ -184,6 +200,29 @@ public class SdlangCompilerTests
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_fragment.metadata.json");
         Assert.That(File.Exists(metadataPath), Is.True);
+    }
+
+    [Test]
+    public void CompileShader_ValidComputeShaderWithBindings_CreatesComputeMetadata()
+    {
+        string shaderPath = Path.Combine(_testDir, "valid_compute.slang");
+        File.WriteAllText(shaderPath, ValidComputeShaderWithBindings);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.Combine(_testDir, ".generated", "valid_compute.metadata.json");
+        Assert.That(File.Exists(metadataPath), Is.True);
+
+        string json = File.ReadAllText(metadataPath);
+        ComputeShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ComputeShaderMetadataDto);
+
+        Assert.That(metadata, Is.Not.Null);
+        Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Compute));
+        Assert.That(metadata.ThreadCountX, Is.EqualTo(8));
+        Assert.That(metadata.ThreadCountY, Is.EqualTo(8));
+        Assert.That(metadata.ThreadCountZ, Is.EqualTo(1));
+        Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
     }
 
     [Test]
