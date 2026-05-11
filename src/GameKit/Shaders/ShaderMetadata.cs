@@ -11,9 +11,6 @@ public enum ShaderStage
 
     [EnumMember(Value = "fragment")]
     Fragment = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-
-    [EnumMember(Value = "compute")]
-    Compute = 2
 }
 
 
@@ -82,12 +79,9 @@ public class ShaderInstance
     public required string EntryPoint { get; init; }
 }
 
-public class ShaderMetadata
+public class GraphicsShaderMetadata
 {
     public required ShaderStage Stage { get; init; }
     public required ShaderBindingLayout BindingLayout { get; init; }
     public required List<ShaderInstance> Shaders { get; init; }
-    public uint ThreadCountX { get; init; }
-    public uint ThreadCountY { get; init; }
-    public uint ThreadCountZ { get; init; }
 }

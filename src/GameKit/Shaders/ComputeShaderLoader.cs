@@ -8,10 +8,10 @@ public class ComputeShaderLoader : IContentLoader<ComputeShader>
 {
     private const string GeneratedShaderDirectory = ".generated";
     private readonly ShaderFormats _shaderFormats;
-    private readonly IContentLoader<ShaderMetadata> _shaderMetadataLoader;
+    private readonly IContentLoader<ComputeShaderMetadata> _shaderMetadataLoader;
     private readonly VirtualFileSystem _virtualFileSystem;
 
-    internal ComputeShaderLoader(GpuDevice gpuDevice, IContentLoader<ShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ComputeShaderLoader(GpuDevice gpuDevice, IContentLoader<ComputeShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
     {
         _shaderFormats = gpuDevice.GetSupportedShaderFormats();
         _shaderMetadataLoader = shaderMetadataLoader;
@@ -35,12 +35,7 @@ public class ComputeShaderLoader : IContentLoader<ComputeShader>
         }
 
         string metadataFilename = Path.Combine(generatedDirectoryName, $"{name}.metadata.json");
-        ShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
-
-        if (shaderMetadata.Stage != ShaderStage.Compute)
-        {
-            throw new ArgumentException($"Shader '{pathString}' is not a compute shader (stage: {shaderMetadata.Stage})");
-        }
+        ComputeShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
 
         foreach (ShaderInstance shaderInstance in shaderMetadata.Shaders)
         {
@@ -53,7 +48,7 @@ public class ComputeShaderLoader : IContentLoader<ComputeShader>
         throw new NotSupportedException("No compatible shader format found for this GPU.");
     }
 
-    private ComputeShader CreateComputeShader(string directory, ShaderInstance shaderInstance, ShaderMetadata shaderMetadata)
+    private ComputeShader CreateComputeShader(string directory, ShaderInstance shaderInstance, ComputeShaderMetadata shaderMetadata)
     {
         string filePath = Path.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(filePath);
