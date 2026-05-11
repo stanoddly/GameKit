@@ -34,7 +34,10 @@ public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
             ReadOnlySpan<StorageBufferReadWriteBinding>.Empty))
         {
             computePass.BindComputePipeline(_computePipeline);
-            computePass.Dispatch(512 / 8, 512 / 8, 1);
+            computePass.Dispatch(
+                (uint)_outputTexture.Size.Width / _computePipeline.ThreadCountX,
+                (uint)_outputTexture.Size.Height / _computePipeline.ThreadCountY,
+                1);
         }
 
         renderContext.CommandBuffer.BlitTextures(_outputTexture, renderContext.SwapchainTexture);

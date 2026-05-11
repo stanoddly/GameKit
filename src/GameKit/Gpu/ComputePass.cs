@@ -6,15 +6,21 @@ namespace GameKit.Gpu;
 public class ComputePass : IComputePass
 {
     private Pointer<SDL_GPUComputePass> _nativePointer;
+    private readonly uint _readWriteStorageTextureCount;
+    private readonly uint _readWriteStorageBufferCount;
+    private ComputePipeline? _boundPipeline;
 
-    internal ComputePass(Pointer<SDL_GPUComputePass> nativePointer)
+    internal ComputePass(Pointer<SDL_GPUComputePass> nativePointer, uint readWriteStorageTextureCount, uint readWriteStorageBufferCount)
     {
         _nativePointer = nativePointer;
+        _readWriteStorageTextureCount = readWriteStorageTextureCount;
+        _readWriteStorageBufferCount = readWriteStorageBufferCount;
     }
 
     public void BindComputePipeline(ComputePipeline pipeline)
     {
         ThrowIfDisposed();
+        _boundPipeline = pipeline;
         unsafe
         {
             SDL3.SDL_BindGPUComputePipeline(_nativePointer, pipeline.Pointer);
@@ -39,7 +45,7 @@ public class ComputePass : IComputePass
         }
     }
 
-    public void BindStorageTextures(ReadOnlySpan<Texture> textures, uint slot = 0)
+    public void BindReadOnlyStorageTextures(ReadOnlySpan<Texture> textures, uint slot = 0)
     {
         ThrowIfDisposed();
         unsafe
@@ -53,13 +59,13 @@ public class ComputePass : IComputePass
         }
     }
 
-    public void BindStorageTexture(Texture texture, uint slot = 0)
+    public void BindReadOnlyStorageTexture(Texture texture, uint slot = 0)
     {
         ReadOnlySpan<Texture> textures = [texture];
-        BindStorageTextures(textures, slot);
+        BindReadOnlyStorageTextures(textures, slot);
     }
 
-    public void BindStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0)
+    public void BindReadOnlyStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0)
     {
         ThrowIfDisposed();
         unsafe
@@ -73,15 +79,16 @@ public class ComputePass : IComputePass
         }
     }
 
-    public void BindStorageBuffer(GpuStorageBuffer buffer, uint slot = 0)
+    public void BindReadOnlyStorageBuffer(GpuStorageBuffer buffer, uint slot = 0)
     {
         ReadOnlySpan<GpuStorageBuffer> buffers = [buffer];
-        BindStorageBuffers(buffers, slot);
+        BindReadOnlyStorageBuffers(buffers, slot);
     }
 
     public void Dispatch(uint groupCountX, uint groupCountY, uint groupCountZ)
     {
         ThrowIfDisposed();
+        ThrowIfInvalidDispatch();
         unsafe
         {
             SDL3.SDL_DispatchGPUCompute(_nativePointer, groupCountX, groupCountY, groupCountZ);
@@ -91,6 +98,7 @@ public class ComputePass : IComputePass
     public void DispatchIndirect(GpuStorageBuffer buffer, uint offset = 0)
     {
         ThrowIfDisposed();
+        ThrowIfInvalidDispatch();
         unsafe
         {
             SDL3.SDL_DispatchGPUComputeIndirect(_nativePointer, buffer.SdlBuffer, offset);
@@ -114,6 +122,28 @@ public class ComputePass : IComputePass
         if (_nativePointer.IsNull)
         {
             throw new ObjectDisposedException(nameof(ComputePass));
+        }
+    }
+
+    private void ThrowIfInvalidDispatch()
+    {
+        if (_boundPipeline == null)
+        {
+            throw new InvalidOperationException("ComputePipeline must be bound before dispatching.");
+        }
+
+        uint declaredTextures = _boundPipeline.BindingLayout.BindingCounts.NumReadWriteStorageTextures;
+        if (_readWriteStorageTextureCount != declaredTextures)
+        {
+            throw new InvalidOperationException(
+                $"Read-write storage texture count mismatch: compute pass was created with {_readWriteStorageTextureCount} but pipeline declares {declaredTextures}.");
+        }
+
+        uint declaredBuffers = _boundPipeline.BindingLayout.BindingCounts.NumReadWriteStorageBuffers;
+        if (_readWriteStorageBufferCount != declaredBuffers)
+        {
+            throw new InvalidOperationException(
+                $"Read-write storage buffer count mismatch: compute pass was created with {_readWriteStorageBufferCount} but pipeline declares {declaredBuffers}.");
         }
     }
 }

@@ -64,7 +64,7 @@ public class ComputePipelineBuilder
         byte[] shaderCode = new byte[stream.Length];
         stream.ReadExactly(shaderCode);
 
-        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint);
+        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint + "\0");
 
         ShaderBindingLayout bindingLayout = shaderMetadata.BindingLayout;
 
@@ -96,7 +96,7 @@ public class ComputePipelineBuilder
                     throw new GameKitInitializationException($"SDL_CreateGPUComputePipeline failed: {SDL3.SDL_GetError()}");
                 }
 
-                ComputePipeline computePipeline = new ComputePipeline(_gpuDevice, pipeline, bindingLayout);
+                ComputePipeline computePipeline = new ComputePipeline(_gpuDevice, pipeline, bindingLayout, shaderMetadata.ThreadCountX, shaderMetadata.ThreadCountY, shaderMetadata.ThreadCountZ);
                 _gpuDevice.RegisterComputePipeline(computePipeline);
                 return computePipeline;
             }

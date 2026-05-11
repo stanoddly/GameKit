@@ -10,11 +10,18 @@ public class ComputePipeline : IDisposable
     internal Pointer<SDL_GPUComputePipeline> Pointer { get; set; }
     public ShaderBindingLayout BindingLayout { get; }
 
-    internal ComputePipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUComputePipeline> pointer, ShaderBindingLayout bindingLayout)
+    public uint ThreadCountX { get; }
+    public uint ThreadCountY { get; }
+    public uint ThreadCountZ { get; }
+
+    internal ComputePipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUComputePipeline> pointer, ShaderBindingLayout bindingLayout, uint threadCountX, uint threadCountY, uint threadCountZ)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
         BindingLayout = bindingLayout;
+        ThreadCountX = threadCountX;
+        ThreadCountY = threadCountY;
+        ThreadCountZ = threadCountZ;
     }
 
     public void Dispose()

@@ -231,7 +231,7 @@ public class CommandBuffer: ICommandBuffer
                 bufferBindings,
                 (uint)readWriteStorageBuffers.Length);
 
-            return new ComputePass(computePass);
+            return new ComputePass(computePass, (uint)readWriteStorageTextures.Length, (uint)readWriteStorageBuffers.Length);
         }
     }
 
