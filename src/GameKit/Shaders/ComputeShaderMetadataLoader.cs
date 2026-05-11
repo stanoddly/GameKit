@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GameKit.Content;
 using GameKit.ShaderCommon;
 
@@ -14,8 +15,13 @@ public class ComputeShaderMetadataLoader : IContentLoader<ComputeShaderMetadata>
 
     public ComputeShaderMetadata Load(ReadOnlySpan<char> path)
     {
-        ShaderMetadataDto dto = GraphicsShaderMetadataLoader.DeserializeDto(_fileSystem, path);
+        using Stream stream = _fileSystem.GetFile(path).Open();
+        ComputeShaderMetadataDto? dto = JsonSerializer.Deserialize(stream, ShaderMetadataJsonContext.Default.ComputeShaderMetadataDto);
 
+        if (dto == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize compute shader metadata from path: {path.ToString()}");
+        }
         if (dto.Stage != ShaderStageDto.Compute)
         {
             throw new ArgumentException($"Expected compute shader but got {dto.Stage}");
@@ -25,9 +31,9 @@ public class ComputeShaderMetadataLoader : IContentLoader<ComputeShaderMetadata>
         {
             BindingLayout = dto.BindingLayout,
             Shaders = GraphicsShaderMetadataLoader.ConvertShaderInstances(dto.Shaders),
-            ThreadCountX = dto.ThreadCountX ?? throw new InvalidOperationException("Compute shader metadata missing ThreadCountX"),
-            ThreadCountY = dto.ThreadCountY ?? throw new InvalidOperationException("Compute shader metadata missing ThreadCountY"),
-            ThreadCountZ = dto.ThreadCountZ ?? throw new InvalidOperationException("Compute shader metadata missing ThreadCountZ")
+            ThreadCountX = dto.ThreadCountX,
+            ThreadCountY = dto.ThreadCountY,
+            ThreadCountZ = dto.ThreadCountZ
         };
     }
 }
