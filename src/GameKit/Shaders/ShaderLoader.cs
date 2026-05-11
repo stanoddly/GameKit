@@ -44,7 +44,7 @@ public class ShaderLoader: IContentLoader<Shader>
 
         stream.ReadExactly(shaderCode);
         
-        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint);
+        byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint + "\0");
 
         unsafe
         {

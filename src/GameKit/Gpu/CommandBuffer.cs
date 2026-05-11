@@ -244,9 +244,9 @@ public class CommandBuffer: ICommandBuffer
 
     private void AssignSlot(ref ShaderUniformSlotSizes slotSizes, uint slot, int size)
     {
-        if (slot > 4)
+        if (slot > 3)
         {
-            throw new ArgumentOutOfRangeException(nameof(slot), slot, "Slot must be between 0 and 4.");
+            throw new ArgumentOutOfRangeException(nameof(slot), slot, "Slot must be between 0 and 3.");
         }
 
         byte byteSize = (byte)size;
