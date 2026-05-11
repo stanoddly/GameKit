@@ -44,7 +44,10 @@ public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
         {
             Stage = ConvertShaderStage(dto.Stage),
             BindingLayout = dto.BindingLayout,
-            Shaders = shaders
+            Shaders = shaders,
+            ThreadCountX = dto.ThreadCountX ?? 0,
+            ThreadCountY = dto.ThreadCountY ?? 0,
+            ThreadCountZ = dto.ThreadCountZ ?? 0
         };
     }
 
@@ -63,6 +66,7 @@ public class ShaderMetadataLoader: IContentLoader<ShaderMetadata>
     {
         ShaderStageDto.Vertex => ShaderStage.Vertex,
         ShaderStageDto.Fragment => ShaderStage.Fragment,
+        ShaderStageDto.Compute => ShaderStage.Compute,
         _ => throw new InvalidOperationException($"Unknown shader stage: {stage}")
     };
 }

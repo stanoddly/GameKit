@@ -12,7 +12,9 @@ internal enum ResourceType
     StorageTexture,
     StorageBuffer,
     Sampler,
-    UniformBuffer
+    UniformBuffer,
+    ReadWriteStorageTexture,
+    ReadWriteStorageBuffer
 }
 
 internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
@@ -197,12 +199,34 @@ public class SdlangCompiler
         // SDL GPU requires:
         // - Vertex: textures/samplers/buffers in space 0, uniforms in space 1
         // - Fragment: textures/samplers/buffers in space 2, uniforms in space 3
-        int expectedResourceSpace = stage == ShaderStageDto.Vertex ? 0 : 2;
-        int expectedUniformSpace = stage == ShaderStageDto.Vertex ? 1 : 3;
-        string stageName = stage == ShaderStageDto.Vertex ? "vertex" : "fragment";
+        // - Compute: textures/samplers/buffers in space 0, uniforms in space 1
+        int expectedResourceSpace;
+        int expectedUniformSpace;
+        string stageName;
+
+        switch (stage)
+        {
+            case ShaderStageDto.Vertex:
+                expectedResourceSpace = 0;
+                expectedUniformSpace = 1;
+                stageName = "vertex";
+                break;
+            case ShaderStageDto.Fragment:
+                expectedResourceSpace = 2;
+                expectedUniformSpace = 3;
+                stageName = "fragment";
+                break;
+            case ShaderStageDto.Compute:
+                expectedResourceSpace = 0;
+                expectedUniformSpace = 1;
+                stageName = "compute";
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown shader stage: {stage}");
+        }
 
         // Validate space for each binding
-        foreach (var binding in bindings)
+        foreach (ResourceBinding binding in bindings)
         {
             int expectedSpace = binding.Type == ResourceType.UniformBuffer ? expectedUniformSpace : expectedResourceSpace;
             if (binding.Space != expectedSpace)
@@ -213,24 +237,23 @@ public class SdlangCompiler
             }
         }
 
-        // Validate index ordering within the resource space (sampled textures, then storage textures, then storage buffers)
-        var resourceBindings = bindings
-            .Where(b => b.Type != ResourceType.UniformBuffer && b.Type != ResourceType.Sampler)
+        // Validate index ordering within the resource space
+        // Read-only resources: sampled textures, then storage textures, then storage buffers
+        // Read-write resources (compute only): separate index space — readwrite storage textures, then readwrite storage buffers
+        List<ResourceBinding> readOnlyResourceBindings = bindings
+            .Where(b => b.Type != ResourceType.UniformBuffer && b.Type != ResourceType.Sampler
+                && b.Type != ResourceType.ReadWriteStorageTexture && b.Type != ResourceType.ReadWriteStorageBuffer)
             .OrderBy(b => b.Index)
             .ToList();
 
-        if (resourceBindings.Count == 0)
-            return;
-
-        // Group by type and verify ordering
-        var sampledTextures = resourceBindings.Where(b => b.Type == ResourceType.SampledTexture).ToList();
-        var storageTextures = resourceBindings.Where(b => b.Type == ResourceType.StorageTexture).ToList();
-        var storageBuffers = resourceBindings.Where(b => b.Type == ResourceType.StorageBuffer).ToList();
+        List<ResourceBinding> sampledTextures = readOnlyResourceBindings.Where(b => b.Type == ResourceType.SampledTexture).ToList();
+        List<ResourceBinding> storageTextures = readOnlyResourceBindings.Where(b => b.Type == ResourceType.StorageTexture).ToList();
+        List<ResourceBinding> storageBuffers = readOnlyResourceBindings.Where(b => b.Type == ResourceType.StorageBuffer).ToList();
 
         int expectedIndex = 0;
 
         // Validate sampled textures come first and are contiguous starting at 0
-        foreach (var tex in sampledTextures.OrderBy(t => t.Index))
+        foreach (ResourceBinding tex in sampledTextures.OrderBy(t => t.Index))
         {
             if (tex.Index != expectedIndex)
             {
@@ -242,7 +265,7 @@ public class SdlangCompiler
         }
 
         // Validate storage textures come next
-        foreach (var tex in storageTextures.OrderBy(t => t.Index))
+        foreach (ResourceBinding tex in storageTextures.OrderBy(t => t.Index))
         {
             if (tex.Index != expectedIndex)
             {
@@ -253,8 +276,8 @@ public class SdlangCompiler
             expectedIndex++;
         }
 
-        // Validate storage buffers come last
-        foreach (var buf in storageBuffers.OrderBy(b => b.Index))
+        // Validate storage buffers come after storage textures
+        foreach (ResourceBinding buf in storageBuffers.OrderBy(b => b.Index))
         {
             if (buf.Index != expectedIndex)
             {
@@ -263,6 +286,34 @@ public class SdlangCompiler
                     $"SDL GPU requires storage buffers immediately after storage textures");
             }
             expectedIndex++;
+        }
+
+        // Read-write resources use a separate index space starting from 0
+        List<ResourceBinding> readWriteStorageTextures = bindings.Where(b => b.Type == ResourceType.ReadWriteStorageTexture).ToList();
+        List<ResourceBinding> readWriteStorageBuffers = bindings.Where(b => b.Type == ResourceType.ReadWriteStorageBuffer).ToList();
+
+        int rwExpectedIndex = 0;
+
+        // Validate read-write storage textures start at index 0 and are contiguous
+        foreach (ResourceBinding tex in readWriteStorageTextures.OrderBy(t => t.Index))
+        {
+            if (tex.Index != rwExpectedIndex)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Read-write storage texture '{tex.Name}' has index {tex.Index}, but expected {rwExpectedIndex}.");
+            }
+            rwExpectedIndex++;
+        }
+
+        // Validate read-write storage buffers come after read-write storage textures
+        foreach (ResourceBinding buf in readWriteStorageBuffers.OrderBy(b => b.Index))
+        {
+            if (buf.Index != rwExpectedIndex)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Read-write storage buffer '{buf.Name}' has index {buf.Index}, but expected {rwExpectedIndex}.");
+            }
+            rwExpectedIndex++;
         }
     }
 
@@ -273,10 +324,12 @@ public class SdlangCompiler
         ResourceType.StorageBuffer => "storage buffers",
         ResourceType.Sampler => "samplers",
         ResourceType.UniformBuffer => "uniform buffers",
+        ResourceType.ReadWriteStorageTexture => "read-write storage textures",
+        ResourceType.ReadWriteStorageBuffer => "read-write storage buffers",
         _ => type.ToString()
     };
 
-    private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources) ParseReflectionData(
+    private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources, uint threadCountX, uint threadCountY, uint threadCountZ) ParseReflectionData(
         FileInfo reflectionFile)
     {
         string json = File.ReadAllText(reflectionFile.FullName);
@@ -285,6 +338,9 @@ public class SdlangCompiler
 
         string entryPoint = "main";
         ShaderStageDto stage = ShaderStageDto.Vertex;
+        uint threadCountX = 1;
+        uint threadCountY = 1;
+        uint threadCountZ = 1;
 
         if (root.TryGetProperty("entryPoints", out JsonElement entryPoints) && entryPoints.GetArrayLength() > 0)
         {
@@ -301,8 +357,26 @@ public class SdlangCompiler
                 {
                     "vertex" => ShaderStageDto.Vertex,
                     "fragment" or "pixel" => ShaderStageDto.Fragment,
+                    "compute" => ShaderStageDto.Compute,
                     _ => throw new InvalidOperationException($"Unknown shader stage '{stageStr}'")
                 };
+            }
+
+            if (firstEntry.TryGetProperty("threadGroupSize", out JsonElement threadGroupSize))
+            {
+                JsonElement.ArrayEnumerator enumerator = threadGroupSize.EnumerateArray();
+                if (enumerator.MoveNext())
+                {
+                    threadCountX = enumerator.Current.GetUInt32();
+                }
+                if (enumerator.MoveNext())
+                {
+                    threadCountY = enumerator.Current.GetUInt32();
+                }
+                if (enumerator.MoveNext())
+                {
+                    threadCountZ = enumerator.Current.GetUInt32();
+                }
             }
         }
 
@@ -311,6 +385,8 @@ public class SdlangCompiler
         byte samplers = 0;
         byte storageTextures = 0;
         byte storageBuffers = 0;
+        byte readWriteStorageTextures = 0;
+        byte readWriteStorageBuffers = 0;
 
         List<ResourceBinding> resourceBindings = new();
 
@@ -337,15 +413,34 @@ public class SdlangCompiler
                             if (paramType.TryGetProperty("baseShape", out JsonElement baseShapeElement))
                             {
                                 string? baseShape = baseShapeElement.GetString();
+                                bool isReadWrite = paramType.TryGetProperty("access", out JsonElement accessElement)
+                                    && accessElement.GetString() == "readWrite";
+
                                 if (baseShape == "structuredBuffer")
                                 {
-                                    storageBuffers++;
-                                    resourceBindings.Add(new ResourceBinding(paramName, ResourceType.StorageBuffer, space, index));
+                                    if (isReadWrite)
+                                    {
+                                        readWriteStorageBuffers++;
+                                        resourceBindings.Add(new ResourceBinding(paramName, ResourceType.ReadWriteStorageBuffer, space, index));
+                                    }
+                                    else
+                                    {
+                                        storageBuffers++;
+                                        resourceBindings.Add(new ResourceBinding(paramName, ResourceType.StorageBuffer, space, index));
+                                    }
                                 }
                                 else
                                 {
-                                    // texture2D and other texture types are sampled textures
-                                    resourceBindings.Add(new ResourceBinding(paramName, ResourceType.SampledTexture, space, index));
+                                    if (isReadWrite)
+                                    {
+                                        readWriteStorageTextures++;
+                                        resourceBindings.Add(new ResourceBinding(paramName, ResourceType.ReadWriteStorageTexture, space, index));
+                                    }
+                                    else
+                                    {
+                                        // texture2D and other texture types are sampled textures
+                                        resourceBindings.Add(new ResourceBinding(paramName, ResourceType.SampledTexture, space, index));
+                                    }
                                 }
                             }
                             break;
@@ -361,8 +456,10 @@ public class SdlangCompiler
         // Validate bindings conform to SDL GPU requirements
         ValidateBindings(stage, resourceBindings);
 
-        ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(new ShaderBindingCounts(samplers, storageTextures, storageBuffers), shaderUniformSlots);
-        return (entryPoint, stage, shaderBindingLayout);
+        ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(
+            new ShaderBindingCounts(samplers, storageTextures, storageBuffers, readWriteStorageTextures, readWriteStorageBuffers),
+            shaderUniformSlots);
+        return (entryPoint, stage, shaderBindingLayout, threadCountX, threadCountY, threadCountZ);
     }
 
     private static (int space, int index) GetBindingInfo(JsonElement param)
@@ -448,9 +545,13 @@ public class SdlangCompiler
     }
 
     private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
-        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash)
+        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash,
+        uint threadCountX = 0, uint threadCountY = 0, uint threadCountZ = 0)
     {
-        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash, SlangVersion);
+        uint? tcX = threadCountX > 0 ? threadCountX : null;
+        uint? tcY = threadCountY > 0 ? threadCountY : null;
+        uint? tcZ = threadCountZ > 0 ? threadCountZ : null;
+        ShaderMetadataDto metadata = new ShaderMetadataDto(stage, resources, shaderInstances, fileHash, SlangVersion, tcX, tcY, tcZ);
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
         using FileStream stream = metadataFile.Create();
@@ -519,14 +620,14 @@ public class SdlangCompiler
             (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
-            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout) = ParseReflectionData(reflectionFile);
+            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
 
             // Step 3: Update shader instances with correct entry point
             shaderInstances = shaderInstances.Select(instance =>
                 new ShaderInstanceDto(instance.Format, instance.Filename, entryPoint)).ToList();
 
             // Step 4: Write metadata
-            WriteMetadata(outputDir, filenameWithoutExt, stage, bindingLayout, shaderInstances, currentHash);
+            WriteMetadata(outputDir, filenameWithoutExt, stage, bindingLayout, shaderInstances, currentHash, threadCountX, threadCountY, threadCountZ);
         }
         finally
         {

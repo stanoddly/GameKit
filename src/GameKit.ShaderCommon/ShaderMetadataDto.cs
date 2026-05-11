@@ -8,7 +8,10 @@ public enum ShaderStageDto
     Vertex = 0,
 
     [EnumMember(Value = "fragment")]
-    Fragment = 1
+    Fragment = 1,
+
+    [EnumMember(Value = "compute")]
+    Compute = 2
 }
 
 public enum ShaderFormatDto
@@ -34,4 +37,4 @@ public enum ShaderFormatDto
 
 public record ShaderInstanceDto(ShaderFormatDto Format, string Filename, string EntryPoint);
 
-public record ShaderMetadataDto(ShaderStageDto Stage, ShaderBindingLayout BindingLayout, List<ShaderInstanceDto> Shaders, string SourceHash, string? SlangVersion);
+public record ShaderMetadataDto(ShaderStageDto Stage, ShaderBindingLayout BindingLayout, List<ShaderInstanceDto> Shaders, string SourceHash, string? SlangVersion, uint? ThreadCountX = null, uint? ThreadCountY = null, uint? ThreadCountZ = null);

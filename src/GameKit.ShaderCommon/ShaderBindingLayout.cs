@@ -36,7 +36,7 @@ public readonly record struct ShaderBindingLayout(
     }
 }
 
-public record struct ShaderBindingCounts(byte NumSamplers, byte NumStorageTextures, byte NumStorageBuffers);
+public record struct ShaderBindingCounts(byte NumSamplers, byte NumStorageTextures, byte NumStorageBuffers, byte NumReadWriteStorageTextures = 0, byte NumReadWriteStorageBuffers = 0);
 
 public record struct ShaderUniformSlotSizes(byte Slot0, byte Slot1, byte Slot2, byte Slot3);
 
