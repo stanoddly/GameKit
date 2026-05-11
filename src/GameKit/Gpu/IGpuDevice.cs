@@ -25,12 +25,16 @@ public interface IGpuDevice : IDisposable
 
     void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline);
 
+    void RegisterComputePipeline(ComputePipeline computePipeline);
+
     void RegisterShader(Shader shader);
     
     void ReleaseTexture(Texture texture);
     
     void ReleaseGraphicsPipeline(GraphicsPipeline pipeline);
-    
+
+    void ReleaseComputePipeline(ComputePipeline computePipeline);
+
     void ReleaseShader(Shader shader);
     
     void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer);

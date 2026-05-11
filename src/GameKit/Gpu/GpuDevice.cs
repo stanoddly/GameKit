@@ -13,6 +13,7 @@ internal class GpuDevice : IGpuDevice
     private MemoryTrackedSet<GpuStorageBuffer> _storageBuffers = new();
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
+    private LockedSet<ComputePipeline> _computePipelines = new();
     private LockedSet<Shader> _shaders = new();
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
@@ -180,6 +181,8 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline) => _graphicsPipelines.Add(graphicsPipeline);
 
+    public void RegisterComputePipeline(ComputePipeline computePipeline) => _computePipelines.Add(computePipeline);
+
     public void RegisterShader(Shader shader) => _shaders.Add(shader);
 
     public void ReleaseTexture(Texture texture)
@@ -214,6 +217,23 @@ internal class GpuDevice : IGpuDevice
         }
 
         pipeline.Pointer = default;
+    }
+
+    public void ReleaseComputePipeline(ComputePipeline computePipeline)
+    {
+        _computePipelines.Remove(computePipeline);
+        Pointer<SDL_GPUComputePipeline> pointer = computePipeline.Pointer;
+        if (pointer.IsNull)
+        {
+            return;
+        }
+
+        unsafe
+        {
+            SDL3.SDL_ReleaseGPUComputePipeline(SdlGpuDevice, pointer);
+        }
+
+        computePipeline.Pointer = default;
     }
 
     public void ReleaseShader(Shader shader)
@@ -326,6 +346,11 @@ internal class GpuDevice : IGpuDevice
         foreach (GraphicsPipeline graphicsPipeline in _graphicsPipelines.ClearAndCopy())
         {
             ReleaseGraphicsPipeline(graphicsPipeline);
+        }
+
+        foreach (ComputePipeline computePipeline in _computePipelines.ClearAndCopy())
+        {
+            ReleaseComputePipeline(computePipeline);
         }
 
         foreach (Shader shader in _shaders.ClearAndCopy())
