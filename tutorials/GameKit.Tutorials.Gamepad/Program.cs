@@ -1,3 +1,4 @@
+using System.Numerics;
 using GameKit.App;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
@@ -8,7 +9,7 @@ static class Program
 {
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRenderManager();
 
         builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
@@ -17,9 +18,9 @@ static class Program
         builder.OnStart((IGamepadService gamepadService) =>
         {
             Console.WriteLine($"Gamepads connected at startup: {gamepadService.Gamepads.Count}");
-            foreach (var gp in gamepadService.Gamepads)
+            foreach (GameKit.Input.Gamepad gamepad in gamepadService.Gamepads)
             {
-                Console.WriteLine($"  Gamepad {gp.DeviceId}");
+                Console.WriteLine($"  Gamepad {gamepad.DeviceId}");
             }
 
             if (gamepadService.Gamepads.Count == 0)
@@ -31,22 +32,24 @@ static class Program
 
             gamepadService.LeftStickMotion += (gamepad, motion) =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Stick: ({motion.X:F2}, {motion.Y:F2})");
+                Vector2 value = motion.Value;
+                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Stick: ({value.X:F2}, {value.Y:F2})");
             };
 
             gamepadService.RightStickMotion += (gamepad, motion) =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Stick: ({motion.X:F2}, {motion.Y:F2})");
+                Vector2 value = motion.Value;
+                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Stick: ({value.X:F2}, {value.Y:F2})");
             };
 
-            gamepadService.LeftTriggerMotion += (gamepad, value) =>
+            gamepadService.LeftTriggerMotion += (gamepad, motion) =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Trigger: {value:F2}");
+                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Trigger: {motion.Value:F2}");
             };
 
-            gamepadService.RightTriggerMotion += (gamepad, value) =>
+            gamepadService.RightTriggerMotion += (gamepad, motion) =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Trigger: {value:F2}");
+                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Trigger: {motion.Value:F2}");
             };
 
             gamepadService.ButtonPress += (gamepad, button) =>
