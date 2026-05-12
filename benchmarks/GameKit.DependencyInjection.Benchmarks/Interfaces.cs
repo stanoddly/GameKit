@@ -1,3 +1,4 @@
+#pragma warning disable CS9113
 namespace GameKit.DependencyInjection.Benchmarks;
 
 // Interfaces for alias benchmarking
