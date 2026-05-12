@@ -475,7 +475,7 @@ public class AtlasPackerTests
         public Texture Load(Image image) => null!;
     }
 
-    private class StubImageLoader(Dictionary<string, RawImage> images) : IContentLoader<Image>
+    private class StubImageLoader(Dictionary<string, RawImage> images) : IImageLoader
     {
         public Image Load(ReadOnlySpan<char> path) =>
             images.GetValueOrDefault(path.ToString()) ?? MakeImage(256, 256);

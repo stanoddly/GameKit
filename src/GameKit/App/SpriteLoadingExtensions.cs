@@ -1,4 +1,3 @@
-using GameKit.Content;
 using GameKit.Sprites;
 
 namespace GameKit.App;
@@ -8,8 +7,8 @@ public static class SpriteLoadingExtensions
     public static GameKitAppBuilder RegisterSpriteLoading(this GameKitAppBuilder builder)
     {
         builder.AddSingleton<SpriteAssetStorage>();
-        builder.AddSingleton<IContentLoader<SpriteAsset>, SpriteAssetLoader>();
-        builder.AddSingleton<IContentLoader<AnimatedSpriteAsset>, AnimatedSpriteAssetLoader>();
+        builder.AddSingleton<ISpriteAssetLoader, SpriteAssetLoader>();
+        builder.AddSingleton<IAnimatedSpriteAssetLoader, AnimatedSpriteAssetLoader>();
         return builder;
     }
 

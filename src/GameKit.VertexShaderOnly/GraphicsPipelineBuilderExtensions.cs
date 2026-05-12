@@ -28,7 +28,7 @@ public static class GraphicsPipelineBuilderExtensions
         FragmentShader fragmentShader;
         try
         {
-            fragmentShader = builder.FragmentShaderLoader.Load(NoopFragmentShaderPath);
+            fragmentShader = builder.ShaderLoader.LoadFragmentShader(NoopFragmentShaderPath);
         }
         catch (Exception ex)
         {

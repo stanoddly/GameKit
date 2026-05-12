@@ -18,7 +18,7 @@ public sealed class SpriteAtlasBuilder
 
     private readonly VirtualFileSystem _fileSystem;
     private readonly ITextureLoader _textureLoader;
-    private readonly IContentLoader<Image> _imageLoader;
+    private readonly IImageLoader _imageLoader;
     private readonly SpriteAssetStorage _storage;
     private readonly JsonSerializerOptions _options = new()
     {
@@ -30,7 +30,7 @@ public sealed class SpriteAtlasBuilder
     public static SpriteAtlasBuilder Create(
         SpriteAtlasBuilderConfig spriteAtlasBuilderConfig,
         ITextureLoader textureLoader,
-        IContentLoader<Image> contentLoader,
+        IImageLoader contentLoader,
         VirtualFileSystem fileSystem,
         SpriteAssetStorage storage)
     {
@@ -39,7 +39,7 @@ public sealed class SpriteAtlasBuilder
         return spriteAtlasBuilder;
     }
 
-    internal SpriteAtlasBuilder(ITextureLoader textureLoader, IContentLoader<Image> imageLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
+    internal SpriteAtlasBuilder(ITextureLoader textureLoader, IImageLoader imageLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
     {
         _textureLoader = textureLoader;
         _imageLoader = imageLoader;

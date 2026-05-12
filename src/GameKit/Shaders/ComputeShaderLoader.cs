@@ -4,14 +4,14 @@ using GameKit.ShaderCommon;
 
 namespace GameKit.Shaders;
 
-public class ComputeShaderLoader : IContentLoader<ComputeShader>
+public class ComputeShaderLoader : IComputeShaderLoader
 {
     private const string GeneratedShaderDirectory = ".generated";
     private readonly ShaderFormats _shaderFormats;
-    private readonly IContentLoader<ComputeShaderMetadata> _shaderMetadataLoader;
+    private readonly ComputeShaderMetadataLoader _shaderMetadataLoader;
     private readonly VirtualFileSystem _virtualFileSystem;
 
-    internal ComputeShaderLoader(GpuDevice gpuDevice, IContentLoader<ComputeShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ComputeShaderLoader(GpuDevice gpuDevice, ComputeShaderMetadataLoader shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
     {
         _shaderFormats = gpuDevice.GetSupportedShaderFormats();
         _shaderMetadataLoader = shaderMetadataLoader;

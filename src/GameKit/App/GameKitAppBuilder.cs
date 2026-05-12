@@ -98,20 +98,19 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, TextInputService textInput, Window window, AppControl appControl) =>
             factory.CreateEventService(keyboard, gamepad, mouse, textInput, window, appControl));
 
-        AddSingleton<IContentLoader<GraphicsShaderMetadata>, GraphicsShaderMetadataLoader>();
+        AddSingleton<GraphicsShaderMetadataLoader>();
 
         AddSingleton<ShaderLoader>();
-        AddAlias<IContentLoader<VertexShader>, ShaderLoader>();
-        AddAlias<IContentLoader<FragmentShader>, ShaderLoader>();
+        AddAlias<IShaderLoader, ShaderLoader>();
 
         AddSingleton<ITextureLoader, TextureLoader>();
 
         AddSingleton<GraphicsPipelineBuilder>();
 
-        AddSingleton<IContentLoader<ComputeShaderMetadata>, ComputeShaderMetadataLoader>();
+        AddSingleton<ComputeShaderMetadataLoader>();
 
         AddSingleton<ComputeShaderLoader>();
-        AddAlias<IContentLoader<ComputeShader>, ComputeShaderLoader>();
+        AddAlias<IComputeShaderLoader, ComputeShaderLoader>();
 
         AddSingleton<ComputePipelineBuilder>();
 
@@ -127,9 +126,9 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
 
-        if (!IsRegistered<IContentLoader<Image>>())
+        if (!IsRegistered<IImageLoader>())
         {
-            AddSingleton<IContentLoader<Image>, SdlImageLoader>();
+            AddSingleton<IImageLoader, SdlImageLoader>();
         }
 
         ServiceProvider serviceProvider = BuildServiceProvider();

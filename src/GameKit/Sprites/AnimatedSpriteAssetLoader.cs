@@ -8,7 +8,7 @@ using GameKit.Utilities;
 
 namespace GameKit.Sprites;
 
-public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAsset>
+public sealed class AnimatedSpriteAssetLoader : IAnimatedSpriteAssetLoader
 {
     private readonly VirtualFileSystem _fileSystem;
     private readonly ITextureLoader _textureLoader;
@@ -24,8 +24,8 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
     private AnimatedSpriteAsset CreateAnimation(AnimatedSpriteDto animatedSpriteDto)
     {
         Texture texture = _textureLoader.Load(animatedSpriteDto.Texture);
-        var builder = ImmutableArray.CreateBuilder<ShortRectangle>(animatedSpriteDto.Frames.Length);
-        foreach (var frame in animatedSpriteDto.Frames)
+        ImmutableArray<ShortRectangle>.Builder builder = ImmutableArray.CreateBuilder<ShortRectangle>(animatedSpriteDto.Frames.Length);
+        foreach (ShortRectangle frame in animatedSpriteDto.Frames)
         {
             builder.Add(frame);
         }
@@ -36,7 +36,7 @@ public sealed class AnimatedSpriteAssetLoader : IContentLoader<AnimatedSpriteAss
         return animatedSpriteAsset;
     }
 
-    AnimatedSpriteAsset IContentLoader<AnimatedSpriteAsset>.Load(ReadOnlySpan<char> path)
+    public AnimatedSpriteAsset Load(ReadOnlySpan<char> path)
     {
         if (_storage.TryGetAnimatedSprite(path, out AnimatedSpriteAsset? existingAnimation))
         {

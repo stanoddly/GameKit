@@ -1,7 +1,7 @@
 using GameKit.Common;
-using GameKit.Content;
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
+using GameKit.Shaders;
 
 namespace GameKit.Tutorials.ComputeShader;
 
@@ -45,7 +45,7 @@ public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static ComputeRenderer Create(
-        IContentLoader<ComputeShader> computeShaderLoader,
+        IComputeShaderLoader computeShaderLoader,
         ComputePipelineBuilder computePipelineBuilder,
         IGpuDevice gpuDevice)
     {
