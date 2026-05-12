@@ -100,25 +100,22 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<IContentLoader<GraphicsShaderMetadata>, GraphicsShaderMetadataLoader>();
 
-        AddSingleton<ShaderLoader>((GpuDevice gpuDevice, IContentLoader<GraphicsShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
-            new ShaderLoader(gpuDevice, shaderMetadataLoader, virtualFileSystem));
-        AddAlias<IContentLoader<Shader>, ShaderLoader>();
+        AddSingleton<ShaderLoader>();
+        AddAlias<IContentLoader<VertexShader>, ShaderLoader>();
+        AddAlias<IContentLoader<FragmentShader>, ShaderLoader>();
 
         AddSingleton<ITextureLoader, TextureLoader>();
 
-        AddSingleton<GraphicsPipelineBuilder>((GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader) =>
-            new GraphicsPipelineBuilder(gpuDevice, window, shaderLoader));
+        AddSingleton<GraphicsPipelineBuilder>();
 
         AddSingleton<IContentLoader<ComputeShaderMetadata>, ComputeShaderMetadataLoader>();
 
-        AddSingleton<ComputeShaderLoader>((GpuDevice gpuDevice, IContentLoader<ComputeShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
-            new ComputeShaderLoader(gpuDevice, shaderMetadataLoader, virtualFileSystem));
+        AddSingleton<ComputeShaderLoader>();
         AddAlias<IContentLoader<ComputeShader>, ComputeShaderLoader>();
 
-        AddSingleton<ComputePipelineBuilder>((GpuDevice gpuDevice) =>
-            new ComputePipelineBuilder(gpuDevice));
+        AddSingleton<ComputePipelineBuilder>();
 
-        AddSingleton<GameKitFrameContext>((GameKitFactory factory) => factory.CreateFrameContext());
+        AddSingleton<GameKitFrameContext>();
         AddAlias<FrameContext, GameKitFrameContext>();
 
         AddSingleton<FontSystem>(FontSystem.Create);

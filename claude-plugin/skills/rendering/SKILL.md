@@ -153,8 +153,8 @@ Order matters — matches shader input semantic order and `BindVertexBuffer()` c
 .SetShaders("shaders/vertex", "shaders/fragment")
 
 // Separate objects (for reuse across pipelines)
-Shader vertexShader = shaderLoader.Load("shaders/terrain_vertex");
-Shader fragmentShader = shaderLoader.Load("shaders/terrain_fragment");
+VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/terrain_vertex");
+FragmentShader fragmentShader = shaderLoader.LoadFragmentShader("shaders/terrain_fragment");
 .SetShaders(vertexShader, fragmentShader)
 ```
 

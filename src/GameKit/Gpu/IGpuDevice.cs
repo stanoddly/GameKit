@@ -29,7 +29,7 @@ public interface IGpuDevice : IDisposable
 
     void RegisterComputePipeline(ComputePipeline computePipeline);
 
-    void RegisterShader(Shader shader);
+    void RegisterShader(GraphicsShader shader);
     
     void ReleaseTexture(Texture texture);
     
@@ -37,7 +37,7 @@ public interface IGpuDevice : IDisposable
 
     void ReleaseComputePipeline(ComputePipeline computePipeline);
 
-    void ReleaseShader(Shader shader);
+    void ReleaseShader(GraphicsShader shader);
     
     void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer);
 

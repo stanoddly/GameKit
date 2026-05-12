@@ -108,8 +108,8 @@ Paths are relative to `Content/` directory and exclude the `.slang` extension. T
 **Option 2: Load separately**
 
 ```csharp
-Shader vertexShader = shaderLoader.Load("shaders/terrain_vertex");
-Shader fragmentShader = shaderLoader.Load("shaders/terrain_fragment");
+VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/terrain_vertex");
+FragmentShader fragmentShader = shaderLoader.LoadFragmentShader("shaders/terrain_fragment");
 
 GraphicsPipeline pipeline = graphicsPipelineBuilder
     .SetShaders(vertexShader, fragmentShader)

@@ -91,8 +91,8 @@ internal struct PipelineBuilderInfo
 
     public DepthBufferFormat? DepthBufferFormat { get; set; }
 
-    public Shader? VertexShader { get; set; } = null;
-    public Shader? FragmentShader { get; set; } = null;
+    public VertexShader? VertexShader { get; set; } = null;
+    public FragmentShader? FragmentShader { get; set; } = null;
 
     public void Reset()
     {
@@ -116,19 +116,22 @@ public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
     private readonly IWindow _window;
-    private readonly IContentLoader<Shader> _shaderLoader;
+    private readonly IContentLoader<VertexShader> _vertexShaderLoader;
+    private readonly IContentLoader<FragmentShader> _fragmentShaderLoader;
     private PipelineBuilderInfo _info = new();
 
     /// <summary>
     /// Gets the shader loader for loading shaders from the virtual file system.
     /// </summary>
-    public IContentLoader<Shader> ShaderLoader => _shaderLoader;
+    public IContentLoader<VertexShader> VertexShaderLoader => _vertexShaderLoader;
+    public IContentLoader<FragmentShader> FragmentShaderLoader => _fragmentShaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader)
+    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<VertexShader> vertexShaderLoader, IContentLoader<FragmentShader> fragmentShaderLoader)
     {
         _gpuDevice = gpuDevice;
         _window = window;
-        _shaderLoader = shaderLoader;
+        _vertexShaderLoader = vertexShaderLoader;
+        _fragmentShaderLoader = fragmentShaderLoader;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
@@ -223,18 +226,8 @@ public class GraphicsPipelineBuilder
         return this;
     }
     
-    public GraphicsPipelineBuilder SetShaders(Shader vertexShader, Shader fragmentShader)
+    public GraphicsPipelineBuilder SetShaders(VertexShader vertexShader, FragmentShader fragmentShader)
     {
-        if (vertexShader.Stage != ShaderStage.Vertex)
-        {
-            throw new ArgumentException("vertexShader.Stage != ShaderStage.Vertex");
-        }
-        
-        if (fragmentShader.Stage != ShaderStage.Fragment)
-        {
-            throw new ArgumentException("fragmentShader.Stage != ShaderStage.Fragment");
-        }
-
         _info.VertexShader = vertexShader;
         _info.FragmentShader = fragmentShader;
 
@@ -243,8 +236,8 @@ public class GraphicsPipelineBuilder
 
     public GraphicsPipelineBuilder SetShaders(string vertexShaderPath, string fragmentShaderPath)
     {
-        Shader vertexShader = _shaderLoader.Load(vertexShaderPath);
-        Shader fragmentShader = _shaderLoader.Load(fragmentShaderPath);
+        VertexShader vertexShader = _vertexShaderLoader.Load(vertexShaderPath);
+        FragmentShader fragmentShader = _fragmentShaderLoader.Load(fragmentShaderPath);
 
         return SetShaders(vertexShader, fragmentShader);
     }
