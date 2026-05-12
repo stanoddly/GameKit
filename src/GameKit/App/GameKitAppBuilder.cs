@@ -102,12 +102,13 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<ShaderLoader>((GpuDevice gpuDevice, IContentLoader<GraphicsShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem) =>
             new ShaderLoader(gpuDevice, shaderMetadataLoader, virtualFileSystem));
-        AddAlias<IContentLoader<Shader>, ShaderLoader>();
+        AddAlias<IContentLoader<VertexShader>, ShaderLoader>();
+        AddAlias<IContentLoader<FragmentShader>, ShaderLoader>();
 
         AddSingleton<ITextureLoader, TextureLoader>();
 
-        AddSingleton<GraphicsPipelineBuilder>((GpuDevice gpuDevice, IWindow window, IContentLoader<Shader> shaderLoader) =>
-            new GraphicsPipelineBuilder(gpuDevice, window, shaderLoader));
+        AddSingleton<GraphicsPipelineBuilder>((GpuDevice gpuDevice, IWindow window, IContentLoader<VertexShader> vertexShaderLoader, IContentLoader<FragmentShader> fragmentShaderLoader) =>
+            new GraphicsPipelineBuilder(gpuDevice, window, vertexShaderLoader, fragmentShaderLoader));
 
         AddSingleton<IContentLoader<ComputeShaderMetadata>, ComputeShaderMetadataLoader>();
 

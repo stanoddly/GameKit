@@ -36,8 +36,8 @@ Add for each vertex buffer type you'll bind. Order matters - matches the binding
 .SetShaders("shaders/vertex", "shaders/fragment")
 
 // Option 2: Load separately (if you need to reuse shader objects)
-Shader vertexShader = shaderLoader.Load("shaders/terrain_vertex");
-Shader fragmentShader = shaderLoader.Load("shaders/terrain_fragment");
+VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/terrain_vertex");
+FragmentShader fragmentShader = shaderLoader.LoadFragmentShader("shaders/terrain_fragment");
 .SetShaders(vertexShader, fragmentShader)
 ```
 

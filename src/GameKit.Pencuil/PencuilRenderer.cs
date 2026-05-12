@@ -50,10 +50,10 @@ public class PencuilRenderer
 
         _vertexBuffer = gpuMemorySystem.CreateVertexBuffer(quad);
 
-        Shader vertexShader = shaderLoader.Load("shaders/pencuil_vertex");
-        Shader colorFragmentShader = shaderLoader.Load("shaders/pencuil_color_fragment");
-        Shader tintedTextureFragmentShader = shaderLoader.Load("shaders/pencuil_tinted_texture_fragment");
-        Shader textureFragmentShader = shaderLoader.Load("shaders/pencuil_texture_fragment");
+        VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/pencuil_vertex");
+        FragmentShader colorFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_color_fragment");
+        FragmentShader tintedTextureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_tinted_texture_fragment");
+        FragmentShader textureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_texture_fragment");
 
         var colorTargetFormat = window.ColorTargetFormat;
         var renderSize = window.RenderSizeInPixels;

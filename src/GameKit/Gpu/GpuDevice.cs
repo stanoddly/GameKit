@@ -14,7 +14,7 @@ internal class GpuDevice : IGpuDevice
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
     private LockedSet<ComputePipeline> _computePipelines = new();
-    private LockedSet<Shader> _shaders = new();
+    private LockedSet<GraphicsShader> _shaders = new();
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
 
@@ -215,7 +215,7 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterComputePipeline(ComputePipeline computePipeline) => _computePipelines.Add(computePipeline);
 
-    public void RegisterShader(Shader shader) => _shaders.Add(shader);
+    public void RegisterShader(GraphicsShader shader) => _shaders.Add(shader);
 
     public void ReleaseTexture(Texture texture)
     {
@@ -268,7 +268,7 @@ internal class GpuDevice : IGpuDevice
         computePipeline.Pointer = default;
     }
 
-    public void ReleaseShader(Shader shader)
+    public void ReleaseShader(GraphicsShader shader)
     {
         _shaders.Remove(shader);
 
@@ -385,7 +385,7 @@ internal class GpuDevice : IGpuDevice
             ReleaseComputePipeline(computePipeline);
         }
 
-        foreach (Shader shader in _shaders.ClearAndCopy())
+        foreach (GraphicsShader shader in _shaders.ClearAndCopy())
         {
             ReleaseShader(shader);
         }

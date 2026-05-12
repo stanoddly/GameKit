@@ -61,7 +61,7 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
         GpuVertexBuffer<PositionVertex> vertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
 
         // Load vertex shader
-        Shader vertexShader = shaderLoader.Load("shaders/depth_vertex");
+        VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/depth_vertex");
 
         // Create depth-only pipeline using the extension method
         GraphicsPipeline depthOnlyPipeline = graphicsPipelineBuilder

@@ -23,12 +23,12 @@ public static class GraphicsPipelineBuilderExtensions
     /// </exception>
     public static GraphicsPipelineBuilder SetVertexShader(
         this GraphicsPipelineBuilder builder,
-        Shader vertexShader)
+        VertexShader vertexShader)
     {
-        Shader fragmentShader;
+        FragmentShader fragmentShader;
         try
         {
-            fragmentShader = builder.ShaderLoader.Load(NoopFragmentShaderPath);
+            fragmentShader = builder.FragmentShaderLoader.Load(NoopFragmentShaderPath);
         }
         catch (Exception ex)
         {
