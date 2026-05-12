@@ -8,12 +8,12 @@ public interface ITextureLoader
     Texture Load(Image image);
 }
 
-public class TextureLoader: ITextureLoader
+public class TextureLoader : ITextureLoader
 {
-    private readonly IContentLoader<Image> _imageLoader;
+    private readonly IImageLoader _imageLoader;
     private readonly GpuMemorySystem _gpuMemorySystem;
 
-    public TextureLoader(IContentLoader<Image> imageLoader, GpuMemorySystem gpuMemorySystem)
+    public TextureLoader(IImageLoader imageLoader, GpuMemorySystem gpuMemorySystem)
     {
         _imageLoader = imageLoader;
         _gpuMemorySystem = gpuMemorySystem;

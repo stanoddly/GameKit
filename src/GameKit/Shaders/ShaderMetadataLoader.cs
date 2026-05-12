@@ -4,7 +4,7 @@ using GameKit.ShaderCommon;
 
 namespace GameKit.Shaders;
 
-public class GraphicsShaderMetadataLoader : IContentLoader<GraphicsShaderMetadata>
+public class GraphicsShaderMetadataLoader
 {
     private readonly VirtualFileSystem _fileSystem;
 

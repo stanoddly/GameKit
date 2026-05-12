@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
@@ -6,13 +6,12 @@ using GameKit.Utilities;
 
 namespace GameKit.Sprites;
 
-public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
-{    private readonly VirtualFileSystem _fileSystem;
+public sealed class SpriteAssetLoader : ISpriteAssetLoader
+{
+    private readonly VirtualFileSystem _fileSystem;
     private readonly ITextureLoader _textureLoader;
     private readonly SpriteAssetStorage _storage;
 
-    
-    
     public SpriteAssetLoader(ITextureLoader textureLoader, VirtualFileSystem fileSystem, SpriteAssetStorage storage)
     {
         _fileSystem = fileSystem;
@@ -20,7 +19,7 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
         _storage = storage;
     }
 
-    SpriteAsset IContentLoader<SpriteAsset>.Load(ReadOnlySpan<char> path)
+    public SpriteAsset Load(ReadOnlySpan<char> path)
     {
         if (_storage.TryGetSprite(path, out SpriteAsset? existingSprite))
         {
@@ -30,7 +29,7 @@ public sealed class SpriteAssetLoader : IContentLoader<SpriteAsset>
         using Stream spritesJsonStream = _fileSystem.OpenStream(path);
 
         SpriteDto spriteDto = JsonSerializer.Deserialize(spritesJsonStream, SpriteDtosJsonContext.Default.SpriteDto)
-                               ?? throw new JsonException("Deserialization returned null for SpriteDto.");
+                              ?? throw new JsonException("Deserialization returned null for SpriteDto.");
 
         Texture texture = _textureLoader.Load(spriteDto.Texture);
         ShortRectangle imageRegion = spriteDto.TextureRegion;

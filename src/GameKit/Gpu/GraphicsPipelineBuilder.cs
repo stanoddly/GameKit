@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using GameKit.Content;
 using GameKit.Shaders;
 using SDL;
 
@@ -116,22 +115,19 @@ public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
     private readonly IWindow _window;
-    private readonly IContentLoader<VertexShader> _vertexShaderLoader;
-    private readonly IContentLoader<FragmentShader> _fragmentShaderLoader;
+    private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
     /// <summary>
     /// Gets the shader loader for loading shaders from the virtual file system.
     /// </summary>
-    public IContentLoader<VertexShader> VertexShaderLoader => _vertexShaderLoader;
-    public IContentLoader<FragmentShader> FragmentShaderLoader => _fragmentShaderLoader;
+    public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IContentLoader<VertexShader> vertexShaderLoader, IContentLoader<FragmentShader> fragmentShaderLoader)
+    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
         _window = window;
-        _vertexShaderLoader = vertexShaderLoader;
-        _fragmentShaderLoader = fragmentShaderLoader;
+        _shaderLoader = shaderLoader;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
@@ -236,8 +232,8 @@ public class GraphicsPipelineBuilder
 
     public GraphicsPipelineBuilder SetShaders(string vertexShaderPath, string fragmentShaderPath)
     {
-        VertexShader vertexShader = _vertexShaderLoader.Load(vertexShaderPath);
-        FragmentShader fragmentShader = _fragmentShaderLoader.Load(fragmentShaderPath);
+        VertexShader vertexShader = _shaderLoader.LoadVertexShader(vertexShaderPath);
+        FragmentShader fragmentShader = _shaderLoader.LoadFragmentShader(fragmentShaderPath);
 
         return SetShaders(vertexShader, fragmentShader);
     }

@@ -5,15 +5,15 @@ using SDL;
 
 namespace GameKit.Shaders;
 
-public class ShaderLoader: IContentLoader<VertexShader>, IContentLoader<FragmentShader>
+public class ShaderLoader : IShaderLoader
 {
     private const string GeneratedShaderDirectory = ".generated";
     private readonly GpuDevice _gpuDevice;
-    private readonly IContentLoader<GraphicsShaderMetadata> _shaderMetadataLoader;
+    private readonly GraphicsShaderMetadataLoader _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
     private VirtualFileSystem _virtualFileSystem;
 
-    internal ShaderLoader(GpuDevice gpuDevice, IContentLoader<GraphicsShaderMetadata> shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ShaderLoader(GpuDevice gpuDevice, GraphicsShaderMetadataLoader shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
     {
         _gpuDevice = gpuDevice;
         _shaderMetadataLoader = shaderMetadataLoader;
@@ -98,16 +98,6 @@ public class ShaderLoader: IContentLoader<VertexShader>, IContentLoader<Fragment
         }
 
         return fragmentShader;
-    }
-
-    VertexShader IContentLoader<VertexShader>.Load(ReadOnlySpan<char> path)
-    {
-        return LoadVertexShader(path);
-    }
-
-    FragmentShader IContentLoader<FragmentShader>.Load(ReadOnlySpan<char> path)
-    {
-        return LoadFragmentShader(path);
     }
 
     private GraphicsShader Load(ReadOnlySpan<char> path, ShaderStage expectedStage)
