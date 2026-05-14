@@ -331,6 +331,36 @@ public class SdlangCompiler
             }
             rwExpectedIndex++;
         }
+
+        ValidateSamplerTexturePairings(stageName, bindings);
+    }
+
+    private static void ValidateSamplerTexturePairings(string stageName, List<ResourceBinding> bindings)
+    {
+        List<ResourceBinding> sampledTextures = bindings.Where(b => b.Type == ResourceType.SampledTexture).ToList();
+        List<ResourceBinding> samplers = bindings.Where(b => b.Type == ResourceType.Sampler).ToList();
+
+        foreach (ResourceBinding sampledTexture in sampledTextures)
+        {
+            bool hasMatchingSampler = samplers.Any(s => s.Space == sampledTexture.Space && s.Index == sampledTexture.Index);
+            if (!hasMatchingSampler)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Sampled texture '{sampledTexture.Name}' in {stageName} shader uses index {sampledTexture.Index} in space {sampledTexture.Space}, " +
+                    "but SDL GPU requires a sampler at the same index and space");
+            }
+        }
+
+        foreach (ResourceBinding sampler in samplers)
+        {
+            bool hasMatchingTexture = sampledTextures.Any(t => t.Space == sampler.Space && t.Index == sampler.Index);
+            if (!hasMatchingTexture)
+            {
+                throw new ShaderBindingValidationException(
+                    $"Sampler '{sampler.Name}' in {stageName} shader uses index {sampler.Index} in space {sampler.Space}, " +
+                    "but SDL GPU requires a sampled texture at the same index and space");
+            }
+        }
     }
 
     private static string GetResourceTypeName(ResourceType type) => type switch
