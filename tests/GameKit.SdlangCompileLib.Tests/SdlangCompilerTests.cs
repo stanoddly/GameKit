@@ -129,6 +129,58 @@ public class SdlangCompilerTests
                                                          }
                                                          """;
 
+    private const string VertexShaderMismatchedSamplerIndex = """
+                                                              struct VertexInput {
+                                                                  float3 position : POSITION;
+                                                                  float2 texCoord : TEXCOORD0;
+                                                              };
+
+                                                              struct VertexOutput {
+                                                                  float4 position : SV_Position;
+                                                                  float4 color : COLOR0;
+                                                              };
+
+                                                              Texture2D<float4> albedo : register(t0, space0);
+                                                              SamplerState albedoSampler : register(s1, space0);
+
+                                                              [shader("vertex")]
+                                                              VertexOutput main(VertexInput input) {
+                                                                  VertexOutput output;
+                                                                  output.position = float4(input.position, 1.0);
+                                                                  output.color = albedo.SampleLevel(albedoSampler, input.texCoord, 0.0);
+                                                                  return output;
+                                                              }
+                                                              """;
+
+    private const string FragmentShaderMismatchedSamplerIndex = """
+                                                                struct FragmentInput {
+                                                                    float4 position : SV_Position;
+                                                                    float2 texCoord : TEXCOORD0;
+                                                                };
+
+                                                                Texture2D<float4> albedo : register(t0, space2);
+                                                                SamplerState albedoSampler : register(s1, space2);
+
+                                                                [shader("fragment")]
+                                                                float4 main(FragmentInput input) : SV_Target {
+                                                                    return albedo.Sample(albedoSampler, input.texCoord);
+                                                                }
+                                                                """;
+
+    private const string ComputeShaderMismatchedSamplerIndex = """
+                                                               Texture2D<float4> inputTexture : register(t0, space0);
+                                                               SamplerState inputSampler : register(s1, space0);
+                                                               RWTexture2D<float4> outputTexture : register(u0, space1);
+
+                                                               [numthreads(8, 8, 1)]
+                                                               [shader("compute")]
+                                                               void main(uint3 dispatchThreadID : SV_DispatchThreadID)
+                                                               {
+                                                                   float2 uv = float2(dispatchThreadID.xy) / float2(8.0, 8.0);
+                                                                   outputTexture[dispatchThreadID.xy] = inputTexture.SampleLevel(inputSampler, uv, 0.0);
+                                                               }
+                                                               """;
+
     private string _testDir = string.Empty;
 
     [SetUp]
@@ -284,5 +336,28 @@ public class SdlangCompilerTests
             compiler.Compile([shaderPath], force: true));
 
         Assert.That(ex.Message, Does.Contain("index"));
+    }
+
+    [TestCase(VertexShaderMismatchedSamplerIndex)]
+    [TestCase(FragmentShaderMismatchedSamplerIndex)]
+    [TestCase(ComputeShaderMismatchedSamplerIndex)]
+    public void CompileShader_MismatchedSamplerTextureIndex_ThrowsValidationException(string shaderContent)
+    {
+        string shaderPath = CreateTemporaryShaderFile(shaderContent);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+
+        ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
+            compiler.Compile([shaderPath], force: true));
+
+        Assert.That(ex.Message, Does.Contain("same index and space"));
+    }
+
+    private string CreateTemporaryShaderFile(string shaderContent)
+    {
+        string filename = Path.ChangeExtension(Path.GetRandomFileName(), ".slang");
+        string shaderPath = Path.Combine(_testDir, filename);
+        File.WriteAllText(shaderPath, shaderContent);
+        return shaderPath;
     }
 }
