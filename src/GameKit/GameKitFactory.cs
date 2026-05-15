@@ -28,7 +28,7 @@ public class GameKitFactory: IDisposable
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_EVENT_LOGGING, "2");
         //SDL3.SDL_SetHint(SDL3.SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-        if (_config.DebugLogging)
+        if (_config.EnableSdlLogging)
         {
             SDL3.SDL_SetHint(SDL3.SDL_HINT_LOGGING, "*=debug");
         }
@@ -124,6 +124,7 @@ public class GameKitFactory: IDisposable
 
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
             SDL_GPUVulkanOptions* vulkanOptionsPointer = &vulkanOptions;
+            SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, _config.EnableGpuValidation);
             SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
             SDL3.SDL_SetPointerProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, (IntPtr)vulkanOptionsPointer);
 
