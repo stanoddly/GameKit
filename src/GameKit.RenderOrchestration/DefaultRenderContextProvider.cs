@@ -27,7 +27,7 @@ public class DefaultRenderContextProvider : IRenderContextProvider<DefaultRender
     {
         CommandBuffer renderCommandBuffer = _gpuDevice.AcquireCommandBuffer();
         
-        if (!_window.TryAcquireSwapchainTexture(renderCommandBuffer, out SwapchainTexture swapchainTexture))
+        if (!_window.TryWaitAndAcquireSwapchainTexture(renderCommandBuffer, out SwapchainTexture swapchainTexture))
         {
             renderContext = null;
             renderCommandBuffer.Dispose();
