@@ -101,7 +101,7 @@ internal class Window : IWindow
         }
     }
 
-    public bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
+    public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
         swapchainTexture = default!;
         uint width, height;
@@ -109,9 +109,9 @@ internal class Window : IWindow
         unsafe
         {
             SDL_GPUTexture* swapchainTexturePointer;
-            if (SDL3.SDL_AcquireGPUSwapchainTexture(commandBuffer.SdlGpuCommandBuffer, SdlWindow, &swapchainTexturePointer, &width, &height) == false)
+            if (SDL3.SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer.SdlGpuCommandBuffer, SdlWindow, &swapchainTexturePointer, &width, &height) == false)
             {
-                throw new GameKitInitializationException($"SDL_AcquireGPUSwapchainTexture failed: {SDL3.SDL_GetError()}");
+                throw new GameKitInitializationException($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL3.SDL_GetError()}");
             }
 
             if (swapchainTexturePointer == null)

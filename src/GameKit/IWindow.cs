@@ -20,7 +20,7 @@ public interface IWindow : IDisposable
 
     event ResolutionChangedHandler? ResolutionChanged;
 
-    bool TryAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);
+    bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);
 
     void SetFullscreenBorderless(bool fullscreen);
 
