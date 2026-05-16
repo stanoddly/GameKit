@@ -41,6 +41,26 @@ public class GpuMemorySystem: ICopyPass
         GetOrCreateCopyPass().UpdateVertexBuffer(vertexBuffer, vertices);
     }
 
+    public GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<ushort> indices)
+    {
+        return GetOrCreateCopyPass().CreateIndexBuffer(indices);
+    }
+
+    public GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<uint> indices)
+    {
+        return GetOrCreateCopyPass().CreateIndexBuffer(indices);
+    }
+
+    public void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<ushort> indices)
+    {
+        GetOrCreateCopyPass().UpdateIndexBuffer(indexBuffer, indices);
+    }
+
+    public void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<uint> indices)
+    {
+        GetOrCreateCopyPass().UpdateIndexBuffer(indexBuffer, indices);
+    }
+
     public GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
         return GetOrCreateCopyPass().CreateStorageBuffer(data);

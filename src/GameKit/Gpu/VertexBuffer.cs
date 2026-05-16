@@ -9,16 +9,14 @@ public abstract class GpuVertexBuffer: IDisposable, IGpuMemorySized
     internal IGpuDevice GpuDevice { get; set; }
 
     internal Pointer<SDL_GPUBuffer> SdlVertexBuffer { get; set; }
-    internal Pointer<SDL_GPUBuffer> SdlIndexBuffer { get; set; }
     public int BufferSize { get; }
     public int Size { get; internal set; }
     public long SizeInBytes { get; }
 
-    protected GpuVertexBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, Pointer<SDL_GPUBuffer> sdlIndexBuffer, int size, long sizeInBytes)
+    protected GpuVertexBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, int size, long sizeInBytes)
     {
         GpuDevice = gpuDevice;
         SdlVertexBuffer = sdlVertexBuffer;
-        SdlIndexBuffer = sdlIndexBuffer;
         BufferSize = size;
         Size = size;
         SizeInBytes = sizeInBytes;
@@ -32,8 +30,8 @@ public abstract class GpuVertexBuffer: IDisposable, IGpuMemorySized
 
 public class GpuVertexBuffer<TVertexType>: GpuVertexBuffer where TVertexType : unmanaged, IVertexType
 {
-    internal GpuVertexBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, Pointer<SDL_GPUBuffer> sdlIndexBuffer, int size)
-        : base(gpuDevice, sdlVertexBuffer, sdlIndexBuffer, size, Unsafe.SizeOf<TVertexType>() * size)
+    internal GpuVertexBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, int size)
+        : base(gpuDevice, sdlVertexBuffer, size, (long)Unsafe.SizeOf<TVertexType>() * size)
     {
     }
 }

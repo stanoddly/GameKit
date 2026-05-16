@@ -10,6 +10,7 @@ public class RenderPass<TValidator> : IRenderPass
 {
     private Pointer<SDL_GPURenderPass> _nativePointer;
     private uint _verticesCount = 0;
+    private GpuIndexBuffer? _indexBuffer;
     private TValidator _validator;
 
     private ShaderBindingCounts _fragmentShaderBindingCounts;
@@ -63,7 +64,20 @@ public class RenderPass<TValidator> : IRenderPass
     {
         BindVertexBuffer(0, buffer);
     }
-    
+
+    public void BindIndexBuffer(GpuIndexBuffer buffer)
+    {
+        ThrowIfDisposed();
+
+        _validator.OnBindIndexBuffer(this, buffer);
+        _indexBuffer = buffer;
+
+        unsafe
+        {
+            SDL_GPUBufferBinding sdlGpuBufferBinding = new SDL_GPUBufferBinding { buffer = buffer.SdlBuffer, offset = 0 };
+            SDL3.SDL_BindGPUIndexBuffer(_nativePointer, &sdlGpuBufferBinding, GetSdlIndexElementSize(buffer.ElementSize));
+        }
+    }
 
     public void BindVertexSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
@@ -224,6 +238,29 @@ public class RenderPass<TValidator> : IRenderPass
         }
     }
 
+    public void DrawIndexedPrimitive()
+    {
+        DrawIndexedPrimitiveInstanced(1);
+    }
+
+    public void DrawIndexedPrimitiveInstanced(uint instanceCount)
+    {
+        DrawIndexedPrimitiveInstanced(instanceCount, 0);
+    }
+
+    public void DrawIndexedPrimitiveInstanced(uint instanceCount, uint firstInstance)
+    {
+        ThrowIfDisposed();
+
+        _validator.OnDrawIndexedPrimitive(this);
+
+        unsafe
+        {
+            uint indexCount = (uint)(_indexBuffer?.Size ?? 0);
+            SDL3.SDL_DrawGPUIndexedPrimitives(_nativePointer, indexCount, instanceCount, 0, 0, firstInstance);
+        }
+    }
+
     public bool IsDefault()
     {
         return _nativePointer.IsNull;
@@ -244,7 +281,19 @@ public class RenderPass<TValidator> : IRenderPass
     private void ThrowIfDisposed()
     {
         if (_nativePointer.IsNull)
+        {
             throw new ObjectDisposedException(nameof(RenderPass));
+        }
+    }
+
+    private static SDL_GPUIndexElementSize GetSdlIndexElementSize(IndexElementSize elementSize)
+    {
+        return elementSize switch
+        {
+            IndexElementSize.UInt16 => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_16BIT,
+            IndexElementSize.UInt32 => SDL_GPUIndexElementSize.SDL_GPU_INDEXELEMENTSIZE_32BIT,
+            _ => throw new ArgumentOutOfRangeException(nameof(elementSize), elementSize, null)
+        };
     }
 }
 

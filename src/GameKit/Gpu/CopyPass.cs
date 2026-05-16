@@ -68,7 +68,7 @@ public class CopyPass: ICopyPass
             
             SDL3.SDL_UploadToGPUBuffer(_sdlCopyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
             
-            GpuVertexBuffer<TVertexType> vertexBuffer = new GpuVertexBuffer<TVertexType>(_gpuDevice, rawVertexBuffer, Pointer<SDL_GPUBuffer>.Null, vertices.Length);
+            GpuVertexBuffer<TVertexType> vertexBuffer = new GpuVertexBuffer<TVertexType>(_gpuDevice, rawVertexBuffer, vertices.Length);
             _gpuDevice.RegisterVertexBuffer(vertexBuffer);
             return vertexBuffer;
         }
@@ -115,6 +115,109 @@ public class CopyPass: ICopyPass
         }
         
         vertexBuffer.Size = vertices.Length;
+    }
+
+    public GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<ushort> indices)
+    {
+        return CreateIndexBuffer(indices, IndexElementSize.UInt16);
+    }
+
+    public GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<uint> indices)
+    {
+        return CreateIndexBuffer(indices, IndexElementSize.UInt32);
+    }
+
+    private GpuIndexBuffer CreateIndexBuffer<TIndexType>(ReadOnlySpan<TIndexType> indices, IndexElementSize elementSize)
+        where TIndexType : unmanaged
+    {
+        if (indices.Length == 0)
+        {
+            throw new ArgumentException("Cannot create an empty index buffer", nameof(indices));
+        }
+
+        uint sizeBytes = (uint)(Unsafe.SizeOf<TIndexType>() * indices.Length);
+        unsafe
+        {
+            SDL_GPUBufferCreateInfo sdlGpuBufferCreateInfo = new SDL_GPUBufferCreateInfo()
+            {
+                usage = SDL_GPUBufferUsageFlags.SDL_GPU_BUFFERUSAGE_INDEX,
+                size = sizeBytes
+            };
+
+            SDL_GPUBuffer* rawBuffer = SDL3.SDL_CreateGPUBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuBufferCreateInfo);
+
+            SDL_GPUTransferBuffer* transferBuffer = CreateAndTrackTransferBuffer(sizeBytes);
+
+            TIndexType* transferBufferPointer = (TIndexType*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
+            Span<TIndexType> transferBufferSpan = new Span<TIndexType>(transferBufferPointer, indices.Length);
+
+            indices.CopyTo(transferBufferSpan);
+
+            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer);
+
+            SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
+            SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
+                { buffer = rawBuffer, offset = 0, size = sizeBytes };
+
+            SDL3.SDL_UploadToGPUBuffer(_sdlCopyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
+
+            GpuIndexBuffer indexBuffer = new GpuIndexBuffer(_gpuDevice, rawBuffer, indices.Length, elementSize);
+            _gpuDevice.RegisterIndexBuffer(indexBuffer);
+            return indexBuffer;
+        }
+    }
+
+    public void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<ushort> indices)
+    {
+        UpdateIndexBuffer(indexBuffer, indices, IndexElementSize.UInt16);
+    }
+
+    public void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<uint> indices)
+    {
+        UpdateIndexBuffer(indexBuffer, indices, IndexElementSize.UInt32);
+    }
+
+    private void UpdateIndexBuffer<TIndexType>(GpuIndexBuffer indexBuffer, ReadOnlySpan<TIndexType> indices, IndexElementSize elementSize)
+        where TIndexType : unmanaged
+    {
+        if (indexBuffer.ElementSize != elementSize)
+        {
+            throw new ArgumentException($"Cannot update a {indexBuffer.ElementSize} index buffer with {elementSize} indices.", nameof(indices));
+        }
+
+        uint sizeBytes = (uint)(Unsafe.SizeOf<TIndexType>() * indices.Length);
+
+        if (sizeBytes == 0)
+        {
+            throw new ArgumentException("Cannot update index buffer with empty data", nameof(indices));
+        }
+
+        uint bufferSizeBytes = (uint)indexBuffer.SizeInBytes;
+
+        if (sizeBytes > bufferSizeBytes)
+        {
+            throw new ArgumentException($"{nameof(indices)} cannot fit to {nameof(indexBuffer)}");
+        }
+
+        unsafe
+        {
+            SDL_GPUTransferBuffer* transferBuffer = CreateAndTrackTransferBuffer(sizeBytes);
+
+            TIndexType* transferBufferPointer = (TIndexType*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer, false);
+            Span<TIndexType> transferBufferSpan = new Span<TIndexType>(transferBufferPointer, indices.Length);
+
+            indices.CopyTo(transferBufferSpan);
+
+            SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, transferBuffer);
+
+            SDL_GPUTransferBufferLocation sdlGpuTransferBufferLocation = new SDL_GPUTransferBufferLocation { transfer_buffer = transferBuffer, offset = 0 };
+            SDL_GPUBufferRegion sdlGpuBufferRegion = new SDL_GPUBufferRegion
+                { buffer = indexBuffer.SdlBuffer, offset = 0, size = sizeBytes };
+
+            SDL3.SDL_UploadToGPUBuffer(_sdlCopyPass, &sdlGpuTransferBufferLocation, &sdlGpuBufferRegion, false);
+        }
+
+        indexBuffer.Size = indices.Length;
     }
 
     public GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged

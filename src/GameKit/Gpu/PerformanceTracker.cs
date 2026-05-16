@@ -71,6 +71,7 @@ public class PerformanceTracker : IUpdatable, IDisposable
     {
         return $"Textures: {stats.TextureCount} ({FormatBytes(stats.TextureBytes)}), " +
                $"VertexBuffers: {stats.VertexBufferCount} ({FormatBytes(stats.VertexBufferBytes)}), " +
+               $"IndexBuffers: {stats.IndexBufferCount} ({FormatBytes(stats.IndexBufferBytes)}), " +
                $"StorageBuffers: {stats.StorageBufferCount} ({FormatBytes(stats.StorageBufferBytes)}), " +
                $"Total: {FormatBytes(stats.TotalBytes)}";
     }

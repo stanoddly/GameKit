@@ -12,6 +12,14 @@ public interface ICopyPass: IDisposable
 
     void UpdateVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> vertexBuffer, ReadOnlySpan<TVertexType> vertices) where TVertexType: unmanaged, IVertexType;
 
+    GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<ushort> indices);
+
+    GpuIndexBuffer CreateIndexBuffer(ReadOnlySpan<uint> indices);
+
+    void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<ushort> indices);
+
+    void UpdateIndexBuffer(GpuIndexBuffer indexBuffer, ReadOnlySpan<uint> indices);
+
     GpuStorageBuffer<T> CreateStorageBuffer<T>(ReadOnlySpan<T> data) where T : unmanaged;
 
     void UpdateStorageBuffer<T>(GpuStorageBuffer<T> storageBuffer, ReadOnlySpan<T> data) where T : unmanaged;
