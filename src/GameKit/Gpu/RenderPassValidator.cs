@@ -18,6 +18,11 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
         where TVertexType : unmanaged, IVertexType;
 
     /// <summary>
+    /// Called when an index buffer is bound to the render pass.
+    /// </summary>
+    void OnBindIndexBuffer(RenderPass<TSelfValidator> renderPass, GpuIndexBuffer buffer);
+
+    /// <summary>
     /// Called when vertex samplers are bound to the render pass.
     /// </summary>
     void OnBindVertexSamplers(RenderPass<TSelfValidator> renderPass, uint slot, int samplerCount);
@@ -33,6 +38,13 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     /// Throws an exception if validation fails.
     /// </summary>
     void OnDrawPrimitive(RenderPass<TSelfValidator> renderPass);
+
+    /// <summary>
+    /// Called when an indexed primitive draw is requested.
+    /// Validates that the current render pass state is valid for drawing.
+    /// Throws an exception if validation fails.
+    /// </summary>
+    void OnDrawIndexedPrimitive(RenderPass<TSelfValidator> renderPass);
 }
 
 /// <summary>
@@ -43,6 +55,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     private const int MaxVertexBufferSlots = 8;
 
     private uint _verticesCount;
+    private GpuIndexBuffer? _indexBuffer;
     private GraphicsPipeline? _graphicsPipeline;
     private readonly CommandBuffer _commandBuffer;
 
@@ -108,6 +121,11 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         SetSlotType(slot, typeId);
     }
 
+    public void OnBindIndexBuffer(RenderPass<RenderPassValidator> renderPass, GpuIndexBuffer buffer)
+    {
+        _indexBuffer = buffer;
+    }
+
     private void SetSlotType(uint slot, VertexTypeId typeId)
     {
         switch (slot)
@@ -148,6 +166,26 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     }
 
     public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass)
+    {
+        ValidateDrawState(renderPass);
+    }
+
+    public void OnDrawIndexedPrimitive(RenderPass<RenderPassValidator> renderPass)
+    {
+        ValidateDrawState(renderPass);
+
+        if (_indexBuffer == null)
+        {
+            throw new InvalidOperationException("IndexBuffer must be bound before indexed drawing.");
+        }
+
+        if (_indexBuffer.Size == 0)
+        {
+            throw new InvalidOperationException("Bound IndexBuffer is empty.");
+        }
+    }
+
+    private void ValidateDrawState(RenderPass<RenderPassValidator> renderPass)
     {
         if (_graphicsPipeline == null)
         {
@@ -209,6 +247,10 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     {
     }
 
+    public void OnBindIndexBuffer(RenderPass<NullRenderPassValidator> renderPass, GpuIndexBuffer buffer)
+    {
+    }
+
     public void OnBindVertexSamplers(RenderPass<NullRenderPassValidator> renderPass, uint slot, int samplerCount)
     {
     }
@@ -218,6 +260,10 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     }
 
     public void OnDrawPrimitive(RenderPass<NullRenderPassValidator> renderPass)
+    {
+    }
+
+    public void OnDrawIndexedPrimitive(RenderPass<NullRenderPassValidator> renderPass)
     {
     }
 }

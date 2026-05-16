@@ -10,6 +10,8 @@ public interface IRenderPass: IDisposable
     void BindVertexBuffer<TVertexType>(GpuVertexBuffer<TVertexType> buffer)
         where TVertexType : unmanaged, IVertexType;
 
+    void BindIndexBuffer(GpuIndexBuffer buffer);
+
     void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0);
     void BindFragmentSampler(Texture texture, Sampler sampler);
     void BindFragmentSamplerArray(TextureArray textureArray, Sampler sampler, uint slot = 0);
@@ -24,4 +26,7 @@ public interface IRenderPass: IDisposable
     void DrawPrimitive();
     void DrawPrimitiveInstanced(uint instanceCount);
     void DrawPrimitiveInstanced(uint instanceCount, uint firstInstance);
+    void DrawIndexedPrimitive();
+    void DrawIndexedPrimitiveInstanced(uint instanceCount);
+    void DrawIndexedPrimitiveInstanced(uint instanceCount, uint firstInstance);
 }

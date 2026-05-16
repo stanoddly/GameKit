@@ -10,6 +10,7 @@ internal class GpuDevice : IGpuDevice
 {
     private MemoryTrackedSet<Texture> _textures = new();
     private MemoryTrackedSet<GpuVertexBuffer> _vertexBuffers = new();
+    private MemoryTrackedSet<GpuIndexBuffer> _indexBuffers = new();
     private MemoryTrackedSet<GpuStorageBuffer> _storageBuffers = new();
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
@@ -24,10 +25,12 @@ internal class GpuDevice : IGpuDevice
         {
             (int Count, long TotalBytes) textures = _textures.CountAndTotalBytes;
             (int Count, long TotalBytes) vertexBuffers = _vertexBuffers.CountAndTotalBytes;
+            (int Count, long TotalBytes) indexBuffers = _indexBuffers.CountAndTotalBytes;
             (int Count, long TotalBytes) storageBuffers = _storageBuffers.CountAndTotalBytes;
             return new GpuMemoryStats(
                 textures.Count, textures.TotalBytes,
                 vertexBuffers.Count, vertexBuffers.TotalBytes,
+                indexBuffers.Count, indexBuffers.TotalBytes,
                 storageBuffers.Count, storageBuffers.TotalBytes
             );
         }
@@ -211,6 +214,8 @@ internal class GpuDevice : IGpuDevice
 
     public void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer) => _vertexBuffers.Add(vertexBuffer);
 
+    public void RegisterIndexBuffer(GpuIndexBuffer indexBuffer) => _indexBuffers.Add(indexBuffer);
+
     public void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline) => _graphicsPipelines.Add(graphicsPipeline);
 
     public void RegisterComputePipeline(ComputePipeline computePipeline) => _computePipelines.Add(computePipeline);
@@ -292,15 +297,19 @@ internal class GpuDevice : IGpuDevice
 
             vertexBuffer.SdlVertexBuffer = default;
         }
+    }
 
-        if (!vertexBuffer.SdlIndexBuffer.IsNull)
+    public void ReleaseIndexBuffer(GpuIndexBuffer indexBuffer)
+    {
+        _indexBuffers.Remove(indexBuffer);
+        if (!indexBuffer.SdlBuffer.IsNull)
         {
             unsafe
             {
-                SDL3.SDL_ReleaseGPUBuffer(SdlGpuDevice, vertexBuffer.SdlIndexBuffer);
+                SDL3.SDL_ReleaseGPUBuffer(SdlGpuDevice, indexBuffer.SdlBuffer);
             }
 
-            vertexBuffer.SdlIndexBuffer = default;
+            indexBuffer.SdlBuffer = default;
         }
     }
 
@@ -345,7 +354,9 @@ internal class GpuDevice : IGpuDevice
 
             SDL_GPUBuffer* rawVertexBuffer = SDL3.SDL_CreateGPUBuffer(SdlGpuDevice, &sdlGpuBufferCreateInfo);
 
-            return new GpuVertexBuffer<TVertexType>(this, rawVertexBuffer, Pointer<SDL_GPUBuffer>.Null, length);
+            GpuVertexBuffer<TVertexType> vertexBuffer = new GpuVertexBuffer<TVertexType>(this, rawVertexBuffer, length);
+            RegisterVertexBuffer(vertexBuffer);
+            return vertexBuffer;
         }
     }
 
@@ -393,6 +404,11 @@ internal class GpuDevice : IGpuDevice
         foreach (GpuVertexBuffer vertexBuffer in _vertexBuffers.ClearAndCopy())
         {
             ReleaseVertexBuffer(vertexBuffer);
+        }
+
+        foreach (GpuIndexBuffer indexBuffer in _indexBuffers.ClearAndCopy())
+        {
+            ReleaseIndexBuffer(indexBuffer);
         }
 
         foreach (GpuStorageBuffer storageBuffer in _storageBuffers.ClearAndCopy())

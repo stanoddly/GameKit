@@ -25,6 +25,8 @@ public interface IGpuDevice : IDisposable
 
     void RegisterVertexBuffer(GpuVertexBuffer vertexBuffer);
 
+    void RegisterIndexBuffer(GpuIndexBuffer indexBuffer);
+
     void RegisterGraphicsPipeline(GraphicsPipeline graphicsPipeline);
 
     void RegisterComputePipeline(ComputePipeline computePipeline);
@@ -40,6 +42,8 @@ public interface IGpuDevice : IDisposable
     void ReleaseShader(GraphicsShader shader);
     
     void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer);
+
+    void ReleaseIndexBuffer(GpuIndexBuffer indexBuffer);
 
     void ReleaseSampler(Sampler sampler);
 
