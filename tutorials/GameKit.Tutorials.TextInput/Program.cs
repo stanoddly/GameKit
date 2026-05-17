@@ -13,8 +13,8 @@ static class Program
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new AppConfig { Size = (640, 400), Title = "Text Input" });
-        builder.AddSingleton(new TextInputViewModel());
+        builder.AddSingleton(new AppConfig { Size = (640, 440), Title = "Text Input" });
+        builder.AddSingleton<TextInputViewModel>();
         builder.AddSingleton<IView, TextInputView>();
 
         using IGameKitApp gameKitApp = builder.Build();

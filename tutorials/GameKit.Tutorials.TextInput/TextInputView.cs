@@ -1,5 +1,6 @@
 using GameKit.Common;
 using GameKit.Gpu;
+using GameKit.Input;
 using GameKit.Pencuil;
 using GameKit.Text;
 
@@ -7,11 +8,18 @@ namespace GameKit.Tutorials.TextInput;
 
 public class TextInputViewModel : IViewModel
 {
+    private readonly IClipboardService _clipboardService;
+
     public bool IsDirty { get; set; } = true;
 
     private string _name = "Player";
     private string _width = "64";
     private string _height = "48";
+
+    public TextInputViewModel(IClipboardService clipboardService)
+    {
+        _clipboardService = clipboardService;
+    }
 
     public string Name
     {
@@ -51,6 +59,8 @@ public class TextInputViewModel : IViewModel
             }
         }
     }
+
+    public string ClipboardText => _clipboardService.HasText ? (_clipboardService.GetText() ?? "") : "";
 }
 
 public class TextInputView : View<TextInputViewModel>
@@ -109,5 +119,12 @@ public class TextInputView : View<TextInputViewModel>
 
         pencil.MoveTo(startX, startY + 280);
         pencil.Text($"Name: {ViewModel.Name}  Size: {ViewModel.Width}x{ViewModel.Height}", _font, ValueColor);
+
+        string clipboardText = ViewModel.ClipboardText;
+        if (clipboardText.Length > 0)
+        {
+            pencil.MoveTo(startX, startY + 310);
+            pencil.Text($"Clipboard: {clipboardText}", _labelFont, LabelColor);
+        }
     }
 }

@@ -95,6 +95,9 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<TextInputService>((GameKitFactory factory, Window window) => factory.CreateTextInputService(window));
         AddAlias<ITextInputService, TextInputService>();
 
+        AddSingleton<ClipboardService>();
+        AddAlias<IClipboardService, ClipboardService>();
+
         AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, TextInputService textInput, Window window, AppControl appControl) =>
             factory.CreateEventService(keyboard, gamepad, mouse, textInput, window, appControl));
 
