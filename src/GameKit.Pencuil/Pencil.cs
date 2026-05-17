@@ -635,6 +635,20 @@ public static class PencilExtensions
 
         IntVector2 textPosition = new IntVector2(position.X + padding, position.Y + padding);
 
+        if (isFocused && pencil.EditingState != null && pencil.EditingState.HasSelection)
+        {
+            (int selStart, int selLength) = pencil.EditingState.GetSelectionRange();
+            int selStartX = textPosition.X;
+            if (selStart > 0)
+            {
+                IntVector2 beforeSelSize = pencil.MeasureText(displayText[..selStart], font);
+                selStartX += beforeSelSize.X;
+            }
+            IntVector2 selTextSize = pencil.MeasureText(displayText.Substring(selStart, selLength), font);
+            Rectangle selRect = new Rectangle(selStartX, position.Y + padding, selTextSize.X, textSize.Y);
+            pencil.AddRectangle(selRect, style.SelectionColor);
+        }
+
         if (displayText.Length > 0)
         {
             IntVector2 savedPosition = pencil.CurrentPosition;
@@ -645,20 +659,6 @@ public static class PencilExtensions
 
         if (isFocused && pencil.EditingState != null)
         {
-            if (pencil.EditingState.HasSelection)
-            {
-                (int selStart, int selLength) = pencil.EditingState.GetSelectionRange();
-                int selStartX = textPosition.X;
-                if (selStart > 0)
-                {
-                    IntVector2 beforeSelSize = pencil.MeasureText(displayText[..selStart], font);
-                    selStartX += beforeSelSize.X;
-                }
-                IntVector2 selTextSize = pencil.MeasureText(displayText.Substring(selStart, selLength), font);
-                Rectangle selRect = new Rectangle(selStartX, position.Y + padding, selTextSize.X, textSize.Y);
-                pencil.AddRectangle(selRect, style.SelectionColor);
-            }
-
             int cursorX;
             if (pencil.EditingState.CursorPosition > 0 && displayText.Length > 0)
             {
