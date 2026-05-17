@@ -56,9 +56,9 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
         });
 
-        keyboardService.SubscribeKeyDown(options.InputOrder, (_, args) =>
+        keyboardService.SubscribeKeyDown(options.InputOrder, (keyboard, args) =>
         {
-            if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode))
+            if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode, keyboard.Shift, keyboard.Ctrl))
             {
                 args.Consume();
             }
