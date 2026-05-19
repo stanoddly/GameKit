@@ -945,11 +945,12 @@ public class ServiceCollectionTests
 
         ServiceProvider first = collection.BuildServiceProvider();
         ServiceProvider second = collection.BuildServiceProvider();
+        SimpleService firstService = first.GetRequiredService<SimpleService>();
 
         first.Dispose();
 
         Assert.That(disposingCount, Is.EqualTo(1));
-        Assert.That(second.GetRequiredService<SimpleService>(), Is.Not.SameAs(first.GetRequiredService<SimpleService>()));
+        Assert.That(second.GetRequiredService<SimpleService>(), Is.Not.SameAs(firstService));
     }
 
     // --- Dispose order must be reverse creation order ---
@@ -1282,6 +1283,28 @@ public class ServiceCollectionTests
 
         Assert.That(service.Services, Is.Not.Null);
         Assert.That(service.Services.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void ConstructorInjection_IEnumerable_InChildReceivesParentThenChildRegistrations()
+    {
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton<IMyService, MyServiceImpl>();
+        parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton<IMyService, AnotherServiceImpl>();
+        childCollection.AddSingleton<ServiceWithEnumerableDependency>();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        ServiceWithEnumerableDependency service = child.GetRequiredService<ServiceWithEnumerableDependency>();
+        IMyService[] services = service.Services.ToArray();
+
+        Assert.That(services, Has.Length.EqualTo(3));
+        Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
+        Assert.That(services[2], Is.InstanceOf<AnotherServiceImpl>());
     }
 }
 
