@@ -419,72 +419,49 @@ public class ParentChainTests
     }
 
     // -------------------------------------------------------------------------
-    // 5. ServiceProvider.Empty
+    // 5. Empty parent provider
     // -------------------------------------------------------------------------
 
     [Test]
-    public void Empty_GetRequiredService_Throws()
+    public void EmptyProvider_UsedAsParent_ChildResolvesOwnServices()
     {
-        Assert.Throws<InvalidOperationException>(
-            () => ServiceProvider.Empty.GetRequiredService<SimpleService>());
-    }
-
-    [Test]
-    public void Empty_GetService_ReturnsNull()
-    {
-        Assert.That(ServiceProvider.Empty.GetService<SimpleService>(), Is.Null);
-    }
-
-    [Test]
-    public void Empty_GetServices_ReturnsEmptyList()
-    {
-        Assert.That(ServiceProvider.Empty.GetServices<SimpleService>(), Is.Empty);
-    }
-
-    [Test]
-    public void Empty_Dispose_DoesNotThrow()
-    {
-        // Empty is a shared singleton — disposal must be a safe no-op.
-        // Calling Dispose once sets _disposed, making subsequent calls no-ops too.
-        Assert.DoesNotThrow(() => ServiceProvider.Empty.Dispose());
-    }
-
-    [Test]
-    public void Empty_UsedAsParent_ChildResolvesOwnServices()
-    {
+        ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
         ServiceCollection childCollection = new();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(ServiceProvider.Empty);
+        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.Not.Null);
     }
 
     [Test]
-    public void Empty_UsedAsParent_MissingServiceReturnsNull()
+    public void EmptyProvider_UsedAsParent_MissingServiceReturnsNull()
     {
+        ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
         ServiceCollection childCollection = new();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(ServiceProvider.Empty);
+        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
 
         // AnotherService is neither in child nor in Empty
         Assert.That(child.GetService<AnotherService>(), Is.Null);
     }
 
     [Test]
-    public void Empty_UsedAsParent_MissingServiceThrowsOnGetRequired()
+    public void EmptyProvider_UsedAsParent_MissingServiceThrowsOnGetRequired()
     {
+        ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
         ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(ServiceProvider.Empty);
+        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
 
         Assert.Throws<InvalidOperationException>(
             () => child.GetRequiredService<SimpleService>());
     }
 
     [Test]
-    public void Empty_UsedAsParent_GetServices_ReturnsEmptyForUnregisteredType()
+    public void EmptyProvider_UsedAsParent_GetServices_ReturnsEmptyForUnregisteredType()
     {
+        ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
         ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(ServiceProvider.Empty);
+        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
 
         Assert.That(child.GetServices<IMyService>(), Is.Empty);
     }

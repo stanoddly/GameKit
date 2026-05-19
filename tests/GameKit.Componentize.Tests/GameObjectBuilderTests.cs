@@ -47,7 +47,8 @@ public class GameObjectBuilderTests
     [SetUp]
     public void Setup()
     {
-        _world = new GameWorld(ServiceProvider.Empty);
+        ServiceProvider serviceProvider = new ServiceCollection().BuildServiceProvider();
+        _world = new GameWorld(serviceProvider);
     }
 
     [Test]

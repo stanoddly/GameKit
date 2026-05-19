@@ -29,16 +29,8 @@ public class ServiceProvider : IDisposable
     // Parallel list _creationTypes records the concrete type for each slot, enabling typed disposal callbacks.
     private readonly List<int> _creationOrder = new();
     private readonly List<Type> _creationTypes = new();
-    private readonly bool _canDispose;
-
-    public static ServiceProvider Empty { get; } = CreateEmpty();
 
     internal ServiceProvider(ServiceProvider? parent)
-        : this(parent, true)
-    {
-    }
-
-    private ServiceProvider(ServiceProvider? parent, bool canDispose)
     {
         if (parent != null)
         {
@@ -46,25 +38,12 @@ public class ServiceProvider : IDisposable
         }
 
         _parent = parent;
-        _canDispose = canDispose;
         _pending = new Dictionary<int, object>();
-    }
-
-    private static ServiceProvider CreateEmpty()
-    {
-        ServiceProvider provider = new ServiceProvider(null, false);
-        provider.FreezeServices();
-        return provider;
     }
 
     private void AddChild(ServiceProvider child)
     {
         ThrowIfDisposed();
-
-        if (!_canDispose)
-        {
-            return;
-        }
 
         _children ??= new List<ServiceProvider>();
         _children.Add(child);
@@ -402,11 +381,6 @@ public class ServiceProvider : IDisposable
     /// <remarks>Services aliased to multiple types are disposed exactly once — deduplication is done by reference, so aliases do not cause double disposal.</remarks>
     public void Dispose()
     {
-        if (!_canDispose)
-        {
-            return;
-        }
-
         if (_disposed)
         {
             return;
