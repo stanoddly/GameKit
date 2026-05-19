@@ -12,7 +12,8 @@ public class ServiceProvider : IDisposable
     // faster than hash+compare on the GetRequiredService hot path. Null until FreezeServices().
     private object?[]? _services;
     private Dictionary<int, object>? _pending;
-    private readonly ServiceProvider? _parent;
+    private ServiceProvider? _parent;
+    private List<ServiceProvider>? _children;
     private List<ServiceActivatedCallback>? _activatedCallbacks;
     private List<ServiceDisposingCallback>? _disposingCallbacks;
     private Func<int, object>? _buildTimeResolver;
@@ -28,20 +29,58 @@ public class ServiceProvider : IDisposable
     // Parallel list _creationTypes records the concrete type for each slot, enabling typed disposal callbacks.
     private readonly List<int> _creationOrder = new();
     private readonly List<Type> _creationTypes = new();
+    private readonly bool _canDispose;
 
     public static ServiceProvider Empty { get; } = CreateEmpty();
 
     internal ServiceProvider(ServiceProvider? parent)
+        : this(parent, true)
     {
+    }
+
+    private ServiceProvider(ServiceProvider? parent, bool canDispose)
+    {
+        if (parent != null)
+        {
+            parent.AddChild(this);
+        }
+
         _parent = parent;
+        _canDispose = canDispose;
         _pending = new Dictionary<int, object>();
     }
 
     private static ServiceProvider CreateEmpty()
     {
-        ServiceProvider provider = new ServiceProvider(null);
+        ServiceProvider provider = new ServiceProvider(null, false);
         provider.FreezeServices();
         return provider;
+    }
+
+    private void AddChild(ServiceProvider child)
+    {
+        ThrowIfDisposed();
+
+        if (!_canDispose)
+        {
+            return;
+        }
+
+        _children ??= new List<ServiceProvider>();
+        _children.Add(child);
+    }
+
+    private void RemoveChild(ServiceProvider child)
+    {
+        _children?.Remove(child);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(ServiceProvider));
+        }
     }
 
     internal void SetServiceCollections(Dictionary<int, Array> collections)
@@ -137,9 +176,8 @@ public class ServiceProvider : IDisposable
         _services = services;
         _pending = null;
 
-        // Merge parent's service collections into the child's — child entries take precedence
-        // (child's own collection for a given id fully replaces parent's, matching the
-        // all-or-nothing fallback semantics on the hot path). Only fill gaps the child left.
+        // Merge parent's service collections into the child's. Collections compose from
+        // ancestor to child, while single-service resolution remains child-wins.
         Dictionary<int, Array>? parentCollections = _parent?._serviceCollections;
         if (parentCollections != null)
         {
@@ -151,8 +189,19 @@ public class ServiceProvider : IDisposable
 
             foreach (KeyValuePair<int, Array> kvp in parentCollections)
             {
-                // TryAdd: child's entry wins; parent fills only the gaps.
-                _serviceCollections.TryAdd(kvp.Key, kvp.Value);
+                if (_serviceCollections.TryGetValue(kvp.Key, out Array? childCollection))
+                {
+                    Array parentCollection = kvp.Value;
+                    Type elementType = parentCollection.GetType().GetElementType()!;
+                    Array merged = Array.CreateInstance(elementType, parentCollection.Length + childCollection.Length);
+                    Array.Copy(parentCollection, 0, merged, 0, parentCollection.Length);
+                    Array.Copy(childCollection, 0, merged, parentCollection.Length, childCollection.Length);
+                    _serviceCollections[kvp.Key] = merged;
+                }
+                else
+                {
+                    _serviceCollections.Add(kvp.Key, kvp.Value);
+                }
             }
         }
     }
@@ -189,6 +238,16 @@ public class ServiceProvider : IDisposable
         return _parent?.GetServiceByIdInChain(id);
     }
 
+    internal Array? GetServiceCollectionById(int id)
+    {
+        if (_serviceCollections != null && _serviceCollections.TryGetValue(id, out Array? collection))
+        {
+            return collection;
+        }
+
+        return null;
+    }
+
     internal void SetService(int id, object service)
     {
         if (!_pending!.ContainsKey(id))
@@ -221,6 +280,8 @@ public class ServiceProvider : IDisposable
     /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="T"/> is not registered in this provider or any ancestor provider.</exception>
     public T GetRequiredService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
+        ThrowIfDisposed();
+
         int id = ServiceTypeId<T>.Id;
 
         object?[]? services = _services;
@@ -265,6 +326,8 @@ public class ServiceProvider : IDisposable
     /// </returns>
     public IReadOnlyList<T> GetServices<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
+        ThrowIfDisposed();
+
         int id = ServiceTypeId<T>.Id;
 
         if (_serviceCollections != null)
@@ -300,6 +363,8 @@ public class ServiceProvider : IDisposable
     /// <returns>The registered singleton instance of <typeparamref name="T"/>, or <see langword="null"/> if not registered in this provider or any ancestor.</returns>
     public T? GetService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
+        ThrowIfDisposed();
+
         int id = ServiceTypeId<T>.Id;
 
         object?[]? services = _services;
@@ -337,12 +402,31 @@ public class ServiceProvider : IDisposable
     /// <remarks>Services aliased to multiple types are disposed exactly once — deduplication is done by reference, so aliases do not cause double disposal.</remarks>
     public void Dispose()
     {
+        if (!_canDispose)
+        {
+            return;
+        }
+
         if (_disposed)
         {
             return;
         }
 
         _disposed = true;
+
+        ServiceProvider? parent = _parent;
+        _parent = null;
+        parent?.RemoveChild(this);
+
+        List<ServiceProvider>? children = _children;
+        _children = null;
+        if (children != null)
+        {
+            for (int i = children.Count - 1; i >= 0; i--)
+            {
+                children[i].Dispose();
+            }
+        }
 
         // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
@@ -384,5 +468,14 @@ public class ServiceProvider : IDisposable
                 disposable.Dispose();
             }
         }
+
+        _services = null;
+        _pending = null;
+        _serviceCollections = null;
+        _activatedCallbacks = null;
+        _disposingCallbacks = null;
+        _buildTimeResolver = null;
+        _buildTimeTryResolver = null;
+        _buildTimeCollectionResolver = null;
     }
 }

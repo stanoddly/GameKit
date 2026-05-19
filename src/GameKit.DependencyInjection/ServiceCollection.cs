@@ -469,12 +469,33 @@ public class ServiceCollection
         Dictionary<int, ServiceDescriptor> descriptorMap,
         HashSet<int> resolving)
     {
+        Array? parentCollection = parent?.GetServiceCollectionById(id);
+
         if (!_serviceGroups.TryGetValue(id, out List<ServiceDescriptor>? group))
         {
-            return Array.Empty<object>();
+            if (parentCollection == null)
+            {
+                return Array.Empty<object>();
+            }
+
+            object[] parentInstances = new object[parentCollection.Length];
+            for (int i = 0; i < parentCollection.Length; i++)
+            {
+                parentInstances[i] = parentCollection.GetValue(i)!;
+            }
+
+            return parentInstances;
         }
 
-        List<object> instances = new(group.Count);
+        List<object> instances = new(group.Count + (parentCollection?.Length ?? 0));
+
+        if (parentCollection != null)
+        {
+            for (int i = 0; i < parentCollection.Length; i++)
+            {
+                instances.Add(parentCollection.GetValue(i)!);
+            }
+        }
 
         for (int i = 0; i < group.Count; i++)
         {

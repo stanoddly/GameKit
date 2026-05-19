@@ -1,4 +1,5 @@
 using GameKit.DependencyInjection;
+using System.Reflection;
 
 namespace GameKit.DependencyInjection.Tests;
 
@@ -39,6 +40,26 @@ public class DoubleDisposeTracker : IDisposable
     public void Dispose()
     {
         DisposeCallCount++;
+    }
+}
+
+public class OrderedDisposable : IDisposable
+{
+    private readonly List<string> _disposeOrder;
+    private readonly string _name;
+
+    public OrderedDisposable(List<string> disposeOrder, string name)
+    {
+        _disposeOrder = disposeOrder;
+        _name = name;
+    }
+
+    public int DisposeCallCount { get; private set; }
+
+    public void Dispose()
+    {
+        DisposeCallCount++;
+        _disposeOrder.Add(_name);
     }
 }
 
@@ -183,7 +204,7 @@ public class ParentChainTests
     }
 
     [Test]
-    public void GetServices_UsesChildCollection_WhenChildRegistersType_DoesNotMergeParent()
+    public void GetServices_ReturnsParentThenChildRegistrations_WhenChildRegistersType()
     {
         ServiceCollection parentCollection = new();
         parentCollection.AddSingleton<IMyService, MyServiceImpl>();
@@ -191,14 +212,15 @@ public class ParentChainTests
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        // Child registers only one IMyService — parent's two-item collection is not merged
         childCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider child = childCollection.BuildServiceProvider(parent);
 
         IReadOnlyList<IMyService> services = child.GetServices<IMyService>();
 
-        Assert.That(services, Has.Count.EqualTo(1));
-        Assert.That(services[0], Is.InstanceOf<AnotherServiceImpl>());
+        Assert.That(services, Has.Count.EqualTo(3));
+        Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
+        Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
+        Assert.That(services[2], Is.InstanceOf<AnotherServiceImpl>());
     }
 
     [Test]
@@ -278,6 +300,101 @@ public class ParentChainTests
         parent.Dispose();
 
         Assert.That(parentService.Disposed, Is.True);
+    }
+
+    [Test]
+    public void Dispose_Parent_DisposesChildrenBeforeOwnServices()
+    {
+        List<string> disposeOrder = new();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection firstChildCollection = new();
+        firstChildCollection.AddSingleton(new OrderedDisposable(disposeOrder, "firstChild"));
+        ServiceProvider firstChild = firstChildCollection.BuildServiceProvider(parent);
+
+        ServiceCollection secondChildCollection = new();
+        secondChildCollection.AddSingleton(new OrderedDisposable(disposeOrder, "secondChild"));
+        ServiceProvider secondChild = secondChildCollection.BuildServiceProvider(parent);
+
+        parent.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => firstChild.GetRequiredService<OrderedDisposable>());
+        Assert.Throws<ObjectDisposedException>(() => secondChild.GetRequiredService<OrderedDisposable>());
+        Assert.That(disposeOrder, Is.EqualTo(new[] { "secondChild", "firstChild", "parent" }));
+    }
+
+    [Test]
+    public void Dispose_Child_DetachesFromParent()
+    {
+        List<string> disposeOrder = new();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        OrderedDisposable childService = new(disposeOrder, "child");
+        childCollection.AddSingleton(childService);
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        child.Dispose();
+        parent.Dispose();
+
+        Assert.That(childService.DisposeCallCount, Is.EqualTo(1));
+        Assert.That(disposeOrder, Is.EqualTo(new[] { "child", "parent" }));
+    }
+
+    [Test]
+    public void GetRequiredService_AfterDispose_ThrowsObjectDisposedException()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        provider.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => provider.GetRequiredService<SimpleService>());
+    }
+
+    [Test]
+    public void GetService_AfterDispose_ThrowsObjectDisposedException()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        provider.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => provider.GetService<SimpleService>());
+    }
+
+    [Test]
+    public void GetServices_AfterDispose_ThrowsObjectDisposedException()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        provider.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => provider.GetServices<SimpleService>());
+    }
+
+    [Test]
+    public void Dispose_ClearsServiceReferences()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        provider.Dispose();
+
+        Assert.That(GetPrivateField<object?>(provider, "_services"), Is.Null);
+        Assert.That(GetPrivateField<object?>(provider, "_pending"), Is.Null);
+        Assert.That(GetPrivateField<object?>(provider, "_serviceCollections"), Is.Null);
     }
 
     // -------------------------------------------------------------------------
@@ -431,5 +548,12 @@ public class ParentChainTests
         IMyService resolved = child.GetRequiredService<IMyService>();
 
         Assert.That(resolved, Is.SameAs(grandparent.GetRequiredService<IMyService>()));
+    }
+
+    private static T? GetPrivateField<T>(ServiceProvider provider, string fieldName)
+    {
+        FieldInfo field = typeof(ServiceProvider).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException($"Field {fieldName} was not found.");
+        return (T?)field.GetValue(provider);
     }
 }
