@@ -469,7 +469,7 @@ public class ServiceCollection
         Dictionary<int, ServiceDescriptor> descriptorMap,
         HashSet<int> resolving)
     {
-        Array? parentCollection = parent?.GetServiceCollectionById(id);
+        Array? parentCollection = parent?.GetMergedServiceCollectionById(id);
 
         if (!_serviceGroups.TryGetValue(id, out List<ServiceDescriptor>? group))
         {
@@ -479,10 +479,7 @@ public class ServiceCollection
             }
 
             object[] parentInstances = new object[parentCollection.Length];
-            for (int i = 0; i < parentCollection.Length; i++)
-            {
-                parentInstances[i] = parentCollection.GetValue(i)!;
-            }
+            CopyArrayItems(parentCollection, parentInstances);
 
             return parentInstances;
         }
@@ -491,10 +488,8 @@ public class ServiceCollection
 
         if (parentCollection != null)
         {
-            for (int i = 0; i < parentCollection.Length; i++)
-            {
-                instances.Add(parentCollection.GetValue(i)!);
-            }
+            object[] parentItems = Unsafe.As<object[]>(parentCollection);
+            instances.AddRange(parentItems);
         }
 
         for (int i = 0; i < group.Count; i++)
@@ -551,5 +546,14 @@ public class ServiceCollection
         }
 
         return instances.ToArray();
+    }
+
+    private static void CopyArrayItems(Array source, object[] destination)
+    {
+        object[] sourceItems = Unsafe.As<object[]>(source);
+        for (int i = 0; i < sourceItems.Length; i++)
+        {
+            destination[i] = sourceItems[i];
+        }
     }
 }

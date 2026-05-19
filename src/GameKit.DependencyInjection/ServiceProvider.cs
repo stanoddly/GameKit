@@ -12,6 +12,7 @@ public class ServiceProvider : IDisposable
     // faster than hash+compare on the GetRequiredService hot path. Null until FreezeServices().
     private object?[]? _services;
     private Dictionary<int, object>? _pending;
+    // Nulled on dispose after detaching, so unloaded child providers do not retain parent graphs.
     private ServiceProvider? _parent;
     private List<ServiceProvider>? _children;
     private List<ServiceActivatedCallback>? _activatedCallbacks;
@@ -51,6 +52,7 @@ public class ServiceProvider : IDisposable
 
     private void RemoveChild(ServiceProvider child)
     {
+        // Parent cascade clears _children before disposing children; child detach then becomes a no-op.
         _children?.Remove(child);
     }
 
@@ -217,7 +219,8 @@ public class ServiceProvider : IDisposable
         return _parent?.GetServiceByIdInChain(id);
     }
 
-    internal Array? GetServiceCollectionById(int id)
+    // Parent providers are already frozen with ancestor collections merged in, so one lookup is enough.
+    internal Array? GetMergedServiceCollectionById(int id)
     {
         if (_serviceCollections != null && _serviceCollections.TryGetValue(id, out Array? collection))
         {

@@ -327,6 +327,30 @@ public class ParentChainTests
     }
 
     [Test]
+    public void Dispose_Grandparent_DisposesDescendantsBeforeAncestors()
+    {
+        List<string> disposeOrder = new();
+
+        ServiceCollection grandparentCollection = new();
+        grandparentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "grandparent"));
+        ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton(new OrderedDisposable(disposeOrder, "child"));
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        grandparent.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => parent.GetRequiredService<OrderedDisposable>());
+        Assert.Throws<ObjectDisposedException>(() => child.GetRequiredService<OrderedDisposable>());
+        Assert.That(disposeOrder, Is.EqualTo(new[] { "child", "parent", "grandparent" }));
+    }
+
+    [Test]
     public void Dispose_Child_DetachesFromParent()
     {
         List<string> disposeOrder = new();
