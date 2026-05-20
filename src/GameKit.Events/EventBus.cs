@@ -175,7 +175,7 @@ internal class EventBus : IEventBus
         {
             _publishDepth--;
 
-            if (hasRemovedSubscriptions)
+            if (_publishDepth == 0 && hasRemovedSubscriptions)
             {
                 CompactSubscriptions(subscriptions);
             }
@@ -200,11 +200,6 @@ internal class EventBus : IEventBus
 
     private void CompactSubscriptions(List<object?> subscriptions)
     {
-        if (_publishDepth > 0)
-        {
-            return;
-        }
-
         subscriptions.RemoveAll(static subscription => subscription == null);
     }
 }
