@@ -44,7 +44,8 @@ internal static class ComponentTypeHelper
 
 internal class EventBus : IEventBus
 {
-    private readonly List<List<object>?> _eventHandlersPerType = new();
+    private readonly List<List<object?>?> _eventHandlersPerType = new();
+    private int _publishDepth;
 
     private void EnsureCapacity(int id)
     {
@@ -69,7 +70,7 @@ internal class EventBus : IEventBus
         foreach (int eventArgsTypeId in componentTypeHandledEventArgs)
         {
             EnsureCapacity(eventArgsTypeId);
-            _eventHandlersPerType[eventArgsTypeId] ??= new List<object>();
+            _eventHandlersPerType[eventArgsTypeId] ??= new List<object?>();
             _eventHandlersPerType[eventArgsTypeId]!.Add(instance);
         }
     }
@@ -78,7 +79,7 @@ internal class EventBus : IEventBus
     {
         int id = TypeId<TEventArgs>.Id;
         EnsureCapacity(id);
-        _eventHandlersPerType[id] ??= new List<object>();
+        _eventHandlersPerType[id] ??= new List<object?>();
         _eventHandlersPerType[id]!.Add(obj);
     }
 
@@ -91,7 +92,7 @@ internal class EventBus : IEventBus
             return;
         }
 
-        _eventHandlersPerType[id]?.Remove(obj);
+        RemoveHandler(_eventHandlersPerType[id], obj);
     }
 
     public void Unsubscribe<TSubscriber>(
@@ -112,8 +113,25 @@ internal class EventBus : IEventBus
                 continue;
             }
 
-            _eventHandlersPerType[eventArgsTypeId]?.Remove(instance);
+            RemoveHandler(_eventHandlersPerType[eventArgsTypeId], instance);
         }
+    }
+
+    private void RemoveHandler(List<object?>? subscriptions, object instance)
+    {
+        if (subscriptions == null)
+        {
+            return;
+        }
+
+        int index = subscriptions.IndexOf(instance);
+
+        if (index < 0)
+        {
+            return;
+        }
+
+        subscriptions[index] = null;
     }
 
     public void PublishEvent<TEventArgs>(TEventArgs args)
@@ -125,69 +143,63 @@ internal class EventBus : IEventBus
             return;
         }
 
-        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
+        List<object?>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
 
         if (subscriptions == null)
         {
             return;
         }
 
-        foreach (object obj in subscriptions)
+        int subscriptionCount = subscriptions.Count;
+        bool hasRemovedSubscriptions = false;
+
+        _publishDepth++;
+
+        try
         {
-            IEventHandler<TEventArgs> eventHandler = Unsafe.As<IEventHandler<TEventArgs>>(obj);
-            eventHandler.Process(args);
+            for (int i = 0; i < subscriptionCount; i++)
+            {
+                object? obj = subscriptions[i];
+
+                if (obj == null)
+                {
+                    hasRemovedSubscriptions = true;
+                    continue;
+                }
+
+                IEventHandler<TEventArgs> eventHandler = Unsafe.As<IEventHandler<TEventArgs>>(obj);
+                eventHandler.Process(args);
+            }
+        }
+        finally
+        {
+            _publishDepth--;
+
+            if (_publishDepth == 0 && hasRemovedSubscriptions)
+            {
+                CompactSubscriptions(subscriptions);
+            }
         }
     }
 
     public void PublishEvents<TEventArgs>(ReadOnlySpan<TEventArgs> args)
     {
-        int eventArgsTypeId = TypeId<TEventArgs>.Id;
-
-        if (eventArgsTypeId >= _eventHandlersPerType.Count)
-        {
-            return;
-        }
-
-        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
-
-        if (subscriptions == null)
-        {
-            return;
-        }
-
         foreach (TEventArgs arg in args)
         {
-            foreach (object obj in subscriptions)
-            {
-                IEventHandler<TEventArgs> eventHandler = Unsafe.As<IEventHandler<TEventArgs>>(obj);
-                eventHandler.Process(arg);
-            }
+            PublishEvent(arg);
         }
     }
 
     public void PublishEvents<TEventArgs>(List<TEventArgs> args)
     {
-        int eventArgsTypeId = TypeId<TEventArgs>.Id;
-
-        if (eventArgsTypeId >= _eventHandlersPerType.Count)
-        {
-            return;
-        }
-
-        List<object>? subscriptions = _eventHandlersPerType[eventArgsTypeId];
-
-        if (subscriptions == null)
-        {
-            return;
-        }
-
         foreach (TEventArgs arg in args)
         {
-            foreach (object obj in subscriptions)
-            {
-                IEventHandler<TEventArgs> eventHandler = Unsafe.As<IEventHandler<TEventArgs>>(obj);
-                eventHandler.Process(arg);
-            }
+            PublishEvent(arg);
         }
+    }
+
+    private void CompactSubscriptions(List<object?> subscriptions)
+    {
+        subscriptions.RemoveAll(static subscription => subscription == null);
     }
 }
