@@ -25,8 +25,4 @@ public interface IEventBus
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type);
 
     void PublishEvent<TEventArgs>(TEventArgs args);
-
-    void PublishEvents<TEventArgs>(ReadOnlySpan<TEventArgs> args);
-
-    void PublishEvents<TEventArgs>(List<TEventArgs> args);
 }
