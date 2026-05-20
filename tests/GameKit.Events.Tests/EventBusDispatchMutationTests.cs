@@ -51,6 +51,23 @@ public sealed class EventBusDispatchMutationTests
         Assert.That(newHandler.ProcessCount, Is.EqualTo(1));
     }
 
+    [Test]
+    public void PublishEvents_HandlerUnsubscribesItself_DoesNotRunForRemainingEvents()
+    {
+        IEventBus eventBus = CreateEventBus();
+        SelfUnsubscribingHandler handler = new(eventBus);
+
+        eventBus.Subscribe<TestEvent>(handler);
+
+        eventBus.PublishEvents(new List<TestEvent>
+        {
+            new(1),
+            new(2)
+        });
+
+        Assert.That(handler.ProcessCount, Is.EqualTo(1));
+    }
+
     private static IEventBus CreateEventBus()
     {
         ServiceCollection services = new();

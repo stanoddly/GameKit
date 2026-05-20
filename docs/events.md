@@ -25,6 +25,7 @@ public sealed class DamageEventHandler : IEventHandler<DamageEvent>
 - `Subscribe<TEventArgs>(IEventHandler<TEventArgs> handler)` - subscribes one handler to one event type directly.
 - `Unsubscribe(...)` - symmetric overloads for removing subscriptions.
 - `PublishEvent<TEventArgs>(TEventArgs args)` - publishes one event.
+- `PublishEvents<TEventArgs>(ReadOnlySpan<TEventArgs> args)` and `PublishEvents<TEventArgs>(List<TEventArgs> args)` - publish a batch in order by publishing each event individually.
 
 Handlers for the same event type run in subscription order. Subscriptions can change during event dispatch: unsubscribing a handler takes effect immediately for handlers that have not run yet, while subscribing a new handler takes effect on the next published event.
 

@@ -184,6 +184,22 @@ internal class EventBus : IEventBus
         }
     }
 
+    public void PublishEvents<TEventArgs>(ReadOnlySpan<TEventArgs> args)
+    {
+        foreach (TEventArgs arg in args)
+        {
+            PublishEvent(arg);
+        }
+    }
+
+    public void PublishEvents<TEventArgs>(List<TEventArgs> args)
+    {
+        foreach (TEventArgs arg in args)
+        {
+            PublishEvent(arg);
+        }
+    }
+
     private void CompactDeferredRemovals()
     {
         if (_publishDepth > 0 || !_hasDeferredRemovals)
