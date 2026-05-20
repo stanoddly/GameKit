@@ -46,7 +46,6 @@ internal class EventBus : IEventBus
 {
     private readonly List<List<object?>?> _eventHandlersPerType = new();
     private int _publishDepth;
-    private bool _hasDeferredRemovals;
 
     private void EnsureCapacity(int id)
     {
@@ -132,14 +131,8 @@ internal class EventBus : IEventBus
             return;
         }
 
-        if (_publishDepth == 0)
-        {
-            subscriptions.RemoveAt(index);
-            return;
-        }
-
         subscriptions[index] = null;
-        _hasDeferredRemovals = true;
+        CompactSubscriptions(subscriptions);
     }
 
     public void PublishEvent<TEventArgs>(TEventArgs args)
@@ -159,6 +152,7 @@ internal class EventBus : IEventBus
         }
 
         int subscriptionCount = subscriptions.Count;
+        bool hasRemovedSubscriptions = false;
 
         _publishDepth++;
 
@@ -170,6 +164,7 @@ internal class EventBus : IEventBus
 
                 if (obj == null)
                 {
+                    hasRemovedSubscriptions = true;
                     continue;
                 }
 
@@ -180,7 +175,11 @@ internal class EventBus : IEventBus
         finally
         {
             _publishDepth--;
-            CompactDeferredRemovals();
+
+            if (hasRemovedSubscriptions)
+            {
+                CompactSubscriptions(subscriptions);
+            }
         }
     }
 
@@ -200,23 +199,13 @@ internal class EventBus : IEventBus
         }
     }
 
-    private void CompactDeferredRemovals()
+    private void CompactSubscriptions(List<object?> subscriptions)
     {
-        if (_publishDepth > 0 || !_hasDeferredRemovals)
+        if (_publishDepth > 0)
         {
             return;
         }
 
-        foreach (List<object?>? subscriptions in _eventHandlersPerType)
-        {
-            if (subscriptions == null)
-            {
-                continue;
-            }
-
-            subscriptions.RemoveAll(static subscription => subscription == null);
-        }
-
-        _hasDeferredRemovals = false;
+        subscriptions.RemoveAll(static subscription => subscription == null);
     }
 }
