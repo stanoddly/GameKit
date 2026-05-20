@@ -132,7 +132,6 @@ internal class EventBus : IEventBus
         }
 
         subscriptions[index] = null;
-        CompactSubscriptions(subscriptions);
     }
 
     public void PublishEvent<TEventArgs>(TEventArgs args)
