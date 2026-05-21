@@ -30,8 +30,6 @@ public delegate void ServiceActivatedCallback(
 /// <see cref="DynamicallyAccessedMemberTypes.Interfaces"/> so the trimmer preserves interface
 /// metadata when the type flows from a <c>typeof(T)</c> expression in generator-emitted code.
 /// </param>
-/// <param name="provider">The provider that owns the service being disposed.</param>
 public delegate void ServiceDisposingCallback(
     object instance,
-    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type,
-    ServiceProvider provider);
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type);

@@ -133,30 +133,6 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void OnDisposing_CanResolveServicesFromOwningProvider()
-    {
-        CallbackConcreteService? resolvedDuringDisposal = null;
-
-        ServiceCollection collection = new();
-        collection.AddSingleton<CallbackConcreteService>();
-        collection.AddSingleton<CallbackDisposableService>(_ => new CallbackDisposableService(new List<string>()));
-        collection.OnDisposing((instance, type, provider) =>
-        {
-            if (instance is CallbackDisposableService)
-            {
-                resolvedDuringDisposal = provider.GetRequiredService<CallbackConcreteService>();
-            }
-        });
-
-        ServiceProvider serviceProvider = collection.BuildServiceProvider();
-        CallbackConcreteService expectedService = serviceProvider.GetRequiredService<CallbackConcreteService>();
-
-        serviceProvider.Dispose();
-
-        Assert.That(resolvedDuringDisposal, Is.SameAs(expectedService));
-    }
-
-    [Test]
     public void OnDisposing_FiresInReverseConstructionOrder()
     {
         List<string> calls = new();

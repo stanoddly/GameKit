@@ -61,20 +61,35 @@ public static class UpdateRegistryServiceCollectionExtensions
 {
     public static ServiceCollection RegisterUpdatables(this ServiceCollection services)
     {
+        Dictionary<IUpdatable, UpdateRegistry> registrations = new(ReferenceEqualityComparer.Instance);
+        object registrationsLock = new();
+
         services.OnActivated((instance, _, provider) =>
         {
             if (instance is IUpdatable updatable)
             {
                 UpdateRegistry updateRegistry = provider.GetRequiredService<UpdateRegistry>();
                 updateRegistry.Register(updatable);
+                lock (registrationsLock)
+                {
+                    registrations[updatable] = updateRegistry;
+                }
             }
         });
 
-        services.OnDisposing((instance, _, provider) =>
+        services.OnDisposing((instance, _) =>
         {
             if (instance is IUpdatable updatable)
             {
-                UpdateRegistry updateRegistry = provider.GetRequiredService<UpdateRegistry>();
+                UpdateRegistry? updateRegistry;
+                lock (registrationsLock)
+                {
+                    if (!registrations.Remove(updatable, out updateRegistry))
+                    {
+                        return;
+                    }
+                }
+
                 updateRegistry.Unregister(updatable);
             }
         });

@@ -162,11 +162,6 @@ public class ServiceCollection
         _disposingCallbacks.Add(callback);
     }
 
-    public void OnDisposing(Action<object, Type> callback)
-    {
-        _disposingCallbacks.Add((instance, type, _) => callback(instance, type));
-    }
-
     /// <summary>Returns <see langword="true"/> if <typeparamref name="T"/> has been registered at least once.</summary>
     /// <typeparam name="T">The service type to check.</typeparam>
     /// <returns><see langword="true"/> if <typeparamref name="T"/> is registered; otherwise <see langword="false"/>.</returns>
