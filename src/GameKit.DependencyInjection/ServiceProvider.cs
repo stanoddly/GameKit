@@ -82,14 +82,16 @@ public class ServiceProvider : IDisposable
         _disposingCallbacks = disposingCallbacks;
     }
 
+    internal List<ServiceActivatedCallback>? ActivatedCallbacks => _activatedCallbacks;
+
+    internal List<ServiceDisposingCallback>? DisposingCallbacks => _disposingCallbacks;
+
     // The [DynamicallyAccessedMembers] annotation on type preserves interface metadata
     // when called from generator-emitted code via typeof(T) where T carries the annotation.
     internal void RunActivatedCallbacks(
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        _parent?.RunActivatedCallbacks(instance, type);
-
         if (_activatedCallbacks == null)
         {
             return;
@@ -112,8 +114,6 @@ public class ServiceProvider : IDisposable
                 callback(instance, type);
             }
         }
-
-        _parent?.RunDisposingCallbacks(instance, type);
     }
 
     internal void FreezeServices()
@@ -393,6 +393,10 @@ public class ServiceProvider : IDisposable
 
         _disposed = true;
 
+        ServiceProvider? parent = _parent;
+        _parent = null;
+        parent?.RemoveChild(this);
+
         List<ServiceProvider>? children = _children;
         _children = null;
         if (children != null)
@@ -402,8 +406,6 @@ public class ServiceProvider : IDisposable
                 children[i].Dispose();
             }
         }
-
-        ServiceProvider? parent = _parent;
 
         // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
@@ -454,7 +456,5 @@ public class ServiceProvider : IDisposable
         _buildTimeResolver = null;
         _buildTimeTryResolver = null;
         _buildTimeCollectionResolver = null;
-        _parent = null;
-        parent?.RemoveChild(this);
     }
 }

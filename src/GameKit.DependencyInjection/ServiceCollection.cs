@@ -189,9 +189,9 @@ public class ServiceCollection
         ServiceProvider provider = new ServiceProvider(parent);
 
         List<ServiceActivatedCallback>? activatedCallbacks =
-            _activatedCallbacks.Count > 0 ? new List<ServiceActivatedCallback>(_activatedCallbacks) : null;
+            MergeActivatedCallbacks(parent, _activatedCallbacks);
         List<ServiceDisposingCallback>? disposingCallbacks =
-            _disposingCallbacks.Count > 0 ? new List<ServiceDisposingCallback>(_disposingCallbacks) : null;
+            MergeDisposingCallbacks(parent, _disposingCallbacks);
         provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
@@ -361,6 +361,46 @@ public class ServiceCollection
                 break;
             }
         }
+    }
+
+    private static List<ServiceActivatedCallback>? MergeActivatedCallbacks(
+        ServiceProvider? parent,
+        List<ServiceActivatedCallback> childCallbacks)
+    {
+        List<ServiceActivatedCallback>? parentCallbacks = parent?.ActivatedCallbacks;
+        int callbackCount = (parentCallbacks?.Count ?? 0) + childCallbacks.Count;
+        if (callbackCount == 0)
+        {
+            return null;
+        }
+
+        List<ServiceActivatedCallback> callbacks = new(callbackCount);
+        if (parentCallbacks != null)
+        {
+            callbacks.AddRange(parentCallbacks);
+        }
+        callbacks.AddRange(childCallbacks);
+        return callbacks;
+    }
+
+    private static List<ServiceDisposingCallback>? MergeDisposingCallbacks(
+        ServiceProvider? parent,
+        List<ServiceDisposingCallback> childCallbacks)
+    {
+        List<ServiceDisposingCallback>? parentCallbacks = parent?.DisposingCallbacks;
+        int callbackCount = childCallbacks.Count + (parentCallbacks?.Count ?? 0);
+        if (callbackCount == 0)
+        {
+            return null;
+        }
+
+        List<ServiceDisposingCallback> callbacks = new(callbackCount);
+        callbacks.AddRange(childCallbacks);
+        if (parentCallbacks != null)
+        {
+            callbacks.AddRange(parentCallbacks);
+        }
+        return callbacks;
     }
 
     private object? ResolveNonLastDescriptor(
