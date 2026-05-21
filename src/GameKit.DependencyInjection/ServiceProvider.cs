@@ -21,6 +21,7 @@ public class ServiceProvider : IDisposable
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
+    private bool _disposing;
     // Values are real T[] instances built via Array.CreateInstance (see ServiceCollection).
     // GetServices<T>() recovers the typed array via Unsafe.As<T[]> and returns it directly
     // as IReadOnlyList<T> — zero allocation, zero copy. Do NOT switch to object[] storage:
@@ -58,7 +59,7 @@ public class ServiceProvider : IDisposable
 
     private void ThrowIfDisposed()
     {
-        if (_disposed)
+        if (_disposed && !_disposing)
         {
             throw new ObjectDisposedException(nameof(ServiceProvider));
         }
@@ -95,7 +96,7 @@ public class ServiceProvider : IDisposable
 
         foreach (ServiceActivatedCallback callback in _activatedCallbacks)
         {
-            callback(instance, type);
+            callback(instance, type, this);
         }
     }
 
@@ -110,7 +111,7 @@ public class ServiceProvider : IDisposable
 
         foreach (ServiceDisposingCallback callback in _disposingCallbacks)
         {
-            callback(instance, type);
+            callback(instance, type, this);
         }
     }
 
@@ -384,12 +385,12 @@ public class ServiceProvider : IDisposable
     /// <remarks>Services aliased to multiple types are disposed exactly once — deduplication is done by reference, so aliases do not cause double disposal.</remarks>
     public void Dispose()
     {
-        if (_disposed)
+        if (_disposed || _disposing)
         {
             return;
         }
 
-        _disposed = true;
+        _disposing = true;
 
         ServiceProvider? parent = _parent;
         _parent = null;
@@ -454,5 +455,7 @@ public class ServiceProvider : IDisposable
         _buildTimeResolver = null;
         _buildTimeTryResolver = null;
         _buildTimeCollectionResolver = null;
+        _disposing = false;
+        _disposed = true;
     }
 }

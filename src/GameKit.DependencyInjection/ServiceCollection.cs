@@ -146,6 +146,11 @@ public class ServiceCollection
         _activatedCallbacks.Add(callback);
     }
 
+    public void OnActivated(Action<object, Type> callback)
+    {
+        _activatedCallbacks.Add((instance, type, _) => callback(instance, type));
+    }
+
     /// <summary>
     /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
     /// immediately before that service's own <see cref="IDisposable.Dispose"/> call. Services are visited
@@ -155,6 +160,11 @@ public class ServiceCollection
     public void OnDisposing(ServiceDisposingCallback callback)
     {
         _disposingCallbacks.Add(callback);
+    }
+
+    public void OnDisposing(Action<object, Type> callback)
+    {
+        _disposingCallbacks.Add((instance, type, _) => callback(instance, type));
     }
 
     /// <summary>Returns <see langword="true"/> if <typeparamref name="T"/> has been registered at least once.</summary>

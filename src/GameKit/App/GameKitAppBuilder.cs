@@ -10,22 +10,11 @@ namespace GameKit.App;
 public class GameKitAppBuilder : ServiceCollection
 {
     private readonly FileSystemBuilder _fileSystemBuilder = new();
-    private readonly List<IStartable> _startables = new();
-    private readonly List<IUpdatable> _updatables = new();
+    private readonly UpdateRegistry _updateRegistry = new();
 
     public GameKitAppBuilder()
     {
-        OnActivated((obj, _) =>
-        {
-            if (obj is IStartable startable)
-            {
-                _startables.Add(startable);
-            }
-            if (obj is IUpdatable updatable)
-            {
-                _updatables.Add(updatable);
-            }
-        });
+        this.RegisterUpdatables();
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
@@ -125,6 +114,7 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<AppControl>();
         AddSingleton<VirtualFileSystem>(() => _fileSystemBuilder.Create());
+        AddSingleton(_updateRegistry);
 
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
@@ -135,6 +125,6 @@ public class GameKitAppBuilder : ServiceCollection
         }
 
         ServiceProvider serviceProvider = BuildServiceProvider();
-        return new GameKitApp(serviceProvider, _startables, _updatables);
+        return new GameKitApp(serviceProvider, _updateRegistry);
     }
 }

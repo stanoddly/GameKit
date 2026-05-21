@@ -5,14 +5,12 @@ namespace GameKit.App;
 public class GameKitApp : IGameKitApp
 {
     public ServiceProvider ServiceProvider { get; }
-    private readonly List<IStartable> _startables;
-    private readonly List<IUpdatable> _updatables;
+    private readonly UpdateRegistry _updateRegistry;
 
-    public GameKitApp(ServiceProvider serviceProvider, List<IStartable> startables, List<IUpdatable> updatables)
+    public GameKitApp(ServiceProvider serviceProvider, UpdateRegistry updateRegistry)
     {
         ServiceProvider = serviceProvider;
-        _startables = startables;
-        _updatables = updatables;
+        _updateRegistry = updateRegistry;
     }
 
     public T GetRequiredService<T>() where T : class
@@ -27,11 +25,6 @@ public class GameKitApp : IGameKitApp
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
 
-        for (int i = _startables.Count - 1; i >= 0; i--)
-        {
-            _startables[i].Start();
-        }
-
         while (true)
         {
             // in the very beginning of the frame adjust time and delta
@@ -39,7 +32,7 @@ public class GameKitApp : IGameKitApp
             // then process events
             eventService.Process();
 
-            foreach (IUpdatable updatable in _updatables)
+            foreach (IUpdatable updatable in _updateRegistry.Snapshot())
             {
                 updatable.Update();
             }

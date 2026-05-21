@@ -94,6 +94,20 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
+    public void OnActivated_ReceivesOwningProvider()
+    {
+        ServiceProvider? callbackProvider = null;
+
+        ServiceCollection collection = new();
+        collection.OnActivated((instance, type, provider) => callbackProvider = provider);
+        collection.AddSingleton<CallbackConcreteService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(callbackProvider, Is.SameAs(provider));
+    }
+
+    [Test]
     public void OnDisposing_FiresBeforeOwnDispose()
     {
         List<string> events = new();
@@ -116,6 +130,30 @@ public sealed class ServiceCallbackTests
 
         Assert.That(service.Disposed, Is.True);
         Assert.That(events, Is.EqualTo(new[] { "callback-before-dispose", "dispose" }));
+    }
+
+    [Test]
+    public void OnDisposing_CanResolveServicesFromOwningProvider()
+    {
+        CallbackConcreteService? resolvedDuringDisposal = null;
+
+        ServiceCollection collection = new();
+        collection.AddSingleton<CallbackConcreteService>();
+        collection.AddSingleton<CallbackDisposableService>(_ => new CallbackDisposableService(new List<string>()));
+        collection.OnDisposing((instance, type, provider) =>
+        {
+            if (instance is CallbackDisposableService)
+            {
+                resolvedDuringDisposal = provider.GetRequiredService<CallbackConcreteService>();
+            }
+        });
+
+        ServiceProvider serviceProvider = collection.BuildServiceProvider();
+        CallbackConcreteService expectedService = serviceProvider.GetRequiredService<CallbackConcreteService>();
+
+        serviceProvider.Dispose();
+
+        Assert.That(resolvedDuringDisposal, Is.SameAs(expectedService));
     }
 
     [Test]
