@@ -3,7 +3,6 @@ namespace GameKit.App;
 internal sealed class UpdateLoop
 {
     private readonly List<IUpdatable?> _updatables = new();
-    private bool _needsCompaction;
 
     public int Count { get; private set; }
 
@@ -28,7 +27,6 @@ internal sealed class UpdateLoop
             if (ReferenceEquals(_updatables[i], updatable))
             {
                 _updatables[i] = null;
-                _needsCompaction = true;
                 Count--;
             }
         }
@@ -37,12 +35,20 @@ internal sealed class UpdateLoop
     public void Update()
     {
         int count = _updatables.Count;
+        bool needsCompaction = false;
         for (int i = 0; i < count; i++)
         {
-            _updatables[i]?.Update();
+            IUpdatable? updatable = _updatables[i];
+            if (updatable == null)
+            {
+                needsCompaction = true;
+                continue;
+            }
+
+            updatable.Update();
         }
 
-        if (_needsCompaction)
+        if (needsCompaction)
         {
             Compact();
         }
@@ -58,7 +64,6 @@ internal sealed class UpdateLoop
             }
         }
 
-        _needsCompaction = false;
     }
 }
 
