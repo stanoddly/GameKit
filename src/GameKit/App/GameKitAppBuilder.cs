@@ -114,6 +114,7 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<AppControl>();
         AddSingleton<VirtualFileSystem>(() => _fileSystemBuilder.Create());
+        AddSingleton(_updateLoop);
 
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
@@ -124,6 +125,6 @@ public class GameKitAppBuilder : ServiceCollection
         }
 
         ServiceProvider serviceProvider = BuildServiceProvider();
-        return new GameKitApp(serviceProvider, _updateLoop);
+        return new GameKitApp(serviceProvider);
     }
 }
