@@ -189,9 +189,9 @@ public class ServiceCollection
         ServiceProvider provider = new ServiceProvider(parent);
 
         List<ServiceActivatedCallback>? activatedCallbacks =
-            MergeActivatedCallbacks(parent, _activatedCallbacks);
+            MergeCallbacks(parent?.ActivatedCallbacks, _activatedCallbacks, parentFirst: true);
         List<ServiceDisposingCallback>? disposingCallbacks =
-            MergeDisposingCallbacks(parent, _disposingCallbacks);
+            MergeCallbacks(parent?.DisposingCallbacks, _disposingCallbacks, parentFirst: false);
         provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
@@ -363,43 +363,28 @@ public class ServiceCollection
         }
     }
 
-    private static List<ServiceActivatedCallback>? MergeActivatedCallbacks(
-        ServiceProvider? parent,
-        List<ServiceActivatedCallback> childCallbacks)
+    private static List<TCallback>? MergeCallbacks<TCallback>(
+        List<TCallback>? parentCallbacks,
+        List<TCallback> childCallbacks,
+        bool parentFirst)
     {
-        List<ServiceActivatedCallback>? parentCallbacks = parent?.ActivatedCallbacks;
         int callbackCount = (parentCallbacks?.Count ?? 0) + childCallbacks.Count;
         if (callbackCount == 0)
         {
             return null;
         }
 
-        List<ServiceActivatedCallback> callbacks = new(callbackCount);
-        if (parentCallbacks != null)
+        List<TCallback> callbacks = new(callbackCount);
+        if (parentFirst && parentCallbacks != null)
         {
             callbacks.AddRange(parentCallbacks);
         }
         callbacks.AddRange(childCallbacks);
-        return callbacks;
-    }
-
-    private static List<ServiceDisposingCallback>? MergeDisposingCallbacks(
-        ServiceProvider? parent,
-        List<ServiceDisposingCallback> childCallbacks)
-    {
-        List<ServiceDisposingCallback>? parentCallbacks = parent?.DisposingCallbacks;
-        int callbackCount = childCallbacks.Count + (parentCallbacks?.Count ?? 0);
-        if (callbackCount == 0)
-        {
-            return null;
-        }
-
-        List<ServiceDisposingCallback> callbacks = new(callbackCount);
-        callbacks.AddRange(childCallbacks);
-        if (parentCallbacks != null)
+        if (!parentFirst && parentCallbacks != null)
         {
             callbacks.AddRange(parentCallbacks);
         }
+
         return callbacks;
     }
 
