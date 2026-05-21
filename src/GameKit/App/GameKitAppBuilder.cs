@@ -10,11 +10,12 @@ namespace GameKit.App;
 public class GameKitAppBuilder : ServiceCollection
 {
     private readonly FileSystemBuilder _fileSystemBuilder = new();
-    private readonly UpdateLoop _updateLoop = new();
 
     public GameKitAppBuilder()
     {
-        this.RegisterUpdatables(_updateLoop);
+        UpdateLoop updateLoop = new();
+        AddSingleton(updateLoop);
+        this.RegisterUpdatables(updateLoop);
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
@@ -114,7 +115,6 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<AppControl>();
         AddSingleton<VirtualFileSystem>(() => _fileSystemBuilder.Create());
-        AddSingleton(_updateLoop);
 
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
