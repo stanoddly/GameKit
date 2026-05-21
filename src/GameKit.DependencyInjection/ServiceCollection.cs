@@ -146,11 +146,6 @@ public class ServiceCollection
         _activatedCallbacks.Add(callback);
     }
 
-    public void OnActivated(Action<object, Type> callback)
-    {
-        _activatedCallbacks.Add((instance, type, _) => callback(instance, type));
-    }
-
     /// <summary>
     /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
     /// immediately before that service's own <see cref="IDisposable.Dispose"/> call. Services are visited

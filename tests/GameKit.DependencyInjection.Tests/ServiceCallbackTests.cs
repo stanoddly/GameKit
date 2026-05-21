@@ -94,20 +94,6 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
-    public void OnActivated_ReceivesOwningProvider()
-    {
-        ServiceProvider? callbackProvider = null;
-
-        ServiceCollection collection = new();
-        collection.OnActivated((instance, type, provider) => callbackProvider = provider);
-        collection.AddSingleton<CallbackConcreteService>();
-
-        ServiceProvider provider = collection.BuildServiceProvider();
-
-        Assert.That(callbackProvider, Is.SameAs(provider));
-    }
-
-    [Test]
     public void OnDisposing_FiresBeforeOwnDispose()
     {
         List<string> events = new();

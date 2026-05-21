@@ -7,7 +7,7 @@ public class GameKitApp : IGameKitApp
     public ServiceProvider ServiceProvider { get; }
     private readonly UpdateRegistry _updateRegistry;
 
-    public GameKitApp(ServiceProvider serviceProvider, UpdateRegistry updateRegistry)
+    internal GameKitApp(ServiceProvider serviceProvider, UpdateRegistry updateRegistry)
     {
         ServiceProvider = serviceProvider;
         _updateRegistry = updateRegistry;

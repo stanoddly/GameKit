@@ -48,13 +48,24 @@ public class UpdateRegistryTests
     {
         ServiceCollection rootCollection = new();
         UpdateRegistry registry = new();
-        rootCollection.AddSingleton(registry);
-        rootCollection.RegisterUpdatables();
+        rootCollection.OnActivated((instance, _) =>
+        {
+            if (instance is IUpdatable updatable)
+            {
+                registry.Register(updatable);
+            }
+        });
+        rootCollection.OnDisposing((instance, _) =>
+        {
+            if (instance is IUpdatable updatable)
+            {
+                registry.Unregister(updatable);
+            }
+        });
         rootCollection.AddSingleton<RegistryTestUpdatable>(_ => new RegistryTestUpdatable());
         ServiceProvider rootProvider = rootCollection.BuildServiceProvider();
 
         ServiceCollection childCollection = new();
-        childCollection.RegisterUpdatables();
         childCollection.AddSingleton<ChildRegistryTestUpdatable>(_ => new ChildRegistryTestUpdatable());
         ServiceProvider childProvider = childCollection.BuildServiceProvider(rootProvider);
 

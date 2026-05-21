@@ -14,7 +14,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        this.RegisterUpdatables();
+        this.RegisterUpdatables(_updateRegistry);
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)

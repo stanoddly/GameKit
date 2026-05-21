@@ -1,8 +1,6 @@
-using GameKit.DependencyInjection;
-
 namespace GameKit.App;
 
-public sealed class UpdateRegistry
+internal sealed class UpdateRegistry
 {
     private readonly List<IUpdatable> _updatables = new();
     private readonly object _lock = new();
@@ -57,23 +55,15 @@ public sealed class UpdateRegistry
     }
 }
 
-public static class UpdateRegistryServiceCollectionExtensions
+internal static class UpdateRegistryServiceCollectionExtensions
 {
-    public static ServiceCollection RegisterUpdatables(this ServiceCollection services)
+    public static GameKitAppBuilder RegisterUpdatables(this GameKitAppBuilder services, UpdateRegistry updateRegistry)
     {
-        Dictionary<IUpdatable, UpdateRegistry> registrations = new(ReferenceEqualityComparer.Instance);
-        object registrationsLock = new();
-
-        services.OnActivated((instance, _, provider) =>
+        services.OnActivated((instance, _) =>
         {
             if (instance is IUpdatable updatable)
             {
-                UpdateRegistry updateRegistry = provider.GetRequiredService<UpdateRegistry>();
                 updateRegistry.Register(updatable);
-                lock (registrationsLock)
-                {
-                    registrations[updatable] = updateRegistry;
-                }
             }
         });
 
@@ -81,15 +71,6 @@ public static class UpdateRegistryServiceCollectionExtensions
         {
             if (instance is IUpdatable updatable)
             {
-                UpdateRegistry? updateRegistry;
-                lock (registrationsLock)
-                {
-                    if (!registrations.Remove(updatable, out updateRegistry))
-                    {
-                        return;
-                    }
-                }
-
                 updateRegistry.Unregister(updatable);
             }
         });

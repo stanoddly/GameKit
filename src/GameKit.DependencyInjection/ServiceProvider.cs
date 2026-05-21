@@ -88,6 +88,8 @@ public class ServiceProvider : IDisposable
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
+        _parent?.RunActivatedCallbacks(instance, type);
+
         if (_activatedCallbacks == null)
         {
             return;
@@ -95,7 +97,7 @@ public class ServiceProvider : IDisposable
 
         foreach (ServiceActivatedCallback callback in _activatedCallbacks)
         {
-            callback(instance, type, this);
+            callback(instance, type);
         }
     }
 
@@ -103,15 +105,15 @@ public class ServiceProvider : IDisposable
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        if (_disposingCallbacks == null)
+        if (_disposingCallbacks != null)
         {
-            return;
+            foreach (ServiceDisposingCallback callback in _disposingCallbacks)
+            {
+                callback(instance, type);
+            }
         }
 
-        foreach (ServiceDisposingCallback callback in _disposingCallbacks)
-        {
-            callback(instance, type);
-        }
+        _parent?.RunDisposingCallbacks(instance, type);
     }
 
     internal void FreezeServices()
@@ -391,10 +393,6 @@ public class ServiceProvider : IDisposable
 
         _disposed = true;
 
-        ServiceProvider? parent = _parent;
-        _parent = null;
-        parent?.RemoveChild(this);
-
         List<ServiceProvider>? children = _children;
         _children = null;
         if (children != null)
@@ -404,6 +402,8 @@ public class ServiceProvider : IDisposable
                 children[i].Dispose();
             }
         }
+
+        ServiceProvider? parent = _parent;
 
         // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
@@ -454,5 +454,7 @@ public class ServiceProvider : IDisposable
         _buildTimeResolver = null;
         _buildTimeTryResolver = null;
         _buildTimeCollectionResolver = null;
+        _parent = null;
+        parent?.RemoveChild(this);
     }
 }

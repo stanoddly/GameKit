@@ -33,6 +33,10 @@ public class ChildChainDisposable : IDisposable
     }
 }
 
+public class ParentChainCallbackService;
+
+public class ParentChainCallbackDisposable;
+
 public class DoubleDisposeTracker : IDisposable
 {
     public int DisposeCallCount { get; private set; }
@@ -549,6 +553,68 @@ public class ParentChainTests
         IMyService resolved = child.GetRequiredService<IMyService>();
 
         Assert.That(resolved, Is.SameAs(grandparent.GetRequiredService<IMyService>()));
+    }
+
+    [Test]
+    public void OnActivated_ParentCallbacksFireForChildOwnedServices()
+    {
+        List<string> activations = new();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.OnActivated((_, type) => activations.Add($"parent:{type.Name}"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton<ParentChainCallbackService>();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        Assert.That(child.GetRequiredService<ParentChainCallbackService>(), Is.Not.Null);
+        Assert.That(activations, Is.EqualTo(new[] { $"parent:{nameof(ParentChainCallbackService)}" }));
+    }
+
+    [Test]
+    public void OnActivated_InheritedCallbacksRunFromAncestorToChild()
+    {
+        List<string> activations = new();
+
+        ServiceCollection grandparentCollection = new();
+        grandparentCollection.OnActivated((_, _) => activations.Add("grandparent"));
+        ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.OnActivated((_, _) => activations.Add("parent"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+
+        ServiceCollection childCollection = new();
+        childCollection.OnActivated((_, _) => activations.Add("child"));
+        childCollection.AddSingleton<ParentChainCallbackService>();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        Assert.That(child.GetRequiredService<ParentChainCallbackService>(), Is.Not.Null);
+        Assert.That(activations, Is.EqualTo(new[] { "grandparent", "parent", "child" }));
+    }
+
+    [Test]
+    public void OnDisposing_InheritedCallbacksRunFromChildToAncestor()
+    {
+        List<string> callbacks = new();
+
+        ServiceCollection grandparentCollection = new();
+        grandparentCollection.OnDisposing((_, _) => callbacks.Add("grandparent"));
+        ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
+
+        ServiceCollection parentCollection = new();
+        parentCollection.OnDisposing((_, _) => callbacks.Add("parent"));
+        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+
+        ServiceCollection childCollection = new();
+        childCollection.OnDisposing((_, _) => callbacks.Add("child"));
+        childCollection.AddSingleton<ParentChainCallbackDisposable>();
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        child.Dispose();
+
+        Assert.That(callbacks, Is.EqualTo(new[] { "child", "parent", "grandparent" }));
     }
 
     private static T? GetPrivateField<T>(ServiceProvider provider, string fieldName)
