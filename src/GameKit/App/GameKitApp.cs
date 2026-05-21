@@ -5,12 +5,12 @@ namespace GameKit.App;
 public class GameKitApp : IGameKitApp
 {
     public ServiceProvider ServiceProvider { get; }
-    private readonly UpdateRegistry _updateRegistry;
+    private readonly UpdateLoop _updateLoop;
 
-    internal GameKitApp(ServiceProvider serviceProvider, UpdateRegistry updateRegistry)
+    internal GameKitApp(ServiceProvider serviceProvider, UpdateLoop updateLoop)
     {
         ServiceProvider = serviceProvider;
-        _updateRegistry = updateRegistry;
+        _updateLoop = updateLoop;
     }
 
     public T GetRequiredService<T>() where T : class
@@ -32,10 +32,7 @@ public class GameKitApp : IGameKitApp
             // then process events
             eventService.Process();
 
-            foreach (IUpdatable updatable in _updateRegistry.Snapshot())
-            {
-                updatable.Update();
-            }
+            _updateLoop.Update();
 
             if (appControl.QuitRequested)
             {
