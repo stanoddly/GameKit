@@ -230,7 +230,7 @@ public class RenderPass<TValidator> : IRenderPass
     {
         ThrowIfDisposed();
 
-        _validator.OnDrawPrimitive(this);
+        _validator.OnDrawPrimitive(this, firstInstance);
 
         unsafe
         {
@@ -269,7 +269,7 @@ public class RenderPass<TValidator> : IRenderPass
     {
         ThrowIfDisposed();
 
-        _validator.OnDrawIndexedPrimitive(this, indexCount, firstIndex);
+        _validator.OnDrawIndexedPrimitive(this, indexCount, firstIndex, vertexOffset, firstInstance);
 
         unsafe
         {

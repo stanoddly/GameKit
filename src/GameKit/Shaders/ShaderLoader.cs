@@ -27,14 +27,24 @@ public class ShaderLoader : IShaderLoader
         {
             if (_shaderFormats.Contains(shaderInstance.Format))
             {
-                return CreateShader(directory, shaderInstance, shaderMetadata.BindingLayout, shaderMetadata.Stage);
+                return CreateShader(
+                    directory,
+                    shaderInstance,
+                    shaderMetadata.BindingLayout,
+                    shaderMetadata.SystemValueInputs,
+                    shaderMetadata.Stage);
             }
         }
 
         throw new NotSupportedException("No compatible shader format found for this GPU.");
     }
 
-    private GraphicsShader CreateShader(string directory, ShaderInstance shaderInstance, ShaderBindingLayout shaderBindingLayout, ShaderStage shaderStage)
+    private GraphicsShader CreateShader(
+        string directory,
+        ShaderInstance shaderInstance,
+        ShaderBindingLayout shaderBindingLayout,
+        ShaderSystemValueInputs systemValueInputs,
+        ShaderStage shaderStage)
     {
         string path = Path.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(path);
@@ -68,7 +78,7 @@ public class ShaderLoader : IShaderLoader
 
                 GraphicsShader shader = shaderStage switch
                 {
-                    ShaderStage.Vertex => new VertexShader(_gpuDevice, sdlGpuShader, shaderBindingLayout),
+                    ShaderStage.Vertex => new VertexShader(_gpuDevice, sdlGpuShader, shaderBindingLayout, systemValueInputs),
                     ShaderStage.Fragment => new FragmentShader(_gpuDevice, sdlGpuShader, shaderBindingLayout),
                     _ => throw new InvalidOperationException($"Unsupported graphics shader stage: {shaderStage}")
                 };
