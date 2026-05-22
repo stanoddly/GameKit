@@ -8,20 +8,35 @@ public static class GameKitAppBuilderExtensions
 {
     public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IRenderContext
     {
-        builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<TRenderContext>(
-            sp.GetRequiredService<GpuMemorySystem>(),
-            sp.GetRequiredService<IRenderContextProvider<TRenderContext>>(),
-            sp.GetServices<IRenderPhase<TRenderContext>>()));
+        DefaultRenderManager<TRenderContext>? renderManager = null;
+        builder.OnActivated((instance, _) =>
+        {
+            if (renderManager != null && instance is IRenderPhase<TRenderContext> renderPhase)
+            {
+                renderManager.Register(renderPhase);
+            }
+        });
+        builder.OnDisposing((instance, _) =>
+        {
+            if (renderManager != null && instance is IRenderPhase<TRenderContext> renderPhase)
+            {
+                renderManager.Unregister(renderPhase);
+            }
+        });
+        builder.AddSingleton<IRenderManager>(sp =>
+        {
+            renderManager = new DefaultRenderManager<TRenderContext>(
+                sp.GetRequiredService<GpuMemorySystem>(),
+                sp.GetRequiredService<IRenderContextProvider<TRenderContext>>(),
+                sp.GetServices<IRenderPhase<TRenderContext>>());
+            return renderManager;
+        });
         return builder;
     }
 
     public static GameKitAppBuilder UseDefaultRenderManager(this GameKitAppBuilder builder)
     {
         builder.AddSingleton<IRenderContextProvider<DefaultRenderContext>, DefaultRenderContextProvider>();
-        builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<DefaultRenderContext>(
-            sp.GetRequiredService<GpuMemorySystem>(),
-            sp.GetRequiredService<IRenderContextProvider<DefaultRenderContext>>(),
-            sp.GetServices<IRenderPhase<DefaultRenderContext>>()));
-        return builder;
+        return builder.UseDefaultRenderManager<DefaultRenderContext>();
     }
 }

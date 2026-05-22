@@ -10,7 +10,7 @@ namespace GameKit.RenderOrchestration;
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IRenderContext
 {
-    private readonly IRenderPhase<TRenderContext>[] _renderers;
+    private readonly List<IRenderPhase<TRenderContext>?> _renderers = new();
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
 
@@ -18,11 +18,52 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
-        _renderers = renderers.OrderBy(r => r.Order).ToArray();
-        
-        if (_renderers.Length == 0)
+
+        foreach (IRenderPhase<TRenderContext> renderer in renderers)
         {
-            throw new ArgumentException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
+            Register(renderer);
+        }
+    }
+
+    public void Register(IRenderPhase<TRenderContext> renderer)
+    {
+        for (int i = 0; i < _renderers.Count; i++)
+        {
+            IRenderPhase<TRenderContext>? existingRenderer = _renderers[i];
+            if (ReferenceEquals(existingRenderer, renderer))
+            {
+                return;
+            }
+        }
+
+        int insertIndex = _renderers.Count;
+        for (int i = 0; i < _renderers.Count; i++)
+        {
+            IRenderPhase<TRenderContext>? existingRenderer = _renderers[i];
+            if (existingRenderer == null)
+            {
+                continue;
+            }
+
+            if (renderer.Order < existingRenderer.Order)
+            {
+                insertIndex = i;
+                break;
+            }
+        }
+
+        _renderers.Insert(insertIndex, renderer);
+    }
+
+    public void Unregister(IRenderPhase<TRenderContext> renderer)
+    {
+        for (int i = 0; i < _renderers.Count; i++)
+        {
+            if (ReferenceEquals(_renderers[i], renderer))
+            {
+                _renderers[i] = null;
+                return;
+            }
         }
     }
 
@@ -38,13 +79,38 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            foreach (IRenderPhase<TRenderContext> renderer in _renderers)
+            int rendererCount = _renderers.Count;
+            bool needsCompaction = false;
+            for (int i = 0; i < rendererCount; i++)
             {
+                IRenderPhase<TRenderContext>? renderer = _renderers[i];
+                if (renderer == null)
+                {
+                    needsCompaction = true;
+                    continue;
+                }
+
                 renderer.Render(renderContext);
+            }
+
+            if (needsCompaction)
+            {
+                Compact();
             }
             
             // submit all pending changes before renderContext is disposed
             _gpuMemorySystem.Submit();
+        }
+    }
+
+    private void Compact()
+    {
+        for (int i = _renderers.Count - 1; i >= 0; i--)
+        {
+            if (_renderers[i] == null)
+            {
+                _renderers.RemoveAt(i);
+            }
         }
     }
 }
