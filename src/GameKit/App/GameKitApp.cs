@@ -5,14 +5,10 @@ namespace GameKit.App;
 public class GameKitApp : IGameKitApp
 {
     public ServiceProvider ServiceProvider { get; }
-    private readonly List<IStartable> _startables;
-    private readonly List<IUpdatable> _updatables;
 
-    public GameKitApp(ServiceProvider serviceProvider, List<IStartable> startables, List<IUpdatable> updatables)
+    internal GameKitApp(ServiceProvider serviceProvider)
     {
         ServiceProvider = serviceProvider;
-        _startables = startables;
-        _updatables = updatables;
     }
 
     public T GetRequiredService<T>() where T : class
@@ -26,11 +22,7 @@ public class GameKitApp : IGameKitApp
         EventService eventService = ServiceProvider.GetRequiredService<EventService>();
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
-
-        for (int i = _startables.Count - 1; i >= 0; i--)
-        {
-            _startables[i].Start();
-        }
+        UpdateLoop updateLoop = ServiceProvider.GetRequiredService<UpdateLoop>();
 
         while (true)
         {
@@ -39,10 +31,7 @@ public class GameKitApp : IGameKitApp
             // then process events
             eventService.Process();
 
-            foreach (IUpdatable updatable in _updatables)
-            {
-                updatable.Update();
-            }
+            updateLoop.Update();
 
             if (appControl.QuitRequested)
             {

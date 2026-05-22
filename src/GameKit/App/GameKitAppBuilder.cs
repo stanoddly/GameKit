@@ -10,20 +10,29 @@ namespace GameKit.App;
 public class GameKitAppBuilder : ServiceCollection
 {
     private readonly FileSystemBuilder _fileSystemBuilder = new();
-    private readonly List<IStartable> _startables = new();
-    private readonly List<IUpdatable> _updatables = new();
 
     public GameKitAppBuilder()
     {
-        OnActivated((obj, _) =>
+        WireUpdatableLifecycle();
+    }
+
+    private void WireUpdatableLifecycle()
+    {
+        UpdateLoop updateLoop = new();
+        AddSingleton(updateLoop);
+        OnActivated((instance, _) =>
         {
-            if (obj is IStartable startable)
+            if (instance is IUpdatable updatable)
             {
-                _startables.Add(startable);
+                updateLoop.Register(updatable);
             }
-            if (obj is IUpdatable updatable)
+        });
+
+        OnDisposing((instance, _) =>
+        {
+            if (instance is IUpdatable updatable)
             {
-                _updatables.Add(updatable);
+                updateLoop.Unregister(updatable);
             }
         });
     }
@@ -135,6 +144,6 @@ public class GameKitAppBuilder : ServiceCollection
         }
 
         ServiceProvider serviceProvider = BuildServiceProvider();
-        return new GameKitApp(serviceProvider, _startables, _updatables);
+        return new GameKitApp(serviceProvider);
     }
 }

@@ -189,9 +189,9 @@ public class ServiceCollection
         ServiceProvider provider = new ServiceProvider(parent);
 
         List<ServiceActivatedCallback>? activatedCallbacks =
-            _activatedCallbacks.Count > 0 ? new List<ServiceActivatedCallback>(_activatedCallbacks) : null;
+            MergeCallbacks(parent?.ActivatedCallbacks, _activatedCallbacks, parentFirst: true);
         List<ServiceDisposingCallback>? disposingCallbacks =
-            _disposingCallbacks.Count > 0 ? new List<ServiceDisposingCallback>(_disposingCallbacks) : null;
+            MergeCallbacks(parent?.DisposingCallbacks, _disposingCallbacks, parentFirst: false);
         provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
@@ -361,6 +361,31 @@ public class ServiceCollection
                 break;
             }
         }
+    }
+
+    private static List<TCallback>? MergeCallbacks<TCallback>(
+        List<TCallback>? parentCallbacks,
+        List<TCallback> childCallbacks,
+        bool parentFirst)
+    {
+        int callbackCount = (parentCallbacks?.Count ?? 0) + childCallbacks.Count;
+        if (callbackCount == 0)
+        {
+            return null;
+        }
+
+        List<TCallback> callbacks = new(callbackCount);
+        if (parentFirst && parentCallbacks != null)
+        {
+            callbacks.AddRange(parentCallbacks);
+        }
+        callbacks.AddRange(childCallbacks);
+        if (!parentFirst && parentCallbacks != null)
+        {
+            callbacks.AddRange(parentCallbacks);
+        }
+
+        return callbacks;
     }
 
     private object? ResolveNonLastDescriptor(

@@ -82,6 +82,10 @@ public class ServiceProvider : IDisposable
         _disposingCallbacks = disposingCallbacks;
     }
 
+    internal List<ServiceActivatedCallback>? ActivatedCallbacks => _activatedCallbacks;
+
+    internal List<ServiceDisposingCallback>? DisposingCallbacks => _disposingCallbacks;
+
     // The [DynamicallyAccessedMembers] annotation on type preserves interface metadata
     // when called from generator-emitted code via typeof(T) where T carries the annotation.
     internal void RunActivatedCallbacks(
@@ -103,14 +107,12 @@ public class ServiceProvider : IDisposable
         object instance,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
-        if (_disposingCallbacks == null)
+        if (_disposingCallbacks != null)
         {
-            return;
-        }
-
-        foreach (ServiceDisposingCallback callback in _disposingCallbacks)
-        {
-            callback(instance, type);
+            foreach (ServiceDisposingCallback callback in _disposingCallbacks)
+            {
+                callback(instance, type);
+            }
         }
     }
 
