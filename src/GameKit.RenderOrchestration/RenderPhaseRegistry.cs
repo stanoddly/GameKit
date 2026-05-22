@@ -4,7 +4,6 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
     where TRenderContext : IRenderContext
 {
     private readonly List<IRenderPhase<TRenderContext>?> _renderPhases = new();
-    private bool _isRendering;
     private bool _dirty;
 
     public void Register(IRenderPhase<TRenderContext> renderPhase)
@@ -20,11 +19,6 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
 
         _renderPhases.Add(renderPhase);
         _dirty = true;
-
-        if (!_isRendering)
-        {
-            Normalize();
-        }
     }
 
     public void Unregister(IRenderPhase<TRenderContext> renderPhase)
@@ -35,10 +29,6 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
             {
                 _renderPhases[i] = null;
                 _dirty = true;
-                if (!_isRendering)
-                {
-                    Normalize();
-                }
                 return;
             }
         }
@@ -49,24 +39,15 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
         Normalize();
 
         int renderPhaseCount = _renderPhases.Count;
-        _isRendering = true;
-        try
+        for (int i = 0; i < renderPhaseCount; i++)
         {
-            for (int i = 0; i < renderPhaseCount; i++)
+            IRenderPhase<TRenderContext>? renderPhase = _renderPhases[i];
+            if (renderPhase == null)
             {
-                IRenderPhase<TRenderContext>? renderPhase = _renderPhases[i];
-                if (renderPhase == null)
-                {
-                    continue;
-                }
-
-                renderPhase.Render(renderContext);
+                continue;
             }
-        }
-        finally
-        {
-            _isRendering = false;
-            Normalize();
+
+            renderPhase.Render(renderContext);
         }
     }
 
