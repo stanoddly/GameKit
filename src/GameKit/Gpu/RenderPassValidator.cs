@@ -44,7 +44,7 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     /// Validates that the current render pass state is valid for drawing.
     /// Throws an exception if validation fails.
     /// </summary>
-    void OnDrawIndexedPrimitive(RenderPass<TSelfValidator> renderPass);
+    void OnDrawIndexedPrimitive(RenderPass<TSelfValidator> renderPass, uint indexCount, uint firstIndex);
 }
 
 /// <summary>
@@ -170,7 +170,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         ValidateDrawState(renderPass);
     }
 
-    public void OnDrawIndexedPrimitive(RenderPass<RenderPassValidator> renderPass)
+    public void OnDrawIndexedPrimitive(RenderPass<RenderPassValidator> renderPass, uint indexCount, uint firstIndex)
     {
         ValidateDrawState(renderPass);
 
@@ -182,6 +182,20 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         if (_indexBuffer.Size == 0)
         {
             throw new InvalidOperationException("Bound IndexBuffer is empty.");
+        }
+
+        if (firstIndex > _indexBuffer.Size)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(firstIndex),
+                $"First index {firstIndex} is outside the bound IndexBuffer size {_indexBuffer.Size}.");
+        }
+
+        if (indexCount > _indexBuffer.Size - firstIndex)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(indexCount),
+                $"Index count {indexCount} starting at {firstIndex} exceeds the bound IndexBuffer size {_indexBuffer.Size}.");
         }
     }
 
@@ -263,7 +277,7 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     {
     }
 
-    public void OnDrawIndexedPrimitive(RenderPass<NullRenderPassValidator> renderPass)
+    public void OnDrawIndexedPrimitive(RenderPass<NullRenderPassValidator> renderPass, uint indexCount, uint firstIndex)
     {
     }
 }

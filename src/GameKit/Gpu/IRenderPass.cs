@@ -27,6 +27,13 @@ public interface IRenderPass: IDisposable
     void DrawPrimitiveInstanced(uint instanceCount);
     void DrawPrimitiveInstanced(uint instanceCount, uint firstInstance);
     void DrawIndexedPrimitive();
+    void DrawIndexedPrimitive(uint indexCount, uint firstIndex = 0, int vertexOffset = 0);
     void DrawIndexedPrimitiveInstanced(uint instanceCount);
     void DrawIndexedPrimitiveInstanced(uint instanceCount, uint firstInstance);
+    void DrawIndexedPrimitiveInstanced(
+        uint indexCount,
+        uint instanceCount,
+        uint firstIndex,
+        int vertexOffset,
+        uint firstInstance);
 }

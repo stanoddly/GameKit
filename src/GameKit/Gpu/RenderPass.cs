@@ -240,7 +240,13 @@ public class RenderPass<TValidator> : IRenderPass
 
     public void DrawIndexedPrimitive()
     {
-        DrawIndexedPrimitiveInstanced(1);
+        uint indexCount = (uint)(_indexBuffer?.Size ?? 0);
+        DrawIndexedPrimitive(indexCount);
+    }
+
+    public void DrawIndexedPrimitive(uint indexCount, uint firstIndex = 0, int vertexOffset = 0)
+    {
+        DrawIndexedPrimitiveInstanced(indexCount, 1, firstIndex, vertexOffset, 0);
     }
 
     public void DrawIndexedPrimitiveInstanced(uint instanceCount)
@@ -250,14 +256,30 @@ public class RenderPass<TValidator> : IRenderPass
 
     public void DrawIndexedPrimitiveInstanced(uint instanceCount, uint firstInstance)
     {
+        uint indexCount = (uint)(_indexBuffer?.Size ?? 0);
+        DrawIndexedPrimitiveInstanced(indexCount, instanceCount, 0, 0, firstInstance);
+    }
+
+    public void DrawIndexedPrimitiveInstanced(
+        uint indexCount,
+        uint instanceCount,
+        uint firstIndex,
+        int vertexOffset,
+        uint firstInstance)
+    {
         ThrowIfDisposed();
 
-        _validator.OnDrawIndexedPrimitive(this);
+        _validator.OnDrawIndexedPrimitive(this, indexCount, firstIndex);
 
         unsafe
         {
-            uint indexCount = (uint)(_indexBuffer?.Size ?? 0);
-            SDL3.SDL_DrawGPUIndexedPrimitives(_nativePointer, indexCount, instanceCount, 0, 0, firstInstance);
+            SDL3.SDL_DrawGPUIndexedPrimitives(
+                _nativePointer,
+                indexCount,
+                instanceCount,
+                firstIndex,
+                vertexOffset,
+                firstInstance);
         }
     }
 
