@@ -72,22 +72,22 @@ public class DefaultRenderManagerTests
     }
 
     [Test]
-    public void UnregisterDuringRender_DoesNotSkipRemainingRenderPhases()
+    public void ChildProviderDisposeDuringRender_DoesNotSkipRemainingRootRenderPhases()
     {
         List<string> calls = new();
-        TestRenderContextProvider renderContextProvider = new();
-        DefaultRenderManager<TestRenderContext> renderManager = new(
-            new GpuMemorySystem(null!),
-            renderContextProvider,
-            Array.Empty<IRenderPhase<TestRenderContext>>());
-        TestRenderPhase secondPhase = new("second", calls);
-        SelfUnregisteringRenderPhase firstPhase = new("first", calls, renderManager);
-        renderManager.Register(firstPhase);
-        renderManager.Register(secondPhase);
+        GameKitAppBuilder builder = CreateBuilder(calls);
+        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
+        ServiceProvider parent = builder.BuildServiceProvider();
+        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+
+        ServiceProvider? child = null;
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new DisposingRenderPhase("child", calls, () => child!, 0));
+        child = childCollection.BuildServiceProvider(parent);
 
         renderManager.Execute();
 
-        Assert.That(calls, Is.EqualTo(new[] { "first", "second" }));
+        Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
 
     private static GameKitAppBuilder CreateBuilder(List<string> calls)
@@ -140,23 +140,24 @@ public class DefaultRenderManagerTests
         }
     }
 
-    private sealed class SelfUnregisteringRenderPhase : TestRenderPhase
+    private sealed class DisposingRenderPhase : TestRenderPhase
     {
-        private readonly DefaultRenderManager<TestRenderContext> _renderManager;
+        private readonly Func<ServiceProvider> _provider;
 
-        public SelfUnregisteringRenderPhase(
+        public DisposingRenderPhase(
             string name,
             List<string> calls,
-            DefaultRenderManager<TestRenderContext> renderManager)
-            : base(name, calls)
+            Func<ServiceProvider> provider,
+            int order)
+            : base(name, calls, order)
         {
-            _renderManager = renderManager;
+            _provider = provider;
         }
 
         public override void Render(TestRenderContext renderContext)
         {
             base.Render(renderContext);
-            _renderManager.Unregister(this);
+            _provider().Dispose();
         }
     }
 }
