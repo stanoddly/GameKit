@@ -26,6 +26,7 @@ public class ShaderBindingValidationException(string message) : Exception(messag
 public class SdlangCompiler
 {
     private const string GeneratedShaderDirectory = ".generated";
+    private const int MaxReflectionTraversalDepth = 64;
     private static readonly string SlangCompilerPath = GetSlangCompilerPath();
     private static readonly string SlangVersion = GetSlangVersion();
     
@@ -518,15 +519,24 @@ public class SdlangCompiler
         {
             foreach (JsonElement entryPoint in entryPoints.EnumerateArray())
             {
-                AnalyzeSystemValueInputs(entryPoint, ref usesVertexId, ref usesInstanceId);
+                AnalyzeSystemValueInputs(entryPoint, ref usesVertexId, ref usesInstanceId, 0);
             }
         }
 
         return new ShaderSystemValueInputs(usesVertexId, usesInstanceId);
     }
 
-    private static void AnalyzeSystemValueInputs(JsonElement element, ref bool usesVertexId, ref bool usesInstanceId)
+    private static void AnalyzeSystemValueInputs(
+        JsonElement element,
+        ref bool usesVertexId,
+        ref bool usesInstanceId,
+        int depth)
     {
+        if (depth > MaxReflectionTraversalDepth)
+        {
+            throw new ShaderCompilationException("Slang reflection JSON exceeds the maximum supported nesting depth.");
+        }
+
         if (element.ValueKind == JsonValueKind.Object)
         {
             if (element.TryGetProperty("semanticName", out JsonElement semanticNameElement))
@@ -544,14 +554,14 @@ public class SdlangCompiler
 
             foreach (JsonProperty property in element.EnumerateObject())
             {
-                AnalyzeSystemValueInputs(property.Value, ref usesVertexId, ref usesInstanceId);
+                AnalyzeSystemValueInputs(property.Value, ref usesVertexId, ref usesInstanceId, depth + 1);
             }
         }
         else if (element.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement item in element.EnumerateArray())
             {
-                AnalyzeSystemValueInputs(item, ref usesVertexId, ref usesInstanceId);
+                AnalyzeSystemValueInputs(item, ref usesVertexId, ref usesInstanceId, depth + 1);
             }
         }
     }

@@ -176,8 +176,6 @@ public class GraphicsPipelineBuilder
     {
         uint vertexTypeSizeBytes = (uint)Unsafe.SizeOf<TVertexType>();
 
-        SDL_GPUVertexInputRate inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX;
-        uint finalInstanceStepRate = 0;
         if (instanceStepRate.HasValue)
         {
             throw new NotSupportedException(
@@ -189,8 +187,8 @@ public class GraphicsPipelineBuilder
         SDL_GPUVertexBufferDescription sdlGpuVertexBufferDescription = new()
         {
             slot = bufferSlot,
-            input_rate = inputRate,
-            instance_step_rate = finalInstanceStepRate,
+            input_rate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
+            instance_step_rate = 0,
             pitch = vertexTypeSizeBytes
         };
         _info.SdlGpuVertexBufferDescriptions.Add(sdlGpuVertexBufferDescription);

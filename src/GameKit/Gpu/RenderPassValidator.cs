@@ -173,6 +173,8 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass, uint firstInstance)
     {
         ValidateDrawState(renderPass);
+        // SDL's first_vertex restriction is safe here because DrawPrimitive currently
+        // hardcodes first_vertex to 0 in RenderPass.DrawPrimitiveInstanced.
         ValidateSystemValueInputs(firstInstance);
     }
 
@@ -197,7 +199,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
             throw new InvalidOperationException("Bound IndexBuffer is empty.");
         }
 
-        if (firstIndex > _indexBuffer.Size)
+        if (firstIndex >= _indexBuffer.Size)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(firstIndex),

@@ -44,6 +44,7 @@ public class IndexedRenderPassRenderer : IRenderPhase<DefaultRenderContext>
 
         renderPass.DrawIndexedPrimitive(3, 0, 0);
         renderPass.DrawIndexedPrimitive(3, 3, 0);
+        // Reuses the same six index values against the second quad's vertex range.
         renderPass.DrawIndexedPrimitive(6, 0, 4);
 
         renderPass.BindGraphicsPipeline(_instancedPipeline);
