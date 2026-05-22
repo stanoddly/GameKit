@@ -5,8 +5,7 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
 {
     private readonly List<IRenderPhase<TRenderContext>?> _renderPhases = new();
     private bool _isRendering;
-    private bool _needsCompaction;
-    private bool _needsSort;
+    private bool _dirty;
 
     public void Register(IRenderPhase<TRenderContext> renderPhase)
     {
@@ -20,7 +19,7 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
         }
 
         _renderPhases.Add(renderPhase);
-        _needsSort = true;
+        _dirty = true;
 
         if (!_isRendering)
         {
@@ -35,7 +34,7 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
             if (ReferenceEquals(_renderPhases[i], renderPhase))
             {
                 _renderPhases[i] = null;
-                _needsCompaction = true;
+                _dirty = true;
                 if (!_isRendering)
                 {
                     Normalize();
@@ -73,23 +72,20 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
 
     private void Normalize()
     {
-        if (_needsCompaction)
+        if (!_dirty)
         {
-            for (int i = _renderPhases.Count - 1; i >= 0; i--)
+            return;
+        }
+
+        for (int i = _renderPhases.Count - 1; i >= 0; i--)
+        {
+            if (_renderPhases[i] == null)
             {
-                if (_renderPhases[i] == null)
-                {
-                    _renderPhases.RemoveAt(i);
-                }
+                _renderPhases.RemoveAt(i);
             }
-
-            _needsCompaction = false;
         }
 
-        if (_needsSort)
-        {
-            _renderPhases.Sort(static (left, right) => left!.Order.CompareTo(right!.Order));
-            _needsSort = false;
-        }
+        _renderPhases.Sort(static (left, right) => left!.Order.CompareTo(right!.Order));
+        _dirty = false;
     }
 }
