@@ -375,7 +375,7 @@ public class SdlangCompiler
         _ => type.ToString()
     };
 
-    private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources, uint threadCountX, uint threadCountY, uint threadCountZ) ParseReflectionData(
+    private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) ParseReflectionData(
         FileInfo reflectionFile)
     {
         string json = File.ReadAllText(reflectionFile.FullName);
@@ -426,6 +426,7 @@ public class SdlangCompiler
             }
         }
 
+        ShaderSystemValueInputs systemValueInputs = AnalyzeSystemValueInputs(root);
         ShaderUniformSlotSizes shaderUniformSlots = new();
 
         byte samplers = 0;
@@ -505,7 +506,54 @@ public class SdlangCompiler
         ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(
             new ShaderBindingCounts(samplers, storageTextures, storageBuffers, readWriteStorageTextures, readWriteStorageBuffers),
             shaderUniformSlots);
-        return (entryPoint, stage, shaderBindingLayout, threadCountX, threadCountY, threadCountZ);
+        return (entryPoint, stage, shaderBindingLayout, systemValueInputs, threadCountX, threadCountY, threadCountZ);
+    }
+
+    private static ShaderSystemValueInputs AnalyzeSystemValueInputs(JsonElement root)
+    {
+        bool usesVertexId = false;
+        bool usesInstanceId = false;
+
+        if (root.TryGetProperty("entryPoints", out JsonElement entryPoints))
+        {
+            foreach (JsonElement entryPoint in entryPoints.EnumerateArray())
+            {
+                AnalyzeSystemValueInputs(entryPoint, ref usesVertexId, ref usesInstanceId);
+            }
+        }
+
+        return new ShaderSystemValueInputs(usesVertexId, usesInstanceId);
+    }
+
+    private static void AnalyzeSystemValueInputs(JsonElement element, ref bool usesVertexId, ref bool usesInstanceId)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            if (element.TryGetProperty("semanticName", out JsonElement semanticNameElement))
+            {
+                string? semanticName = semanticNameElement.GetString();
+                if (string.Equals(semanticName, "SV_VERTEXID", StringComparison.OrdinalIgnoreCase))
+                {
+                    usesVertexId = true;
+                }
+                else if (string.Equals(semanticName, "SV_INSTANCEID", StringComparison.OrdinalIgnoreCase))
+                {
+                    usesInstanceId = true;
+                }
+            }
+
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                AnalyzeSystemValueInputs(property.Value, ref usesVertexId, ref usesInstanceId);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                AnalyzeSystemValueInputs(item, ref usesVertexId, ref usesInstanceId);
+            }
+        }
     }
 
     private static (int space, int index) GetBindingInfo(JsonElement param)
@@ -588,14 +636,6 @@ public class SdlangCompiler
             // TODO: error message
             _ => throw new ArgumentOutOfRangeException()
         };
-    }
-
-    private static ShaderSystemValueInputs AnalyzeSystemValueInputs(FileInfo filePath)
-    {
-        string source = File.ReadAllText(filePath.FullName);
-        return new ShaderSystemValueInputs(
-            source.Contains("SV_VertexID", StringComparison.Ordinal),
-            source.Contains("SV_InstanceID", StringComparison.Ordinal));
     }
 
     private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
@@ -716,15 +756,11 @@ public class SdlangCompiler
             (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
-            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
+            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
 
             // Step 3: Update shader instances with correct entry point
             shaderInstances = shaderInstances.Select(instance =>
                 new ShaderInstanceDto(instance.Format, instance.Filename, entryPoint)).ToList();
-
-            ShaderSystemValueInputs systemValueInputs = stage == ShaderStageDto.Vertex
-                ? AnalyzeSystemValueInputs(filePath)
-                : default;
 
             // Step 4: Write metadata
             WriteMetadata(
