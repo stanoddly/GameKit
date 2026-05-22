@@ -83,19 +83,10 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     public void Render(TRenderContext renderContext)
     {
         bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
-        IReadOnlyList<IView?> views = _viewRegistry.Views;
-        int viewCount = views.Count;
-        bool needsCompaction = false;
+        ReadOnlySpan<IView> views = _viewRegistry.Views;
 
-        for (int i = 0; i < viewCount; i++)
+        foreach (IView view in views)
         {
-            IView? view = views[i];
-            if (view == null)
-            {
-                needsCompaction = true;
-                continue;
-            }
-
             needsBuild |= view.ConsumeDirty();
         }
 
@@ -103,14 +94,8 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         {
             _pencil.FocusClaimedThisFrame = false;
 
-            for (int i = 0; i < viewCount; i++)
+            foreach (IView view in views)
             {
-                IView? view = views[i];
-                if (view == null)
-                {
-                    continue;
-                }
-
                 view.Build(_pencil);
             }
 
@@ -127,11 +112,6 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
 
             _pencil.CycleInstructions();
-        }
-
-        if (needsCompaction)
-        {
-            _viewRegistry.Compact();
         }
 
         bool hasFocus = _pencil.HasFocus;

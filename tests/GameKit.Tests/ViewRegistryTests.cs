@@ -31,9 +31,7 @@ public class ViewRegistryTests
         childCollection.AddSingleton<IView>(new TestView("child"));
         using ServiceProvider child = childCollection.BuildServiceProvider(root);
 
-        Assert.That(
-            viewRegistry.Views.Where(v => v != null).Cast<TestView>().Select(v => v.Name),
-            Is.EqualTo(new[] { "child" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "child" }));
     }
 
     [Test]
@@ -63,9 +61,8 @@ public class ViewRegistryTests
         ServiceProvider child = childCollection.BuildServiceProvider(root);
 
         child.Dispose();
-        viewRegistry.Compact();
 
-        Assert.That(viewRegistry.Views, Is.Empty);
+        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
@@ -91,9 +88,7 @@ public class ViewRegistryTests
         });
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        Assert.That(
-            viewRegistry.Views.Where(v => v != null).Cast<TestView>().Select(v => v.Name),
-            Is.EqualTo(new[] { "root" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "root" }));
     }
 
     [Test]
@@ -127,11 +122,8 @@ public class ViewRegistryTests
         using ServiceProvider child2 = child2Collection.BuildServiceProvider(root);
 
         child1.Dispose();
-        viewRegistry.Compact();
 
-        Assert.That(
-            viewRegistry.Views.Where(v => v != null).Cast<TestView>().Select(v => v.Name),
-            Is.EqualTo(new[] { "child2" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "child2" }));
     }
 
     [Test]
@@ -143,7 +135,18 @@ public class ViewRegistryTests
         viewRegistry.Add(view);
         viewRegistry.Add(view);
 
-        Assert.That(viewRegistry.Views, Has.Count.EqualTo(1));
+        Assert.That(viewRegistry.Views.Length, Is.EqualTo(1));
+    }
+
+    private static string[] ViewNames(ViewRegistry viewRegistry)
+    {
+        ReadOnlySpan<IView> views = viewRegistry.Views;
+        string[] names = new string[views.Length];
+        for (int i = 0; i < views.Length; i++)
+        {
+            names[i] = ((TestView)views[i]).Name;
+        }
+        return names;
     }
 
     private sealed class TestView : IView

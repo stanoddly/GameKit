@@ -1,11 +1,13 @@
+using System.Runtime.InteropServices;
+
 namespace GameKit.Pencuil;
 
 public class ViewRegistry
 {
-    private readonly List<IView?> _views = new();
+    private readonly List<IView> _views = new();
     private bool _dirty;
 
-    public IReadOnlyList<IView?> Views => _views;
+    public ReadOnlySpan<IView> Views => CollectionsMarshal.AsSpan(_views);
 
     public void Add(IView view)
     {
@@ -27,7 +29,7 @@ public class ViewRegistry
         {
             if (ReferenceEquals(_views[i], view))
             {
-                _views[i] = null;
+                _views.RemoveAt(i);
                 _dirty = true;
                 return;
             }
@@ -45,14 +47,4 @@ public class ViewRegistry
         return false;
     }
 
-    public void Compact()
-    {
-        for (int i = _views.Count - 1; i >= 0; i--)
-        {
-            if (_views[i] == null)
-            {
-                _views.RemoveAt(i);
-            }
-        }
-    }
 }
