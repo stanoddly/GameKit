@@ -10,20 +10,18 @@ namespace GameKit.RenderOrchestration;
 public class DefaultRenderManager<TRenderContext> : IRenderManager
     where TRenderContext: IRenderContext
 {
-    private readonly IRenderPhase<TRenderContext>[] _renderers;
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
+    private readonly RenderPhaseRegistry<TRenderContext> _renderPhaseRegistry;
 
-    public DefaultRenderManager(GpuMemorySystem gpuMemorySystem, IRenderContextProvider<TRenderContext> renderContextProvider, IEnumerable<IRenderPhase<TRenderContext>> renderers)
+    internal DefaultRenderManager(
+        GpuMemorySystem gpuMemorySystem,
+        IRenderContextProvider<TRenderContext> renderContextProvider,
+        RenderPhaseRegistry<TRenderContext> renderPhaseRegistry)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
-        _renderers = renderers.OrderBy(r => r.Order).ToArray();
-        
-        if (_renderers.Length == 0)
-        {
-            throw new ArgumentException($"No instances of {typeof(IRenderPhase<TRenderContext>).FullName} were registered");
-        }
+        _renderPhaseRegistry = renderPhaseRegistry;
     }
 
     /// <summary>
@@ -38,10 +36,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            foreach (IRenderPhase<TRenderContext> renderer in _renderers)
-            {
-                renderer.Render(renderContext);
-            }
+            _renderPhaseRegistry.Render(renderContext);
             
             // submit all pending changes before renderContext is disposed
             _gpuMemorySystem.Submit();

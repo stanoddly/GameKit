@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
     </ItemGroup>
 
 </Project>
