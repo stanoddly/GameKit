@@ -90,6 +90,26 @@ public class DefaultRenderManagerTests
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
 
+    [Test]
+    public void ChildProviderBuildDuringRender_AddsRenderPhaseForNextFrame()
+    {
+        List<string> calls = new();
+        GameKitAppBuilder builder = CreateBuilder(calls);
+        ServiceProvider? parent = null;
+        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new ChildProviderBuildingRenderPhase("root", calls, () => parent!, 0));
+        parent = builder.BuildServiceProvider();
+        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+
+        renderManager.Execute();
+
+        Assert.That(calls, Is.EqualTo(new[] { "root" }));
+
+        calls.Clear();
+        renderManager.Execute();
+
+        Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
+    }
+
     private static GameKitAppBuilder CreateBuilder(List<string> calls)
     {
         GameKitAppBuilder builder = new();
@@ -132,6 +152,8 @@ public class DefaultRenderManagerTests
             Order = order;
         }
 
+        protected List<string> Calls => _calls;
+
         public int Order { get; }
 
         public virtual void Render(TestRenderContext renderContext)
@@ -158,6 +180,36 @@ public class DefaultRenderManagerTests
         {
             base.Render(renderContext);
             _provider().Dispose();
+        }
+    }
+
+    private sealed class ChildProviderBuildingRenderPhase : TestRenderPhase
+    {
+        private readonly Func<ServiceProvider> _parentProvider;
+        private ServiceProvider? _child;
+
+        public ChildProviderBuildingRenderPhase(
+            string name,
+            List<string> calls,
+            Func<ServiceProvider> parentProvider,
+            int order)
+            : base(name, calls, order)
+        {
+            _parentProvider = parentProvider;
+        }
+
+        public override void Render(TestRenderContext renderContext)
+        {
+            base.Render(renderContext);
+
+            if (_child != null)
+            {
+                return;
+            }
+
+            ServiceCollection childCollection = new();
+            childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", Calls, -10));
+            _child = childCollection.BuildServiceProvider(_parentProvider());
         }
     }
 }

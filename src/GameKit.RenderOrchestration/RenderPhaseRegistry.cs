@@ -4,6 +4,9 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
     where TRenderContext : IRenderContext
 {
     private readonly List<IRenderPhase<TRenderContext>?> _renderPhases = new();
+    private bool _isRendering;
+    private bool _needsCompaction;
+    private bool _needsSort;
 
     public void Register(IRenderPhase<TRenderContext> renderPhase)
     {
@@ -16,23 +19,13 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
             }
         }
 
-        int insertIndex = _renderPhases.Count;
-        for (int i = 0; i < _renderPhases.Count; i++)
+        _renderPhases.Add(renderPhase);
+        _needsSort = true;
+
+        if (!_isRendering)
         {
-            IRenderPhase<TRenderContext>? existingRenderPhase = _renderPhases[i];
-            if (existingRenderPhase == null)
-            {
-                continue;
-            }
-
-            if (renderPhase.Order < existingRenderPhase.Order)
-            {
-                insertIndex = i;
-                break;
-            }
+            Normalize();
         }
-
-        _renderPhases.Insert(insertIndex, renderPhase);
     }
 
     public void Unregister(IRenderPhase<TRenderContext> renderPhase)
@@ -42,6 +35,11 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
             if (ReferenceEquals(_renderPhases[i], renderPhase))
             {
                 _renderPhases[i] = null;
+                _needsCompaction = true;
+                if (!_isRendering)
+                {
+                    Normalize();
+                }
                 return;
             }
         }
@@ -49,34 +47,49 @@ internal sealed class RenderPhaseRegistry<TRenderContext>
 
     public void Render(TRenderContext renderContext)
     {
+        Normalize();
+
         int renderPhaseCount = _renderPhases.Count;
-        bool needsCompaction = false;
-        for (int i = 0; i < renderPhaseCount; i++)
+        _isRendering = true;
+        try
         {
-            IRenderPhase<TRenderContext>? renderPhase = _renderPhases[i];
-            if (renderPhase == null)
+            for (int i = 0; i < renderPhaseCount; i++)
             {
-                needsCompaction = true;
-                continue;
+                IRenderPhase<TRenderContext>? renderPhase = _renderPhases[i];
+                if (renderPhase == null)
+                {
+                    continue;
+                }
+
+                renderPhase.Render(renderContext);
             }
-
-            renderPhase.Render(renderContext);
         }
-
-        if (needsCompaction)
+        finally
         {
-            Compact();
+            _isRendering = false;
+            Normalize();
         }
     }
 
-    private void Compact()
+    private void Normalize()
     {
-        for (int i = _renderPhases.Count - 1; i >= 0; i--)
+        if (_needsCompaction)
         {
-            if (_renderPhases[i] == null)
+            for (int i = _renderPhases.Count - 1; i >= 0; i--)
             {
-                _renderPhases.RemoveAt(i);
+                if (_renderPhases[i] == null)
+                {
+                    _renderPhases.RemoveAt(i);
+                }
             }
+
+            _needsCompaction = false;
+        }
+
+        if (_needsSort)
+        {
+            _renderPhases.Sort(static (left, right) => left!.Order.CompareTo(right!.Order));
+            _needsSort = false;
         }
     }
 }
