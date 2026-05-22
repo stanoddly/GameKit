@@ -38,13 +38,9 @@ public class ViewRegistry
 
     public bool ConsumeDirty()
     {
-        if (_dirty)
-        {
-            _dirty = false;
-            return true;
-        }
-
-        return false;
+        bool dirty = _dirty;
+        _dirty = false;
+        return dirty;
     }
 
 }
