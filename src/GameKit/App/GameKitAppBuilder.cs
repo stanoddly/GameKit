@@ -13,9 +13,28 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
+        WireUpdatableLifecycle();
+    }
+
+    private void WireUpdatableLifecycle()
+    {
         UpdateLoop updateLoop = new();
         AddSingleton(updateLoop);
-        this.RegisterUpdatables(updateLoop);
+        OnActivated((instance, _) =>
+        {
+            if (instance is IUpdatable updatable)
+            {
+                updateLoop.Register(updatable);
+            }
+        });
+
+        OnDisposing((instance, _) =>
+        {
+            if (instance is IUpdatable updatable)
+            {
+                updateLoop.Unregister(updatable);
+            }
+        });
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)

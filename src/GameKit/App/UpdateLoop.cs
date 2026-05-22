@@ -4,8 +4,6 @@ internal sealed class UpdateLoop
 {
     private readonly List<IUpdatable?> _updatables = new();
 
-    public int Count { get; private set; }
-
     public void Register(IUpdatable updatable)
     {
         for (int i = 0; i < _updatables.Count; i++)
@@ -17,7 +15,6 @@ internal sealed class UpdateLoop
         }
 
         _updatables.Add(updatable);
-        Count++;
     }
 
     public void Unregister(IUpdatable updatable)
@@ -27,7 +24,7 @@ internal sealed class UpdateLoop
             if (ReferenceEquals(_updatables[i], updatable))
             {
                 _updatables[i] = null;
-                Count--;
+                return;
             }
         }
     }
@@ -63,30 +60,5 @@ internal sealed class UpdateLoop
                 _updatables.RemoveAt(i);
             }
         }
-
-    }
-}
-
-internal static class UpdateLoopServiceCollectionExtensions
-{
-    public static GameKitAppBuilder RegisterUpdatables(this GameKitAppBuilder services, UpdateLoop updateLoop)
-    {
-        services.OnActivated((instance, _) =>
-        {
-            if (instance is IUpdatable updatable)
-            {
-                updateLoop.Register(updatable);
-            }
-        });
-
-        services.OnDisposing((instance, _) =>
-        {
-            if (instance is IUpdatable updatable)
-            {
-                updateLoop.Unregister(updatable);
-            }
-        });
-
-        return services;
     }
 }
