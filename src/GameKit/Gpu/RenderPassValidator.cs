@@ -37,14 +37,19 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     /// Validates that the current render pass state is valid for drawing.
     /// Throws an exception if validation fails.
     /// </summary>
-    void OnDrawPrimitive(RenderPass<TSelfValidator> renderPass);
+    void OnDrawPrimitive(RenderPass<TSelfValidator> renderPass, uint firstInstance);
 
     /// <summary>
     /// Called when an indexed primitive draw is requested.
     /// Validates that the current render pass state is valid for drawing.
     /// Throws an exception if validation fails.
     /// </summary>
-    void OnDrawIndexedPrimitive(RenderPass<TSelfValidator> renderPass);
+    void OnDrawIndexedPrimitive(
+        RenderPass<TSelfValidator> renderPass,
+        uint indexCount,
+        uint firstIndex,
+        int vertexOffset,
+        uint firstInstance);
 }
 
 /// <summary>
@@ -165,14 +170,24 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     {
     }
 
-    public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass)
+    public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass, uint firstInstance)
     {
         ValidateDrawState(renderPass);
+        // SDL's first_vertex restriction is safe here because DrawPrimitive currently
+        // hardcodes first_vertex to 0 in RenderPass.DrawPrimitiveInstanced.
+        ValidateSystemValueInputs(firstInstance);
     }
 
-    public void OnDrawIndexedPrimitive(RenderPass<RenderPassValidator> renderPass)
+    public void OnDrawIndexedPrimitive(
+        RenderPass<RenderPassValidator> renderPass,
+        uint indexCount,
+        uint firstIndex,
+        int vertexOffset,
+        uint firstInstance)
     {
         ValidateDrawState(renderPass);
+        ValidateSystemValueInputs(firstInstance);
+        ValidateVertexOffset(vertexOffset);
 
         if (_indexBuffer == null)
         {
@@ -182,6 +197,20 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         if (_indexBuffer.Size == 0)
         {
             throw new InvalidOperationException("Bound IndexBuffer is empty.");
+        }
+
+        if (firstIndex >= _indexBuffer.Size)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(firstIndex),
+                $"First index {firstIndex} is outside the bound IndexBuffer size {_indexBuffer.Size}.");
+        }
+
+        if (indexCount > _indexBuffer.Size - firstIndex)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(indexCount),
+                $"Index count {indexCount} starting at {firstIndex} exceeds the bound IndexBuffer size {_indexBuffer.Size}.");
         }
     }
 
@@ -226,6 +255,42 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.VertexShader.BindingLayout.UniformSlotSizes,
             _commandBuffer.VertexShaderUniformSlotSizes);
     }
+
+    private void ValidateSystemValueInputs(uint firstInstance)
+    {
+        if (_graphicsPipeline == null)
+        {
+            return;
+        }
+
+        if (_graphicsPipeline.VertexShader.SystemValueInputs.UsesInstanceId && firstInstance != 0)
+        {
+            // SDL GPU: "first_vertex and first_instance parameters are NOT compatible
+            // with built-in vertex/instance ID variables in shaders".
+            // https://wiki.libsdl.org/SDL3/SDL_DrawGPUIndexedPrimitives
+            throw new InvalidOperationException(
+                "firstInstance must be 0 when the bound vertex shader uses SV_InstanceID. " +
+                "SDL GPU does not define built-in instance IDs consistently for non-zero firstInstance values.");
+        }
+    }
+
+    private void ValidateVertexOffset(int vertexOffset)
+    {
+        if (_graphicsPipeline == null)
+        {
+            return;
+        }
+
+        if (_graphicsPipeline.VertexShader.SystemValueInputs.UsesVertexId && vertexOffset != 0)
+        {
+            // SDL GPU: "first_vertex and first_instance parameters are NOT compatible
+            // with built-in vertex/instance ID variables in shaders".
+            // https://wiki.libsdl.org/SDL3/SDL_DrawGPUIndexedPrimitives
+            throw new InvalidOperationException(
+                "vertexOffset must be 0 when the bound vertex shader uses SV_VertexID. " +
+                "SDL GPU does not define built-in vertex IDs consistently for non-zero vertex offset values.");
+        }
+    }
 }
 
 /// <summary>
@@ -259,11 +324,16 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     {
     }
 
-    public void OnDrawPrimitive(RenderPass<NullRenderPassValidator> renderPass)
+    public void OnDrawPrimitive(RenderPass<NullRenderPassValidator> renderPass, uint firstInstance)
     {
     }
 
-    public void OnDrawIndexedPrimitive(RenderPass<NullRenderPassValidator> renderPass)
+    public void OnDrawIndexedPrimitive(
+        RenderPass<NullRenderPassValidator> renderPass,
+        uint indexCount,
+        uint firstIndex,
+        int vertexOffset,
+        uint firstInstance)
     {
     }
 }

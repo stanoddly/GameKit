@@ -40,6 +40,7 @@
     <Project Path="tutorials/GameKit.Tutorials.Hotbar/GameKit.Tutorials.Hotbar.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Instancing/GameKit.Tutorials.Instancing.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.IndexBuffer/GameKit.Tutorials.IndexBuffer.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.IndexedRenderPass/GameKit.Tutorials.IndexedRenderPass.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.FileDialogs/GameKit.Tutorials.FileDialogs.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.TextInput/GameKit.Tutorials.TextInput.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.WindowConfiguration/GameKit.Tutorials.WindowConfiguration.csproj" />

@@ -40,6 +40,20 @@ public class SdlangCompilerTests
                                                          }
                                                          """;
 
+    private const string VertexShaderWithSystemValueInputs = """
+                                                            struct VertexInput {
+                                                                float3 position : POSITION;
+                                                                uint vertexId : SV_VertexID;
+                                                                uint instanceId : SV_InstanceID;
+                                                            };
+
+                                                            [shader("vertex")]
+                                                            float4 main(VertexInput input) : SV_POSITION
+                                                            {
+                                                                return float4(input.position.xy, float(input.vertexId + input.instanceId), 1.0);
+                                                            }
+                                                            """;
+
     private const string ValidFragmentShaderWithBindings = """
                                                            struct FragmentInput {
                                                                float4 position : SV_Position;
@@ -223,9 +237,30 @@ public class SdlangCompilerTests
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
         Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
         Assert.That(metadata.SourceHash, Is.Not.Empty);
+        Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.False);
+        Assert.That(metadata.SystemValueInputs.UsesInstanceId, Is.False);
 
         using JsonDocument document = JsonDocument.Parse(json);
         Assert.That(document.RootElement.TryGetProperty("threadCountX", out JsonElement _), Is.False);
+    }
+
+    [Test]
+    public void CompileShader_VertexShaderWithSystemValueInputs_CreatesSystemValueMetadata()
+    {
+        string shaderPath = Path.Combine(_testDir, "system_values.slang");
+        File.WriteAllText(shaderPath, VertexShaderWithSystemValueInputs);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.Combine(_testDir, ".generated", "system_values.metadata.json");
+        string json = File.ReadAllText(metadataPath);
+
+        VertexShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
+
+        Assert.That(metadata, Is.Not.Null);
+        Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.True);
+        Assert.That(metadata.SystemValueInputs.UsesInstanceId, Is.True);
     }
 
     [Test]

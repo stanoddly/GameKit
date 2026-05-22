@@ -13,7 +13,11 @@ public abstract class GraphicsShader: IDisposable
     internal ShaderStage Stage { get; }
     public ShaderBindingLayout BindingLayout { get; }
 
-    private protected GraphicsShader(GpuDevice gpuDevice, Pointer<SDL_GPUShader> pointer, ShaderStage stage, ShaderBindingLayout bindingLayout)
+    private protected GraphicsShader(
+        GpuDevice gpuDevice,
+        Pointer<SDL_GPUShader> pointer,
+        ShaderStage stage,
+        ShaderBindingLayout bindingLayout)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
@@ -30,10 +34,17 @@ public abstract class GraphicsShader: IDisposable
 
 public sealed class VertexShader: GraphicsShader
 {
-    internal VertexShader(GpuDevice gpuDevice, Pointer<SDL_GPUShader> pointer, ShaderBindingLayout bindingLayout)
+    internal VertexShader(
+        GpuDevice gpuDevice,
+        Pointer<SDL_GPUShader> pointer,
+        ShaderBindingLayout bindingLayout,
+        ShaderSystemValueInputs systemValueInputs)
         : base(gpuDevice, pointer, ShaderStage.Vertex, bindingLayout)
     {
+        SystemValueInputs = systemValueInputs;
     }
+
+    public ShaderSystemValueInputs SystemValueInputs { get; }
 }
 
 public sealed class FragmentShader: GraphicsShader

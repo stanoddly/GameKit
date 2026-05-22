@@ -176,25 +176,19 @@ public class GraphicsPipelineBuilder
     {
         uint vertexTypeSizeBytes = (uint)Unsafe.SizeOf<TVertexType>();
 
-        SDL_GPUVertexInputRate inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX;
-        uint finalInstanceStepRate = 0;
         if (instanceStepRate.HasValue)
         {
-            if (instanceStepRate.Value < 1)
-            {
-                throw new ArgumentException("instanceStepRate must be greater than zero!");
-            }
-
-            finalInstanceStepRate = (uint)instanceStepRate.Value;
-            inputRate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_INSTANCE;
+            throw new NotSupportedException(
+                "SDL GPU currently requires vertex buffer instance_step_rate to be 0. " +
+                "Use SV_InstanceID with storage buffers for instancing, and keep firstInstance at 0 when the shader depends on SV_InstanceID.");
         }
 
         uint bufferSlot = (uint)_info.SdlGpuVertexBufferDescriptions.Count;
         SDL_GPUVertexBufferDescription sdlGpuVertexBufferDescription = new()
         {
             slot = bufferSlot,
-            input_rate = inputRate,
-            instance_step_rate = finalInstanceStepRate,
+            input_rate = SDL_GPUVertexInputRate.SDL_GPU_VERTEXINPUTRATE_VERTEX,
+            instance_step_rate = 0,
             pitch = vertexTypeSizeBytes
         };
         _info.SdlGpuVertexBufferDescriptions.Add(sdlGpuVertexBufferDescription);
@@ -454,7 +448,9 @@ public class GraphicsPipelineBuilder
                     }
                 };
 
-                var pipeline = SDL3.SDL_CreateGPUGraphicsPipeline(_gpuDevice.SdlGpuDevice, &sdlGpuGraphicsPipelineCreateInfo);
+                SDL_GPUGraphicsPipeline* pipeline = SDL3.SDL_CreateGPUGraphicsPipeline(
+                    _gpuDevice.SdlGpuDevice,
+                    &sdlGpuGraphicsPipelineCreateInfo);
                 if (pipeline == null)
                 {
                     throw new GameKitInitializationException(

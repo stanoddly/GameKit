@@ -50,7 +50,7 @@ public readonly struct ShaderFormats
     // TODO: params
     public ShaderFormats(Span<ShaderFormat> formats)
     {
-        foreach (var format in formats)
+        foreach (ShaderFormat format in formats)
         {
             _flags |= (uint)format;
         }
@@ -83,5 +83,6 @@ public class GraphicsShaderMetadata
 {
     public required ShaderStage Stage { get; init; }
     public required ShaderBindingLayout BindingLayout { get; init; }
+    public ShaderSystemValueInputs SystemValueInputs { get; init; }
     public required List<ShaderInstance> Shaders { get; init; }
 }

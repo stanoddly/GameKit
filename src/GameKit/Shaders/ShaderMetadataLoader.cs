@@ -79,6 +79,7 @@ public class GraphicsShaderMetadataLoader
         {
             Stage = ShaderStage.Vertex,
             BindingLayout = dto.BindingLayout,
+            SystemValueInputs = dto.SystemValueInputs,
             Shaders = ConvertShaderInstances(dto.Shaders)
         };
     }
