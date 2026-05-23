@@ -5,51 +5,32 @@ namespace GameKit.App;
 public class SceneManager : IDisposable
 {
     private readonly ServiceProvider _rootProvider;
-    private readonly Dictionary<string, ServiceProvider> _scenes = new();
+    private ServiceProvider? _sceneProvider;
 
     public SceneManager(ServiceProvider rootProvider)
     {
         _rootProvider = rootProvider;
     }
 
-    public void Load(string name, Action<ServiceCollection> configure)
-    {
-        Unload(name);
-        ServiceCollection collection = new();
-        configure(collection);
-        _scenes[name] = collection.BuildServiceProvider(_rootProvider);
-    }
-
-    public void Unload(string name)
-    {
-        if (_scenes.Remove(name, out ServiceProvider? provider))
-        {
-            provider.Dispose();
-        }
-    }
-
     public void Load(Action<ServiceCollection> configure)
     {
-        Load("default", configure);
+        Unload();
+        ServiceCollection collection = new();
+        configure(collection);
+        _sceneProvider = collection.BuildServiceProvider(_rootProvider);
     }
 
     public void Unload()
     {
-        Unload("default");
-    }
-
-    public void UnloadAll()
-    {
-        foreach (ServiceProvider provider in _scenes.Values)
+        if (_sceneProvider != null)
         {
-            provider.Dispose();
+            _sceneProvider.Dispose();
+            _sceneProvider = null;
         }
-
-        _scenes.Clear();
     }
 
     public void Dispose()
     {
-        UnloadAll();
+        Unload();
     }
 }
