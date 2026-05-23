@@ -1,3 +1,4 @@
+using GameKit.App;
 using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Pencuil;
@@ -50,7 +51,7 @@ public class MenuView : IView
         {
             _activeScene = "A";
             _dirty = true;
-            _sceneManager.LoadScene(services =>
+            _sceneManager.Load(services =>
             {
                 services.AddSingleton<IView>(new SceneView("Scene A", new Color(70, 130, 180, 255)));
             });
@@ -60,7 +61,7 @@ public class MenuView : IView
         {
             _activeScene = "B";
             _dirty = true;
-            _sceneManager.LoadScene(services =>
+            _sceneManager.Load(services =>
             {
                 services.AddSingleton<IView>(new SceneView("Scene B", new Color(180, 100, 70, 255)));
             });

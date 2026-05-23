@@ -11,10 +11,10 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRenderManager()
             .UsePencuil()
+            .UseScenes()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
         builder.AddSingleton(new AppConfig { Size = (960, 540), Title = "Scene Switching" });
-        builder.AddSingleton<SceneManager>();
         builder.AddSingleton<IView, MenuView>();
 
         using IGameKitApp gameKitApp = builder.Build();

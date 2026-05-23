@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- `docs/class-registration.md` - ServiceCollection/ServiceProvider API: registration overloads, source generator requirements, lifecycle, aliases, multi-registration
+- `docs/class-registration.md` - ServiceCollection/ServiceProvider API: registration overloads, source generator requirements, lifecycle, aliases, multi-registration, parent/child provider callback merging and scoped lifecycles
 - `docs/events.md` - GameKit.Events EventBus, event handlers, publishing, and DI auto-subscription
 - `docs/static-factory-methods.md` - Static Create() method pattern
 - `docs/componentize.md` - GameKit.Componentize setup and usage
