@@ -7,7 +7,7 @@ namespace GameKit.Tests;
 public class SceneManagerTests
 {
     [Test]
-    public void Load_RegistersSceneServicesViaParentCallbacks()
+    public void Load_DoesNotApplyImmediately()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
@@ -18,11 +18,27 @@ public class SceneManagerTests
             services.AddSingleton<IView>(new TestView("scene"));
         });
 
+        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Load_AppliesOnUpdate()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.Load(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+        sceneManager.Update();
+
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
     }
 
     [Test]
-    public void Load_DisposePreviousScene()
+    public void Load_MultipleBeforeUpdate_LastWins()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
@@ -32,28 +48,67 @@ public class SceneManagerTests
         {
             services.AddSingleton<IView>(new TestView("first"));
         });
-
         sceneManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
+        sceneManager.Update();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
 
     [Test]
-    public void Unload_DisposesSceneServices()
+    public void Load_DisposesPreviousSceneOnUpdate()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         SceneManager sceneManager = new(root);
 
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("first"));
+        });
+
         sceneManager.Load(services =>
+        {
+            services.AddSingleton<IView>(new TestView("second"));
+        });
+        sceneManager.Update();
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
+    }
+
+    [Test]
+    public void Unload_DoesNotApplyImmediately()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
         {
             services.AddSingleton<IView>(new TestView("scene"));
         });
 
         sceneManager.Unload();
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+    }
+
+    [Test]
+    public void Unload_AppliesOnUpdate()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+
+        sceneManager.Unload();
+        sceneManager.Update();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
@@ -64,11 +119,86 @@ public class SceneManagerTests
         ServiceProvider root = BuildRootProvider(new ViewRegistry());
         SceneManager sceneManager = new(root);
 
-        Assert.DoesNotThrow(() => sceneManager.Unload());
+        sceneManager.Unload();
+
+        Assert.DoesNotThrow(() => sceneManager.Update());
+    }
+
+    [Test]
+    public void Load_CancelsPendingUnload()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("first"));
+        });
+
+        sceneManager.Unload();
+        sceneManager.Load(services =>
+        {
+            services.AddSingleton<IView>(new TestView("second"));
+        });
+        sceneManager.Update();
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
+    }
+
+    [Test]
+    public void Unload_CancelsPendingLoad()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.Load(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+        sceneManager.Unload();
+        sceneManager.Update();
+
+        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Update_WithNoPending_DoesNothing()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+
+        sceneManager.Update();
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
     }
 
     [Test]
     public void Dispose_UnloadsActiveScene()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+
+        sceneManager.Dispose();
+
+        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Dispose_ClearsPendingLoad()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
@@ -80,12 +210,48 @@ public class SceneManagerTests
         });
 
         sceneManager.Dispose();
+        sceneManager.Update();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
-    public void Load_SceneServicesCanResolveRootServices()
+    public void LoadImmediately_RegistersSceneServicesViaParentCallbacks()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("scene"));
+        });
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+    }
+
+    [Test]
+    public void LoadImmediately_DisposesPreviousScene()
+    {
+        ViewRegistry viewRegistry = new();
+        ServiceProvider root = BuildRootProvider(viewRegistry);
+        SceneManager sceneManager = new(root);
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("first"));
+        });
+
+        sceneManager.LoadImmediately(services =>
+        {
+            services.AddSingleton<IView>(new TestView("second"));
+        });
+
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
+    }
+
+    [Test]
+    public void LoadImmediately_SceneServicesCanResolveRootServices()
     {
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(new AppConfig { Title = "test" });
@@ -93,7 +259,7 @@ public class SceneManagerTests
         SceneManager sceneManager = new(root);
 
         AppConfig? resolved = null;
-        sceneManager.Load(services =>
+        sceneManager.LoadImmediately(services =>
         {
             services.AddSingleton<IView>(sp =>
             {
@@ -107,18 +273,18 @@ public class SceneManagerTests
     }
 
     [Test]
-    public void Load_DisposesSceneOwnedDisposables()
+    public void UnloadImmediately_DisposesSceneOwnedDisposables()
     {
         ServiceProvider root = BuildRootProvider(new ViewRegistry());
         SceneManager sceneManager = new(root);
 
         DisposableService disposable = new();
-        sceneManager.Load(services =>
+        sceneManager.LoadImmediately(services =>
         {
             services.AddSingleton(disposable);
         });
 
-        sceneManager.Unload();
+        sceneManager.UnloadImmediately();
 
         Assert.That(disposable.IsDisposed, Is.True);
     }
