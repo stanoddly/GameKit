@@ -2,7 +2,7 @@ using GameKit.DependencyInjection;
 
 namespace GameKit.App;
 
-public class SceneManager : IUpdatable, IDisposable
+public class SceneManager : IDisposable
 {
     private readonly ServiceProvider _rootProvider;
     private ServiceProvider? _sceneProvider;
@@ -43,7 +43,7 @@ public class SceneManager : IUpdatable, IDisposable
         }
     }
 
-    public void Update()
+    internal void ApplyPendingTransition()
     {
         if (_pendingLoad != null)
         {

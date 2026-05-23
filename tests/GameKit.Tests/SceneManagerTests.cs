@@ -32,7 +32,7 @@ public class SceneManagerTests
         {
             services.AddSingleton<IView>(new TestView("scene"));
         });
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
     }
@@ -52,7 +52,7 @@ public class SceneManagerTests
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
@@ -73,7 +73,7 @@ public class SceneManagerTests
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
@@ -108,7 +108,7 @@ public class SceneManagerTests
         });
 
         sceneManager.Unload();
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
@@ -121,7 +121,7 @@ public class SceneManagerTests
 
         sceneManager.Unload();
 
-        Assert.DoesNotThrow(() => sceneManager.Update());
+        Assert.DoesNotThrow(() => sceneManager.ApplyPendingTransition());
     }
 
     [Test]
@@ -141,7 +141,7 @@ public class SceneManagerTests
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
@@ -158,7 +158,7 @@ public class SceneManagerTests
             services.AddSingleton<IView>(new TestView("scene"));
         });
         sceneManager.Unload();
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
@@ -175,7 +175,7 @@ public class SceneManagerTests
             services.AddSingleton<IView>(new TestView("scene"));
         });
 
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
     }
@@ -210,7 +210,7 @@ public class SceneManagerTests
         });
 
         sceneManager.Dispose();
-        sceneManager.Update();
+        sceneManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }

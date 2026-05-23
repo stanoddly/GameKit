@@ -23,11 +23,13 @@ public class GameKitApp : IGameKitApp
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
         UpdateLoop updateLoop = ServiceProvider.GetRequiredService<UpdateLoop>();
+        SceneManager? sceneManager = ServiceProvider.GetService<SceneManager>();
 
         while (true)
         {
             // in the very beginning of the frame adjust time and delta
             frameContext.StartFrame();
+            sceneManager?.ApplyPendingTransition();
             // then process events
             eventService.Process();
 
