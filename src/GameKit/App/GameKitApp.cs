@@ -27,7 +27,7 @@ public class GameKitApp : IGameKitApp
 
         while (true)
         {
-            // in the very beginning of the frame adjust time and delta
+            // start the frame before applying queued stage transitions
             frameContext.StartFrame();
             stageManager.ApplyPendingTransition();
             // then process events

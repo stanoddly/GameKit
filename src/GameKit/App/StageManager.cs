@@ -15,6 +15,8 @@ internal sealed class StageManager : IStageManager, IDisposable
 
     public void Load(Action<ServiceCollection> configure)
     {
+        ArgumentNullException.ThrowIfNull(configure);
+
         _pendingLoad = configure;
     }
 

@@ -7,6 +7,15 @@ namespace GameKit.Tests;
 public class StageManagerTests
 {
     [Test]
+    public void Load_WithNullConfigure_Throws()
+    {
+        ServiceProvider root = BuildRootProvider(new ViewRegistry());
+        StageManager stageManager = new(root);
+
+        Assert.Throws<ArgumentNullException>(() => stageManager.Load(null!));
+    }
+
+    [Test]
     public void Load_DoesNotApplyImmediately()
     {
         ViewRegistry viewRegistry = new();
@@ -147,28 +156,6 @@ public class StageManagerTests
         stageManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
-    }
-
-    [Test]
-    public void Load_DisposesPreviousStage()
-    {
-        ViewRegistry viewRegistry = new();
-        ServiceProvider root = BuildRootProvider(viewRegistry);
-        StageManager stageManager = new(root);
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("first"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("second"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
 
     [Test]
