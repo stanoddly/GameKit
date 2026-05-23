@@ -23,11 +23,13 @@ public class GameKitApp : IGameKitApp
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
         UpdateLoop updateLoop = ServiceProvider.GetRequiredService<UpdateLoop>();
+        StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
         while (true)
         {
-            // in the very beginning of the frame adjust time and delta
+            // start the frame before applying queued stage transitions
             frameContext.StartFrame();
+            stageManager.ApplyPendingTransition();
             // then process events
             eventService.Process();
 

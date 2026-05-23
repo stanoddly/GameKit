@@ -4,7 +4,7 @@ using GameKit.Gpu;
 using GameKit.Pencuil;
 using GameKit.Text;
 
-namespace GameKit.Tutorials.SceneSwitching;
+namespace GameKit.Tutorials.StageSwitching;
 
 public class MenuView : IView
 {
@@ -20,14 +20,14 @@ public class MenuView : IView
     private const int ButtonGap = 16;
     private const int TopMargin = 24;
 
-    private readonly SceneManager _sceneManager;
+    private readonly IStageManager _stageManager;
     private readonly Font _font;
-    private string? _activeScene;
+    private string? _activeStage;
     private bool _dirty = true;
 
-    public MenuView(SceneManager sceneManager, IFontSystem fontSystem)
+    public MenuView(IStageManager stageManager, IFontSystem fontSystem)
     {
-        _sceneManager = sceneManager;
+        _stageManager = stageManager;
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
     }
 
@@ -47,23 +47,23 @@ public class MenuView : IView
         int startX = pencil.Center.X - totalWidth / 2;
         int y = TopMargin;
 
-        if (DrawSceneButton(pencil, startX, y, "Scene A", _activeScene == "A"))
+        if (DrawStageButton(pencil, startX, y, "Stage A", _activeStage == "A"))
         {
-            _activeScene = "A";
+            _activeStage = "A";
             _dirty = true;
-            _sceneManager.Load(services =>
+            _stageManager.Load(services =>
             {
-                services.AddSingleton<IView>(new SceneView("Scene A", new Color(70, 130, 180, 255)));
+                services.AddSingleton<IView>(new StageView("Stage A", new Color(70, 130, 180, 255)));
             });
         }
 
-        if (DrawSceneButton(pencil, startX + ButtonWidth + ButtonGap, y, "Scene B", _activeScene == "B"))
+        if (DrawStageButton(pencil, startX + ButtonWidth + ButtonGap, y, "Stage B", _activeStage == "B"))
         {
-            _activeScene = "B";
+            _activeStage = "B";
             _dirty = true;
-            _sceneManager.Load(services =>
+            _stageManager.Load(services =>
             {
-                services.AddSingleton<IView>(new SceneView("Scene B", new Color(180, 100, 70, 255)));
+                services.AddSingleton<IView>(new StageView("Stage B", new Color(180, 100, 70, 255)));
             });
         }
     }
@@ -85,7 +85,7 @@ public class MenuView : IView
         return state;
     }
 
-    private bool DrawSceneButton(Pencil pencil, int x, int y, string text, bool active)
+    private bool DrawStageButton(Pencil pencil, int x, int y, string text, bool active)
     {
         Color color = active ? ActiveButtonColor : ButtonColor;
         Color hoverColor = active ? ActiveButtonHoverColor : ButtonHoverColor;
