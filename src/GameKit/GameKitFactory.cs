@@ -45,10 +45,10 @@ public class GameKitFactory: IDisposable
 
     internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
     {
-        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless);
+        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false)
+    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
     {
         EnsureSdlInitialized();
 
@@ -83,6 +83,11 @@ public class GameKitFactory: IDisposable
         if (borderless)
         {
             windowFlags |= SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
+        }
+
+        if (alwaysOnTop)
+        {
+            windowFlags |= SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP;
         }
 
         Pointer<SDL_Window> sdlWindow;

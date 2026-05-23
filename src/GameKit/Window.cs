@@ -101,6 +101,42 @@ internal class Window : IWindow
         }
     }
 
+    public bool SupportsAlwaysOnTop
+    {
+        get
+        {
+            string? videoDriver = GetCurrentVideoDriver();
+            return !string.Equals(videoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public bool AlwaysOnTop
+    {
+        get
+        {
+            unsafe
+            {
+                return (SDL3.SDL_GetWindowFlags(SdlWindow) & SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP) != 0;
+            }
+        }
+        set
+        {
+            unsafe
+            {
+                if (SDL3.SDL_SetWindowAlwaysOnTop(SdlWindow, value) == false)
+                {
+                    throw new GameKitException($"SDL_SetWindowAlwaysOnTop failed: {SDL3.SDL_GetError()}");
+                }
+            }
+        }
+    }
+
+    private static unsafe string? GetCurrentVideoDriver()
+    {
+        byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
+        return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
+    }
+
     public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
         swapchainTexture = default!;
