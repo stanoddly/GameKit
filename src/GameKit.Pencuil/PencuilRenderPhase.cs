@@ -82,8 +82,8 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public void Render(TRenderContext renderContext)
     {
-        bool needsBuild = _pencil.NeedsUpdate;
-        IReadOnlyList<IView> views = _viewRegistry.Views;
+        bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
+        ReadOnlySpan<IView> views = _viewRegistry.Views;
 
         foreach (IView view in views)
         {
