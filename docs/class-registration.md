@@ -129,7 +129,7 @@ Registers a callback that runs after all services are constructed but before the
 ```csharp
 services.OnStart(sp =>
 {
-    sp.GetRequiredService<SceneLoader>().LoadInitialScene();
+    sp.GetRequiredService<StageLoader>().LoadInitialStage();
 });
 ```
 
@@ -140,7 +140,7 @@ services.OnStart(sp =>
 Convenience overload that resolves the delegate's parameters as services.
 
 ```csharp
-services.OnStart((SceneLoader loader) => loader.LoadInitialScene());
+services.OnStart((StageLoader loader) => loader.LoadInitialStage());
 ```
 
 ---
@@ -197,7 +197,7 @@ ServiceProvider child = childServices.BuildServiceProvider(parent: provider);
 
 ## Parent/Child Providers
 
-`BuildServiceProvider(parent)` creates a child provider that inherits from a parent. This is the mechanism behind scoped lifetimes such as scene management — a scene creates a child provider, and disposing the child cleanly tears down only the scene's services.
+`BuildServiceProvider(parent)` creates a child provider that inherits from a parent. This is the mechanism behind scoped lifetimes such as stage management — a stage creates a child provider, and disposing the child cleanly tears down only the stage's services.
 
 ### Service resolution
 
@@ -208,13 +208,13 @@ ServiceCollection rootCollection = new();
 rootCollection.AddSingleton(new AppConfig());
 ServiceProvider root = rootCollection.BuildServiceProvider();
 
-ServiceCollection sceneCollection = new();
-sceneCollection.AddSingleton<IView>(new GameplayView());
-ServiceProvider scene = sceneCollection.BuildServiceProvider(parent: root);
+ServiceCollection stageCollection = new();
+stageCollection.AddSingleton<IView>(new GameplayView());
+ServiceProvider stage = stageCollection.BuildServiceProvider(parent: root);
 
-// scene can resolve both its own and parent services
-AppConfig config = scene.GetRequiredService<AppConfig>();
-IView view = scene.GetRequiredService<IView>();
+// stage can resolve both its own and parent services
+AppConfig config = stage.GetRequiredService<AppConfig>();
+IView view = stage.GetRequiredService<IView>();
 ```
 
 ### Service collections (`GetServices<T>`)
@@ -243,12 +243,12 @@ rootCollection.OnDisposing((instance, _) =>
 ServiceProvider root = rootCollection.BuildServiceProvider();
 
 // Child inherits the hooks — PhysicsSystem is auto-registered with UpdateLoop
-ServiceCollection sceneCollection = new();
-sceneCollection.AddSingleton<IUpdatable, PhysicsSystem>();
-ServiceProvider scene = sceneCollection.BuildServiceProvider(parent: root);
+ServiceCollection stageCollection = new();
+stageCollection.AddSingleton<IUpdatable, PhysicsSystem>();
+ServiceProvider stage = stageCollection.BuildServiceProvider(parent: root);
 
 // Disposing the child auto-unregisters PhysicsSystem from UpdateLoop
-scene.Dispose();
+stage.Dispose();
 ```
 
 ### Disposal

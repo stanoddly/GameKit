@@ -4,76 +4,77 @@ using GameKit.Pencuil;
 
 namespace GameKit.Tests;
 
-public class SceneManagerTests
+public class StageManagerTests
 {
     [Test]
     public void Load_DoesNotApplyImmediately()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
-    public void Load_AppliesOnUpdate()
+    public void Load_AppliesOnPendingTransition()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
-        sceneManager.ApplyPendingTransition();
+        stageManager.ApplyPendingTransition();
 
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
     }
 
     [Test]
-    public void Load_MultipleBeforeUpdate_LastWins()
+    public void Load_MultipleBeforePendingTransition_LastWins()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("first"));
         });
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.ApplyPendingTransition();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
 
     [Test]
-    public void Load_DisposesPreviousSceneOnUpdate()
+    public void Load_DisposesPreviousStageOnPendingTransition()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("first"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.ApplyPendingTransition();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
@@ -83,45 +84,47 @@ public class SceneManagerTests
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.Unload();
+        stageManager.Unload();
 
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
     }
 
     [Test]
-    public void Unload_AppliesOnUpdate()
+    public void Unload_AppliesOnPendingTransition()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.Unload();
-        sceneManager.ApplyPendingTransition();
+        stageManager.Unload();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
-    public void Unload_WhenNoSceneLoaded_DoesNotThrow()
+    public void Unload_WhenNoStageLoaded_DoesNotThrow()
     {
         ServiceProvider root = BuildRootProvider(new ViewRegistry());
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Unload();
+        stageManager.Unload();
 
-        Assert.DoesNotThrow(() => sceneManager.ApplyPendingTransition());
+        Assert.DoesNotThrow(stageManager.ApplyPendingTransition);
     }
 
     [Test]
@@ -129,19 +132,20 @@ public class SceneManagerTests
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("first"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.Unload();
-        sceneManager.Load(services =>
+        stageManager.Unload();
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
-        sceneManager.ApplyPendingTransition();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
@@ -151,48 +155,50 @@ public class SceneManagerTests
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
-        sceneManager.Unload();
-        sceneManager.ApplyPendingTransition();
+        stageManager.Unload();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
-    public void Update_WithNoPending_DoesNothing()
+    public void ApplyPendingTransition_WithNoPending_DoesNothing()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.ApplyPendingTransition();
+        stageManager.ApplyPendingTransition();
 
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
     }
 
     [Test]
-    public void Dispose_UnloadsActiveScene()
+    public void Dispose_UnloadsActiveStage()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.Dispose();
+        stageManager.Dispose();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
@@ -202,89 +208,95 @@ public class SceneManagerTests
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.Load(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
 
-        sceneManager.Dispose();
-        sceneManager.ApplyPendingTransition();
+        stageManager.Dispose();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
     }
 
     [Test]
-    public void LoadImmediately_RegistersSceneServicesViaParentCallbacks()
+    public void Load_RegistersStageServicesViaParentCallbacksOnPendingTransition()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
-            services.AddSingleton<IView>(new TestView("scene"));
+            services.AddSingleton<IView>(new TestView("stage"));
         });
+        stageManager.ApplyPendingTransition();
 
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "scene" }));
+        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
     }
 
     [Test]
-    public void LoadImmediately_DisposesPreviousScene()
+    public void Load_DisposesPreviousStage()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("first"));
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(new TestView("second"));
         });
+        stageManager.ApplyPendingTransition();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
     }
 
     [Test]
-    public void LoadImmediately_SceneServicesCanResolveRootServices()
+    public void Load_StageServicesCanResolveRootServices()
     {
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(new AppConfig { Title = "test" });
         ServiceProvider root = rootCollection.BuildServiceProvider();
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
         AppConfig? resolved = null;
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton<IView>(sp =>
             {
                 resolved = sp.GetRequiredService<AppConfig>();
-                return new TestView("scene");
+                return new TestView("stage");
             });
         });
+        stageManager.ApplyPendingTransition();
 
         Assert.That(resolved, Is.Not.Null);
         Assert.That(resolved!.Title, Is.EqualTo("test"));
     }
 
     [Test]
-    public void UnloadImmediately_DisposesSceneOwnedDisposables()
+    public void Unload_DisposesStageOwnedDisposables()
     {
         ServiceProvider root = BuildRootProvider(new ViewRegistry());
-        SceneManager sceneManager = new(root);
+        StageManager stageManager = new(root);
 
         DisposableService disposable = new();
-        sceneManager.LoadImmediately(services =>
+        stageManager.Load(services =>
         {
             services.AddSingleton(disposable);
         });
+        stageManager.ApplyPendingTransition();
 
-        sceneManager.UnloadImmediately();
+        stageManager.Unload();
+        stageManager.ApplyPendingTransition();
 
         Assert.That(disposable.IsDisposed, Is.True);
     }

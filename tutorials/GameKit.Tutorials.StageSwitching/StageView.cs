@@ -1,24 +1,24 @@
 using GameKit.Gpu;
 using GameKit.Pencuil;
 
-namespace GameKit.Tutorials.SceneSwitching;
+namespace GameKit.Tutorials.StageSwitching;
 
-public class SceneView : IView, IDisposable
+public class StageView : IView, IDisposable
 {
     private readonly string _name;
     private readonly Color _color;
     private bool _dirty = true;
 
-    public SceneView(string name, Color color)
+    public StageView(string name, Color color)
     {
         _name = name;
         _color = color;
-        Console.WriteLine($"SceneView created: {_name}");
+        Console.WriteLine($"StageView created: {_name}");
     }
 
     public void Dispose()
     {
-        Console.WriteLine($"SceneView disposed: {_name}");
+        Console.WriteLine($"StageView disposed: {_name}");
     }
 
     public bool ConsumeDirty()

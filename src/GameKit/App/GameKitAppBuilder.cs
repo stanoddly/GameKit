@@ -138,6 +138,9 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<UpdateSystem>();
         AddSingleton<TimerSystem>();
 
+        AddSingleton<StageManager>();
+        AddAlias<IStageManager, StageManager>();
+
         if (!IsRegistered<IImageLoader>())
         {
             AddSingleton<IImageLoader, SdlImageLoader>();
