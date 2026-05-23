@@ -129,7 +129,10 @@ Registers a callback that runs after all services are constructed but before the
 ```csharp
 services.OnStart(sp =>
 {
-    sp.GetRequiredService<StageLoader>().LoadInitialStage();
+    sp.GetRequiredService<IStageManager>().Load(stage =>
+    {
+        stage.AddSingleton<IView, GameplayView>();
+    });
 });
 ```
 
@@ -140,7 +143,13 @@ services.OnStart(sp =>
 Convenience overload that resolves the delegate's parameters as services.
 
 ```csharp
-services.OnStart((StageLoader loader) => loader.LoadInitialStage());
+services.OnStart((IStageManager stages) =>
+{
+    stages.Load(stage =>
+    {
+        stage.AddSingleton<IView, GameplayView>();
+    });
+});
 ```
 
 ---

@@ -7,7 +7,6 @@ internal sealed class StageManager : IStageManager, IDisposable
     private readonly ServiceProvider _rootProvider;
     private ServiceProvider? _stageProvider;
     private Action<ServiceCollection>? _pendingLoad;
-    private bool _pendingUnload;
 
     public StageManager(ServiceProvider rootProvider)
     {
@@ -17,13 +16,6 @@ internal sealed class StageManager : IStageManager, IDisposable
     public void Load(Action<ServiceCollection> configure)
     {
         _pendingLoad = configure;
-        _pendingUnload = false;
-    }
-
-    public void Unload()
-    {
-        _pendingLoad = null;
-        _pendingUnload = true;
     }
 
     internal void ApplyPendingTransition()
@@ -33,11 +25,6 @@ internal sealed class StageManager : IStageManager, IDisposable
             Action<ServiceCollection> configure = _pendingLoad;
             ClearPendingTransition();
             ReplaceStage(configure);
-        }
-        else if (_pendingUnload)
-        {
-            ClearPendingTransition();
-            UnloadActiveStage();
         }
     }
 
@@ -67,6 +54,5 @@ internal sealed class StageManager : IStageManager, IDisposable
     private void ClearPendingTransition()
     {
         _pendingLoad = null;
-        _pendingUnload = false;
     }
 }

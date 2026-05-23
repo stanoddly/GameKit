@@ -80,94 +80,6 @@ public class StageManagerTests
     }
 
     [Test]
-    public void Unload_DoesNotApplyImmediately()
-    {
-        ViewRegistry viewRegistry = new();
-        ServiceProvider root = BuildRootProvider(viewRegistry);
-        StageManager stageManager = new(root);
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("stage"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        stageManager.Unload();
-
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "stage" }));
-    }
-
-    [Test]
-    public void Unload_AppliesOnPendingTransition()
-    {
-        ViewRegistry viewRegistry = new();
-        ServiceProvider root = BuildRootProvider(viewRegistry);
-        StageManager stageManager = new(root);
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("stage"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        stageManager.Unload();
-        stageManager.ApplyPendingTransition();
-
-        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void Unload_WhenNoStageLoaded_DoesNotThrow()
-    {
-        ServiceProvider root = BuildRootProvider(new ViewRegistry());
-        StageManager stageManager = new(root);
-
-        stageManager.Unload();
-
-        Assert.DoesNotThrow(stageManager.ApplyPendingTransition);
-    }
-
-    [Test]
-    public void Load_CancelsPendingUnload()
-    {
-        ViewRegistry viewRegistry = new();
-        ServiceProvider root = BuildRootProvider(viewRegistry);
-        StageManager stageManager = new(root);
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("first"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        stageManager.Unload();
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("second"));
-        });
-        stageManager.ApplyPendingTransition();
-
-        Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "second" }));
-    }
-
-    [Test]
-    public void Unload_CancelsPendingLoad()
-    {
-        ViewRegistry viewRegistry = new();
-        ServiceProvider root = BuildRootProvider(viewRegistry);
-        StageManager stageManager = new(root);
-
-        stageManager.Load(services =>
-        {
-            services.AddSingleton<IView>(new TestView("stage"));
-        });
-        stageManager.Unload();
-        stageManager.ApplyPendingTransition();
-
-        Assert.That(viewRegistry.Views.Length, Is.EqualTo(0));
-    }
-
-    [Test]
     public void ApplyPendingTransition_WithNoPending_DoesNothing()
     {
         ViewRegistry viewRegistry = new();
@@ -186,7 +98,7 @@ public class StageManagerTests
     }
 
     [Test]
-    public void Dispose_UnloadsActiveStage()
+    public void Dispose_DisposesActiveStage()
     {
         ViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
@@ -283,7 +195,7 @@ public class StageManagerTests
     }
 
     [Test]
-    public void Unload_DisposesStageOwnedDisposables()
+    public void Load_DisposesPreviousStageOwnedDisposables()
     {
         ServiceProvider root = BuildRootProvider(new ViewRegistry());
         StageManager stageManager = new(root);
@@ -295,7 +207,10 @@ public class StageManagerTests
         });
         stageManager.ApplyPendingTransition();
 
-        stageManager.Unload();
+        stageManager.Load(services =>
+        {
+            services.AddSingleton<IView>(new TestView("next"));
+        });
         stageManager.ApplyPendingTransition();
 
         Assert.That(disposable.IsDisposed, Is.True);
