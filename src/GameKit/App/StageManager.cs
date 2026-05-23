@@ -23,14 +23,14 @@ internal sealed class StageManager : IStageManager, IDisposable
         if (_pendingLoad != null)
         {
             Action<ServiceCollection> configure = _pendingLoad;
-            ClearPendingTransition();
+            _pendingLoad = null;
             ReplaceStage(configure);
         }
     }
 
     public void Dispose()
     {
-        ClearPendingTransition();
+        _pendingLoad = null;
         UnloadActiveStage();
     }
 
@@ -51,8 +51,4 @@ internal sealed class StageManager : IStageManager, IDisposable
         }
     }
 
-    private void ClearPendingTransition()
-    {
-        _pendingLoad = null;
-    }
 }
