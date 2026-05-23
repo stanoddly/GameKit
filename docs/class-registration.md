@@ -195,6 +195,72 @@ ServiceProvider provider = services.BuildServiceProvider();
 ServiceProvider child = childServices.BuildServiceProvider(parent: provider);
 ```
 
+## Parent/Child Providers
+
+`BuildServiceProvider(parent)` creates a child provider that inherits from a parent. This is the mechanism behind scoped lifetimes such as scene management — a scene creates a child provider, and disposing the child cleanly tears down only the scene's services.
+
+### Service resolution
+
+A child provider flattens the parent's service array into its own at freeze time. Child registrations override parent registrations for the same type (last-wins). After freezing, resolution is a single array lookup — there is no parent traversal at runtime.
+
+```csharp
+ServiceCollection rootCollection = new();
+rootCollection.AddSingleton(new AppConfig());
+ServiceProvider root = rootCollection.BuildServiceProvider();
+
+ServiceCollection sceneCollection = new();
+sceneCollection.AddSingleton<IView>(new GameplayView());
+ServiceProvider scene = sceneCollection.BuildServiceProvider(parent: root);
+
+// scene can resolve both its own and parent services
+AppConfig config = scene.GetRequiredService<AppConfig>();
+IView view = scene.GetRequiredService<IView>();
+```
+
+### Service collections (`GetServices<T>`)
+
+Multi-registrations compose across the hierarchy: parent entries appear first, followed by child entries. This is the opposite of single-service resolution (where child wins) — collections accumulate.
+
+### Callback merging
+
+`OnActivated` and `OnDisposing` callbacks registered on the parent's `ServiceCollection` are **merged into the child provider**. When the child provider constructs a service, the parent's `OnActivated` callbacks fire first, then the child's own. When the child provider disposes, its `OnDisposing` callbacks fire first, then the parent's.
+
+This means child services automatically participate in any lifecycle hooks the parent set up. For example, `GameKitAppBuilder` registers `OnActivated` callbacks that add `IUpdatable` services to the `UpdateLoop` and `IView` services to the `ViewRegistry`. A child provider built with `BuildServiceProvider(parent: root)` inherits these callbacks — any `IUpdatable` or `IView` registered in the child is automatically discovered and unregistered on disposal.
+
+```csharp
+// Root sets up lifecycle hooks
+ServiceCollection rootCollection = new();
+UpdateLoop updateLoop = new();
+rootCollection.AddSingleton(updateLoop);
+rootCollection.OnActivated((instance, _) =>
+{
+    if (instance is IUpdatable updatable) { updateLoop.Register(updatable); }
+});
+rootCollection.OnDisposing((instance, _) =>
+{
+    if (instance is IUpdatable updatable) { updateLoop.Unregister(updatable); }
+});
+ServiceProvider root = rootCollection.BuildServiceProvider();
+
+// Child inherits the hooks — PhysicsSystem is auto-registered with UpdateLoop
+ServiceCollection sceneCollection = new();
+sceneCollection.AddSingleton<IUpdatable, PhysicsSystem>();
+ServiceProvider scene = sceneCollection.BuildServiceProvider(parent: root);
+
+// Disposing the child auto-unregisters PhysicsSystem from UpdateLoop
+scene.Dispose();
+```
+
+### Disposal
+
+Disposing a child provider:
+
+1. Detaches from the parent (clears the parent reference).
+2. Disposes its own children recursively (deepest first).
+3. Walks its own services in reverse creation order — `OnDisposing` callbacks fire, then `IDisposable.Dispose()`.
+
+Parent-owned services are **not** disposed by the child — only services the child itself constructed are in its creation-order list. Disposing a parent cascades to all children before disposing its own services.
+
 ## Resolution API
 
 ### `GetRequiredService<T>()`
