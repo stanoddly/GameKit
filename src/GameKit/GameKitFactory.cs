@@ -11,6 +11,7 @@ public class GameKitFactory: IDisposable
     private static readonly Size<uint> DefaultSize = (640, 480);
 
     private readonly GameKitConfig _config;
+    private string? _currentVideoDriver;
     private bool _initialized;
 
     public GameKitFactory(GameKitConfig config)
@@ -20,19 +21,7 @@ public class GameKitFactory: IDisposable
 
     public string? CurrentVideoDriver
     {
-        get
-        {
-            if (!_initialized)
-            {
-                return null;
-            }
-
-            unsafe
-            {
-                byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
-                return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
-            }
-        }
+        get { return _currentVideoDriver; }
     }
 
     private void EnsureSdlInitialized()
@@ -58,6 +47,13 @@ public class GameKitFactory: IDisposable
         }
 
         _initialized = true;
+        _currentVideoDriver = GetCurrentVideoDriver();
+    }
+
+    private static unsafe string? GetCurrentVideoDriver()
+    {
+        byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
+        return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
     }
 
     internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
@@ -224,6 +220,7 @@ public class GameKitFactory: IDisposable
         }
 
         SDL3.SDL_Quit();
+        _currentVideoDriver = null;
         _initialized = false;
     }
 }
