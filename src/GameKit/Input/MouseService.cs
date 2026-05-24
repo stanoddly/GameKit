@@ -4,13 +4,13 @@ using SDL;
 
 namespace GameKit.Input;
 
-public enum MouseButton: uint
+public enum MouseButton : byte
 {
-    Left = SDL.SDL_MouseButtonFlags.SDL_BUTTON_LMASK,
-    Middle = SDL.SDL_MouseButtonFlags.SDL_BUTTON_MMASK,
-    Right = SDL.SDL_MouseButtonFlags.SDL_BUTTON_RMASK,
-    X1 = SDL.SDL_MouseButtonFlags.SDL_BUTTON_X1MASK,
-    X2 = SDL.SDL_MouseButtonFlags.SDL_BUTTON_X2MASK
+    Left = 1,
+    Middle = 2,
+    Right = 3,
+    X1 = 4,
+    X2 = 5
 }
 
 public class Mouse

@@ -74,18 +74,18 @@ public class Hotbar : View<HotbarViewModel>
     public override void Build(Pencil pencil)
     {
         int hoveredSlot = -1;
-        IntVector2 hoveredPos = default;
+        Vector2Int hoveredPos = default;
 
         using (pencil.WithGap(SlotGap))
         using (pencil.WithDirection(LayoutDirection.Right))
         {
             int totalExtent = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
-            IntVector2 anchor = pencil.BottomCenter;
+            Vector2Int anchor = pencil.BottomCenter;
             pencil.MoveTo(anchor.X - totalExtent / 2, anchor.Y - SlotSize - 16);
 
             for (int i = 0; i < SlotCount; i++)
             {
-                IntVector2 slotPos = pencil.CurrentPosition;
+                Vector2Int slotPos = pencil.CurrentPosition;
 
                 Color color = i == ViewModel.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
@@ -94,8 +94,8 @@ public class Hotbar : View<HotbarViewModel>
                 CursorState state = pencil.Panel(SlotSize, SlotSize, color);
 
                 // Draw icon centered in slot (32x32 icon in 48x48 slot = 8px padding)
-                IntVector2 nextPos = pencil.CurrentPosition;
-                IntVector2 nextSize = pencil.CurrentSize;
+                Vector2Int nextPos = pencil.CurrentPosition;
+                Vector2Int nextSize = pencil.CurrentSize;
                 const int iconPadding = (SlotSize - 32) / 2;
                 pencil.MoveTo(slotPos.X + iconPadding, slotPos.Y + iconPadding);
                 pencil.Image(_slotSprites[i], Colors.White);
@@ -117,7 +117,7 @@ public class Hotbar : View<HotbarViewModel>
         if (hoveredSlot >= 0)
         {
             string label = SlotNames[hoveredSlot];
-            IntVector2 textSize = pencil.MeasureText(label, _font);
+            Vector2Int textSize = pencil.MeasureText(label, _font);
             pencil.MoveTo(
                 hoveredPos.X + (SlotSize - textSize.X) / 2,
                 hoveredPos.Y - textSize.Y - LabelGap);

@@ -4,11 +4,11 @@ namespace GameKit.Common;
 
 public readonly record struct Rectangle(int X, int Y, int Width, int Height)
 {
-    public Rectangle(IntVector2 position, IntVector2 size) : this(position.X, position.Y, size.X, size.Y) { }
+    public Rectangle(Vector2Int position, Vector2Int size) : this(position.X, position.Y, size.X, size.Y) { }
     public (int, int) GetXY() => (X, Y);
     public (int, int) GetSize() => (Width, Height);
 
-    public bool Intersects(IntVector2 point) => point.X >= X && point.X <= X + Width && point.Y >= Y && point.Y <= Y + Height;
+    public bool Intersects(Vector2Int point) => point.X >= X && point.X <= X + Width && point.Y >= Y && point.Y <= Y + Height;
 }
 
 public readonly record struct Rectangle<TType>(TType X, TType Y, TType Width, TType Height) where TType : unmanaged, INumberBase<TType>

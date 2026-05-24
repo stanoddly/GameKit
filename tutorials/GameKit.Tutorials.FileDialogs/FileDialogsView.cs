@@ -135,7 +135,7 @@ public class FileDialogsView : View<FileDialogsViewModel>
         pencil.MoveTo(x, y);
         CursorState state = pencil.Panel(ButtonWidth, ButtonHeight, color);
 
-        IntVector2 textSize = pencil.MeasureText(text, _font);
+        Vector2Int textSize = pencil.MeasureText(text, _font);
         pencil.MoveTo(
             x + (ButtonWidth - textSize.X) / 2,
             y + (ButtonHeight - textSize.Y) / 2);
@@ -146,7 +146,7 @@ public class FileDialogsView : View<FileDialogsViewModel>
 
     private void DrawValue(Pencil pencil, int y, string text)
     {
-        IntVector2 textSize = pencil.MeasureText(text, _font);
+        Vector2Int textSize = pencil.MeasureText(text, _font);
         int x = pencil.Center.X - Math.Min(textSize.X, ContentWidth) / 2;
 
         pencil.MoveTo(x, y);

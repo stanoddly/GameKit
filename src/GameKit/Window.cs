@@ -132,6 +132,54 @@ internal class Window : IWindow
         }
     }
 
+    private bool _draggable;
+
+    public bool Draggable
+    {
+        get => _draggable;
+        set
+        {
+            unsafe
+            {
+                if (value)
+                {
+                    SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestDraggable, IntPtr.Zero);
+                }
+                else
+                {
+                    SDL3.SDL_SetWindowHitTest(SdlWindow, null, IntPtr.Zero);
+                }
+            }
+            _draggable = value;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe SDL_HitTestResult HitTestDraggable(SDL_Window* window, SDL_Point* area, IntPtr data)
+    {
+        return SDL_HitTestResult.SDL_HITTEST_DRAGGABLE;
+    }
+
+    public Vector2Int Position
+    {
+        get
+        {
+            int x, y;
+            unsafe
+            {
+                SDL3.SDL_GetWindowPosition(SdlWindow, &x, &y);
+            }
+            return new Vector2Int(x, y);
+        }
+        set
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowPosition(SdlWindow, value.X, value.Y);
+            }
+        }
+    }
+
     public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
         swapchainTexture = default!;
