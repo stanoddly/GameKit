@@ -27,7 +27,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
         mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
         {
-            pencil.CursorPosition = (IntVector2)args.Position;
+            pencil.CursorPosition = (Vector2Int)args.Position;
             pencil.Invalidate();
         });
 
@@ -35,7 +35,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         {
             if (args.Button == MouseButton.Left)
             {
-                if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
+                if (pencil.IsOverInteractiveArea((Vector2Int)args.Position))
                 {
                     args.Consume();
                 }
@@ -49,7 +49,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
                 pencil.CursorJustReleased = true;
                 pencil.Invalidate();
 
-                if (pencil.IsOverInteractiveArea((IntVector2)args.Position))
+                if (pencil.IsOverInteractiveArea((Vector2Int)args.Position))
                 {
                     args.Consume();
                 }

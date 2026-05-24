@@ -132,6 +132,26 @@ internal class Window : IWindow
         }
     }
 
+    public Vector2Int Position
+    {
+        get
+        {
+            int x, y;
+            unsafe
+            {
+                SDL3.SDL_GetWindowPosition(SdlWindow, &x, &y);
+            }
+            return new Vector2Int(x, y);
+        }
+        set
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowPosition(SdlWindow, value.X, value.Y);
+            }
+        }
+    }
+
     public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
     {
         swapchainTexture = default!;

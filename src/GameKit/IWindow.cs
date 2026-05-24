@@ -28,6 +28,11 @@ public interface IWindow : IDisposable
     /// </summary>
     bool AlwaysOnTop { get; set; }
 
+    /// <summary>
+    /// Gets or sets the position of the window on the display, in screen coordinates.
+    /// </summary>
+    GameKit.Common.Vector2Int Position { get; set; }
+
     event ResolutionChangedHandler? ResolutionChanged;
 
     bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);

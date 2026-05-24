@@ -18,14 +18,14 @@ public enum CursorState : byte { None, Hovered, Clicked }
 public readonly struct DirectionDisposer : IDisposable
 {
     private readonly Pencil _context;
-    private readonly IntVector2 _previousPosition;
-    private readonly IntVector2 _previousSize;
+    private readonly Vector2Int _previousPosition;
+    private readonly Vector2Int _previousSize;
     private readonly LayoutDirection _previousLayoutDirection;
 
     internal DirectionDisposer(
         Pencil context,
-        IntVector2 previousPosition,
-        IntVector2 previousSize,
+        Vector2Int previousPosition,
+        Vector2Int previousSize,
         LayoutDirection previousLayoutDirection)
     {
         _context = context;
@@ -87,15 +87,15 @@ public class Pencil
         Invalidate();
     }
 
-    public void UpdateCursor(IntVector2 position, bool pressed)
+    public void UpdateCursor(Vector2Int position, bool pressed)
     {
 
     }
 
     public LayoutDirection CurrentDirection { get; set; } = LayoutDirection.Bottom;
-    public IntVector2 CurrentPosition { get; set; }
-    public IntVector2 CurrentSize { get; set; }
-    public IntVector2 CursorPosition { get; set; }
+    public Vector2Int CurrentPosition { get; set; }
+    public Vector2Int CurrentSize { get; set; }
+    public Vector2Int CursorPosition { get; set; }
     public int CurrentGap { get; set; }
 
     public bool CursorJustReleased { get; set; }
@@ -138,7 +138,7 @@ public class Pencil
         _clickTests.Add(test);
     }
 
-    public bool IsOverInteractiveArea(IntVector2 position)
+    public bool IsOverInteractiveArea(Vector2Int position)
     {
         foreach (Rectangle area in _clickTests)
         {
@@ -161,52 +161,52 @@ public class Pencil
         _textureRegionInstructions.Add(new TextureRegionInstruction(_depth++, texture, area, uvs, tint));
     }
 
-    public IntVector2 DetermineNextPosition(IntVector2 size)
+    public Vector2Int DetermineNextPosition(Vector2Int size)
     {
         int gap = CurrentSize != default ? CurrentGap : 0;
 
         if (CurrentDirection == LayoutDirection.Bottom)
         {
-            return new IntVector2(CurrentPosition.X, CurrentPosition.Y + CurrentSize.Y + gap);
+            return new Vector2Int(CurrentPosition.X, CurrentPosition.Y + CurrentSize.Y + gap);
         }
 
         if (CurrentDirection == LayoutDirection.Top)
         {
-            return new IntVector2(CurrentPosition.X, CurrentPosition.Y - size.Y - gap);
+            return new Vector2Int(CurrentPosition.X, CurrentPosition.Y - size.Y - gap);
         }
 
         if (CurrentDirection == LayoutDirection.Left)
         {
-            return new IntVector2(CurrentPosition.X - size.X - gap, CurrentPosition.Y);
+            return new Vector2Int(CurrentPosition.X - size.X - gap, CurrentPosition.Y);
         }
 
         if (CurrentDirection == LayoutDirection.Right)
         {
-            return new IntVector2(CurrentPosition.X + CurrentSize.X + gap, CurrentPosition.Y);
+            return new Vector2Int(CurrentPosition.X + CurrentSize.X + gap, CurrentPosition.Y);
         }
 
-        return new IntVector2(CurrentPosition.X, CurrentPosition.Y);
+        return new Vector2Int(CurrentPosition.X, CurrentPosition.Y);
     }
 
     public void MoveTo(int x, int y)
     {
-        CurrentPosition = new IntVector2(x, y);
+        CurrentPosition = new Vector2Int(x, y);
     }
 
-    public void MoveTo(IntVector2 position)
+    public void MoveTo(Vector2Int position)
     {
         CurrentPosition = position;
     }
 
-    public IntVector2 TopLeft => new IntVector2(0, 0);
-    public IntVector2 TopCenter => new IntVector2(_viewportWidth / 2, 0);
-    public IntVector2 TopRight => new IntVector2(_viewportWidth, 0);
-    public IntVector2 CenterLeft => new IntVector2(0, _viewportHeight / 2);
-    public IntVector2 Center => new IntVector2(_viewportWidth / 2, _viewportHeight / 2);
-    public IntVector2 CenterRight => new IntVector2(_viewportWidth, _viewportHeight / 2);
-    public IntVector2 BottomLeft => new IntVector2(0, _viewportHeight);
-    public IntVector2 BottomCenter => new IntVector2(_viewportWidth / 2, _viewportHeight);
-    public IntVector2 BottomRight => new IntVector2(_viewportWidth, _viewportHeight);
+    public Vector2Int TopLeft => new Vector2Int(0, 0);
+    public Vector2Int TopCenter => new Vector2Int(_viewportWidth / 2, 0);
+    public Vector2Int TopRight => new Vector2Int(_viewportWidth, 0);
+    public Vector2Int CenterLeft => new Vector2Int(0, _viewportHeight / 2);
+    public Vector2Int Center => new Vector2Int(_viewportWidth / 2, _viewportHeight / 2);
+    public Vector2Int CenterRight => new Vector2Int(_viewportWidth, _viewportHeight / 2);
+    public Vector2Int BottomLeft => new Vector2Int(0, _viewportHeight);
+    public Vector2Int BottomCenter => new Vector2Int(_viewportWidth / 2, _viewportHeight);
+    public Vector2Int BottomRight => new Vector2Int(_viewportWidth, _viewportHeight);
 
     public DirectionDisposer WithDirection(LayoutDirection direction)
     {
@@ -233,8 +233,8 @@ public class Pencil
     {
         TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
         Vector4 uvs = sprite.CalculateTextureRegionUVs();
-        IntVector2 size = new IntVector2(sprite.Size.X, sprite.Size.Y);
-        IntVector2 position = CurrentPosition;
+        Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
+        Vector2Int position = CurrentPosition;
         Rectangle area = new Rectangle(position, size);
 
         AddTexture(sprite.Texture, area, uvs, (FColor)color);
@@ -243,10 +243,10 @@ public class Pencil
         CurrentPosition = DetermineNextPosition(size);
     }
 
-    public IntVector2 MeasureText(string text, Font font)
+    public Vector2Int MeasureText(string text, Font font)
     {
         ShortSize size = _fontSystem.MeasureTextSprite(text, font);
-        return new IntVector2(size.Width, size.Height);
+        return new Vector2Int(size.Width, size.Height);
     }
 
     public bool IsFocused(int id) => FocusedControlId == id;
@@ -519,8 +519,8 @@ public static class PencilExtensions
 {
     public static void Image(this Pencil pencil, SpriteAsset sprite, Color tint)
     {
-        IntVector2 size = new IntVector2(sprite.Size.X, sprite.Size.Y);
-        IntVector2 position = pencil.CurrentPosition;
+        Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
+        Vector2Int position = pencil.CurrentPosition;
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
         pencil.CurrentSize = size;
@@ -529,8 +529,8 @@ public static class PencilExtensions
 
     public static void Image(this Pencil pencil, SpriteAsset sprite, int width, int height, Color tint)
     {
-        IntVector2 size = new IntVector2(width, height);
-        IntVector2 position = pencil.CurrentPosition;
+        Vector2Int size = new Vector2Int(width, height);
+        Vector2Int position = pencil.CurrentPosition;
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
         pencil.CurrentSize = size;
@@ -539,8 +539,8 @@ public static class PencilExtensions
 
     public static CursorState Panel(this Pencil pencil, int width, int height, Color color)
     {
-        IntVector2 size = new IntVector2(width, height);
-        IntVector2 position = pencil.CurrentPosition;
+        Vector2Int size = new Vector2Int(width, height);
+        Vector2Int position = pencil.CurrentPosition;
         Rectangle area = new Rectangle(position, size);
         pencil.AddRectangle(area, color);
         pencil.CurrentSize = size;
@@ -563,13 +563,13 @@ public static class PencilExtensions
     {
         GuiStyle style = pencil.Style;
 
-        IntVector2 size = pencil.MeasureText(text, font);
-        IntVector2 padding = new IntVector2(pencil.Style.TextPadding);
+        Vector2Int size = pencil.MeasureText(text, font);
+        Vector2Int padding = new Vector2Int(pencil.Style.TextPadding);
 
-        IntVector2 fullSize = size + padding + padding;
-        IntVector2 startPosition = pencil.DetermineNextPosition(fullSize);
+        Vector2Int fullSize = size + padding + padding;
+        Vector2Int startPosition = pencil.DetermineNextPosition(fullSize);
 
-        IntVector2 thickness = new IntVector2(style.BorderThickness);
+        Vector2Int thickness = new Vector2Int(style.BorderThickness);
         Color innerColor = style.Background;
 
         Rectangle area = new Rectangle(startPosition, fullSize);
@@ -592,10 +592,10 @@ public static class PencilExtensions
     {
         GuiStyle style = pencil.Style;
         int padding = style.TextPadding;
-        IntVector2 textSize = pencil.MeasureText("Ay", font);
+        Vector2Int textSize = pencil.MeasureText("Ay", font);
         int height = textSize.Y + padding * 2;
-        IntVector2 size = new IntVector2(width, height);
-        IntVector2 position = pencil.CurrentPosition;
+        Vector2Int size = new Vector2Int(width, height);
+        Vector2Int position = pencil.CurrentPosition;
         Rectangle area = new Rectangle(position, size);
 
         bool isFocused = pencil.IsFocused(id);
@@ -633,7 +633,7 @@ public static class PencilExtensions
             ? pencil.EditingState.Buffer
             : value;
 
-        IntVector2 textPosition = new IntVector2(position.X + padding, position.Y + padding);
+        Vector2Int textPosition = new Vector2Int(position.X + padding, position.Y + padding);
 
         if (isFocused && pencil.EditingState != null && pencil.EditingState.HasSelection)
         {
@@ -641,17 +641,17 @@ public static class PencilExtensions
             int selStartX = textPosition.X;
             if (selStart > 0)
             {
-                IntVector2 beforeSelSize = pencil.MeasureText(displayText[..selStart], font);
+                Vector2Int beforeSelSize = pencil.MeasureText(displayText[..selStart], font);
                 selStartX += beforeSelSize.X;
             }
-            IntVector2 selTextSize = pencil.MeasureText(displayText.Substring(selStart, selLength), font);
+            Vector2Int selTextSize = pencil.MeasureText(displayText.Substring(selStart, selLength), font);
             Rectangle selRect = new Rectangle(selStartX, position.Y + padding, selTextSize.X, textSize.Y);
             pencil.AddRectangle(selRect, style.SelectionColor);
         }
 
         if (displayText.Length > 0)
         {
-            IntVector2 savedPosition = pencil.CurrentPosition;
+            Vector2Int savedPosition = pencil.CurrentPosition;
             pencil.CurrentPosition = textPosition;
             pencil.Text(displayText, font, style.TextColor);
             pencil.CurrentPosition = savedPosition;
@@ -663,7 +663,7 @@ public static class PencilExtensions
             if (pencil.EditingState.CursorPosition > 0 && displayText.Length > 0)
             {
                 string beforeCursor = displayText[..pencil.EditingState.CursorPosition];
-                IntVector2 beforeSize = pencil.MeasureText(beforeCursor, font);
+                Vector2Int beforeSize = pencil.MeasureText(beforeCursor, font);
                 cursorX = textPosition.X + beforeSize.X;
             }
             else

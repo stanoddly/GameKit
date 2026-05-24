@@ -76,7 +76,7 @@ public class MenuView : IView
         pencil.MoveTo(x, y);
         CursorState state = pencil.Panel(ButtonWidth, ButtonHeight, actualColor);
 
-        IntVector2 textSize = pencil.MeasureText(text, _font);
+        Vector2Int textSize = pencil.MeasureText(text, _font);
         pencil.MoveTo(
             x + (ButtonWidth - textSize.X) / 2,
             y + (ButtonHeight - textSize.Y) / 2);
