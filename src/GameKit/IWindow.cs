@@ -18,6 +18,16 @@ public interface IWindow : IDisposable
     bool MouseGrab { get; set; }
     bool WindowRelativeMouseMode { get; set; }
 
+    /// <summary>
+    /// True when the active SDL video backend is expected to support always-on-top windows.
+    /// </summary>
+    bool SupportsAlwaysOnTop { get; }
+
+    /// <summary>
+    /// Requests that the window stays above other windows. Some platforms or compositors may ignore this.
+    /// </summary>
+    bool AlwaysOnTop { get; set; }
+
     event ResolutionChangedHandler? ResolutionChanged;
 
     bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);

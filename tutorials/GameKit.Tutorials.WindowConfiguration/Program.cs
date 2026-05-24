@@ -3,6 +3,7 @@ using GameKit.App;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
+using GameKit.Input;
 using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.WindowConfiguration;
@@ -11,21 +12,54 @@ static class Program
 {
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRenderManager();
 
         builder.AddSingleton(new AppConfig
         {
             Size = (800, 600),
-            Title = "Window Configuration Demo"
+            Title = "Window Configuration Demo",
+            AlwaysOnTop = true
         });
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
-        builder.OnStart((IWindow window) =>
+        builder.OnStart((IWindow window, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {
-            using var icon = CreateIcon(32, 32);
+            using RawImage icon = CreateIcon(32, 32);
             window.SetIcon(icon);
+
+            Console.WriteLine($"SDL video driver: {platformInfo.SdlVideoDriver ?? "unknown"}");
+            Console.WriteLine($"Always on top: {window.AlwaysOnTop}");
+            Console.WriteLine($"Always-on-top supported by current SDL video driver: {window.SupportsAlwaysOnTop}");
+            if (window.SupportsAlwaysOnTop)
+            {
+                Console.WriteLine("Press Space to toggle always-on-top.");
+            }
+            else
+            {
+                Console.WriteLine("The SDL Wayland backend does not currently apply always-on-top for normal windows.");
+                Console.WriteLine("On KDE Wayland, try running with: SDL_VIDEO_DRIVER=x11 dotnet run");
+            }
+
+            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+            {
+                if (eventArgs.Key != VirtualKey.Space)
+                {
+                    return;
+                }
+
+                if (!window.SupportsAlwaysOnTop)
+                {
+                    Console.WriteLine("Always-on-top is not supported by the current SDL video driver.");
+                    eventArgs.Consume();
+                    return;
+                }
+
+                window.AlwaysOnTop = !window.AlwaysOnTop;
+                Console.WriteLine($"Always on top: {window.AlwaysOnTop}");
+                eventArgs.Consume();
+            };
         });
 
         using IGameKitApp gameKitApp = builder.Build();

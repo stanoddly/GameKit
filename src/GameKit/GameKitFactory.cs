@@ -43,12 +43,24 @@ public class GameKitFactory: IDisposable
         _initialized = true;
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
+    private static unsafe string? GetCurrentVideoDriver()
     {
-        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless);
+        byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
+        return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false)
+    internal PlatformInfo CreatePlatformInfo()
+    {
+        EnsureSdlInitialized();
+        return new PlatformInfo(GetCurrentVideoDriver());
+    }
+
+    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    {
+        return CreateWindow(gpuDevice, frameContext, platformInfo, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
+    }
+
+    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
     {
         EnsureSdlInitialized();
 
@@ -85,6 +97,11 @@ public class GameKitFactory: IDisposable
             windowFlags |= SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
         }
 
+        if (alwaysOnTop)
+        {
+            windowFlags |= SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP;
+        }
+
         Pointer<SDL_Window> sdlWindow;
         unsafe
         {
@@ -115,7 +132,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext);
+        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, platformInfo);
     }
 
     internal GpuDevice CreateGpuDevice()

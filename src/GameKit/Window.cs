@@ -13,6 +13,7 @@ internal class Window : IWindow
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
     private readonly GameKitFrameContext _frameContext;
+    private readonly PlatformInfo _platformInfo;
     
     public uint Id { get; }
 
@@ -20,12 +21,13 @@ internal class Window : IWindow
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext)
+    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
         _frameContext = frameContext;
+        _platformInfo = platformInfo;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -97,6 +99,35 @@ internal class Window : IWindow
             unsafe
             {
                 SDL3.SDL_SetWindowRelativeMouseMode(SdlWindow, value);
+            }
+        }
+    }
+
+    public bool SupportsAlwaysOnTop
+    {
+        get
+        {
+            return _platformInfo.SupportsAlwaysOnTopWindows;
+        }
+    }
+
+    public bool AlwaysOnTop
+    {
+        get
+        {
+            unsafe
+            {
+                return (SDL3.SDL_GetWindowFlags(SdlWindow) & SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP) != 0;
+            }
+        }
+        set
+        {
+            unsafe
+            {
+                if (SDL3.SDL_SetWindowAlwaysOnTop(SdlWindow, value) == false)
+                {
+                    throw new GameKitException($"SDL_SetWindowAlwaysOnTop failed: {SDL3.SDL_GetError()}");
+                }
             }
         }
     }
