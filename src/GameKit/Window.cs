@@ -132,6 +132,34 @@ internal class Window : IWindow
         }
     }
 
+    private bool _draggable;
+
+    public bool Draggable
+    {
+        get => _draggable;
+        set
+        {
+            unsafe
+            {
+                if (value)
+                {
+                    SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestDraggable, IntPtr.Zero);
+                }
+                else
+                {
+                    SDL3.SDL_SetWindowHitTest(SdlWindow, null, IntPtr.Zero);
+                }
+            }
+            _draggable = value;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe SDL_HitTestResult HitTestDraggable(SDL_Window* window, SDL_Point* area, IntPtr data)
+    {
+        return SDL_HitTestResult.SDL_HITTEST_DRAGGABLE;
+    }
+
     public Vector2Int Position
     {
         get

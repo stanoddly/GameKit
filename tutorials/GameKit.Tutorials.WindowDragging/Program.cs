@@ -1,6 +1,5 @@
 using GameKit;
 using GameKit.App;
-using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
@@ -25,13 +24,7 @@ static class Program
 
         builder.OnStart((IWindow window, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
         {
-            mouseService.Motion += (Mouse mouse, MouseMotionEventArgs e) =>
-            {
-                if (mouse.IsPressed(MouseButton.Middle))
-                {
-                    window.Position += (Vector2Int)e.RelativeMotion;
-                }
-            };
+            window.Draggable = true;
 
             mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs e) =>
             {

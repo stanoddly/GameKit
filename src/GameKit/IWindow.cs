@@ -33,6 +33,12 @@ public interface IWindow : IDisposable
     /// </summary>
     Vector2Int Position { get; set; }
 
+    /// <summary>
+    /// When true, the entire window surface acts as a drag handle: the OS moves the window
+    /// when the user clicks and drags it. Works on both X11 and Wayland.
+    /// </summary>
+    bool Draggable { get; set; }
+
     event ResolutionChangedHandler? ResolutionChanged;
 
     bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture);
