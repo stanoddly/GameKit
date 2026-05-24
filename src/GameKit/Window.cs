@@ -13,6 +13,7 @@ internal class Window : IWindow
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
     private readonly GameKitFrameContext _frameContext;
+    private readonly string? _currentVideoDriver;
     
     public uint Id { get; }
 
@@ -20,12 +21,13 @@ internal class Window : IWindow
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext)
+    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, string? currentVideoDriver)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
         _frameContext = frameContext;
+        _currentVideoDriver = currentVideoDriver;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -105,8 +107,7 @@ internal class Window : IWindow
     {
         get
         {
-            string? videoDriver = GetCurrentVideoDriver();
-            return !string.Equals(videoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
+            return !string.Equals(_currentVideoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -129,12 +130,6 @@ internal class Window : IWindow
                 }
             }
         }
-    }
-
-    private static unsafe string? GetCurrentVideoDriver()
-    {
-        byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
-        return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
     }
 
     public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)

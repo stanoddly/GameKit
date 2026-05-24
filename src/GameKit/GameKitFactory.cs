@@ -18,6 +18,23 @@ public class GameKitFactory: IDisposable
         _config = config;
     }
 
+    public string? CurrentVideoDriver
+    {
+        get
+        {
+            if (!_initialized)
+            {
+                return null;
+            }
+
+            unsafe
+            {
+                byte* videoDriver = SDL3.Unsafe_SDL_GetCurrentVideoDriver();
+                return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
+            }
+        }
+    }
+
     private void EnsureSdlInitialized()
     {
         if (_initialized)
@@ -51,6 +68,7 @@ public class GameKitFactory: IDisposable
     private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
     {
         EnsureSdlInitialized();
+        string? currentVideoDriver = CurrentVideoDriver;
 
         string windowTitle;
         if (title == null)
@@ -120,7 +138,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext);
+        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, currentVideoDriver);
     }
 
     internal GpuDevice CreateGpuDevice()
