@@ -11,17 +11,11 @@ public class GameKitFactory: IDisposable
     private static readonly Size<uint> DefaultSize = (640, 480);
 
     private readonly GameKitConfig _config;
-    private string? _currentVideoDriver;
     private bool _initialized;
 
     public GameKitFactory(GameKitConfig config)
     {
         _config = config;
-    }
-
-    public string? CurrentVideoDriver
-    {
-        get { return _currentVideoDriver; }
     }
 
     private void EnsureSdlInitialized()
@@ -47,7 +41,6 @@ public class GameKitFactory: IDisposable
         }
 
         _initialized = true;
-        _currentVideoDriver = GetCurrentVideoDriver();
     }
 
     private static unsafe string? GetCurrentVideoDriver()
@@ -56,15 +49,20 @@ public class GameKitFactory: IDisposable
         return Marshal.PtrToStringUTF8((IntPtr)videoDriver);
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config)
-    {
-        return CreateWindow(gpuDevice, frameContext, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
-    }
-
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
+    internal PlatformInfo CreatePlatformInfo()
     {
         EnsureSdlInitialized();
-        string? currentVideoDriver = CurrentVideoDriver;
+        return new PlatformInfo(GetCurrentVideoDriver());
+    }
+
+    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    {
+        return CreateWindow(gpuDevice, frameContext, platformInfo, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
+    }
+
+    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
+    {
+        EnsureSdlInitialized();
 
         string windowTitle;
         if (title == null)
@@ -134,7 +132,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, currentVideoDriver);
+        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, platformInfo);
     }
 
     internal GpuDevice CreateGpuDevice()
@@ -220,7 +218,6 @@ public class GameKitFactory: IDisposable
         }
 
         SDL3.SDL_Quit();
-        _currentVideoDriver = null;
         _initialized = false;
     }
 }

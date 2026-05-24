@@ -13,7 +13,7 @@ internal class Window : IWindow
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
     private readonly GameKitFrameContext _frameContext;
-    private readonly string? _currentVideoDriver;
+    private readonly PlatformInfo _platformInfo;
     
     public uint Id { get; }
 
@@ -21,13 +21,13 @@ internal class Window : IWindow
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, string? currentVideoDriver)
+    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
         _frameContext = frameContext;
-        _currentVideoDriver = currentVideoDriver;
+        _platformInfo = platformInfo;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -107,7 +107,7 @@ internal class Window : IWindow
     {
         get
         {
-            return !string.Equals(_currentVideoDriver, "wayland", StringComparison.OrdinalIgnoreCase);
+            return _platformInfo.SupportsAlwaysOnTopWindows;
         }
     }
 

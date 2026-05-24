@@ -24,12 +24,12 @@ static class Program
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
-        builder.OnStart((IWindow window, IKeyboardService keyboardService, GameKitFactory gameKitFactory) =>
+        builder.OnStart((IWindow window, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {
             using RawImage icon = CreateIcon(32, 32);
             window.SetIcon(icon);
 
-            Console.WriteLine($"SDL video driver: {gameKitFactory.CurrentVideoDriver ?? "unknown"}");
+            Console.WriteLine($"SDL video driver: {platformInfo.SdlVideoDriver ?? "unknown"}");
             Console.WriteLine($"Always on top: {window.AlwaysOnTop}");
             Console.WriteLine($"Always-on-top supported by current SDL video driver: {window.SupportsAlwaysOnTop}");
             if (window.SupportsAlwaysOnTop)
