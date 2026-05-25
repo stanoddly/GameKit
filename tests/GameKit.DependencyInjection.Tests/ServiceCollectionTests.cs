@@ -323,6 +323,19 @@ public class ServiceCollectionTests
         Assert.That(second, Is.SameAs(first));
     }
 
+    [Test]
+    public void AddSingleton_InstanceFactory_InheritedMethod_ResolvesFromBaseFactory()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<DerivedFactory>();
+        collection.AddSingleton<BaseProduct, DerivedFactory>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        BaseProduct product = provider.GetRequiredService<BaseProduct>();
+        Assert.That(product.Source, Is.EqualTo("from-base"));
+    }
+
     // --- AddSingleton<TService, TImplementation>() ---
 
     [Test]
@@ -1382,6 +1395,28 @@ public class TestFactory
     {
         return new FactoryProductWithDependency(simple);
     }
+}
+
+public class BaseProduct
+{
+    public string Source { get; }
+
+    public BaseProduct(string source)
+    {
+        Source = source;
+    }
+}
+
+public class BaseFactory
+{
+    internal BaseProduct CreateBaseProduct()
+    {
+        return new BaseProduct("from-base");
+    }
+}
+
+public class DerivedFactory : BaseFactory
+{
 }
 
 public class ServiceNeedingProvider

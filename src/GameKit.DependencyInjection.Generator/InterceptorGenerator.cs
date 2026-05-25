@@ -29,8 +29,8 @@ readonly record struct InterceptionInfo(
     EquatableArray<string> ConstructorParameterTypes,
     string? ServiceTypeFullName,
     string? DelegateTypeFullName,
-    EquatableArray<string> DelegateParameterTypes,
-    bool DelegateReturnsVoid,
+    EquatableArray<string> ParameterTypes,
+    bool ReturnsVoid,
     string? FactoryTypeFullName,
     string? FactoryMethodName
 );
@@ -239,7 +239,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             elementTypeFullName,
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
-            false,
+            ReturnsVoid: false,
             null,
             null
         ), null);
@@ -326,7 +326,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             null,
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
-            false,
+            ReturnsVoid: false,
             null,
             null
         ), null);
@@ -366,7 +366,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
-            false,
+            ReturnsVoid: false,
             null,
             null
         ), null);
@@ -388,18 +388,8 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         List<IMethodSymbol> candidates = new();
-        foreach (IMethodSymbol method in namedFactoryType.GetMembers().OfType<IMethodSymbol>())
+        foreach (IMethodSymbol method in GetAccessibleInstanceMethods(namedFactoryType, context.SemanticModel, invocation.SpanStart))
         {
-            if (method.IsStatic || method.MethodKind != MethodKind.Ordinary)
-            {
-                continue;
-            }
-
-            if (!context.SemanticModel.IsAccessible(invocation.SpanStart, method))
-            {
-                continue;
-            }
-
             Conversion returnConversion = context.SemanticModel.Compilation.ClassifyConversion(method.ReturnType, serviceType);
             if (returnConversion.IsImplicit || returnConversion.IsIdentity)
             {
@@ -435,7 +425,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             serviceTypeFullName,
             null,
             new EquatableArray<string>(paramTypes),
-            false,
+            ReturnsVoid: false,
             factoryTypeFullName,
             factoryMethod.Name
         ), null);
@@ -561,6 +551,31 @@ public class InterceptorGenerator : IIncrementalGenerator
             null,
             null
         );
+    }
+
+    private static IEnumerable<IMethodSymbol> GetAccessibleInstanceMethods(
+        INamedTypeSymbol type, SemanticModel semanticModel, int position)
+    {
+        INamedTypeSymbol? current = type;
+        while (current != null && current.SpecialType != SpecialType.System_Object)
+        {
+            foreach (IMethodSymbol method in current.GetMembers().OfType<IMethodSymbol>())
+            {
+                if (method.IsStatic || method.MethodKind != MethodKind.Ordinary)
+                {
+                    continue;
+                }
+
+                if (!semanticModel.IsAccessible(position, method))
+                {
+                    continue;
+                }
+
+                yield return method;
+            }
+
+            current = current.BaseType;
+        }
     }
 
     private static IMethodSymbol? GetSingleAccessibleConstructor(INamedTypeSymbol type, SemanticModel semanticModel, int position)
@@ -756,13 +771,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(static sp => sp.GetRequiredService<{info.FactoryTypeFullName}>().{info.FactoryMethodName}(");
 
-        for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
+        for (int j = 0; j < info.ParameterTypes.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
+            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
         }
 
         sb.AppendLine("));");
@@ -787,13 +802,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(sp => typedFactory(");
 
-        for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
+        for (int j = 0; j < info.ParameterTypes.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
+            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
         }
 
         sb.AppendLine("));");
@@ -810,13 +825,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            {info.DelegateTypeFullName} typedAction = ({info.DelegateTypeFullName})action;");
         sb.AppendLine($"            collection.OnStart(sp => typedAction(");
 
-        for (int j = 0; j < info.DelegateParameterTypes.Length; j++)
+        for (int j = 0; j < info.ParameterTypes.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.DelegateParameterTypes[j]));
+            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
         }
 
         sb.AppendLine("));");
