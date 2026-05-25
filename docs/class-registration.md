@@ -43,6 +43,27 @@ Use when:
 
 ---
 
+### `AddSingleton<TService, TFactory>()` — instance factory, requires source generator
+
+When the second type argument is **not** assignable to the first, the source generator treats it as a factory type. The generator finds the single accessible instance method on `TFactory` that returns `TService`, resolves `TFactory` and the method's parameters from the provider, and calls the method to produce the `TService` instance.
+
+```csharp
+services.AddSingleton<AudioManager>();
+services.AddSingleton<AudioDevice, AudioManager>();
+// equivalent to: services.AddSingleton<AudioDevice>(static sp => sp.GetRequiredService<AudioManager>().CreateDevice())
+```
+
+Requirements:
+- `TFactory` must already be registered (the generator emits `sp.GetRequiredService<TFactory>()`).
+- `TFactory` must have exactly one accessible instance method whose return type is assignable to `TService`. Zero matches produce a compile-time error `GK0003`. Multiple matches produce `GK0004`.
+- The method's parameters are resolved as services from the provider, the same way constructor parameters are for `AddSingleton<T>()`.
+
+Use when:
+- A registered object has a factory method that produces the desired service.
+- The service type is different from the factory type (not assignable).
+
+---
+
 ### `AddSingleton<T>(T instance)`
 
 Registers an already-constructed instance. No source generator required.
