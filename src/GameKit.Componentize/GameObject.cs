@@ -7,13 +7,12 @@ namespace GameKit.Componentize;
 
 public class ComponentNotFound(string componentName) : Exception(componentName);
 
-[Flags]
 public enum GameObjectState : byte
 {
-    Alive = 1,
-    Building = 2,
-    Removing = 4,
-    Removed = 8
+    Building,
+    Alive,
+    Removing,
+    Removed
 }
 
 public class GameObject: IEnumerable<ComponentBase>
@@ -52,13 +51,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public TComponent Attach<TComponent>(TComponent component) where TComponent: ComponentBase
     {
-        if ((State & GameObjectState.Alive) == 0)
+        if (State > GameObjectState.Alive)
         {
             throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
         }
 
         _components.Add(component);
-        if ((State & GameObjectState.Building) == 0)
+        if (State == GameObjectState.Alive)
         {
             component.OnAttach(this, ServiceProvider);
             component.OnReady(this, ServiceProvider);
@@ -76,13 +75,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach<TComponent>() where TComponent: ComponentBase
     {
-        if ((State & GameObjectState.Alive) == 0)
+        if (State != GameObjectState.Alive)
         {
+            if (State == GameObjectState.Building)
+            {
+                throw new InvalidOperationException("Cannot detach components during build.");
+            }
             return;
-        }
-        if ((State & GameObjectState.Building) != 0)
-        {
-            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = 0; i < _components.Count; i++)
@@ -98,13 +97,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void DetachAll<TComponent>() where TComponent: ComponentBase
     {
-        if ((State & GameObjectState.Alive) == 0)
+        if (State != GameObjectState.Alive)
         {
+            if (State == GameObjectState.Building)
+            {
+                throw new InvalidOperationException("Cannot detach components during build.");
+            }
             return;
-        }
-        if ((State & GameObjectState.Building) != 0)
-        {
-            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = _components.Count - 1; i >= 0; i--)
@@ -119,13 +118,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach(ComponentBase component)
     {
-        if ((State & GameObjectState.Alive) == 0)
+        if (State != GameObjectState.Alive)
         {
+            if (State == GameObjectState.Building)
+            {
+                throw new InvalidOperationException("Cannot detach components during build.");
+            }
             return;
-        }
-        if ((State & GameObjectState.Building) != 0)
-        {
-            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = 0; i < _components.Count; i++)

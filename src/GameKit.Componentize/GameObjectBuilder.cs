@@ -39,7 +39,7 @@ public class GameObjectBuilder
 
         GameObject gameObject = _world.CreateGameObject(components);
 
-        gameObject.State = GameObjectState.Alive | GameObjectState.Building;
+        gameObject.State = GameObjectState.Building;
         try
         {
             for (int i = 0; i < components.Count; i++)
@@ -47,18 +47,19 @@ public class GameObjectBuilder
                 components[i].OnAttach(gameObject, gameObject.ServiceProvider);
             }
 
-            gameObject.State = GameObjectState.Alive;
-
-            int readyCount = components.Count;
-            for (int i = 0; i < readyCount; i++)
+            int attachedCount = components.Count;
+            for (int i = 0; i < components.Count; i++)
             {
+                if (i >= attachedCount)
+                {
+                    components[i].OnAttach(gameObject, gameObject.ServiceProvider);
+                }
                 components[i].OnReady(gameObject, gameObject.ServiceProvider);
             }
         }
-        catch
+        finally
         {
             gameObject.State = GameObjectState.Alive;
-            throw;
         }
 
         return gameObject;
