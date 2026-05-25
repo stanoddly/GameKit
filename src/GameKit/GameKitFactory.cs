@@ -184,11 +184,26 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService()
+    internal MouseService CreateMouseService(Window window)
     {
         EnsureSdlInitialized();
 
-        return new MouseService();
+        return new MouseService(IsMouseInWindow(window));
+    }
+
+    private static bool IsMouseInWindow(Window window)
+    {
+        unsafe
+        {
+            Pointer<SDL_Window> mouseFocusWindow = SDL3.SDL_GetMouseFocus();
+
+            if (mouseFocusWindow.IsNull)
+            {
+                return false;
+            }
+
+            return (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.Id;
+        }
     }
 
     internal TextInputService CreateTextInputService(Window window)

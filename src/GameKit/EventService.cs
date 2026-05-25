@@ -73,6 +73,20 @@ public class EventService
                 {
                     _mouseService.OnMouseWheelEvent(evt.wheel);
                 }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER)
+                {
+                    if ((uint)evt.window.windowID == _window.Id)
+                    {
+                        _mouseService.OnMouseWindowPresenceEvent(evt.window, true);
+                    }
+                }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE)
+                {
+                    if ((uint)evt.window.windowID == _window.Id)
+                    {
+                        _mouseService.OnMouseWindowPresenceEvent(evt.window, false);
+                    }
+                }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_TEXT_INPUT)
                 {
                     _textInputService.OnTextInputEvent(evt.text);

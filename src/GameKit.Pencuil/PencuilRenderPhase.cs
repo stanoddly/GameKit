@@ -31,6 +31,12 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             pencil.Invalidate();
         });
 
+        mouseService.SubscribeWindowLeave(options.InputOrder, _ =>
+        {
+            pencil.CursorPosition = new Vector2Int(-1, -1);
+            pencil.Invalidate();
+        });
+
         mouseService.SubscribeButtonPress(options.InputOrder, (_, args) =>
         {
             if (args.Button == MouseButton.Left)
