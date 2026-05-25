@@ -46,6 +46,7 @@
     <Project Path="tutorials/GameKit.Tutorials.WindowConfiguration/GameKit.Tutorials.WindowConfiguration.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.TransparentWindow/GameKit.Tutorials.TransparentWindow.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StageSwitching/GameKit.Tutorials.StageSwitching.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.MouseWindowPresence/GameKit.Tutorials.MouseWindowPresence.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/GameKit.DependencyInjection.Benchmarks/GameKit.DependencyInjection.Benchmarks.csproj" />
