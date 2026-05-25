@@ -81,19 +81,11 @@ public class AttachedLifecycleComponent : GameComponent
     }
 }
 
-public class DetachingAttachedLifecycleComponent : GameComponent
+public class DetachingDuringBuildComponent : GameComponent
 {
-    public List<string> Log { get; }
-
-    public DetachingAttachedLifecycleComponent(List<string> log)
-    {
-        Log = log;
-    }
-
     protected override void OnAttach()
     {
-        AttachedLifecycleComponent attached = Owner.Attach(new AttachedLifecycleComponent(Log));
-        attached.Log.Add("B:Attached");
+        ComponentBase attached = Owner.Attach(new AttachedLifecycleComponent(new List<string>()));
         DetachSibling(attached);
     }
 }
@@ -184,7 +176,7 @@ public class GameObjectBuilderTests
             .With(new LifecycleOrderComponent(log) { Name = "C" })
             .Build();
 
-        Assert.That(log, Is.EqualTo(new[] { "A:OnAttach", "B:OnAttach", "C:OnAttach", "A:OnReady", "C:OnReady", "B:OnReady" }));
+        Assert.That(log, Is.EqualTo(new[] { "A:OnAttach", "C:OnAttach", "B:OnAttach", "A:OnReady", "C:OnReady", "B:OnReady" }));
     }
 
     [Test]
@@ -202,17 +194,13 @@ public class GameObjectBuilderTests
     }
 
     [Test]
-    public void Build_AttachAndDetachDuringOnAttach_DoesNotCallReadyOnDetachedComponent()
+    public void Build_DetachDuringOnAttach_Throws()
     {
-        List<string> log = new();
         GameObjectBuilder builder = _world.CreateGameObjectBuilder();
 
-        GameObject gameObject = builder
-            .With(new DetachingAttachedLifecycleComponent(log))
-            .Build();
-
-        Assert.That(gameObject.TryGet<AttachedLifecycleComponent>(), Is.Null);
-        Assert.That(log, Is.EqualTo(new[] { "B:OnAttach", "B:Attached" }));
+        Assert.Throws<InvalidOperationException>(() => builder
+            .With(new DetachingDuringBuildComponent())
+            .Build());
     }
 
     [Test]

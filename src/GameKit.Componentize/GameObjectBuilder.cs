@@ -38,24 +38,26 @@ public class GameObjectBuilder
         _components = null;
 
         GameObject gameObject = _world.CreateGameObject(components);
-        ComponentBase[] buildComponents = components.ToArray();
 
-        gameObject.BeginBuild();
+        gameObject.State = GameObjectState.Alive | GameObjectState.Building;
         try
         {
-            foreach (ComponentBase component in buildComponents)
+            for (int i = 0; i < components.Count; i++)
             {
-                if (gameObject.Contains(component))
-                {
-                    component.OnAttach(gameObject, gameObject.ServiceProvider);
-                }
+                components[i].OnAttach(gameObject, gameObject.ServiceProvider);
             }
 
-            gameObject.CompleteBuild();
+            gameObject.State = GameObjectState.Alive;
+
+            int readyCount = components.Count;
+            for (int i = 0; i < readyCount; i++)
+            {
+                components[i].OnReady(gameObject, gameObject.ServiceProvider);
+            }
         }
         catch
         {
-            gameObject.CancelBuild();
+            gameObject.State = GameObjectState.Alive;
             throw;
         }
 

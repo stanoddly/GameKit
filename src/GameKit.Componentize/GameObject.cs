@@ -7,21 +7,22 @@ namespace GameKit.Componentize;
 
 public class ComponentNotFound(string componentName) : Exception(componentName);
 
+[Flags]
 public enum GameObjectState : byte
 {
-    Alive,
-    Removing,
-    Removed
+    Alive = 1,
+    Building = 2,
+    Removing = 4,
+    Removed = 8
 }
 
 public class GameObject: IEnumerable<ComponentBase>
 {
     internal Handle<GameObject> Handle { get; set; }
-    public GameObjectState State { get; private set; }
+    public GameObjectState State { get; internal set; } = GameObjectState.Alive;
     public event Action<GameObject>? Removed;
     internal readonly ServiceProvider ServiceProvider;
     private readonly List<ComponentBase> _components = new();
-    private bool _deferReady;
 
     internal GameObject(ServiceProvider serviceProvider)
     {
@@ -51,15 +52,15 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public TComponent Attach<TComponent>(TComponent component) where TComponent: ComponentBase
     {
-        if (State != GameObjectState.Alive)
+        if ((State & GameObjectState.Alive) == 0)
         {
             throw new InvalidOperationException($"Cannot attach to {State} GameObject.");
         }
 
         _components.Add(component);
-        component.OnAttach(this, ServiceProvider);
-        if (!_deferReady)
+        if ((State & GameObjectState.Building) == 0)
         {
+            component.OnAttach(this, ServiceProvider);
             component.OnReady(this, ServiceProvider);
         }
         return component;
@@ -75,9 +76,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach<TComponent>() where TComponent: ComponentBase
     {
-        if (State != GameObjectState.Alive)
+        if ((State & GameObjectState.Alive) == 0)
         {
             return;
+        }
+        if ((State & GameObjectState.Building) != 0)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = 0; i < _components.Count; i++)
@@ -93,9 +98,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void DetachAll<TComponent>() where TComponent: ComponentBase
     {
-        if (State != GameObjectState.Alive)
+        if ((State & GameObjectState.Alive) == 0)
         {
             return;
+        }
+        if ((State & GameObjectState.Building) != 0)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = _components.Count - 1; i >= 0; i--)
@@ -110,9 +119,13 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach(ComponentBase component)
     {
-        if (State != GameObjectState.Alive)
+        if ((State & GameObjectState.Alive) == 0)
         {
             return;
+        }
+        if ((State & GameObjectState.Building) != 0)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
         }
 
         for (int i = 0; i < _components.Count; i++)
@@ -230,34 +243,6 @@ public class GameObject: IEnumerable<ComponentBase>
         Removed?.Invoke(this);
         Removed = null;
         State = GameObjectState.Removed;
-    }
-
-    internal void BeginBuild()
-    {
-        _deferReady = true;
-    }
-
-    internal void CompleteBuild()
-    {
-        _deferReady = false;
-        ComponentBase[] readyComponents = _components.ToArray();
-        foreach (ComponentBase component in readyComponents)
-        {
-            if (Contains(component))
-            {
-                component.OnReady(this, ServiceProvider);
-            }
-        }
-    }
-
-    internal void CancelBuild()
-    {
-        _deferReady = false;
-    }
-
-    internal bool Contains(ComponentBase component)
-    {
-        return _components.Contains(component);
     }
 
     private void TeardownComponent(ComponentBase component)
