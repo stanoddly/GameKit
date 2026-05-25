@@ -21,6 +21,7 @@ public class GameObject: IEnumerable<ComponentBase>
     public event Action<GameObject>? Removed;
     internal readonly ServiceProvider ServiceProvider;
     private readonly List<ComponentBase> _components = new();
+    private bool _deferReady;
 
     internal GameObject(ServiceProvider serviceProvider)
     {
@@ -57,7 +58,10 @@ public class GameObject: IEnumerable<ComponentBase>
 
         _components.Add(component);
         component.OnAttach(this, ServiceProvider);
-        component.OnReady(this, ServiceProvider);
+        if (!_deferReady)
+        {
+            component.OnReady(this, ServiceProvider);
+        }
         return component;
     }
 
@@ -226,6 +230,34 @@ public class GameObject: IEnumerable<ComponentBase>
         Removed?.Invoke(this);
         Removed = null;
         State = GameObjectState.Removed;
+    }
+
+    internal void BeginBuild()
+    {
+        _deferReady = true;
+    }
+
+    internal void CompleteBuild()
+    {
+        _deferReady = false;
+        ComponentBase[] readyComponents = _components.ToArray();
+        foreach (ComponentBase component in readyComponents)
+        {
+            if (Contains(component))
+            {
+                component.OnReady(this, ServiceProvider);
+            }
+        }
+    }
+
+    internal void CancelBuild()
+    {
+        _deferReady = false;
+    }
+
+    internal bool Contains(ComponentBase component)
+    {
+        return _components.Contains(component);
     }
 
     private void TeardownComponent(ComponentBase component)

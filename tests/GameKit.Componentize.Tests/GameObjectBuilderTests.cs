@@ -40,6 +40,64 @@ public class LifecycleOrderComponent : ComponentBase
     }
 }
 
+public class AttachingLifecycleComponent : GameComponent
+{
+    public List<string> Log { get; }
+
+    public AttachingLifecycleComponent(List<string> log)
+    {
+        Log = log;
+    }
+
+    protected override void OnAttach()
+    {
+        Log.Add("A:OnAttach");
+        AttachSibling(new AttachedLifecycleComponent(Log));
+    }
+
+    protected override void OnReady()
+    {
+        Log.Add("A:OnReady");
+    }
+}
+
+public class AttachedLifecycleComponent : GameComponent
+{
+    public List<string> Log { get; }
+
+    public AttachedLifecycleComponent(List<string> log)
+    {
+        Log = log;
+    }
+
+    protected override void OnAttach()
+    {
+        Log.Add("B:OnAttach");
+    }
+
+    protected override void OnReady()
+    {
+        Log.Add("B:OnReady");
+    }
+}
+
+public class DetachingAttachedLifecycleComponent : GameComponent
+{
+    public List<string> Log { get; }
+
+    public DetachingAttachedLifecycleComponent(List<string> log)
+    {
+        Log = log;
+    }
+
+    protected override void OnAttach()
+    {
+        AttachedLifecycleComponent attached = Owner.Attach(new AttachedLifecycleComponent(Log));
+        attached.Log.Add("B:Attached");
+        DetachSibling(attached);
+    }
+}
+
 public class GameObjectBuilderTests
 {
     GameWorld _world;
@@ -103,6 +161,58 @@ public class GameObjectBuilderTests
             .Build();
 
         Assert.That(log, Is.EqualTo(new[] { "A:OnAttach", "B:OnAttach", "A:OnReady", "B:OnReady" }));
+    }
+
+    [Test]
+    public void Build_AttachDuringOnAttach_DoesNotThrow()
+    {
+        GameObjectBuilder builder = _world.CreateGameObjectBuilder();
+
+        Assert.DoesNotThrow(() => builder
+            .With(new AttachingLifecycleComponent(new List<string>()))
+            .Build());
+    }
+
+    [Test]
+    public void Build_AttachDuringOnAttach_DefersReadyUntilAttachPhaseCompletes()
+    {
+        List<string> log = new();
+        GameObjectBuilder builder = _world.CreateGameObjectBuilder();
+
+        builder
+            .With(new AttachingLifecycleComponent(log))
+            .With(new LifecycleOrderComponent(log) { Name = "C" })
+            .Build();
+
+        Assert.That(log, Is.EqualTo(new[] { "A:OnAttach", "B:OnAttach", "C:OnAttach", "A:OnReady", "C:OnReady", "B:OnReady" }));
+    }
+
+    [Test]
+    public void Build_AttachDuringOnAttach_CallsAttachedComponentLifecycleOnce()
+    {
+        List<string> log = new();
+        GameObjectBuilder builder = _world.CreateGameObjectBuilder();
+
+        GameObject gameObject = builder
+            .With(new AttachingLifecycleComponent(log))
+            .Build();
+
+        Assert.That(gameObject.GetComponents<AttachedLifecycleComponent>().Count, Is.EqualTo(1));
+        Assert.That(log, Is.EqualTo(new[] { "A:OnAttach", "B:OnAttach", "A:OnReady", "B:OnReady" }));
+    }
+
+    [Test]
+    public void Build_AttachAndDetachDuringOnAttach_DoesNotCallReadyOnDetachedComponent()
+    {
+        List<string> log = new();
+        GameObjectBuilder builder = _world.CreateGameObjectBuilder();
+
+        GameObject gameObject = builder
+            .With(new DetachingAttachedLifecycleComponent(log))
+            .Build();
+
+        Assert.That(gameObject.TryGet<AttachedLifecycleComponent>(), Is.Null);
+        Assert.That(log, Is.EqualTo(new[] { "B:OnAttach", "B:Attached" }));
     }
 
     [Test]

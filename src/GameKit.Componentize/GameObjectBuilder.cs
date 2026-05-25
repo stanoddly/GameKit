@@ -38,15 +38,25 @@ public class GameObjectBuilder
         _components = null;
 
         GameObject gameObject = _world.CreateGameObject(components);
+        ComponentBase[] buildComponents = components.ToArray();
 
-        foreach (ComponentBase component in components)
+        gameObject.BeginBuild();
+        try
         {
-            component.OnAttach(gameObject, gameObject.ServiceProvider);
+            foreach (ComponentBase component in buildComponents)
+            {
+                if (gameObject.Contains(component))
+                {
+                    component.OnAttach(gameObject, gameObject.ServiceProvider);
+                }
+            }
+
+            gameObject.CompleteBuild();
         }
-
-        foreach (ComponentBase component in components)
+        catch
         {
-            component.OnReady(gameObject, gameObject.ServiceProvider);
+            gameObject.CancelBuild();
+            throw;
         }
 
         return gameObject;
