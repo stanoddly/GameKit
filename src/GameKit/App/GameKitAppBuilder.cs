@@ -100,7 +100,7 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<GamepadService>((GameKitFactory factory) => factory.CreateGamepadService());
         AddAlias<IGamepadService, GamepadService>();
 
-        AddSingleton<MouseService>((GameKitFactory factory) => factory.CreateMouseService());
+        AddSingleton<MouseService>((GameKitFactory factory, Window window) => factory.CreateMouseService(window));
         AddAlias<IMouseService, MouseService>();
 
         AddSingleton<TextInputService>((GameKitFactory factory, Window window) => factory.CreateTextInputService(window));
