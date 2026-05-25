@@ -75,12 +75,12 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach<TComponent>() where TComponent: ComponentBase
     {
+        if (State == GameObjectState.Building)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
+        }
         if (State != GameObjectState.Alive)
         {
-            if (State == GameObjectState.Building)
-            {
-                throw new InvalidOperationException("Cannot detach components during build.");
-            }
             return;
         }
 
@@ -97,12 +97,12 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void DetachAll<TComponent>() where TComponent: ComponentBase
     {
+        if (State == GameObjectState.Building)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
+        }
         if (State != GameObjectState.Alive)
         {
-            if (State == GameObjectState.Building)
-            {
-                throw new InvalidOperationException("Cannot detach components during build.");
-            }
             return;
         }
 
@@ -118,12 +118,12 @@ public class GameObject: IEnumerable<ComponentBase>
 
     public void Detach(ComponentBase component)
     {
+        if (State == GameObjectState.Building)
+        {
+            throw new InvalidOperationException("Cannot detach components during build.");
+        }
         if (State != GameObjectState.Alive)
         {
-            if (State == GameObjectState.Building)
-            {
-                throw new InvalidOperationException("Cannot detach components during build.");
-            }
             return;
         }
 
