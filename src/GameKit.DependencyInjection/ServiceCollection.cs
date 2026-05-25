@@ -22,17 +22,21 @@ public class ServiceCollection
             $"AddSingleton<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
-    /// <summary>Registers <typeparamref name="TImplementation"/> under the service type <typeparamref name="TService"/>, constructing it via its single public constructor.</summary>
-    /// <typeparam name="TService">The service type (interface or base class) under which the implementation is resolved.</typeparam>
-    /// <typeparam name="TImplementation">The concrete type to construct. Must be a named concrete type at the call site, not a type parameter.</typeparam>
+    /// <summary>
+    /// Registers <typeparamref name="T"/> under the service type <typeparamref name="TService"/>.
+    /// When <typeparamref name="T"/> is assignable to <typeparamref name="TService"/>, constructs <typeparamref name="T"/> via its single public constructor with dependencies resolved from the provider.
+    /// When <typeparamref name="T"/> is not assignable to <typeparamref name="TService"/>, resolves <typeparamref name="T"/> from the provider and invokes the single accessible instance method on <typeparamref name="T"/> that returns <typeparamref name="TService"/>, with its parameters resolved from the provider.
+    /// </summary>
+    /// <typeparam name="TService">The service type (interface or base class) under which the instance is resolved.</typeparam>
+    /// <typeparam name="T">Either the concrete implementation type (when assignable to <typeparamref name="TService"/>), or a factory type with an instance method returning <typeparamref name="TService"/>. Must be a named concrete type at the call site, not a type parameter.</typeparam>
     /// <remarks>This overload is intercepted by the source generator at each call site. Both type arguments must be named concrete types — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
     /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because either type argument is a type parameter at the call site.</exception>
-    public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImplementation>()
+    public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>()
         where TService : class
-        where TImplementation : class, TService
+        where T : class
     {
         throw new InvalidOperationException(
-            $"AddSingleton<{typeof(TService).Name}, {typeof(TImplementation).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+            $"AddSingleton<{typeof(TService).Name}, {typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
     }
 
     /// <summary>Registers an already-constructed instance as the singleton for <typeparamref name="T"/>.</summary>
