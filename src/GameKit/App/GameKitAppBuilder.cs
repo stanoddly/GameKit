@@ -84,33 +84,32 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<GameKitFactory>();
 
-        AddSingleton<PlatformInfo>((GameKitFactory factory) => factory.CreatePlatformInfo());
+        AddSingleton<PlatformInfo, GameKitFactory>();
 
-        AddSingleton<Window>((GameKitFactory factory, GpuDevice gpu, AppConfig config, GameKitFrameContext frameContext, PlatformInfo platformInfo) => factory.CreateWindow(gpu, frameContext, config, platformInfo));
+        AddSingleton<Window, GameKitFactory>();
         AddAlias<IWindow, Window>();
 
-        AddSingleton<GpuDevice>((GameKitFactory factory) => factory.CreateGpuDevice());
+        AddSingleton<GpuDevice, GameKitFactory>();
         AddAlias<IGpuDevice, GpuDevice>();
 
         AddSingleton<GpuMemorySystem>();
 
-        AddSingleton<KeyboardService>((GameKitFactory factory, AppControl appControl) => factory.CreateKeyboardService(appControl));
+        AddSingleton<KeyboardService, GameKitFactory>();
         AddAlias<IKeyboardService, KeyboardService>();
 
-        AddSingleton<GamepadService>((GameKitFactory factory) => factory.CreateGamepadService());
+        AddSingleton<GamepadService, GameKitFactory>();
         AddAlias<IGamepadService, GamepadService>();
 
-        AddSingleton<MouseService>((GameKitFactory factory) => factory.CreateMouseService());
+        AddSingleton<MouseService, GameKitFactory>();
         AddAlias<IMouseService, MouseService>();
 
-        AddSingleton<TextInputService>((GameKitFactory factory, Window window) => factory.CreateTextInputService(window));
+        AddSingleton<TextInputService, GameKitFactory>();
         AddAlias<ITextInputService, TextInputService>();
 
         AddSingleton<ClipboardService>();
         AddAlias<IClipboardService, ClipboardService>();
 
-        AddSingleton<EventService>((GameKitFactory factory, KeyboardService keyboard, GamepadService gamepad, MouseService mouse, TextInputService textInput, Window window, AppControl appControl) =>
-            factory.CreateEventService(keyboard, gamepad, mouse, textInput, window, appControl));
+        AddSingleton<EventService, GameKitFactory>();
 
         AddSingleton<GraphicsShaderMetadataLoader>();
 

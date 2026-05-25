@@ -11,10 +11,11 @@ public class GeneratorTrimAnnotationTests
 {
     private const string DamAttribute = "[global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]";
 
-    // Minimal source that triggers all three intercepted overloads of AddSingleton:
+    // Minimal source that triggers all four intercepted overloads of AddSingleton:
     // - AddSingleton<T>()
     // - AddSingleton<TService, TImplementation>()
     // - AddSingleton<T>(Delegate factory)
+    // - AddSingleton<TService, TFactory>() instance factory
     private const string RegistrationSource = """
         using GameKit.DependencyInjection;
         using System;
@@ -22,6 +23,11 @@ public class GeneratorTrimAnnotationTests
         public class MyService { }
         public interface IMyService { }
         public class MyServiceImpl : IMyService { }
+        public class ProductService { public ProductService(string v) {} }
+        public class MyFactory
+        {
+            internal ProductService CreateProduct() => new ProductService("test");
+        }
 
         public static class Registrations
         {
@@ -30,6 +36,8 @@ public class GeneratorTrimAnnotationTests
                 services.AddSingleton<MyService>();
                 services.AddSingleton<IMyService, MyServiceImpl>();
                 services.AddSingleton<MyService>(() => new MyService());
+                services.AddSingleton<MyFactory>();
+                services.AddSingleton<ProductService, MyFactory>();
             }
         }
         """;

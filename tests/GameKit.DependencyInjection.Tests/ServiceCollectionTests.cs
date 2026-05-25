@@ -280,6 +280,49 @@ public class ServiceCollectionTests
         Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(second));
     }
 
+    // --- AddSingleton<TService, TFactory>() instance factory ---
+
+    [Test]
+    public void AddSingleton_InstanceFactory_ResolvesFromFactoryMethod()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<TestFactory>();
+        collection.AddSingleton<FactoryProduct, TestFactory>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        FactoryProduct product = provider.GetRequiredService<FactoryProduct>();
+        Assert.That(product.Value, Is.EqualTo("from-factory"));
+    }
+
+    [Test]
+    public void AddSingleton_InstanceFactory_WithDependency_ResolvesDependency()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<SimpleService>();
+        collection.AddSingleton<TestFactory>();
+        collection.AddSingleton<FactoryProductWithDependency, TestFactory>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        FactoryProductWithDependency product = provider.GetRequiredService<FactoryProductWithDependency>();
+        Assert.That(product.Simple, Is.SameAs(provider.GetRequiredService<SimpleService>()));
+    }
+
+    [Test]
+    public void AddSingleton_InstanceFactory_ReturnsSameInstance()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<TestFactory>();
+        collection.AddSingleton<FactoryProduct, TestFactory>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        FactoryProduct first = provider.GetRequiredService<FactoryProduct>();
+        FactoryProduct second = provider.GetRequiredService<FactoryProduct>();
+        Assert.That(second, Is.SameAs(first));
+    }
+
     // --- AddSingleton<TService, TImplementation>() ---
 
     [Test]
@@ -1305,6 +1348,39 @@ public class ServiceCollectionTests
         Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
         Assert.That(services[1], Is.InstanceOf<AnotherServiceImpl>());
         Assert.That(services[2], Is.InstanceOf<AnotherServiceImpl>());
+    }
+}
+
+public class FactoryProduct
+{
+    public string Value { get; }
+
+    public FactoryProduct(string value)
+    {
+        Value = value;
+    }
+}
+
+public class FactoryProductWithDependency
+{
+    public SimpleService Simple { get; }
+
+    public FactoryProductWithDependency(SimpleService simple)
+    {
+        Simple = simple;
+    }
+}
+
+public class TestFactory
+{
+    internal FactoryProduct CreateProduct()
+    {
+        return new FactoryProduct("from-factory");
+    }
+
+    internal FactoryProductWithDependency CreateProductWithDependency(SimpleService simple)
+    {
+        return new FactoryProductWithDependency(simple);
     }
 }
 
