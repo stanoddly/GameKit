@@ -39,14 +39,29 @@ public class GameObjectBuilder
 
         GameObject gameObject = _world.CreateGameObject(components);
 
-        foreach (ComponentBase component in components)
+        gameObject.State = GameObjectState.Building;
+        try
         {
-            component.OnAttach(gameObject, gameObject.ServiceProvider);
-        }
+            for (int i = 0; i < components.Count; i++)
+            {
+                components[i].OnAttach(gameObject, gameObject.ServiceProvider);
+            }
 
-        foreach (ComponentBase component in components)
+            int attachedCount = components.Count;
+            for (int i = 0; i < attachedCount; i++)
+            {
+                components[i].OnReady(gameObject, gameObject.ServiceProvider);
+            }
+
+            for (int i = attachedCount; i < components.Count; i++)
+            {
+                components[i].OnAttach(gameObject, gameObject.ServiceProvider);
+                components[i].OnReady(gameObject, gameObject.ServiceProvider);
+            }
+        }
+        finally
         {
-            component.OnReady(gameObject, gameObject.ServiceProvider);
+            gameObject.State = GameObjectState.Alive;
         }
 
         return gameObject;
