@@ -107,6 +107,10 @@ public class PencuilRenderer
     {
         if (pencil._coloredRectangleInstructions.Count == 0 && pencil._textureRegionInstructions.Count == 0)
         {
+            using IRenderPass clearPass = new RenderPassBuilder(commandBuffer)
+                .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
+                .Build();
+
             return;
         }
 
