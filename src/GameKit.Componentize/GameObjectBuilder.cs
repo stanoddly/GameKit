@@ -48,12 +48,14 @@ public class GameObjectBuilder
             }
 
             int attachedCount = components.Count;
-            for (int i = 0; i < components.Count; i++)
+            for (int i = 0; i < attachedCount; i++)
             {
-                if (i >= attachedCount)
-                {
-                    components[i].OnAttach(gameObject, gameObject.ServiceProvider);
-                }
+                components[i].OnReady(gameObject, gameObject.ServiceProvider);
+            }
+
+            for (int i = attachedCount; i < components.Count; i++)
+            {
+                components[i].OnAttach(gameObject, gameObject.ServiceProvider);
                 components[i].OnReady(gameObject, gameObject.ServiceProvider);
             }
         }
