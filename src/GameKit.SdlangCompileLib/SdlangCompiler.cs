@@ -807,9 +807,11 @@ public class SdlangCompiler
             return 0;
         }
 
+        // bool is 4 bytes in SPIR-V/DXIL storage buffers but 1 byte in MSL — size is backend-dependent,
+        // so return 0 (skip validation) rather than hardcode a target-specific value.
         return scalarTypeEl.GetString() switch
         {
-            "float32" or "int32" or "uint32" or "bool" => 4,
+            "float32" or "int32" or "uint32" => 4,
             "float64" or "int64" or "uint64" => 8,
             "float16" or "int16" or "uint16" => 2,
             "int8" or "uint8" => 1,
