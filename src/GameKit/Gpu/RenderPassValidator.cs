@@ -33,6 +33,16 @@ public interface IRenderPassValidator<TSelfValidator> where TSelfValidator: IRen
     void OnBindFragmentSamplers(RenderPass<TSelfValidator> renderPass, uint slot, int samplerCount);
 
     /// <summary>
+    /// Called when vertex storage buffers are bound to the render pass.
+    /// </summary>
+    void OnBindVertexStorageBuffers(RenderPass<TSelfValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers);
+
+    /// <summary>
+    /// Called when fragment storage buffers are bound to the render pass.
+    /// </summary>
+    void OnBindFragmentStorageBuffers(RenderPass<TSelfValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers);
+
+    /// <summary>
     /// Called when a primitive draw is requested.
     /// Validates that the current render pass state is valid for drawing.
     /// Throws an exception if validation fails.
@@ -74,6 +84,9 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     private VertexTypeId _slot6Type;
     private VertexTypeId _slot7Type;
 
+    private ShaderCommon.StorageBufferElementSizes _vertexStorageBufferElementSizes;
+    private ShaderCommon.StorageBufferElementSizes _fragmentStorageBufferElementSizes;
+
     private RenderPassValidator(CommandBuffer commandBuffer)
     {
         _commandBuffer = commandBuffer;
@@ -107,6 +120,8 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
         _slot5Type = VertexTypeId.Null;
         _slot6Type = VertexTypeId.Null;
         _slot7Type = VertexTypeId.Null;
+        _vertexStorageBufferElementSizes = default;
+        _fragmentStorageBufferElementSizes = default;
     }
 
     public void OnBindVertexBuffer<TVertexType>(RenderPass<RenderPassValidator> renderPass, uint slot, GpuVertexBuffer<TVertexType> buffer)
@@ -168,6 +183,22 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
 
     public void OnBindFragmentSamplers(RenderPass<RenderPassValidator> renderPass, uint slot, int samplerCount)
     {
+    }
+
+    public void OnBindVertexStorageBuffers(RenderPass<RenderPassValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers)
+    {
+        for (int i = 0; i < buffers.Length; i++)
+        {
+            _vertexStorageBufferElementSizes = SetStorageBufferSlotSize(_vertexStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+        }
+    }
+
+    public void OnBindFragmentStorageBuffers(RenderPass<RenderPassValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers)
+    {
+        for (int i = 0; i < buffers.Length; i++)
+        {
+            _fragmentStorageBufferElementSizes = SetStorageBufferSlotSize(_fragmentStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+        }
     }
 
     public void OnDrawPrimitive(RenderPass<RenderPassValidator> renderPass, uint firstInstance)
@@ -254,6 +285,26 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
 
         ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.VertexShader.BindingLayout.UniformSlotSizes,
             _commandBuffer.VertexShaderUniformSlotSizes);
+
+        ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Vertex",
+            _graphicsPipeline.VertexShader.BindingLayout.StorageBufferElementSizes,
+            _vertexStorageBufferElementSizes);
+
+        ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Fragment",
+            _graphicsPipeline.FragmentShader.BindingLayout.StorageBufferElementSizes,
+            _fragmentStorageBufferElementSizes);
+    }
+
+    private static ShaderCommon.StorageBufferElementSizes SetStorageBufferSlotSize(ShaderCommon.StorageBufferElementSizes sizes, uint slot, uint elementSize)
+    {
+        return slot switch
+        {
+            0 => sizes with { Slot0 = elementSize },
+            1 => sizes with { Slot1 = elementSize },
+            2 => sizes with { Slot2 = elementSize },
+            3 => sizes with { Slot3 = elementSize },
+            _ => sizes
+        };
     }
 
     private void ValidateSystemValueInputs(uint firstInstance)
@@ -321,6 +372,14 @@ public struct NullRenderPassValidator : IRenderPassValidator<NullRenderPassValid
     }
 
     public void OnBindFragmentSamplers(RenderPass<NullRenderPassValidator> renderPass, uint slot, int samplerCount)
+    {
+    }
+
+    public void OnBindVertexStorageBuffers(RenderPass<NullRenderPassValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers)
+    {
+    }
+
+    public void OnBindFragmentStorageBuffers(RenderPass<NullRenderPassValidator> renderPass, uint slot, ReadOnlySpan<GpuStorageBuffer> buffers)
     {
     }
 

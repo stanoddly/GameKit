@@ -12,6 +12,7 @@ public abstract class GpuStorageBuffer : IDisposable, IGpuMemorySized
     public int BufferSize { get; }
     public int Size { get; internal set; }
     public long SizeInBytes { get; }
+    public abstract int ElementSize { get; }
 
     protected GpuStorageBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size, long sizeInBytes)
     {
@@ -27,6 +28,8 @@ public abstract class GpuStorageBuffer : IDisposable, IGpuMemorySized
 
 public class GpuStorageBuffer<T> : GpuStorageBuffer where T : unmanaged
 {
+    public override int ElementSize => Unsafe.SizeOf<T>();
+
     internal GpuStorageBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size)
         : base(gpuDevice, sdlBuffer, size, Unsafe.SizeOf<T>() * size)
     {

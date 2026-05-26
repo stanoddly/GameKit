@@ -1,3 +1,4 @@
+using GameKit.ShaderCommon;
 using GameKit.Utilities;
 using SDL;
 
@@ -9,18 +10,22 @@ public class ComputePass : IComputePass
     private readonly uint _readWriteStorageTextureCount;
     private readonly uint _readWriteStorageBufferCount;
     private ComputePipeline? _boundPipeline;
+    private StorageBufferElementSizes _readOnlyStorageBufferElementSizes;
+    private StorageBufferElementSizes _readWriteStorageBufferElementSizes;
 
-    internal ComputePass(Pointer<SDL_GPUComputePass> nativePointer, uint readWriteStorageTextureCount, uint readWriteStorageBufferCount)
+    internal ComputePass(Pointer<SDL_GPUComputePass> nativePointer, uint readWriteStorageTextureCount, uint readWriteStorageBufferCount, StorageBufferElementSizes readWriteStorageBufferElementSizes)
     {
         _nativePointer = nativePointer;
         _readWriteStorageTextureCount = readWriteStorageTextureCount;
         _readWriteStorageBufferCount = readWriteStorageBufferCount;
+        _readWriteStorageBufferElementSizes = readWriteStorageBufferElementSizes;
     }
 
     public void BindComputePipeline(ComputePipeline pipeline)
     {
         ThrowIfDisposed();
         _boundPipeline = pipeline;
+        _readOnlyStorageBufferElementSizes = default;
         unsafe
         {
             SDL3.SDL_BindGPUComputePipeline(_nativePointer, pipeline.Pointer);
@@ -68,6 +73,10 @@ public class ComputePass : IComputePass
     public void BindReadOnlyStorageBuffers(ReadOnlySpan<GpuStorageBuffer> buffers, uint slot = 0)
     {
         ThrowIfDisposed();
+        for (int i = 0; i < buffers.Length; i++)
+        {
+            _readOnlyStorageBufferElementSizes = SetStorageBufferSlotSize(_readOnlyStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+        }
         unsafe
         {
             SDL_GPUBuffer** sdlBuffers = stackalloc SDL_GPUBuffer*[buffers.Length];
@@ -145,5 +154,25 @@ public class ComputePass : IComputePass
             throw new InvalidOperationException(
                 $"Read-write storage buffer count mismatch: compute pass was created with {_readWriteStorageBufferCount} but pipeline declares {declaredBuffers}.");
         }
+
+        ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Read-only",
+            _boundPipeline.BindingLayout.StorageBufferElementSizes,
+            _readOnlyStorageBufferElementSizes);
+
+        ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Read-write",
+            _boundPipeline.BindingLayout.ReadWriteStorageBufferElementSizes,
+            _readWriteStorageBufferElementSizes);
+    }
+
+    private static StorageBufferElementSizes SetStorageBufferSlotSize(StorageBufferElementSizes sizes, uint slot, uint elementSize)
+    {
+        return slot switch
+        {
+            0 => sizes with { Slot0 = elementSize },
+            1 => sizes with { Slot1 = elementSize },
+            2 => sizes with { Slot2 = elementSize },
+            3 => sizes with { Slot3 = elementSize },
+            _ => sizes
+        };
     }
 }

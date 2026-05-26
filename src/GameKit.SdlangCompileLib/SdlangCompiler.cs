@@ -436,6 +436,9 @@ public class SdlangCompiler
         byte readWriteStorageTextures = 0;
         byte readWriteStorageBuffers = 0;
 
+        Dictionary<int, uint> storageBufferElementSizesBySlot = new();
+        Dictionary<int, uint> readWriteStorageBufferElementSizesBySlot = new();
+
         List<ResourceBinding> resourceBindings = new();
 
         if (root.TryGetProperty("parameters", out JsonElement parameters))
@@ -466,13 +469,16 @@ public class SdlangCompiler
 
                                 if (baseShape == "structuredBuffer")
                                 {
+                                    uint elementSize = ComputeStructuredBufferElementSize(paramType);
                                     if (isReadWrite)
                                     {
+                                        readWriteStorageBufferElementSizesBySlot[index] = elementSize;
                                         readWriteStorageBuffers++;
                                         resourceBindings.Add(new ResourceBinding(paramName, ResourceType.ReadWriteStorageBuffer, space, index));
                                     }
                                     else
                                     {
+                                        storageBufferElementSizesBySlot[index] = elementSize;
                                         storageBuffers++;
                                         resourceBindings.Add(new ResourceBinding(paramName, ResourceType.StorageBuffer, space, index));
                                     }
@@ -506,7 +512,9 @@ public class SdlangCompiler
 
         ShaderBindingLayout shaderBindingLayout = new ShaderBindingLayout(
             new ShaderBindingCounts(samplers, storageTextures, storageBuffers, readWriteStorageTextures, readWriteStorageBuffers),
-            shaderUniformSlots);
+            shaderUniformSlots,
+            BuildStorageBufferElementSizes(storageBufferElementSizesBySlot),
+            BuildStorageBufferElementSizes(readWriteStorageBufferElementSizesBySlot));
         return (entryPoint, stage, shaderBindingLayout, systemValueInputs, threadCountX, threadCountY, threadCountZ);
     }
 
@@ -734,6 +742,79 @@ public class SdlangCompiler
         {
             return false;
         }
+    }
+
+    private static StorageBufferElementSizes BuildStorageBufferElementSizes(Dictionary<int, uint> elementSizesBySlot)
+    {
+        elementSizesBySlot.TryGetValue(0, out uint slot0);
+        elementSizesBySlot.TryGetValue(1, out uint slot1);
+        elementSizesBySlot.TryGetValue(2, out uint slot2);
+        elementSizesBySlot.TryGetValue(3, out uint slot3);
+        return new StorageBufferElementSizes(slot0, slot1, slot2, slot3);
+    }
+
+    private static uint ComputeStructuredBufferElementSize(JsonElement resourceType)
+    {
+        if (!resourceType.TryGetProperty("resultType", out JsonElement resultType))
+        {
+            return 0;
+        }
+
+        string? kind = resultType.TryGetProperty("kind", out JsonElement kindEl) ? kindEl.GetString() : null;
+
+        if (kind == "struct")
+        {
+            if (!resultType.TryGetProperty("fields", out JsonElement fields))
+            {
+                return 0;
+            }
+
+            uint maxEnd = 0;
+            foreach (JsonElement field in fields.EnumerateArray())
+            {
+                if (field.TryGetProperty("binding", out JsonElement binding))
+                {
+                    uint offset = binding.TryGetProperty("offset", out JsonElement offEl) ? offEl.GetUInt32() : 0;
+                    uint size = binding.TryGetProperty("size", out JsonElement sizeEl) ? sizeEl.GetUInt32() : 0;
+                    maxEnd = Math.Max(maxEnd, offset + size);
+                }
+            }
+            return maxEnd;
+        }
+
+        if (kind == "vector")
+        {
+            uint elementCount = resultType.TryGetProperty("elementCount", out JsonElement countEl) ? countEl.GetUInt32() : 0;
+            if (!resultType.TryGetProperty("elementType", out JsonElement elementType))
+            {
+                return 0;
+            }
+            return elementCount * GetScalarSize(elementType);
+        }
+
+        if (kind == "scalar")
+        {
+            return GetScalarSize(resultType);
+        }
+
+        return 0;
+    }
+
+    private static uint GetScalarSize(JsonElement typeElement)
+    {
+        if (!typeElement.TryGetProperty("scalarType", out JsonElement scalarTypeEl))
+        {
+            return 0;
+        }
+
+        return scalarTypeEl.GetString() switch
+        {
+            "float32" or "int32" or "uint32" or "bool" => 4,
+            "float64" or "int64" or "uint64" => 8,
+            "float16" or "int16" or "uint16" => 2,
+            "int8" or "uint8" => 1,
+            _ => 0
+        };
     }
 
     private static void CompileShader(FileInfo filePath, bool force = false)

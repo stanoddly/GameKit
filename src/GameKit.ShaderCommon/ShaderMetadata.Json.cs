@@ -17,4 +17,5 @@ namespace GameKit.ShaderCommon;
 [JsonSerializable(typeof(ShaderFormatDto))]
 [JsonSerializable(typeof(ShaderInstanceDto))]
 [JsonSerializable(typeof(ShaderSystemValueInputs))]
+[JsonSerializable(typeof(StorageBufferElementSizes))]
 public partial class ShaderMetadataJsonContext: JsonSerializerContext;
