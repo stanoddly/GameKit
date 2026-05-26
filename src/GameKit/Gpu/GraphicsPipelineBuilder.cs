@@ -114,7 +114,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly IWindow _window;
+    private readonly Window _window;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -123,7 +123,7 @@ public class GraphicsPipelineBuilder
     /// </summary>
     public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, IWindow window, IShaderLoader shaderLoader)
+    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, Window window, IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
         _window = window;

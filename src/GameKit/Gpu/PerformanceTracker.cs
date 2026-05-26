@@ -2,7 +2,7 @@ namespace GameKit.Gpu;
 
 public class PerformanceTracker : IUpdatable, IDisposable
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     private readonly FrameContext _frameContext;
     private long _frameCount;
     private double _totalFrameTime;
@@ -10,7 +10,7 @@ public class PerformanceTracker : IUpdatable, IDisposable
     private double _maxFrameTime;
     private GpuMemoryStats _peakMemoryStats;
 
-    public PerformanceTracker(IGpuDevice gpuDevice, FrameContext frameContext)
+    public PerformanceTracker(GpuDevice gpuDevice, FrameContext frameContext)
     {
         _gpuDevice = gpuDevice;
         _frameContext = frameContext;

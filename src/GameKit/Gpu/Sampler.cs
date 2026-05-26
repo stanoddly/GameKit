@@ -5,10 +5,10 @@ namespace GameKit.Gpu;
 
 public class Sampler: IDisposable
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     internal Pointer<SDL_GPUSampler> Pointer { get; set; }
 
-    internal Sampler(IGpuDevice gpuDevice, Pointer<SDL_GPUSampler> pointer)
+    internal Sampler(GpuDevice gpuDevice, Pointer<SDL_GPUSampler> pointer)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;

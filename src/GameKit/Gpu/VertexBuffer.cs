@@ -6,14 +6,14 @@ namespace GameKit.Gpu;
 
 public abstract class GpuVertexBuffer: IDisposable, IGpuMemorySized
 {
-    internal IGpuDevice GpuDevice { get; set; }
+    internal GpuDevice GpuDevice { get; set; }
 
     internal Pointer<SDL_GPUBuffer> SdlVertexBuffer { get; set; }
     public int BufferSize { get; }
     public int Size { get; internal set; }
     public long SizeInBytes { get; }
 
-    protected GpuVertexBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, int size, long sizeInBytes)
+    protected GpuVertexBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlVertexBuffer, int size, long sizeInBytes)
     {
         GpuDevice = gpuDevice;
         SdlVertexBuffer = sdlVertexBuffer;

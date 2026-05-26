@@ -47,7 +47,7 @@ public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
     public static ComputeRenderer Create(
         IComputeShaderLoader computeShaderLoader,
         ComputePipelineBuilder computePipelineBuilder,
-        IGpuDevice gpuDevice)
+        GpuDevice gpuDevice)
     {
         ComputeShader computeShader = computeShaderLoader.Load("shaders/compute");
         ComputePipeline computePipeline = computePipelineBuilder.Build(computeShader);

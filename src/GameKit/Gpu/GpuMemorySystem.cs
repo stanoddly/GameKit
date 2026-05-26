@@ -4,11 +4,11 @@ namespace GameKit.Gpu;
 
 public class GpuMemorySystem: ICopyPass
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     private CommandBuffer? _commandBuffer;
     private ICopyPass? _copyPassImplementation;
 
-    public GpuMemorySystem(IGpuDevice gpuDevice)
+    public GpuMemorySystem(GpuDevice gpuDevice)
     {
         _gpuDevice = gpuDevice;
     }

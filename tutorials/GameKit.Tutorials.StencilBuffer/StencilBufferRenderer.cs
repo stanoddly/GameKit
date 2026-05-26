@@ -64,7 +64,7 @@ public class StencilBufferRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice)
+        GpuDevice gpuDevice)
     {
         Texture depthStencilTexture = gpuDevice.CreateDepthBufferTexture(
             new ShortSize(1280, 720),

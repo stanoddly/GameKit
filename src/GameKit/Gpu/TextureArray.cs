@@ -6,12 +6,12 @@ namespace GameKit.Gpu;
 
 public class TextureArray : Texture
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
 
     public ushort LayerCount { get; }
 
     internal TextureArray(
-        IGpuDevice gpuDevice,
+        GpuDevice gpuDevice,
         Pointer<SDL_GPUTexture> sdlGpuTexture,
         ShortSize size,
         ushort layerCount,

@@ -6,7 +6,7 @@ namespace GameKit.Gpu;
 
 public class ComputePipeline : IDisposable
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     internal Pointer<SDL_GPUComputePipeline> Pointer { get; set; }
     public ShaderBindingLayout BindingLayout { get; }
 
@@ -14,7 +14,7 @@ public class ComputePipeline : IDisposable
     public uint ThreadCountY { get; }
     public uint ThreadCountZ { get; }
 
-    internal ComputePipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUComputePipeline> pointer, ShaderBindingLayout bindingLayout, uint threadCountX, uint threadCountY, uint threadCountZ)
+    internal ComputePipeline(GpuDevice gpuDevice, Pointer<SDL_GPUComputePipeline> pointer, ShaderBindingLayout bindingLayout, uint threadCountX, uint threadCountY, uint threadCountZ)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;

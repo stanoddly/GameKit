@@ -52,7 +52,7 @@ public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice)
+        GpuDevice gpuDevice)
     {
         // Create solid color images programmatically
         Image[] images =

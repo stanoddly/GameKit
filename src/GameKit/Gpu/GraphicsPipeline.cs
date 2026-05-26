@@ -7,7 +7,7 @@ namespace GameKit.Gpu;
 
 public class GraphicsPipeline: IDisposable
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
     internal Pointer<SDL_GPUGraphicsPipeline> Pointer { get; set; }
 
     /// <summary>
@@ -25,7 +25,7 @@ public class GraphicsPipeline: IDisposable
     public FragmentShader FragmentShader { get; }
     public DepthBufferFormat DepthBufferFormat { get; }
 
-    internal GraphicsPipeline(IGpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, ImmutableArray<VertexTypeId> vertexBufferTypeIds, VertexShader vertexShader, FragmentShader fragmentShader, DepthBufferFormat depthBufferFormat)
+    internal GraphicsPipeline(GpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, ImmutableArray<VertexTypeId> vertexBufferTypeIds, VertexShader vertexShader, FragmentShader fragmentShader, DepthBufferFormat depthBufferFormat)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;

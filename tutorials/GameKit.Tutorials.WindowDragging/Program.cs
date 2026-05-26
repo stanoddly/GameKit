@@ -22,7 +22,7 @@ static class Program
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(static () => new ClearRenderPhase(FColors.SkyBlue));
 
-        builder.OnStart((IWindow window, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((Window window, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
         {
             window.Draggable = true;
 

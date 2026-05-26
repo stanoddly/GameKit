@@ -52,9 +52,9 @@ public abstract class Texture: IDisposable, IGpuMemorySized
 
 public class UserTexture: Texture
 {
-    private readonly IGpuDevice _gpuDevice;
+    private readonly GpuDevice _gpuDevice;
 
-    internal UserTexture(IGpuDevice gpuDevice, Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
+    internal UserTexture(GpuDevice gpuDevice, Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
         : base(sdlGpuTexture, size, format, format.CalculateSizeInBytes(size.Width, size.Height))
     {
         _gpuDevice = gpuDevice;

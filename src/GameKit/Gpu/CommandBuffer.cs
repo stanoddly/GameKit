@@ -5,22 +5,7 @@ using SDL;
 
 namespace GameKit.Gpu;
 
-public interface ICommandBuffer: IDisposable
-{
-    void Submit();
-    GpuFence SubmitAndAcquireFence();
-    void Cancel();
-    void PushFragmentUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
-    void PushVertexUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
-    void BlitTextures(Texture source, Texture destination);
-    void PushComputeUniformData<TType>(uint slot, TType variable) where TType : unmanaged;
-    ICopyPass CreateCopyPass();
-    IRenderPass CreateRenderPass(List<Texture> colorTargets, List<ColorTargetSettings> colorTargetSettings, Texture? depthBuffer, DepthBufferSettings depthBufferSettings);
-    IComputePass CreateComputePass(ReadOnlySpan<StorageTextureReadWriteBinding> readWriteStorageTextures, ReadOnlySpan<StorageBufferReadWriteBinding> readWriteStorageBuffers);
-    IComputePass CreateComputePass();
-}
-
-public class CommandBuffer: ICommandBuffer
+public class CommandBuffer: IDisposable
 {
     private readonly GpuDevice _gpuDevice;
     private Pointer<SDL_GPUCommandBuffer> _sdlGpuCommandBuffer;
