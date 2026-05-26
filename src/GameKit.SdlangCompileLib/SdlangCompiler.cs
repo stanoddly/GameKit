@@ -750,7 +750,7 @@ public class SdlangCompiler
         elementSizesBySlot.TryGetValue(1, out uint slot1);
         elementSizesBySlot.TryGetValue(2, out uint slot2);
         elementSizesBySlot.TryGetValue(3, out uint slot3);
-        return new StorageBufferElementSizes(slot0, slot1, slot2, slot3);
+        return new StorageBufferElementSizes((ushort)slot0, (ushort)slot1, (ushort)slot2, (ushort)slot3);
     }
 
     private static uint ComputeStructuredBufferElementSize(JsonElement resourceType)

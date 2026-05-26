@@ -248,7 +248,7 @@ public class CommandBuffer: ICommandBuffer
         StorageBufferElementSizes sizes = default;
         for (int i = 0; i < buffers.Length && i < 4; i++)
         {
-            uint elementSize = (uint)buffers[i].Buffer.ElementSize;
+            ushort elementSize = (ushort)buffers[i].Buffer.ElementSize;
             sizes = i switch
             {
                 0 => sizes with { Slot0 = elementSize },

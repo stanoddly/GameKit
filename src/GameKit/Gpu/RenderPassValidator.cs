@@ -189,7 +189,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     {
         for (int i = 0; i < buffers.Length; i++)
         {
-            _vertexStorageBufferElementSizes = SetStorageBufferSlotSize(_vertexStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+            _vertexStorageBufferElementSizes = SetStorageBufferSlotSize(_vertexStorageBufferElementSizes, slot + (uint)i, (ushort)buffers[i].ElementSize);
         }
     }
 
@@ -197,7 +197,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
     {
         for (int i = 0; i < buffers.Length; i++)
         {
-            _fragmentStorageBufferElementSizes = SetStorageBufferSlotSize(_fragmentStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+            _fragmentStorageBufferElementSizes = SetStorageBufferSlotSize(_fragmentStorageBufferElementSizes, slot + (uint)i, (ushort)buffers[i].ElementSize);
         }
     }
 
@@ -295,7 +295,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
             _fragmentStorageBufferElementSizes);
     }
 
-    private static ShaderCommon.StorageBufferElementSizes SetStorageBufferSlotSize(ShaderCommon.StorageBufferElementSizes sizes, uint slot, uint elementSize)
+    private static ShaderCommon.StorageBufferElementSizes SetStorageBufferSlotSize(ShaderCommon.StorageBufferElementSizes sizes, uint slot, ushort elementSize)
     {
         return slot switch
         {

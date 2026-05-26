@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace GameKit.ShaderCommon;
 
-public record struct StorageBufferElementSizes(uint Slot0, uint Slot1, uint Slot2, uint Slot3);
+public record struct StorageBufferElementSizes(ushort Slot0, ushort Slot1, ushort Slot2, ushort Slot3);
 
 public readonly record struct ShaderBindingLayout(
     ShaderBindingCounts BindingCounts,
@@ -123,7 +123,7 @@ public static class ShaderBindingLayoutValidator
         ValidateStorageBufferSlot(label, 3, expected.Slot3, real.Slot3);
     }
 
-    private static void ValidateStorageBufferSlot(string label, int slotIndex, uint expectedSize, uint realSize)
+    private static void ValidateStorageBufferSlot(string label, int slotIndex, ushort expectedSize, ushort realSize)
     {
         if (expectedSize != 0 && realSize != 0 && expectedSize != realSize)
         {

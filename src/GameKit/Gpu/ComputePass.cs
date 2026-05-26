@@ -75,7 +75,7 @@ public class ComputePass : IComputePass
         ThrowIfDisposed();
         for (int i = 0; i < buffers.Length; i++)
         {
-            _readOnlyStorageBufferElementSizes = SetStorageBufferSlotSize(_readOnlyStorageBufferElementSizes, slot + (uint)i, (uint)buffers[i].ElementSize);
+            _readOnlyStorageBufferElementSizes = SetStorageBufferSlotSize(_readOnlyStorageBufferElementSizes, slot + (uint)i, (ushort)buffers[i].ElementSize);
         }
         unsafe
         {
@@ -164,7 +164,7 @@ public class ComputePass : IComputePass
             _readWriteStorageBufferElementSizes);
     }
 
-    private static StorageBufferElementSizes SetStorageBufferSlotSize(StorageBufferElementSizes sizes, uint slot, uint elementSize)
+    private static StorageBufferElementSizes SetStorageBufferSlotSize(StorageBufferElementSizes sizes, uint slot, ushort elementSize)
     {
         return slot switch
         {
