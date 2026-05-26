@@ -56,6 +56,26 @@ internal class Window : IWindow
         }
     }
 
+    public Size<uint> Size
+    {
+        get
+        {
+            int width, height;
+            unsafe
+            {
+                SDL3.SDL_GetWindowSize(SdlWindow, &width, &height);
+            }
+            return new Size<uint>((uint)width, (uint)height);
+        }
+        set
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowSize(SdlWindow, (int)value.Width, (int)value.Height);
+            }
+        }
+    }
+
     public TextureFormat ColorTargetFormat
     {
         get

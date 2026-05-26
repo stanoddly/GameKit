@@ -14,6 +14,12 @@ public interface IWindow : IDisposable
 
     ShortSize RenderSizeInPixels { get; }
 
+    /// <summary>
+    /// Gets or sets the logical size of the window in screen coordinates.
+    /// This may differ from <see cref="RenderSizeInPixels"/> under DPI scaling.
+    /// </summary>
+    Size<uint> Size { get; set; }
+
     TextureFormat ColorTargetFormat { get; }
     bool MouseGrab { get; set; }
     bool WindowRelativeMouseMode { get; set; }
