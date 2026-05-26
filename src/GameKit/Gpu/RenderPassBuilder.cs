@@ -37,9 +37,9 @@ public interface IRenderPassBuilder
 public class RenderPassBuilder : IRenderPassBuilder
 {
     private RenderPassBuilderState _state = new();
-    private readonly ICommandBuffer _commandBuffer;
+    private readonly CommandBuffer _commandBuffer;
 
-    public RenderPassBuilder(ICommandBuffer commandBuffer)
+    public RenderPassBuilder(CommandBuffer commandBuffer)
     {
         _commandBuffer = commandBuffer;
     }

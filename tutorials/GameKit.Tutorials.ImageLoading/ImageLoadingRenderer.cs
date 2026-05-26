@@ -42,7 +42,7 @@ public class ImageLoadingRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice,
+        GpuDevice gpuDevice,
         ITextureLoader textureLoader)
     {
         // Load image from file using SDL3_image

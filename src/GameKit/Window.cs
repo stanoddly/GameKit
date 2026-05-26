@@ -8,7 +8,11 @@ using SDL;
 
 namespace GameKit;
 
-internal class Window : IWindow
+public readonly record struct ResolutionChangedEventArgs(ShortSize OldSize, ShortSize NewSize, ulong Timestamp);
+
+public delegate void ResolutionChangedHandler(ResolutionChangedEventArgs eventArgs);
+
+public class Window : IDisposable
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }

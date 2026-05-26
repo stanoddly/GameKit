@@ -6,7 +6,7 @@ namespace GameKit.Gpu;
 
 public abstract class GpuStorageBuffer : IDisposable, IGpuMemorySized
 {
-    internal IGpuDevice GpuDevice { get; set; }
+    internal GpuDevice GpuDevice { get; set; }
     internal Pointer<SDL_GPUBuffer> SdlBuffer { get; set; }
 
     public int BufferSize { get; }
@@ -14,7 +14,7 @@ public abstract class GpuStorageBuffer : IDisposable, IGpuMemorySized
     public long SizeInBytes { get; }
     public abstract int ElementSize { get; }
 
-    protected GpuStorageBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size, long sizeInBytes)
+    protected GpuStorageBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size, long sizeInBytes)
     {
         GpuDevice = gpuDevice;
         SdlBuffer = sdlBuffer;
@@ -30,7 +30,7 @@ public class GpuStorageBuffer<T> : GpuStorageBuffer where T : unmanaged
 {
     public override int ElementSize => Unsafe.SizeOf<T>();
 
-    internal GpuStorageBuffer(IGpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size)
+    internal GpuStorageBuffer(GpuDevice gpuDevice, Pointer<SDL_GPUBuffer> sdlBuffer, int size)
         : base(gpuDevice, sdlBuffer, size, Unsafe.SizeOf<T>() * size)
     {
     }

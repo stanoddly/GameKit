@@ -87,10 +87,8 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<PlatformInfo, GameKitFactory>();
 
         AddSingleton<Window, GameKitFactory>();
-        AddAlias<IWindow, Window>();
 
         AddSingleton<GpuDevice, GameKitFactory>();
-        AddAlias<IGpuDevice, GpuDevice>();
 
         AddSingleton<GpuMemorySystem>();
 

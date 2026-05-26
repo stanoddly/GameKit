@@ -5,7 +5,7 @@ namespace GameKit.Utils;
 
 public static class OrthographicCameraFactory
 {
-    public static Camera Create(IWindow window, IViewConfiguration viewConfiguration)
+    public static Camera Create(Window window, IViewConfiguration viewConfiguration)
     {
         ShortSize windowSize = window.RenderSizeInPixels;
 

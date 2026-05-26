@@ -9,10 +9,10 @@ namespace GameKit.RenderOrchestration;
 /// </summary>
 public class DefaultRenderContextProvider : IRenderContextProvider<DefaultRenderContext>
 {
-    private readonly IWindow _window;
-    private readonly IGpuDevice _gpuDevice;
+    private readonly Window _window;
+    private readonly GpuDevice _gpuDevice;
 
-    public DefaultRenderContextProvider(IWindow window, IGpuDevice gpuDevice)
+    public DefaultRenderContextProvider(Window window, GpuDevice gpuDevice)
     {
         _window = window;
         _gpuDevice = gpuDevice;

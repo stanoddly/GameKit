@@ -44,7 +44,7 @@ public class InstancingRenderer : IRenderPhase<DefaultRenderContext>
         ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
-        IGpuDevice gpuDevice)
+        GpuDevice gpuDevice)
     {
         // Position offsets for 2x2 grid (xy = offset, zw = padding)
         Vector4[] offsets =

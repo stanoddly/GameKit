@@ -57,10 +57,10 @@ public class FileDialogsView : View<FileDialogsViewModel>
     private static readonly Color ButtonColor = new(62, 87, 121, 255);
     private static readonly Color ButtonHoverColor = new(78, 112, 156, 255);
     private static readonly Color TextColor = new(235, 238, 242, 255);
-    private readonly IWindow _window;
+    private readonly Window _window;
     private readonly Font _font;
 
-    public FileDialogsView(FileDialogsViewModel viewModel, IWindow window, IFontSystem fontSystem)
+    public FileDialogsView(FileDialogsViewModel viewModel, Window window, IFontSystem fontSystem)
         : base(viewModel)
     {
         _window = window;
