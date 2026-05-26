@@ -161,6 +161,8 @@ public class RenderPass<TValidator> : IRenderPass
         byte numStorageBuffers = (byte)Math.Max(_vertexShaderBindingCounts.NumStorageBuffers, slot + buffers.Length);
         _vertexShaderBindingCounts = _vertexShaderBindingCounts with { NumStorageBuffers = numStorageBuffers };
 
+        _validator.OnBindVertexStorageBuffers(this, slot, buffers);
+
         unsafe
         {
             SDL_GPUBuffer** sdlBuffers = stackalloc SDL_GPUBuffer*[buffers.Length];
@@ -188,6 +190,8 @@ public class RenderPass<TValidator> : IRenderPass
 
         byte numStorageBuffers = (byte)Math.Max(_fragmentShaderBindingCounts.NumStorageBuffers, slot + buffers.Length);
         _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumStorageBuffers = numStorageBuffers };
+
+        _validator.OnBindFragmentStorageBuffers(this, slot, buffers);
 
         unsafe
         {

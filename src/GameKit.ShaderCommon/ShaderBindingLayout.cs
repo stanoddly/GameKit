@@ -3,9 +3,13 @@ using System.Runtime.InteropServices;
 
 namespace GameKit.ShaderCommon;
 
+public record struct StorageBufferElementSizes(ushort Slot0, ushort Slot1, ushort Slot2, ushort Slot3);
+
 public readonly record struct ShaderBindingLayout(
     ShaderBindingCounts BindingCounts,
-    ShaderUniformSlotSizes UniformSlotSizes)
+    ShaderUniformSlotSizes UniformSlotSizes,
+    StorageBufferElementSizes StorageBufferElementSizes = default,
+    StorageBufferElementSizes ReadWriteStorageBufferElementSizes = default)
 {
     public int NumSamplers() => BindingCounts.NumSamplers;
     public int NumStorageTextures() => BindingCounts.NumStorageTextures;
@@ -108,6 +112,23 @@ public static class ShaderBindingLayoutValidator
         {
             throw new ShaderBindingLayoutValidationException(
                 $"Slot{slotIndex} size mismatch: expected {expectedSize} but got {realSize}");
+        }
+    }
+
+    public static void ValidateStorageBufferElementSizes(string label, StorageBufferElementSizes expected, StorageBufferElementSizes real)
+    {
+        ValidateStorageBufferSlot(label, 0, expected.Slot0, real.Slot0);
+        ValidateStorageBufferSlot(label, 1, expected.Slot1, real.Slot1);
+        ValidateStorageBufferSlot(label, 2, expected.Slot2, real.Slot2);
+        ValidateStorageBufferSlot(label, 3, expected.Slot3, real.Slot3);
+    }
+
+    private static void ValidateStorageBufferSlot(string label, int slotIndex, ushort expectedSize, ushort realSize)
+    {
+        if (expectedSize != 0 && realSize != 0 && expectedSize != realSize)
+        {
+            throw new ShaderBindingLayoutValidationException(
+                $"{label} storage buffer slot {slotIndex} element size mismatch: shader expects {expectedSize} bytes but buffer element is {realSize} bytes");
         }
     }
 }

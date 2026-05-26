@@ -388,6 +388,78 @@ public class SdlangCompilerTests
         Assert.That(ex.Message, Does.Contain("same index and space"));
     }
 
+    private const string FragmentShaderWithStructStorageBuffer = """
+                                                                 struct FragmentInput {
+                                                                     float4 position : SV_Position;
+                                                                 };
+
+                                                                 struct MyData {
+                                                                     float4 position;
+                                                                     float2 texCoord;
+                                                                     float intensity;
+                                                                 };
+
+                                                                 StructuredBuffer<MyData> dataBuffer : register(t0, space2);
+
+                                                                 [shader("fragment")]
+                                                                 float4 main(FragmentInput input) : SV_Target {
+                                                                     MyData d = dataBuffer[0];
+                                                                     return d.position * d.intensity;
+                                                                 }
+                                                                 """;
+
+    private const string FragmentShaderWithPrimitiveStorageBuffer = """
+                                                                     struct FragmentInput {
+                                                                         float4 position : SV_Position;
+                                                                     };
+
+                                                                     StructuredBuffer<float4> colorBuffer : register(t0, space2);
+
+                                                                     [shader("fragment")]
+                                                                     float4 main(FragmentInput input) : SV_Target {
+                                                                         return colorBuffer[0];
+                                                                     }
+                                                                     """;
+
+    [Test]
+    public void CompileShader_FragmentShaderWithStructStorageBuffer_StoresElementSize()
+    {
+        string shaderPath = CreateTemporaryShaderFile(FragmentShaderWithStructStorageBuffer);
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.ChangeExtension(
+            Path.Combine(_testDir, ".generated", Path.GetFileName(shaderPath)),
+            ".metadata.json");
+        string json = File.ReadAllText(metadataPath);
+
+        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+
+        Assert.That(metadata, Is.Not.Null);
+        // MyData: float4 (16) + float2 (8) + float (4) = 28 bytes at slot 0
+        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(28u));
+        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot1, Is.EqualTo(0u));
+    }
+
+    [Test]
+    public void CompileShader_FragmentShaderWithPrimitiveStorageBuffer_StoresElementSize()
+    {
+        string shaderPath = CreateTemporaryShaderFile(FragmentShaderWithPrimitiveStorageBuffer);
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metadataPath = Path.ChangeExtension(
+            Path.Combine(_testDir, ".generated", Path.GetFileName(shaderPath)),
+            ".metadata.json");
+        string json = File.ReadAllText(metadataPath);
+
+        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+
+        Assert.That(metadata, Is.Not.Null);
+        // float4: 4 floats * 4 bytes = 16 bytes at slot 0
+        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(16u));
+    }
+
     private string CreateTemporaryShaderFile(string shaderContent)
     {
         string filename = Path.ChangeExtension(Path.GetRandomFileName(), ".slang");

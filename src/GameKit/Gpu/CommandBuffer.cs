@@ -231,7 +231,8 @@ public class CommandBuffer: ICommandBuffer
                 bufferBindings,
                 (uint)readWriteStorageBuffers.Length);
 
-            return new ComputePass(computePass, (uint)readWriteStorageTextures.Length, (uint)readWriteStorageBuffers.Length);
+            StorageBufferElementSizes rwElementSizes = BuildStorageBufferElementSizes(readWriteStorageBuffers);
+            return new ComputePass(computePass, (uint)readWriteStorageTextures.Length, (uint)readWriteStorageBuffers.Length, rwElementSizes);
         }
     }
 
@@ -240,6 +241,24 @@ public class CommandBuffer: ICommandBuffer
         return CreateComputePass(
             ReadOnlySpan<StorageTextureReadWriteBinding>.Empty,
             ReadOnlySpan<StorageBufferReadWriteBinding>.Empty);
+    }
+
+    private static StorageBufferElementSizes BuildStorageBufferElementSizes(ReadOnlySpan<StorageBufferReadWriteBinding> buffers)
+    {
+        StorageBufferElementSizes sizes = default;
+        for (int i = 0; i < buffers.Length && i < 4; i++)
+        {
+            ushort elementSize = (ushort)buffers[i].Buffer.ElementSize;
+            sizes = i switch
+            {
+                0 => sizes with { Slot0 = elementSize },
+                1 => sizes with { Slot1 = elementSize },
+                2 => sizes with { Slot2 = elementSize },
+                3 => sizes with { Slot3 = elementSize },
+                _ => sizes
+            };
+        }
+        return sizes;
     }
 
     private void AssignSlot(ref ShaderUniformSlotSizes slotSizes, uint slot, int size)
