@@ -135,6 +135,14 @@ public class Window : IDisposable
         }
     }
 
+    public bool SupportsClickThrough
+    {
+        get
+        {
+            return _platformInfo.SupportsClickThrough;
+        }
+    }
+
     public bool AlwaysOnTop
     {
         get
@@ -157,6 +165,8 @@ public class Window : IDisposable
     }
 
     private bool _draggable;
+    private GCHandle _hitTestHandle;
+    private Func<Vector2Int, HitTestResult>? _hitTestCallback;
 
     public bool Draggable
     {
@@ -167,6 +177,7 @@ public class Window : IDisposable
             {
                 if (value)
                 {
+                    ClearHitTestCallback();
                     SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestDraggable, IntPtr.Zero);
                 }
                 else
@@ -178,10 +189,76 @@ public class Window : IDisposable
         }
     }
 
+    public void SetHitTest(Func<Vector2Int, HitTestResult>? callback)
+    {
+        ClearHitTestCallback();
+        _hitTestCallback = callback;
+
+        if (callback == null)
+        {
+            unsafe
+            {
+                SDL3.SDL_SetWindowHitTest(SdlWindow, null, IntPtr.Zero);
+                SDL3.SDL_SetWindowShape(SdlWindow, null);
+            }
+            return;
+        }
+
+        _draggable = false;
+        ApplyHitTestShape(callback);
+        _hitTestHandle = GCHandle.Alloc(this);
+        unsafe
+        {
+            SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestCallback, GCHandle.ToIntPtr(_hitTestHandle));
+        }
+    }
+
+    // SDL_SetWindowShape defines the input region: alpha=0 pixels receive no input (click-through),
+    // alpha>0 pixels receive input. SDL_SetWindowHitTest then decides draggable vs normal for those pixels.
+    private unsafe void ApplyHitTestShape(Func<Vector2Int, HitTestResult> callback)
+    {
+        Size<uint> size = Size;
+        SDL_Surface* surface = SDL3.SDL_CreateSurface((int)size.Width, (int)size.Height, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888);
+
+        uint* pixels = (uint*)surface->pixels.ToPointer();
+        int stride = surface->pitch / sizeof(uint);
+
+        for (int y = 0; y < (int)size.Height; y++)
+        {
+            for (int x = 0; x < (int)size.Width; x++)
+            {
+                HitTestResult result = callback(new Vector2Int(x, y));
+                pixels[y * stride + x] = result == HitTestResult.Miss ? 0x00000000u : 0xFF000000u;
+            }
+        }
+
+        SDL3.SDL_SetWindowShape(SdlWindow, surface);
+        SDL3.SDL_DestroySurface(surface);
+    }
+
+    private void ClearHitTestCallback()
+    {
+        if (_hitTestHandle.IsAllocated)
+        {
+            _hitTestHandle.Free();
+        }
+        _hitTestCallback = null;
+    }
+
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static unsafe SDL_HitTestResult HitTestDraggable(SDL_Window* window, SDL_Point* area, IntPtr data)
     {
         return SDL_HitTestResult.SDL_HITTEST_DRAGGABLE;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe SDL_HitTestResult HitTestCallback(SDL_Window* window, SDL_Point* area, IntPtr data)
+    {
+        GCHandle handle = GCHandle.FromIntPtr(data);
+        Window self = (Window)handle.Target!;
+        return self._hitTestCallback!(new Vector2Int(area->x, area->y)) == HitTestResult.Draggable
+            ? SDL_HitTestResult.SDL_HITTEST_DRAGGABLE
+            : SDL_HitTestResult.SDL_HITTEST_NORMAL;
     }
 
     public Vector2Int Position
@@ -413,6 +490,7 @@ public class Window : IDisposable
 
     public void Dispose()
     {
+        ClearHitTestCallback();
         unsafe
         {
             SDL3.SDL_ReleaseWindowFromGPUDevice(SdlGpuDevice, SdlWindow);
