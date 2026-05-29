@@ -845,15 +845,17 @@ public class SdlangCompiler
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
             // Step 1: Compile all targets in a single slangc invocation
-            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV];
+            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV, ShaderFormatDto.Msl];
             (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
             (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
 
             // Step 3: Update shader instances with correct entry point
+            // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++
             shaderInstances = shaderInstances.Select(instance =>
-                new ShaderInstanceDto(instance.Format, instance.Filename, entryPoint)).ToList();
+                new ShaderInstanceDto(instance.Format, instance.Filename,
+                    instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
 
             // Step 4: Write metadata
             WriteMetadata(
