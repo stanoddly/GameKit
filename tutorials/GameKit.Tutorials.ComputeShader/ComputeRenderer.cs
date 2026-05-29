@@ -49,7 +49,7 @@ public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
         ComputePipelineBuilder computePipelineBuilder,
         GpuDevice gpuDevice)
     {
-        ComputeShader computeShader = computeShaderLoader.Load("shaders/compute");
+        GameKit.Gpu.ComputeShader computeShader = computeShaderLoader.Load("shaders/compute");
         ComputePipeline computePipeline = computePipelineBuilder.Build(computeShader);
 
         Texture outputTexture = gpuDevice.CreateTexture(

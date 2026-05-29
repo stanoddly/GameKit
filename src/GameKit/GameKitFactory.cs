@@ -141,19 +141,30 @@ public class GameKitFactory: IDisposable
 
         unsafe
         {
-            VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
-            shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;
-            shaderDrawParamsFeatures.shaderDrawParameters = 1;
-
-            SDL_GPUVulkanOptions vulkanOptions = default;
-            vulkanOptions.vulkan_api_version = (1 << 22) | (3 << 12) | 0;
-            vulkanOptions.feature_list = (IntPtr)(&shaderDrawParamsFeatures);
-
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
-            SDL_GPUVulkanOptions* vulkanOptionsPointer = &vulkanOptions;
             SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, _config.EnableGpuValidation);
-            SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
-            SDL3.SDL_SetPointerProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, (IntPtr)vulkanOptionsPointer);
+            if (OperatingSystem.IsMacOS())
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
+            }
+            else
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+            }
+
+            if (!OperatingSystem.IsMacOS())
+            {
+                VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
+                shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;
+                shaderDrawParamsFeatures.shaderDrawParameters = 1;
+
+                SDL_GPUVulkanOptions vulkanOptions = default;
+                vulkanOptions.vulkan_api_version = (1 << 22) | (3 << 12) | 0;
+                vulkanOptions.feature_list = (IntPtr)(&shaderDrawParamsFeatures);
+
+                SDL_GPUVulkanOptions* vulkanOptionsPointer = &vulkanOptions;
+                SDL3.SDL_SetPointerProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_VULKAN_OPTIONS_POINTER, (IntPtr)vulkanOptionsPointer);
+            }
 
             Pointer<SDL_GPUDevice> device = SDL3.SDL_CreateGPUDeviceWithProperties(props);
             SDL3.SDL_DestroyProperties(props);
@@ -162,7 +173,7 @@ public class GameKitFactory: IDisposable
             {
                 throw new GameKitInitializationException($"SDL_CreateGPUDevice failed: {SDL3.SDL_GetError()}");
             }
-            
+
             return new GpuDevice(device);
         }
     }
