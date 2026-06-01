@@ -460,6 +460,65 @@ public class SdlangCompilerTests
         Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(16u));
     }
 
+    private const string VertexShaderWithStorageAndUniformBuffers = """
+                                                                    struct VoxelData {
+                                                                        float positionX;
+                                                                        float positionY;
+                                                                        float positionZ;
+                                                                    };
+
+                                                                    StructuredBuffer<VoxelData> voxelData : register(t0, space0);
+                                                                    StructuredBuffer<uint> visibleIndices : register(t1, space0);
+
+                                                                    ConstantBuffer<float4x4> viewProjection : register(b0, space1);
+                                                                    ConstantBuffer<float3> offset : register(b1, space1);
+
+                                                                    struct Input {
+                                                                        float3 Position : TEXCOORD0;
+                                                                        uint InstanceID : SV_InstanceID;
+                                                                    };
+
+                                                                    [shader("vertex")]
+                                                                    float4 main(Input input) : SV_Position {
+                                                                        uint idx = visibleIndices[input.InstanceID];
+                                                                        VoxelData v = voxelData[idx];
+                                                                        float3 worldPos = input.Position + float3(v.positionX, v.positionY, v.positionZ) + offset;
+                                                                        return mul(viewProjection, float4(worldPos, 1.0));
+                                                                    }
+                                                                    """;
+
+    [Test]
+    public void CompileShader_VertexWithStorageAndUniformBuffers_MetalHasNonConflictingBufferIndices()
+    {
+        string shaderPath = CreateTemporaryShaderFile(VertexShaderWithStorageAndUniformBuffers);
+
+        SdlangCompiler compiler = new SdlangCompiler();
+        compiler.Compile([shaderPath], force: true);
+
+        string metalPath = Path.Combine(
+            _testDir, ".generated",
+            Path.ChangeExtension(Path.GetFileName(shaderPath), ".metal"));
+
+        Assert.That(File.Exists(metalPath), Is.True, "Metal file should be created");
+
+        string metalContent = File.ReadAllText(metalPath);
+
+        // Extract all [[buffer(N)]] indices from the function signature
+        var bufferIndices = System.Text.RegularExpressions.Regex.Matches(metalContent, @"\[\[buffer\((\d+)\)\]\]")
+            .Cast<System.Text.RegularExpressions.Match>()
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        // All buffer indices must be unique (no conflicts)
+        Assert.That(bufferIndices, Is.Unique,
+            $"Metal buffer indices must be unique but found: [{string.Join(", ", bufferIndices)}]");
+
+        // Uniform buffers (constant*) should be offset past storage buffers
+        // 2 storage buffers → uniforms should start at index 2
+        Assert.That(bufferIndices, Does.Contain(2), "First uniform buffer should be at index 2");
+        Assert.That(bufferIndices, Does.Contain(3), "Second uniform buffer should be at index 3");
+    }
+
     private string CreateTemporaryShaderFile(string shaderContent)
     {
         string filename = Path.ChangeExtension(Path.GetRandomFileName(), ".slang");
