@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using GameKit.ShaderCommon;
 
 namespace GameKit.SdlangCompileLib;
@@ -132,36 +133,34 @@ public class SdlangCompiler
         { ShaderFormatDto.Msl, [] }
     };
 
-    private static ShaderInstanceDto CompileTarget(
-        FileInfo filePath, DirectoryInfo outputDir, ShaderFormatDto format,
-        FileInfo? reflectionFile = null, List<string>? extraArgs = null)
+    private static (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
+        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
+        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
 
-        List<string> args =
-        [
+        List<string> args = new List<string>
+        {
             filePath.FullName,
-            "-warnings-disable", "39001,39013,39029"
-        ];
+            "-warnings-disable", "39001,39013,39029",
+            "-reflection-json", reflectionFile.FullName
+        };
 
-        if (reflectionFile != null)
+        List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
+
+        foreach (ShaderFormatDto format in targets)
         {
-            args.AddRange(["-reflection-json", reflectionFile.FullName]);
+            string target = GetTargetString(format);
+            string extension = TargetsWithExtensions[format];
+            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
+
+            args.AddRange(["-target", target]);
+            args.AddRange(CommandLineOptions[format]);
+            args.AddRange(["-entry", "main"]);
+            args.AddRange(["-o", outputFile.FullName]);
+
+            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, "main"));
         }
-
-        if (extraArgs != null)
-        {
-            args.AddRange(extraArgs);
-        }
-
-        string target = GetTargetString(format);
-        string extension = TargetsWithExtensions[format];
-        FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
-
-        args.AddRange(["-target", target]);
-        args.AddRange(CommandLineOptions[format]);
-        args.AddRange(["-entry", "main"]);
-        args.AddRange(["-o", outputFile.FullName]);
 
         Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
 
@@ -189,7 +188,92 @@ public class SdlangCompiler
             throw new ShaderCompilationException($"Shader compilation failed with exit code {process.ExitCode}");
         }
 
-        return new ShaderInstanceDto(format, outputFile.Name, "main");
+        foreach (ShaderFormatDto format in targets)
+        {
+            if (format != ShaderFormatDto.Msl)
+            {
+                continue;
+            }
+
+            string extension = TargetsWithExtensions[format];
+            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
+            NormalizeMetalBufferBindings(outputFile);
+        }
+
+        return (reflectionFile, shaderInstances);
+    }
+
+    private static void NormalizeMetalBufferBindings(FileInfo outputFile)
+    {
+        string metal = File.ReadAllText(outputFile.FullName);
+        const string bufferAnnotationPattern = @"(?<decl>[^,\n()]+?\s+\w+\s*)\[\[buffer\((?<index>\d+)\)\]\]";
+
+        List<Match> matches = Regex.Matches(metal, bufferAnnotationPattern, RegexOptions.CultureInvariant)
+            .Cast<Match>()
+            .ToList();
+
+        Dictionary<int, int> replacementsByMatchIndex = new();
+        List<(int MatchIndex, int OriginalIndex)> uniformBuffers = [];
+        List<(int MatchIndex, int OriginalIndex)> storageBuffers = [];
+
+        foreach ((Match match, int matchIndex) in matches.Select((m, i) => (m, i)))
+        {
+            string declaration = match.Groups["decl"].Value;
+            int originalIndex = int.Parse(match.Groups["index"].Value);
+
+            if (IsMetalUniformBufferDeclaration(declaration))
+            {
+                uniformBuffers.Add((matchIndex, originalIndex));
+            }
+            else if (IsMetalStorageBufferDeclaration(declaration))
+            {
+                storageBuffers.Add((matchIndex, originalIndex));
+            }
+        }
+
+        foreach ((int matchIndex, int originalIndex) in uniformBuffers.OrderBy(b => b.OriginalIndex))
+        {
+            replacementsByMatchIndex[matchIndex] = originalIndex;
+        }
+
+        int uniformBufferCount = uniformBuffers.Count == 0 ? 0 : uniformBuffers.Max(b => b.OriginalIndex) + 1;
+        foreach ((int matchIndex, int originalIndex) in storageBuffers.OrderBy(b => b.OriginalIndex))
+        {
+            replacementsByMatchIndex[matchIndex] = uniformBufferCount + originalIndex;
+        }
+
+        if (replacementsByMatchIndex.Count == 0)
+        {
+            return;
+        }
+
+        int currentMatchIndex = 0;
+        string normalized = Regex.Replace(
+            metal,
+            bufferAnnotationPattern,
+            match =>
+            {
+                int replacementIndex = replacementsByMatchIndex.TryGetValue(currentMatchIndex, out int replacement)
+                    ? replacement
+                    : int.Parse(match.Groups["index"].Value);
+                currentMatchIndex++;
+                return $"{match.Groups["decl"].Value}[[buffer({replacementIndex})]]";
+            },
+            RegexOptions.CultureInvariant);
+
+        File.WriteAllText(outputFile.FullName, normalized);
+    }
+
+    private static bool IsMetalUniformBufferDeclaration(string declaration)
+    {
+        return declaration.Contains(" constant*", StringComparison.Ordinal)
+            || declaration.Contains(" constant *", StringComparison.Ordinal);
+    }
+
+    private static bool IsMetalStorageBufferDeclaration(string declaration)
+    {
+        return declaration.Contains(" device*", StringComparison.Ordinal)
+            || declaration.Contains(" device *", StringComparison.Ordinal);
     }
 
     private static void ValidateBindings(ShaderStageDto stage, List<ResourceBinding> bindings)
@@ -817,39 +901,6 @@ public class SdlangCompiler
         };
     }
 
-    /// <summary>
-    /// Metal uses a single [[buffer(N)]] namespace for both storage buffers and uniform buffers,
-    /// but Slang assigns indices per-register-type (t, u, b) starting from 0. SDL GPU's Metal
-    /// backend expects storage buffers first, then read-write storage buffers, then uniform
-    /// buffers. We use Slang's -fvk-*-shift flags to offset the Metal indices accordingly.
-    /// These flags also affect SPIR-V output, so Metal must be compiled separately.
-    /// </summary>
-    private static List<string> GetMetalBufferBindingShiftArgs(ShaderStageDto stage, ShaderBindingCounts bindingCounts)
-    {
-        List<string> args = [];
-
-        int uniformSpace = stage switch
-        {
-            ShaderStageDto.Vertex => 1,
-            ShaderStageDto.Fragment => 3,
-            ShaderStageDto.Compute => 2,
-            _ => throw new InvalidOperationException($"Unknown shader stage: {stage}")
-        };
-
-        int uniformShift = bindingCounts.NumStorageBuffers + bindingCounts.NumReadWriteStorageBuffers;
-        if (uniformShift > 0)
-        {
-            args.AddRange(["-fvk-b-shift", uniformShift.ToString(), uniformSpace.ToString()]);
-        }
-
-        if (stage == ShaderStageDto.Compute && bindingCounts.NumStorageBuffers > 0 && bindingCounts.NumReadWriteStorageBuffers > 0)
-        {
-            args.AddRange(["-fvk-u-shift", bindingCounts.NumStorageBuffers.ToString(), "1"]);
-        }
-
-        return args;
-    }
-
     private static void CompileShader(FileInfo filePath, bool force = false)
     {
         DirectoryInfo parentDir = filePath.Directory!;
@@ -875,26 +926,20 @@ public class SdlangCompiler
         {
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
-            // Step 1: Compile SPIR-V with reflection data
-            FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
-            ShaderInstanceDto spirvInstance = CompileTarget(filePath, outputDir, ShaderFormatDto.SpirV, reflectionFile);
+            // Step 1: Compile all targets in a single slangc invocation
+            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV, ShaderFormatDto.Msl];
+            (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
 
             // Step 2: Parse reflection data
             (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
 
-            // Step 3: Compile Metal with buffer binding shifts derived from reflection
-            List<string> metalShiftArgs = GetMetalBufferBindingShiftArgs(stage, bindingLayout.BindingCounts);
-            ShaderInstanceDto mslInstance = CompileTarget(filePath, outputDir, ShaderFormatDto.Msl, extraArgs: metalShiftArgs);
-
-            // Step 4: Collect shader instances with correct entry points
+            // Step 3: Update shader instances with correct entry point
             // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++
-            List<ShaderInstanceDto> shaderInstances =
-            [
-                spirvInstance with { EntryPoint = entryPoint },
-                mslInstance with { EntryPoint = $"{entryPoint}_0" }
-            ];
+            shaderInstances = shaderInstances.Select(instance =>
+                new ShaderInstanceDto(instance.Format, instance.Filename,
+                    instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
 
-            // Step 5: Write metadata
+            // Step 4: Write metadata
             WriteMetadata(
                 outputDir,
                 filenameWithoutExt,

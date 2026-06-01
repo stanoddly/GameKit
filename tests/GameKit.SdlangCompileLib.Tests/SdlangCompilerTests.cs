@@ -513,10 +513,15 @@ public class SdlangCompilerTests
         Assert.That(bufferIndices, Is.Unique,
             $"Metal buffer indices must be unique but found: [{string.Join(", ", bufferIndices)}]");
 
-        // Uniform buffers (constant*) should be offset past storage buffers
-        // 2 storage buffers → uniforms should start at index 2
-        Assert.That(bufferIndices, Does.Contain(2), "First uniform buffer should be at index 2");
-        Assert.That(bufferIndices, Does.Contain(3), "Second uniform buffer should be at index 3");
+        // SDL GPU's MSL binding order is uniform buffers first, then storage buffers.
+        Assert.That(bufferIndices, Does.Contain(0), "First uniform buffer should be at index 0");
+        Assert.That(bufferIndices, Does.Contain(1), "Second uniform buffer should be at index 1");
+        Assert.That(bufferIndices, Does.Contain(2), "First storage buffer should be at index 2");
+        Assert.That(bufferIndices, Does.Contain(3), "Second storage buffer should be at index 3");
+        Assert.That(metalContent, Does.Match(@"viewProjection_\d+\s+\[\[buffer\(0\)\]\]"));
+        Assert.That(metalContent, Does.Match(@"offset_\d+\s+\[\[buffer\(1\)\]\]"));
+        Assert.That(metalContent, Does.Match(@"voxelData_\d+\s+\[\[buffer\(2\)\]\]"));
+        Assert.That(metalContent, Does.Match(@"visibleIndices_\d+\s+\[\[buffer\(3\)\]\]"));
     }
 
     private string CreateTemporaryShaderFile(string shaderContent)
