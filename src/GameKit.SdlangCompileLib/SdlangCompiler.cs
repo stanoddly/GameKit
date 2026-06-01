@@ -132,38 +132,36 @@ public class SdlangCompiler
         { ShaderFormatDto.Msl, [] }
     };
 
-    private static (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
-        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
+    private static ShaderInstanceDto CompileTarget(
+        FileInfo filePath, DirectoryInfo outputDir, ShaderFormatDto format,
+        FileInfo? reflectionFile = null, List<string>? extraArgs = null)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
 
-        List<string> args = new List<string>
-        {
+        List<string> args =
+        [
             filePath.FullName,
-            "-warnings-disable", "39001,39013,39029",
-            "-reflection-json", reflectionFile.FullName
-        };
+            "-warnings-disable", "39001,39013,39029"
+        ];
 
-        List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
-
-        // Add all requested targets
-        foreach (ShaderFormatDto format in targets)
+        if (reflectionFile != null)
         {
-            string target = GetTargetString(format);
-            string extension = TargetsWithExtensions[format];
-            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
-
-            args.AddRange(["-target", target]);
-
-            // Add format-specific options
-            List<string> options = CommandLineOptions[format];
-            args.AddRange(options);
-
-            args.AddRange(["-entry", "main"]);
-            args.AddRange(["-o", outputFile.FullName]);
-            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, "main"));
+            args.AddRange(["-reflection-json", reflectionFile.FullName]);
         }
+
+        if (extraArgs != null)
+        {
+            args.AddRange(extraArgs);
+        }
+
+        string target = GetTargetString(format);
+        string extension = TargetsWithExtensions[format];
+        FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
+
+        args.AddRange(["-target", target]);
+        args.AddRange(CommandLineOptions[format]);
+        args.AddRange(["-entry", "main"]);
+        args.AddRange(["-o", outputFile.FullName]);
 
         Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
 
@@ -191,7 +189,7 @@ public class SdlangCompiler
             throw new ShaderCompilationException($"Shader compilation failed with exit code {process.ExitCode}");
         }
 
-        return (reflectionFile, shaderInstances);
+        return new ShaderInstanceDto(format, outputFile.Name, "main");
     }
 
     private static void ValidateBindings(ShaderStageDto stage, List<ResourceBinding> bindings)
@@ -819,6 +817,39 @@ public class SdlangCompiler
         };
     }
 
+    /// <summary>
+    /// Metal uses a single [[buffer(N)]] namespace for both storage buffers and uniform buffers,
+    /// but Slang assigns indices per-register-type (t, u, b) starting from 0. SDL GPU's Metal
+    /// backend expects storage buffers first, then read-write storage buffers, then uniform
+    /// buffers. We use Slang's -fvk-*-shift flags to offset the Metal indices accordingly.
+    /// These flags also affect SPIR-V output, so Metal must be compiled separately.
+    /// </summary>
+    private static List<string> GetMetalBufferBindingShiftArgs(ShaderStageDto stage, ShaderBindingCounts bindingCounts)
+    {
+        List<string> args = [];
+
+        int uniformSpace = stage switch
+        {
+            ShaderStageDto.Vertex => 1,
+            ShaderStageDto.Fragment => 3,
+            ShaderStageDto.Compute => 2,
+            _ => throw new InvalidOperationException($"Unknown shader stage: {stage}")
+        };
+
+        int uniformShift = bindingCounts.NumStorageBuffers + bindingCounts.NumReadWriteStorageBuffers;
+        if (uniformShift > 0)
+        {
+            args.AddRange(["-fvk-b-shift", uniformShift.ToString(), uniformSpace.ToString()]);
+        }
+
+        if (stage == ShaderStageDto.Compute && bindingCounts.NumStorageBuffers > 0 && bindingCounts.NumReadWriteStorageBuffers > 0)
+        {
+            args.AddRange(["-fvk-u-shift", bindingCounts.NumStorageBuffers.ToString(), "1"]);
+        }
+
+        return args;
+    }
+
     private static void CompileShader(FileInfo filePath, bool force = false)
     {
         DirectoryInfo parentDir = filePath.Directory!;
@@ -844,20 +875,26 @@ public class SdlangCompiler
         {
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
-            // Step 1: Compile all targets in a single slangc invocation
-            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV, ShaderFormatDto.Msl];
-            (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
+            // Step 1: Compile SPIR-V with reflection data
+            FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
+            ShaderInstanceDto spirvInstance = CompileTarget(filePath, outputDir, ShaderFormatDto.SpirV, reflectionFile);
 
             // Step 2: Parse reflection data
             (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
 
-            // Step 3: Update shader instances with correct entry point
-            // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++
-            shaderInstances = shaderInstances.Select(instance =>
-                new ShaderInstanceDto(instance.Format, instance.Filename,
-                    instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
+            // Step 3: Compile Metal with buffer binding shifts derived from reflection
+            List<string> metalShiftArgs = GetMetalBufferBindingShiftArgs(stage, bindingLayout.BindingCounts);
+            ShaderInstanceDto mslInstance = CompileTarget(filePath, outputDir, ShaderFormatDto.Msl, extraArgs: metalShiftArgs);
 
-            // Step 4: Write metadata
+            // Step 4: Collect shader instances with correct entry points
+            // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++
+            List<ShaderInstanceDto> shaderInstances =
+            [
+                spirvInstance with { EntryPoint = entryPoint },
+                mslInstance with { EntryPoint = $"{entryPoint}_0" }
+            ];
+
+            // Step 5: Write metadata
             WriteMetadata(
                 outputDir,
                 filenameWithoutExt,
