@@ -231,6 +231,11 @@ public class Pencil
 
     public void Text(string text, Font font, Color color)
     {
+        if (text.Length == 0)
+        {
+            return;
+        }
+
         TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
         Vector4 uvs = sprite.CalculateTextureRegionUVs();
         Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
@@ -245,6 +250,11 @@ public class Pencil
 
     public Vector2Int MeasureText(string text, Font font)
     {
+        if (text.Length == 0)
+        {
+            return default;
+        }
+
         ShortSize size = _fontSystem.MeasureTextSprite(text, font);
         return new Vector2Int(size.Width, size.Height);
     }
