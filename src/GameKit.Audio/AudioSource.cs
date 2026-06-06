@@ -109,14 +109,7 @@ public unsafe sealed class AudioSource : IDisposable
         }
     }
 
-    internal Pointer<MIX_Track> SdlTrack
-    {
-        get
-        {
-            Pointer.ThrowIfNull("Audio source has been disposed.");
-            return Pointer;
-        }
-    }
+    internal Pointer<MIX_Track> SdlTrack => Pointer;
 
     public void Play()
     {

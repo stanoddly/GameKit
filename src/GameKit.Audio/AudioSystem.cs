@@ -1,5 +1,6 @@
 using System.Text;
 using GameKit.Content;
+using GameKit.Common;
 using GameKit.Utilities;
 using SDL;
 
@@ -11,11 +12,10 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     private readonly GameKitFactory _sdlLifetime;
     private readonly VirtualFileSystem _fileSystem;
-    private readonly HashSet<AudioSource> _sources = new();
-    private readonly HashSet<AudioBuffer> _buffers = new();
+    private LockedSet<AudioSource> _sources = new();
+    private LockedSet<AudioBuffer> _buffers = new();
     private Pointer<MIX_Mixer> _mixer;
     private float _masterGain = 1.0f;
-    private bool _disposed;
     private bool _sdlAudioInitialized;
     private bool _mixerInitialized;
 
@@ -113,23 +113,17 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
+        if (_mixer.IsNull && !_mixerInitialized && !_sdlAudioInitialized)
         {
             return;
         }
 
-        _disposed = true;
-
-        AudioSource[] sources = _sources.ToArray();
-        _sources.Clear();
-        foreach (AudioSource source in sources)
+        foreach (AudioSource source in _sources.ClearAndCopy())
         {
             ReleaseSource(source);
         }
 
-        AudioBuffer[] buffers = _buffers.ToArray();
-        _buffers.Clear();
-        foreach (AudioBuffer buffer in buffers)
+        foreach (AudioBuffer buffer in _buffers.ClearAndCopy())
         {
             ReleaseBuffer(buffer);
         }
@@ -222,20 +216,10 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     internal void UpdateSourcePositions()
     {
-        foreach (AudioSource source in _sources)
+        foreach (AudioSource source in _sources.Copy())
         {
             source.ApplyPosition();
         }
-    }
-
-    internal void Untrack(AudioSource source)
-    {
-        _sources.Remove(source);
-    }
-
-    internal void Untrack(AudioBuffer buffer)
-    {
-        _buffers.Remove(buffer);
     }
 
     internal void ReleaseSource(AudioSource source)
@@ -293,6 +277,9 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     private void ThrowIfDisposed()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_mixer.IsNull)
+        {
+            throw new ObjectDisposedException(nameof(AudioSystem));
+        }
     }
 }

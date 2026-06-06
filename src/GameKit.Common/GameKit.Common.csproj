@@ -6,4 +6,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="GameKit" />
+        <InternalsVisibleTo Include="GameKit.Audio" />
+    </ItemGroup>
+
 </Project>
