@@ -1,3 +1,4 @@
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Audio;
@@ -5,21 +6,21 @@ namespace GameKit.Audio;
 public unsafe sealed class AudioBuffer : IDisposable
 {
     private readonly AudioSystem _audioSystem;
-    private MIX_Audio* _sdlAudio;
+    internal Pointer<MIX_Audio> Pointer { get; set; }
     private bool _disposed;
 
-    internal AudioBuffer(AudioSystem audioSystem, MIX_Audio* sdlAudio)
+    internal AudioBuffer(AudioSystem audioSystem, Pointer<MIX_Audio> sdlAudio)
     {
         _audioSystem = audioSystem;
-        _sdlAudio = sdlAudio;
+        Pointer = sdlAudio;
     }
 
-    internal MIX_Audio* SdlAudio
+    internal Pointer<MIX_Audio> SdlAudio
     {
         get
         {
             ThrowIfDisposed();
-            return _sdlAudio;
+            return Pointer;
         }
     }
 
@@ -30,14 +31,12 @@ public unsafe sealed class AudioBuffer : IDisposable
             return;
         }
 
-        _disposed = true;
-        if (_sdlAudio != null)
-        {
-            SDL3_mixer.MIX_DestroyAudio(_sdlAudio);
-            _sdlAudio = null;
-        }
+        _audioSystem.ReleaseBuffer(this);
+    }
 
-        _audioSystem.Untrack(this);
+    internal void MarkDisposed()
+    {
+        _disposed = true;
     }
 
     private void ThrowIfDisposed()

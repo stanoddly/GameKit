@@ -1,5 +1,6 @@
 using System.Text;
 using GameKit.Content;
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Audio;
@@ -12,28 +13,24 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     private readonly VirtualFileSystem _fileSystem;
     private readonly HashSet<AudioSource> _sources = new();
     private readonly HashSet<AudioBuffer> _buffers = new();
-    private MIX_Mixer* _mixer;
+    private Pointer<MIX_Mixer> _mixer;
     private float _masterGain = 1.0f;
     private bool _disposed;
     private bool _sdlAudioInitialized;
     private bool _mixerInitialized;
 
-    public AudioSystem(GameKitFactory sdlLifetime, VirtualFileSystem fileSystem)
+    internal AudioSystem(
+        GameKitFactory sdlLifetime,
+        VirtualFileSystem fileSystem,
+        Pointer<MIX_Mixer> mixer,
+        bool sdlAudioInitialized,
+        bool mixerInitialized)
     {
         _sdlLifetime = sdlLifetime;
         _fileSystem = fileSystem;
-
-        try
-        {
-            InitializeSdlAudio();
-            InitializeMixer();
-            CreateMixerDevice();
-        }
-        catch
-        {
-            Dispose();
-            throw;
-        }
+        _mixer = mixer;
+        _sdlAudioInitialized = sdlAudioInitialized;
+        _mixerInitialized = mixerInitialized;
 
         Listener = new AudioListener(this);
         Groups = new AudioGroups(this);
@@ -70,14 +67,14 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
         fixed (byte* fileDataPointer = fileData)
         {
-            SDL_IOStream* ioStream = SDL3.SDL_IOFromConstMem((IntPtr)fileDataPointer, (UIntPtr)fileData.Length);
-            if (ioStream == null)
+            Pointer<SDL_IOStream> ioStream = SDL3.SDL_IOFromConstMem((IntPtr)fileDataPointer, (UIntPtr)fileData.Length);
+            if (ioStream.IsNull)
             {
                 throw new AudioException($"SDL_IOFromConstMem failed: {SDL3.SDL_GetError()}");
             }
 
-            MIX_Audio* sdlAudio = SDL3_mixer.MIX_LoadAudio_IO(_mixer, ioStream, true, true);
-            if (sdlAudio == null)
+            Pointer<MIX_Audio> sdlAudio = SDL3_mixer.MIX_LoadAudio_IO(_mixer, ioStream, true, true);
+            if (sdlAudio.IsNull)
             {
                 throw new AudioException($"MIX_LoadAudio_IO failed: {SDL3.SDL_GetError()}");
             }
@@ -92,8 +89,8 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     {
         ThrowIfDisposed();
 
-        MIX_Track* track = SDL3_mixer.MIX_CreateTrack(_mixer);
-        if (track == null)
+        Pointer<MIX_Track> track = SDL3_mixer.MIX_CreateTrack(_mixer);
+        if (track.IsNull)
         {
             throw new AudioException($"MIX_CreateTrack failed: {SDL3.SDL_GetError()}");
         }
@@ -124,21 +121,23 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         _disposed = true;
 
         AudioSource[] sources = _sources.ToArray();
+        _sources.Clear();
         foreach (AudioSource source in sources)
         {
-            source.Dispose();
+            ReleaseSource(source);
         }
 
         AudioBuffer[] buffers = _buffers.ToArray();
+        _buffers.Clear();
         foreach (AudioBuffer buffer in buffers)
         {
-            buffer.Dispose();
+            ReleaseBuffer(buffer);
         }
 
-        if (_mixer != null)
+        if (!_mixer.IsNull)
         {
             SDL3_mixer.MIX_DestroyMixer(_mixer);
-            _mixer = null;
+            _mixer = Pointer<MIX_Mixer>.Null;
         }
 
         if (_mixerInitialized)
@@ -154,37 +153,6 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         }
 
         GC.KeepAlive(_sdlLifetime);
-    }
-
-    private void InitializeSdlAudio()
-    {
-        if (SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO) == false)
-        {
-            throw new AudioException($"SDL_InitSubSystem(SDL_INIT_AUDIO) failed: {SDL3.SDL_GetError()}");
-        }
-
-        _sdlAudioInitialized = true;
-    }
-
-    private void InitializeMixer()
-    {
-        if (SDL3_mixer.MIX_Init() == false)
-        {
-            throw new AudioException($"MIX_Init failed: {SDL3.SDL_GetError()}");
-        }
-
-        _mixerInitialized = true;
-    }
-
-    private void CreateMixerDevice()
-    {
-        _mixer = SDL3_mixer.MIX_CreateMixerDevice(SDL3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, null);
-        if (_mixer != null)
-        {
-            return;
-        }
-
-        throw new AudioException($"MIX_CreateMixerDevice failed: {SDL3.SDL_GetError()}");
     }
 
     internal void SetSourceGroup(AudioSource source, AudioGroup? oldGroup, AudioGroup? newGroup)
@@ -268,6 +236,36 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     internal void Untrack(AudioBuffer buffer)
     {
         _buffers.Remove(buffer);
+    }
+
+    internal void ReleaseSource(AudioSource source)
+    {
+        _sources.Remove(source);
+        Pointer<MIX_Track> pointer = source.Pointer;
+        if (pointer.IsNull)
+        {
+            source.MarkDisposed();
+            return;
+        }
+
+        SDL3_mixer.MIX_DestroyTrack(pointer);
+        source.Pointer = Pointer<MIX_Track>.Null;
+        source.MarkDisposed();
+    }
+
+    internal void ReleaseBuffer(AudioBuffer buffer)
+    {
+        _buffers.Remove(buffer);
+        Pointer<MIX_Audio> pointer = buffer.Pointer;
+        if (pointer.IsNull)
+        {
+            buffer.MarkDisposed();
+            return;
+        }
+
+        SDL3_mixer.MIX_DestroyAudio(pointer);
+        buffer.Pointer = Pointer<MIX_Audio>.Null;
+        buffer.MarkDisposed();
     }
 
     internal static void ThrowIfSdlFailed(SDLBool result, string operation)
