@@ -244,13 +244,11 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         Pointer<MIX_Track> pointer = source.Pointer;
         if (pointer.IsNull)
         {
-            source.MarkDisposed();
             return;
         }
 
         SDL3_mixer.MIX_DestroyTrack(pointer);
         source.Pointer = Pointer<MIX_Track>.Null;
-        source.MarkDisposed();
     }
 
     internal void ReleaseBuffer(AudioBuffer buffer)
@@ -259,13 +257,11 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         Pointer<MIX_Audio> pointer = buffer.Pointer;
         if (pointer.IsNull)
         {
-            buffer.MarkDisposed();
             return;
         }
 
         SDL3_mixer.MIX_DestroyAudio(pointer);
         buffer.Pointer = Pointer<MIX_Audio>.Null;
-        buffer.MarkDisposed();
     }
 
     internal static void ThrowIfSdlFailed(SDLBool result, string operation)
