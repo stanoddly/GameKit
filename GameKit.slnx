@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/GameKit.AStar/GameKit.AStar.csproj" />
+    <Project Path="src/GameKit.Audio/GameKit.Audio.csproj" />
     <Project Path="src/GameKit.Collections/GameKit.Collections.csproj" />
     <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
@@ -49,6 +50,7 @@
     <Project Path="tutorials/GameKit.Tutorials.WindowDragging/GameKit.Tutorials.WindowDragging.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StageSwitching/GameKit.Tutorials.StageSwitching.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.MouseWindowPresence/GameKit.Tutorials.MouseWindowPresence.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.Audio/GameKit.Tutorials.Audio.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/GameKit.DependencyInjection.Benchmarks/GameKit.DependencyInjection.Benchmarks.csproj" />
