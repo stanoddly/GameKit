@@ -1,10 +1,8 @@
 using System.Numerics;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using GameKit.Common;
 using GameKit.Content;
 using GameKit.Gpu;
-using GameKit.Utilities;
 
 namespace GameKit.Sprites;
 
@@ -20,12 +18,6 @@ public sealed class SpriteAtlasBuilder
     private readonly ITextureLoader _textureLoader;
     private readonly IImageLoader _imageLoader;
     private readonly SpriteAssetStorage _storage;
-    private readonly JsonSerializerOptions _options = new()
-    {
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new ShortRectangleJsonConverter(), new JsonStringEnumConverter<SpriteFlip>() }
-    };
 
     public static SpriteAtlasBuilder Create(
         SpriteAtlasBuilderConfig spriteAtlasBuilderConfig,
@@ -181,7 +173,7 @@ public sealed class SpriteAtlasBuilder
                 using var stream = file.Open();
                 SpriteDto? spriteDto = null;
                 AnimatedSpriteDto? animatedDto = null;
-                try { spriteDto = JsonSerializer.Deserialize<SpriteDto>(stream, _options); } catch { }
+                try { spriteDto = JsonSerializer.Deserialize(stream, SpriteDtosJsonContext.Default.SpriteDto); } catch { }
                 if (spriteDto != null)
                 {
                     entries.Add((file.Path, spriteDto.Texture, spriteDto.TextureRegion, spriteDto.Flip,
@@ -189,7 +181,7 @@ public sealed class SpriteAtlasBuilder
                     continue;
                 }
                 stream.Position = 0;
-                try { animatedDto = JsonSerializer.Deserialize<AnimatedSpriteDto>(stream, _options); } catch { }
+                try { animatedDto = JsonSerializer.Deserialize(stream, SpriteDtosJsonContext.Default.AnimatedSpriteDto); } catch { }
                 if (animatedDto != null)
                 {
                     int totalFrames = animatedDto.Frames.Length;

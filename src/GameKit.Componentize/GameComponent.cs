@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using GameKit.DependencyInjection;
 
@@ -24,13 +25,13 @@ public abstract class GameComponent : ComponentBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetRequiredService<T>() where T : class
+    public T GetRequiredService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         return ServiceProvider.GetRequiredService<T>();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? GetService<T>() where T : class
+    public T? GetService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         return ServiceProvider.GetService<T>();
     }

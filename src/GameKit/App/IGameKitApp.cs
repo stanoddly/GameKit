@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using GameKit.DependencyInjection;
 
 namespace GameKit.App;
@@ -5,6 +6,6 @@ namespace GameKit.App;
 public interface IGameKitApp : IDisposable
 {
     ServiceProvider ServiceProvider { get; }
-    T GetRequiredService<T>() where T : class;
+    T GetRequiredService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class;
     int Run();
 }

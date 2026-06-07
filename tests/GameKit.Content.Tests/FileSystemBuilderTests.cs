@@ -54,4 +54,19 @@ public class FileSystemBuilderTests
         var expectedPath = Path.Join(typeof(FileSystemBuilderTests).Namespace, "ContentInDevRoot");
         Assert.That(nativeFileSystem.RootPath.EndsWith(expectedPath));
     }
+
+    [Test]
+    public void AddContentFromProjectDirectoryPrefersAppBaseDirectoryWhenContentExists()
+    {
+        // arrange
+        string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Content"));
+        VirtualFileSystem fileSystem = new FileSystemBuilder()
+            .AddContentFromProjectDirectory("Content")
+            .Create();
+
+        // assert
+        Assert.That(fileSystem is NativeFileSystem);
+        NativeFileSystem nativeFileSystem = (NativeFileSystem)fileSystem;
+        Assert.That(nativeFileSystem.RootPath, Is.EqualTo(expectedPath));
+    }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using GameKit.DependencyInjection;
 
 namespace GameKit.App;
@@ -11,7 +12,7 @@ public class GameKitApp : IGameKitApp
         ServiceProvider = serviceProvider;
     }
 
-    public T GetRequiredService<T>() where T : class
+    public T GetRequiredService<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         return ServiceProvider.GetRequiredService<T>();
     }
