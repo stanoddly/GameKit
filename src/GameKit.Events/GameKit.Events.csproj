@@ -14,7 +14,9 @@
       <ProjectReference Include="..\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
       <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                         OutputItemType="Analyzer"
-                        ReferenceOutputAssembly="false" />
+                        ReferenceOutputAssembly="false"
+                        GlobalPropertiesToRemove="PublishAot;PublishTrimmed;TrimMode;IlcOptimizationPreference"
+                        AdditionalProperties="PublishAot=false;PublishTrimmed=false" />
     </ItemGroup>
 
     <Import Project="..\GameKit.DependencyInjection.Generator\build\GameKit.DependencyInjection.Generator.props" />

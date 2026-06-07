@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace GameKit.Content;
 
 public class FileSystemBuilder
@@ -40,16 +38,7 @@ public class FileSystemBuilder
 
     private static string? GetProjectDirectory()
     {
-        // Get the directory from the entry assembly location
-        string? assemblyLocation = Assembly.GetEntryAssembly()?.Location;
-
-        if (string.IsNullOrEmpty(assemblyLocation))
-        {
-            return null;
-        }
-
-        // Walk up from the assembly directory until we find a .csproj file
-        DirectoryInfo? dir = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
+        DirectoryInfo? dir = new(AppContext.BaseDirectory);
 
         while (dir != null)
         {
@@ -61,7 +50,7 @@ public class FileSystemBuilder
             dir = dir.Parent;
         }
 
-        return null;
+        return AppContext.BaseDirectory;
     }
 
     public FileSystemBuilder AddContentFromZip(string filename)
