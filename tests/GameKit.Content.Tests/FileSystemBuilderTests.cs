@@ -60,6 +60,9 @@ public class FileSystemBuilderTests
     {
         // arrange
         string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Content"));
+        // This test exercises the app-base-directory branch, which only applies when the
+        // directory actually exists next to the test assembly (copied at build time).
+        Assert.That(Directory.Exists(expectedPath), $"Expected '{expectedPath}' to exist next to the test assembly.");
         VirtualFileSystem fileSystem = new FileSystemBuilder()
             .AddContentFromProjectDirectory("Content")
             .Create();

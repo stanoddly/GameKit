@@ -176,7 +176,7 @@ public class ServiceProvider : IDisposable
         }
 
         // Overlay child's own pending slots; these are already tracked in _creationRecords
-        // (populated by SetService during build), so no _creationRecords mutation is needed here.
+        // (populated by SetServiceWithType during build), so no _creationRecords mutation is needed here.
         foreach (KeyValuePair<int, object> kvp in pending)
         {
             services[kvp.Key] = kvp.Value;
