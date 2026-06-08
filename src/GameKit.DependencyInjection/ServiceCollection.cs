@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace GameKit.DependencyInjection;
 
@@ -234,7 +233,10 @@ public class ServiceCollection
         }
 
         // Build service collections for GetServices<T>(), keyed by service-type id.
-        Dictionary<int, Array> serviceCollections = new();
+        // Store object[] here instead of a runtime-created T[]: Array.CreateInstance(Type, ...)
+        // requires dynamic code under NativeAOT. ServiceProvider creates and caches the typed
+        // T[] on first GetServices<T>() call, when T is known generically.
+        Dictionary<int, object[]> serviceCollections = new();
         foreach (KeyValuePair<int, List<ServiceDescriptor>> entry in _serviceGroups)
         {
             List<ServiceDescriptor> group = entry.Value;
@@ -261,21 +263,7 @@ public class ServiceCollection
                 }
             }
 
-            // Array.CreateInstance(T, n) produces a real T[] at runtime. Populating via an
-            // object[] view avoids Array.SetValue's reflection path; covariance store-checks
-            // still apply but all instances are guaranteed to be T. The reason this is stored
-            // as Array and not object[] is so ServiceProvider.GetServices<T>() can return it
-            // directly via Unsafe.As<T[]> with zero allocation. If this is ever "simplified"
-            // to object[] storage, GetServices<T> must allocate + copy on every call.
-            Type serviceType = group[0].ServiceType;
-            Array arr = Array.CreateInstance(serviceType, instances.Count);
-            object[] arrAsObjects = Unsafe.As<object[]>(arr);
-            for (int i = 0; i < instances.Count; i++)
-            {
-                arrAsObjects[i] = instances[i];
-            }
-
-            serviceCollections[entry.Key] = arr;
+            serviceCollections[entry.Key] = instances.ToArray();
         }
 
         // Invariant: by this point every descriptor has been eagerly resolved into _pending
@@ -498,7 +486,7 @@ public class ServiceCollection
         Dictionary<int, ServiceDescriptor> descriptorMap,
         HashSet<int> resolving)
     {
-        Array? parentCollection = parent?.GetMergedServiceCollectionById(id);
+        object[]? parentCollection = parent?.GetMergedServiceCollectionById(id);
 
         if (!_serviceGroups.TryGetValue(id, out List<ServiceDescriptor>? group))
         {
@@ -507,18 +495,14 @@ public class ServiceCollection
                 return Array.Empty<object>();
             }
 
-            object[] parentInstances = new object[parentCollection.Length];
-            CopyArrayItems(parentCollection, parentInstances);
-
-            return parentInstances;
+            return parentCollection;
         }
 
         List<object> instances = new(group.Count + (parentCollection?.Length ?? 0));
 
         if (parentCollection != null)
         {
-            object[] parentItems = Unsafe.As<object[]>(parentCollection);
-            instances.AddRange(parentItems);
+            instances.AddRange(parentCollection);
         }
 
         for (int i = 0; i < group.Count; i++)
@@ -577,12 +561,4 @@ public class ServiceCollection
         return instances.ToArray();
     }
 
-    private static void CopyArrayItems(Array source, object[] destination)
-    {
-        object[] sourceItems = Unsafe.As<object[]>(source);
-        for (int i = 0; i < sourceItems.Length; i++)
-        {
-            destination[i] = sourceItems[i];
-        }
-    }
 }

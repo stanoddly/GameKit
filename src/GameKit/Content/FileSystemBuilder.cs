@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace GameKit.Content;
 
 public class FileSystemBuilder
@@ -21,47 +19,49 @@ public class FileSystemBuilder
 
     public FileSystemBuilder AddContentFromProjectDirectory(string? subdirectory = null)
     {
-        string? projectDirectory = GetProjectDirectory();
-
-        if (projectDirectory == null)
-        {
-            throw new InvalidOperationException(
-                "Unable to determine project directory. Ensure you are running from the project directory or from 'bin/[configuration]/net*' directory.");
-        }
-
-        string contentDirectory = subdirectory != null
-            ? Path.Combine(projectDirectory, subdirectory)
-            : projectDirectory;
+        string contentDirectory = ResolveContentDirectory(AppContext.BaseDirectory, subdirectory);
 
         AddContentFromDirectory(contentDirectory);
 
         return this;
     }
 
-    private static string? GetProjectDirectory()
+    private static string ResolveContentDirectory(string baseDirectory, string? subdirectory)
     {
-        // Get the directory from the entry assembly location
-        string? assemblyLocation = Assembly.GetEntryAssembly()?.Location;
+        string appDirectory = Path.GetFullPath(baseDirectory);
+        string appContentDirectory = subdirectory != null
+            ? Path.Combine(appDirectory, subdirectory)
+            : appDirectory;
 
-        if (string.IsNullOrEmpty(assemblyLocation))
+        if (Directory.Exists(appContentDirectory))
         {
-            return null;
+            return appContentDirectory;
         }
 
-        // Walk up from the assembly directory until we find a .csproj file
-        DirectoryInfo? dir = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
+        DirectoryInfo? directory = new DirectoryInfo(appDirectory);
 
-        while (dir != null)
+        while (directory != null)
         {
-            if (dir.GetFiles("*.csproj").Length > 0)
+            if (directory.GetFiles("*.csproj").Length > 0)
             {
-                return dir.FullName;
+                string projectContentDirectory = subdirectory != null
+                    ? Path.Combine(directory.FullName, subdirectory)
+                    : directory.FullName;
+
+                if (Directory.Exists(projectContentDirectory))
+                {
+                    return projectContentDirectory;
+                }
+
+                throw new InvalidOperationException(
+                    $"Content directory not found. Checked '{appContentDirectory}' and '{projectContentDirectory}'.");
             }
 
-            dir = dir.Parent;
+            directory = directory.Parent;
         }
 
-        return null;
+        throw new InvalidOperationException(
+            $"Content directory not found. Checked '{appContentDirectory}' and no project directory was found.");
     }
 
     public FileSystemBuilder AddContentFromZip(string filename)

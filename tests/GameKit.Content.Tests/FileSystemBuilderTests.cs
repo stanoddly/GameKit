@@ -54,4 +54,22 @@ public class FileSystemBuilderTests
         var expectedPath = Path.Join(typeof(FileSystemBuilderTests).Namespace, "ContentInDevRoot");
         Assert.That(nativeFileSystem.RootPath.EndsWith(expectedPath));
     }
+
+    [Test]
+    public void AddContentFromProjectDirectoryPrefersAppBaseDirectoryWhenContentExists()
+    {
+        // arrange
+        string expectedPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Content"));
+        // This test exercises the app-base-directory branch, which only applies when the
+        // directory actually exists next to the test assembly (copied at build time).
+        Assert.That(Directory.Exists(expectedPath), $"Expected '{expectedPath}' to exist next to the test assembly.");
+        VirtualFileSystem fileSystem = new FileSystemBuilder()
+            .AddContentFromProjectDirectory("Content")
+            .Create();
+
+        // assert
+        Assert.That(fileSystem is NativeFileSystem);
+        NativeFileSystem nativeFileSystem = (NativeFileSystem)fileSystem;
+        Assert.That(nativeFileSystem.RootPath, Is.EqualTo(expectedPath));
+    }
 }
