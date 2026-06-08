@@ -344,6 +344,9 @@ public class ServiceProvider : IDisposable
                 }
 
                 object[] services = cache.Services;
+                // The provider stores object[] to avoid NativeAOT dynamic-code warnings during
+                // BuildServiceProvider. Once GetServices<T>() is called, T is known and a real
+                // T[] can be allocated safely, then reused for later calls.
                 T[] typedServices = new T[services.Length];
                 for (int i = 0; i < services.Length; i++)
                 {

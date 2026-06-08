@@ -233,6 +233,9 @@ public class ServiceCollection
         }
 
         // Build service collections for GetServices<T>(), keyed by service-type id.
+        // Store object[] here instead of a runtime-created T[]: Array.CreateInstance(Type, ...)
+        // requires dynamic code under NativeAOT. ServiceProvider creates and caches the typed
+        // T[] on first GetServices<T>() call, when T is known generically.
         Dictionary<int, object[]> serviceCollections = new();
         foreach (KeyValuePair<int, List<ServiceDescriptor>> entry in _serviceGroups)
         {
