@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -41,19 +40,13 @@ public class SdlangCompiler
 
     private static string GetSlangCompilerPath()
     {
+        string? assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        if (string.IsNullOrEmpty(assemblyDir))
+        {
+            throw new InvalidOperationException("Unable to determine assembly directory");
+        }
         string slangExe = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
-        string slangPath = Path.Combine(AppContext.BaseDirectory, "bin", slangExe);
-
-        if (File.Exists(slangPath))
-        {
-            return slangPath;
-        }
-
-        string? assemblyDirectory = GetAssemblyDirectory();
-        if (!string.IsNullOrEmpty(assemblyDirectory))
-        {
-            slangPath = Path.Combine(assemblyDirectory, "bin", slangExe);
-        }
+        string slangPath = Path.Combine(assemblyDir, "bin", slangExe);
 
         if (!File.Exists(slangPath))
         {
@@ -61,15 +54,6 @@ public class SdlangCompiler
         }
 
         return slangPath;
-    }
-
-    [UnconditionalSuppressMessage(
-        "SingleFile",
-        "IL3000",
-        Justification = "MSBuild task execution needs the task assembly directory. Published apps use AppContext.BaseDirectory before this fallback.")]
-    private static string? GetAssemblyDirectory()
-    {
-        return Path.GetDirectoryName(typeof(SdlangCompiler).Assembly.Location);
     }
 
     private static string GetSlangVersion()
