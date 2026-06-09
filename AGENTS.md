@@ -12,3 +12,4 @@
 - `docs/render-pass-flow.md` - Rendering architecture overview, CommandBuffer vs RenderPass, push constants, binding order
 - `docs/subrenderers.md` - Composing multiple renderers within IRenderPhase<T> (IOrderable, IEnumerable injection)
 - `docs/architecture.md` - MVP + CQS + Events: layer responsibilities, boundary contract vs. internal representation, per-genre decision framework
+- `docs/architecture-testing.md` - GameKit.Architecture.Testing: CqsConventions and ModelBoundary checks that enforce the architecture.md boundary claims as unit tests
