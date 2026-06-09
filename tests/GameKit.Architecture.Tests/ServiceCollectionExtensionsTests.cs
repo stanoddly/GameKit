@@ -29,11 +29,24 @@ public sealed class ServiceCollectionExtensionsTests
         ServiceProvider provider = services.BuildServiceProvider();
 
         IDomainEventPublisher publisher = provider.GetRequiredService<IDomainEventPublisher>();
-        DomainEventCursor cursor = provider.GetRequiredService<IDomainEventStream>().CreateCursor();
+        DomainEventCursor cursor = provider.GetRequiredService<DomainEventCursor>();
 
         publisher.Publish(new TestMessage(42));
 
         Assert.That(cursor.TryRead(out DomainMessage? message), Is.True);
         Assert.That(((TestMessage)message!).Value, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void AddDomainEvents_RegistersCursorAsTransient()
+    {
+        ServiceCollection services = new();
+        services.AddDomainEvents();
+        ServiceProvider provider = services.BuildServiceProvider();
+
+        DomainEventCursor first = provider.GetRequiredService<DomainEventCursor>();
+        DomainEventCursor second = provider.GetRequiredService<DomainEventCursor>();
+
+        Assert.That(second, Is.Not.SameAs(first));
     }
 }

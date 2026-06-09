@@ -6,51 +6,51 @@ namespace GameKit.Architecture.Tests;
 [TestFixture]
 public sealed class CommandDispatchingTests
 {
-    // --- DomainEventPump (no DI) ---
+    // --- DomainEventDispatchHook (no DI) ---
 
     [Test]
-    public void Pump_FansEachDrainedMessageToEveryListener()
+    public void DomainEventDispatchHook_FansEachDrainedMessageToEveryListener()
     {
         DomainEventStream stream = new();
         RecordingListener first = new();
         RecordingListener second = new();
-        DomainEventPump pump = new(stream, [first, second]);
+        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), [first, second]);
 
         stream.Publish(new TestMessage(1));
         stream.Publish(new TestMessage(2));
-        pump.OnBatchCompleted();
+        dispatchHook.OnBatchCompleted();
 
         Assert.That(first.Received, Is.EqualTo(new[] { 1, 2 }));
         Assert.That(second.Received, Is.EqualTo(new[] { 1, 2 }));
     }
 
     [Test]
-    public void Pump_OnlyDrainsNewMessagesOnEachBatch()
+    public void DomainEventDispatchHook_OnlyDrainsNewMessagesOnEachBatch()
     {
         DomainEventStream stream = new();
         RecordingListener listener = new();
-        DomainEventPump pump = new(stream, [listener]);
+        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), [listener]);
 
         stream.Publish(new TestMessage(1));
-        pump.OnBatchCompleted();
-        pump.OnBatchCompleted();
+        dispatchHook.OnBatchCompleted();
+        dispatchHook.OnBatchCompleted();
 
         Assert.That(listener.Received, Is.EqualTo(new[] { 1 }));
     }
 
     [Test]
-    public void Pump_Dispose_RemovesItsCursorSoTheStreamCanCompact()
+    public void DomainEventCursor_Dispose_RemovesCursorSoTheStreamCanCompact()
     {
         DomainEventStream stream = new();
-        DomainEventPump pump = new(stream, []);
+        DomainEventCursor cursor = stream.CreateCursor();
 
-        // Fill the buffer to capacity without draining; the pump's undrained cursor pins every event.
+        // Fill the buffer to capacity without draining; the hook's undrained cursor pins every event.
         for (int i = 0; i < 8192; i++)
         {
             stream.Publish(new TestMessage(i));
         }
 
-        pump.Dispose();
+        cursor.Dispose();
 
         // With the cursor gone, compaction proceeds and publishing no longer hits the overflow guard.
         Assert.That(() => stream.Publish(new TestMessage(8192)), Throws.Nothing);
@@ -80,7 +80,7 @@ public sealed class CommandDispatchingTests
 
         provider.GetRequiredService<ICommandDispatcher>().Dispatch(new OuterCommand());
 
-        // OuterCommandHandler publishes event 42; the pump drains it to the listener once the batch ends.
+        // OuterCommandHandler publishes event 42; the hook drains it to the listener once the batch ends.
         Assert.That(provider.GetRequiredService<CapturingListener>().Received, Has.Member(42));
     }
 
@@ -90,7 +90,7 @@ public sealed class CommandDispatchingTests
         services.AddSingleton(recorder);
         services.AddDomainEvents();
         services.AddCommandDispatching();
-        services.AddDomainEventPump();
+        services.AddDomainEventDispatchHook();
         services.AddSingleton<ICommandHandler<OuterCommand>, OuterCommandHandler>();
         services.AddSingleton<ICommandHandler<InnerCommand>, InnerCommandHandler>();
         services.AddSingleton<SpyHook>();

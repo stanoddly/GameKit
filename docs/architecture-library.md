@@ -78,7 +78,7 @@ services.AddAlias<ICommandDispatchHook, TurnTriggerHook>();
 ```
 
 Hooks run in registration order, so a hook that **publishes** domain events must be registered before the
-pump that drains them; otherwise its events wait for the next top-level dispatch.
+hook that drains them; otherwise its events wait for the next top-level dispatch.
 
 ## Domain events
 
@@ -94,8 +94,9 @@ _publisher.Publish(new UnitMovedEvent(faction, unit));
 ```
 
 `AddDomainEvents()` registers the stream as `IDomainEventPublisher` (write) and `IDomainEventStream`
-(read). The stream is a ring buffer; each consumer reads through its own `DomainEventCursor`, so multiple
-consumers drain at independent paces and a slow consumer doesn't drop events for the others.
+(read), and registers `DomainEventCursor` as a transient. The stream is a ring buffer; each consumer reads
+through its own cursor, so multiple consumers drain at independent paces and a slow consumer doesn't drop
+events for the others.
 
 ## Consuming events
 
@@ -108,7 +109,7 @@ audio, per-frame AI). This is the point of per-consumer cursors.
 internal sealed class UnitSpritePresenter : IUpdatable
 {
     private readonly DomainEventCursor _events;
-    internal UnitSpritePresenter(IDomainEventStream events) => _events = events.CreateCursor();
+    internal UnitSpritePresenter(DomainEventCursor events) => _events = events;
 
     public void Update()
     {
@@ -120,9 +121,10 @@ internal sealed class UnitSpritePresenter : IUpdatable
 }
 ```
 
-**`DomainEventPump` + `IDomainEventListener`** — for reactions that must run *within the command batch*
-(scenario triggers, AI that issues follow-up commands before control returns). The pump is an
-`ICommandDispatchHook` that drains the buffered events after each batch and fans each to every listener.
+**`DomainEventDispatchHook` + `IDomainEventListener`** — for model-owned reactions that must run *within
+the command batch* after every command, regardless of who triggered it (scenario triggers, objective checks,
+AI that issues follow-up commands before control returns). The hook is an `ICommandDispatchHook` that drains
+the buffered events after each batch and fans each to every listener.
 
 ```csharp
 internal sealed class DialogTrigger : IDomainEventListener
@@ -130,20 +132,21 @@ internal sealed class DialogTrigger : IDomainEventListener
     public bool TryProcess(DomainMessage message) { /* react, maybe dispatch */ return true; }
 }
 
-services.AddDomainEventPump();                          // requires AddDomainEvents + AddCommandDispatching
+services.AddDomainEventDispatchHook();                  // requires AddDomainEvents + AddCommandDispatching
 services.AddSingleton<DialogTrigger>();
 services.AddAlias<IDomainEventListener, DialogTrigger>();
 ```
 
-Do not push View consumers through the pump — that ties rendering reactions to the model's dispatch
-path instead of the frame loop.
+Do not push View consumers through the dispatch hook — that ties rendering reactions to the model's dispatch
+path instead of the frame loop. Presenters, View sync, audio, and other consumers with their own cadence
+should own a cursor instead.
 
 ## Registration summary
 
 ```csharp
-services.AddDomainEvents();        // DomainEventStream as IDomainEventPublisher + IDomainEventStream
+services.AddDomainEvents();        // DomainEventStream aliases + transient DomainEventCursor
 services.AddCommandDispatching();  // CommandDispatcher as ICommandDispatcher
-services.AddDomainEventPump();     // DomainEventPump as ICommandDispatchHook (drains to IDomainEventListeners)
+services.AddDomainEventDispatchHook(); // DomainEventDispatchHook as ICommandDispatchHook (model-side reactions)
 ```
 
 Then register the game's handlers (closed types), command-dispatch hooks, and event listeners.
