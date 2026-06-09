@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/GameKit.Architecture/GameKit.Architecture.csproj" />
+    <Project Path="src/GameKit.Architecture.Testing/GameKit.Architecture.Testing.csproj" />
     <Project Path="src/GameKit.AStar/GameKit.AStar.csproj" />
     <Project Path="src/GameKit.Collections/GameKit.Collections.csproj" />
     <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
@@ -25,6 +27,8 @@
     <Project Path="tests/GameKit.SdlangCompileLib.Tests/GameKit.SdlangCompileLib.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileTask.Tests/GameKit.SdlangCompileTask.Tests.csproj" />
     <Project Path="tests/GameKit.DependencyInjection.Tests/GameKit.DependencyInjection.Tests.csproj" />
+    <Project Path="tests/GameKit.Architecture.Tests/GameKit.Architecture.Tests.csproj" />
+    <Project Path="tests/GameKit.Architecture.Testing.Tests/GameKit.Architecture.Testing.Tests.csproj" />
     <Project Path="tests/GameKit.Events.Tests/GameKit.Events.Tests.csproj" />
     <Project Path="tests/GameKit.Tests/GameKit.Tests.csproj" />
   </Folder>
