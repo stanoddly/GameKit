@@ -46,7 +46,12 @@ public static class CqsConventions
             .ToArray();
 
         Type[] queryTypes = queryHandlers
-            .SelectMany(handler => GenericArguments(handler, typeof(IQueryHandler<,>)).Take(1))
+            .SelectMany(handler => QueryInterfaces(handler).Select(query => query.GetGenericArguments()[0]))
+            .Distinct()
+            .ToArray();
+
+        Type[] queryResultTypes = queryHandlers
+            .SelectMany(handler => QueryInterfaces(handler).Select(query => query.GetGenericArguments()[1]))
             .Distinct()
             .ToArray();
 
@@ -59,6 +64,7 @@ public static class CqsConventions
         CheckHandlersAreInternal(commandHandlers.Concat(queryHandlers), violations);
         CheckHandlersHaveNoPublicConstructors(commandHandlers.Concat(queryHandlers), violations);
         CheckCommandHandlersDoNotDependOnHandlers(commandHandlers, violations);
+        CheckQueryResultsAreReadonly(queryResultTypes, violations);
 
         return new ArchitectureReport(violations);
     }
@@ -135,6 +141,22 @@ public static class CqsConventions
             }
         }
     }
+
+    private static void CheckQueryResultsAreReadonly(Type[] resultTypes, List<string> violations)
+    {
+        foreach (Type resultType in resultTypes)
+        {
+            if (!QueryResultRules.IsReadonly(resultType, out string reason))
+            {
+                violations.Add($"Query result {resultType.FullName} must be readonly: {reason}");
+            }
+        }
+    }
+
+    private static IEnumerable<Type> QueryInterfaces(Type handler) =>
+        handler.GetInterfaces()
+            .Where(interfaceType => interfaceType.IsGenericType
+                && interfaceType.GetGenericTypeDefinition() == typeof(IQueryHandler<,>));
 
     private static Type? FindHandlerDependency(Type type)
     {
