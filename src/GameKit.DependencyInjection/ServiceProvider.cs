@@ -21,8 +21,6 @@ public class ServiceProvider : IDisposable
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
-    private readonly object _transientResolutionLock = new();
-    private readonly HashSet<int> _resolvingTransientIds = new();
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
     private ServiceDescriptor?[]? _transientDescriptors;
     private Dictionary<int, ServiceCollectionRegistration[]>? _serviceCollectionRegistrations;
@@ -375,34 +373,18 @@ public class ServiceProvider : IDisposable
 
     internal object CreateTransient(ServiceDescriptor descriptor)
     {
-        lock (_transientResolutionLock)
+        object instance = descriptor.TypedFactory!(this)
+            ?? throw new InvalidOperationException("Factory delegate returned null.");
+
+        if (instance is IDisposable)
         {
-            if (!_resolvingTransientIds.Add(descriptor.ServiceTypeId))
-            {
-                throw new InvalidOperationException(
-                    $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
-            }
-
-            try
-            {
-                object instance = descriptor.TypedFactory!(this)
-                    ?? throw new InvalidOperationException("Factory delegate returned null.");
-
-                if (instance is IDisposable)
-                {
-                    _transientDisposables.Add(instance);
-                    _transientDisposableTypes.Add(descriptor.ConcreteType!);
-                }
-
-                RunActivatedCallbacks(instance, descriptor.ConcreteType!);
-
-                return instance;
-            }
-            finally
-            {
-                _resolvingTransientIds.Remove(descriptor.ServiceTypeId);
-            }
+            _transientDisposables.Add(instance);
+            _transientDisposableTypes.Add(descriptor.ConcreteType!);
         }
+
+        RunActivatedCallbacks(instance, descriptor.ConcreteType!);
+
+        return instance;
     }
 
     /// <summary>Returns the service registered for <typeparamref name="T"/>, throwing if the type is not registered.</summary>
