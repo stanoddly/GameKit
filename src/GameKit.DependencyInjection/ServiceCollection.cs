@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GameKit.DependencyInjection;
 
-/// <summary>Collects service registrations and builds a <see cref="ServiceProvider"/> with all singletons eagerly resolved.</summary>
+/// <summary>Collects service registrations and builds a <see cref="ServiceProvider"/> with singleton services eagerly resolved and transient services resolved on demand.</summary>
 public class ServiceCollection
 {
     private readonly HashSet<int> _registeredTypeIds = new();
@@ -92,6 +92,59 @@ public class ServiceCollection
         RegisterDescriptor(ServiceTypeId<T>.Id, descriptor);
     }
 
+    /// <summary>Registers <typeparamref name="T"/> as a transient, constructing a new instance for each resolution.</summary>
+    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site.</remarks>
+    public void AddTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
+    {
+        throw new InvalidOperationException(
+            $"AddTransient<{typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+    }
+
+    /// <summary>Registers <typeparamref name="T"/> under <typeparamref name="TService"/> as a transient.</summary>
+    /// <typeparam name="TService">The service type under which instances are resolved.</typeparam>
+    /// <typeparam name="T">The concrete implementation or factory type. Must be a named concrete type at the call site.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site.</remarks>
+    public void AddTransient<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>()
+        where TService : class
+        where T : class
+    {
+        throw new InvalidOperationException(
+            $"AddTransient<{typeof(TService).Name}, {typeof(T).Name}>() was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+    }
+
+    /// <summary>Registers a factory delegate for <typeparamref name="T"/> whose parameters are resolved from the provider each time the service is requested.</summary>
+    /// <typeparam name="T">The service type to register.</typeparam>
+    /// <param name="factory">A static method group or lambda whose parameter types are all registered services.</param>
+    /// <remarks>This overload is intercepted by the source generator at each call site.</remarks>
+    public void AddTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Delegate factory) where T : class
+    {
+        throw new InvalidOperationException(
+            $"AddTransient<{typeof(T).Name}>(Delegate) was not intercepted by the source generator. Ensure the GameKit.DependencyInjection.Generator is referenced.");
+    }
+
+    /// <summary>Registers a typed transient factory that receives the <see cref="ServiceProvider"/> directly.</summary>
+    /// <typeparam name="T">The service type to register.</typeparam>
+    /// <param name="factory">A delegate that receives the <see cref="ServiceProvider"/> and returns a new instance.</param>
+    public void AddTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T> factory) where T : class
+    {
+        ServiceDescriptor descriptor = ServiceDescriptor.ForTransientTypedFactory(factory);
+        RegisterDescriptor(ServiceTypeId<T>.Id, descriptor);
+    }
+
+    /// <summary>
+    /// Registers a typed transient factory that produces <typeparamref name="TImpl"/> instances under
+    /// <typeparamref name="TService"/>. Activation and disposal callbacks receive <c>typeof(TImpl)</c>.
+    /// </summary>
+    public void AddTransient<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
+        Func<ServiceProvider, TImpl> factory)
+        where TService : class
+        where TImpl : class, TService
+    {
+        ServiceDescriptor descriptor = ServiceDescriptor.ForTransientTypedFactoryWithConcreteType<TService, TImpl>(factory);
+        RegisterDescriptor(ServiceTypeId<TService>.Id, descriptor);
+    }
+
     /// <summary>Registers a callback that runs after all services are constructed but before the provider is frozen.</summary>
     /// <param name="action">The callback to invoke with the fully constructed <see cref="ServiceProvider"/>.</param>
     public void OnStart(Action<ServiceProvider> action)
@@ -112,7 +165,11 @@ public class ServiceCollection
             throw new InvalidOperationException($"{typeof(TImplementation).Name} has not been registered first.");
         }
 
-        ServiceDescriptor descriptor = ServiceDescriptor.ForAlias<TService, TImplementation>();
+        ServiceDescriptor sourceDescriptor = _serviceGroups[ServiceTypeId<TImplementation>.Id][^1];
+        ServiceDescriptor descriptor = sourceDescriptor.Lifetime == ServiceLifetime.Transient
+            ? ServiceDescriptor.ForTransientTypedFactoryWithConcreteType<TService, TImplementation>(
+                static sp => sp.GetRequiredService<TImplementation>())
+            : ServiceDescriptor.ForAlias<TService, TImplementation>();
         RegisterDescriptor(ServiceTypeId<TService>.Id, descriptor);
     }
 
@@ -140,21 +197,21 @@ public class ServiceCollection
     }
 
     /// <summary>
-    /// Registers a callback invoked immediately after each singleton is constructed (or, for pre-constructed
+    /// Registers a callback invoked immediately after each singleton or transient is constructed (or, for pre-constructed
     /// instances, when the provider is built). The callback receives the instance and its concrete implementation type.
     /// </summary>
-    /// <param name="callback">The callback to invoke for each activated singleton.</param>
+    /// <param name="callback">The callback to invoke for each activated service.</param>
     public void OnActivated(ServiceActivatedCallback callback)
     {
         _activatedCallbacks.Add(callback);
     }
 
     /// <summary>
-    /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each singleton,
+    /// Registers a callback invoked during <see cref="ServiceProvider.Dispose"/> for each provider-owned disposable service,
     /// immediately before that service's own <see cref="IDisposable.Dispose"/> call. Services are visited
     /// in reverse creation order.
     /// </summary>
-    /// <param name="callback">The callback to invoke for each singleton being disposed.</param>
+    /// <param name="callback">The callback to invoke for each service being disposed.</param>
     public void OnDisposing(ServiceDisposingCallback callback)
     {
         _disposingCallbacks.Add(callback);
@@ -199,6 +256,7 @@ public class ServiceCollection
 
         // Register ServiceProvider itself
         provider.SetService(ServiceTypeId<ServiceProvider>.Id, provider);
+        provider.SetTransientDescriptors(BuildTransientDescriptorArray(parent, descriptorMap));
 
         // Cache of resolved instances keyed by descriptor, for non-last-wins descriptors
         Dictionary<ServiceDescriptor, object> resolvedInstances = new();
@@ -213,7 +271,10 @@ public class ServiceCollection
 
         foreach (KeyValuePair<int, ServiceDescriptor> entry in descriptorMap)
         {
-            Resolve(entry.Value, provider, parent, descriptorMap, resolving);
+            if (entry.Value.Lifetime == ServiceLifetime.Singleton)
+            {
+                Resolve(entry.Value, provider, parent, descriptorMap, resolving);
+            }
         }
 
         // Resolve all non-last-wins descriptors and cache their instances
@@ -224,6 +285,11 @@ public class ServiceCollection
             for (int i = 0; i < group.Count - 1; i++)
             {
                 ServiceDescriptor descriptor = group[i];
+                if (descriptor.Lifetime == ServiceLifetime.Transient)
+                {
+                    continue;
+                }
+
                 object? instance = ResolveNonLastDescriptor(descriptor, provider, parent, descriptorMap, resolving);
                 if (instance != null)
                 {
@@ -237,9 +303,54 @@ public class ServiceCollection
         // requires dynamic code under NativeAOT. ServiceProvider creates and caches the typed
         // T[] on first GetServices<T>() call, when T is known generically.
         Dictionary<int, object[]> serviceCollections = new();
+        Dictionary<int, ServiceCollectionRegistration[]> serviceCollectionRegistrations = new();
         foreach (KeyValuePair<int, List<ServiceDescriptor>> entry in _serviceGroups)
         {
             List<ServiceDescriptor> group = entry.Value;
+            bool hasTransient = false;
+            for (int i = 0; i < group.Count; i++)
+            {
+                if (group[i].Lifetime == ServiceLifetime.Transient)
+                {
+                    hasTransient = true;
+                    break;
+                }
+            }
+
+            if (hasTransient)
+            {
+                ServiceCollectionRegistration[] registrations = new ServiceCollectionRegistration[group.Count];
+                for (int i = 0; i < group.Count; i++)
+                {
+                    ServiceDescriptor descriptor = group[i];
+                    if (descriptor.Lifetime == ServiceLifetime.Transient)
+                    {
+                        registrations[i] = ServiceCollectionRegistration.ForTransient(descriptor);
+                        continue;
+                    }
+
+                    object? instance = i == group.Count - 1
+                        ? provider.GetServiceById(descriptor.ServiceTypeId)
+                        : resolvedInstances.GetValueOrDefault(descriptor);
+
+                    if (instance == null)
+                    {
+                        instance = ResolveNonLastDescriptor(descriptor, provider, parent, descriptorMap, resolving);
+                    }
+
+                    if (instance == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Cannot resolve service collection entry for {descriptor.ServiceType.Name}.");
+                    }
+
+                    registrations[i] = ServiceCollectionRegistration.ForSingleton(instance);
+                }
+
+                serviceCollectionRegistrations[entry.Key] = registrations;
+                continue;
+            }
+
             List<object> instances = new(group.Count);
 
             for (int i = 0; i < group.Count; i++)
@@ -271,6 +382,7 @@ public class ServiceCollection
         // below can only read through the public ServiceProvider API — there is no supported
         // path to add a new registration during OnStart, so freezing collections here is safe.
         provider.SetServiceCollections(serviceCollections);
+        provider.SetServiceCollectionRegistrations(serviceCollectionRegistrations);
 
         foreach (Action<ServiceProvider> action in _onStartActions)
         {
@@ -286,6 +398,39 @@ public class ServiceCollection
         provider.FreezeServices();
 
         return provider;
+    }
+
+    private static ServiceDescriptor?[]? BuildTransientDescriptorArray(
+        ServiceProvider? parent,
+        Dictionary<int, ServiceDescriptor> descriptorMap)
+    {
+        ServiceDescriptor?[]? parentDescriptors = parent?.GetTransientDescriptors();
+        int maxId = parentDescriptors != null ? parentDescriptors.Length - 1 : -1;
+        foreach (KeyValuePair<int, ServiceDescriptor> entry in descriptorMap)
+        {
+            if (entry.Key > maxId)
+            {
+                maxId = entry.Key;
+            }
+        }
+
+        if (maxId < 0)
+        {
+            return null;
+        }
+
+        ServiceDescriptor?[] descriptors = new ServiceDescriptor?[maxId + 1];
+        if (parentDescriptors != null)
+        {
+            Array.Copy(parentDescriptors, descriptors, parentDescriptors.Length);
+        }
+
+        foreach (KeyValuePair<int, ServiceDescriptor> entry in descriptorMap)
+        {
+            descriptors[entry.Key] = entry.Value.Lifetime == ServiceLifetime.Transient ? entry.Value : null;
+        }
+
+        return descriptors;
     }
 
     private void Resolve(
@@ -434,12 +579,23 @@ public class ServiceCollection
 
         if (descriptorMap.TryGetValue(id, out ServiceDescriptor? descriptor))
         {
+            if (descriptor.Lifetime == ServiceLifetime.Transient)
+            {
+                return provider.CreateTransient(descriptor);
+            }
+
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
             service = provider.GetServiceById(id);
             if (service != null)
             {
                 return service;
             }
+        }
+
+        ServiceDescriptor? transientDescriptor = provider.GetTransientDescriptorById(id);
+        if (transientDescriptor != null)
+        {
+            return provider.CreateTransient(transientDescriptor);
         }
 
         service = parent?.GetServiceByIdInChain(id);
@@ -468,12 +624,23 @@ public class ServiceCollection
 
         if (descriptorMap.TryGetValue(id, out ServiceDescriptor? descriptor))
         {
+            if (descriptor.Lifetime == ServiceLifetime.Transient)
+            {
+                return provider.CreateTransient(descriptor);
+            }
+
             Resolve(descriptor, provider, parent, descriptorMap, resolving);
             service = provider.GetServiceById(id);
             if (service != null)
             {
                 return service;
             }
+        }
+
+        ServiceDescriptor? transientDescriptor = provider.GetTransientDescriptorById(id);
+        if (transientDescriptor != null)
+        {
+            return provider.CreateTransient(transientDescriptor);
         }
 
         return parent?.GetServiceByIdInChain(id);
@@ -486,10 +653,16 @@ public class ServiceCollection
         Dictionary<int, ServiceDescriptor> descriptorMap,
         HashSet<int> resolving)
     {
-        object[]? parentCollection = parent?.GetMergedServiceCollectionById(id);
+        ServiceCollectionRegistration[]? parentRegistrations = parent?.GetMergedServiceCollectionRegistrationsById(id);
+        object[]? parentCollection = parentRegistrations == null ? parent?.GetMergedServiceCollectionById(id) : null;
 
         if (!_serviceGroups.TryGetValue(id, out List<ServiceDescriptor>? group))
         {
+            if (parentRegistrations != null)
+            {
+                return ResolveRegistrations(parentRegistrations, provider);
+            }
+
             if (parentCollection == null)
             {
                 return Array.Empty<object>();
@@ -500,6 +673,11 @@ public class ServiceCollection
 
         List<object> instances = new(group.Count + (parentCollection?.Length ?? 0));
 
+        if (parentRegistrations != null)
+        {
+            instances.AddRange(ResolveRegistrations(parentRegistrations, provider));
+        }
+
         if (parentCollection != null)
         {
             instances.AddRange(parentCollection);
@@ -509,6 +687,12 @@ public class ServiceCollection
         {
             ServiceDescriptor descriptor = group[i];
             bool isLastWins = i == group.Count - 1;
+
+            if (descriptor.Lifetime == ServiceLifetime.Transient)
+            {
+                instances.Add(provider.CreateTransient(descriptor));
+                continue;
+            }
 
             switch (descriptor.Kind)
             {
@@ -561,4 +745,17 @@ public class ServiceCollection
         return instances.ToArray();
     }
 
+    private static object[] ResolveRegistrations(ServiceCollectionRegistration[] registrations, ServiceProvider provider)
+    {
+        object[] instances = new object[registrations.Length];
+        for (int i = 0; i < registrations.Length; i++)
+        {
+            ServiceCollectionRegistration registration = registrations[i];
+            instances[i] = registration.TransientDescriptor != null
+                ? provider.CreateTransient(registration.TransientDescriptor)
+                : registration.SingletonInstance!;
+        }
+
+        return instances;
+    }
 }
