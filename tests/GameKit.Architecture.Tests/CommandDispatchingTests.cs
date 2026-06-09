@@ -38,6 +38,24 @@ public sealed class CommandDispatchingTests
         Assert.That(listener.Received, Is.EqualTo(new[] { 1 }));
     }
 
+    [Test]
+    public void Pump_Dispose_RemovesItsCursorSoTheStreamCanCompact()
+    {
+        DomainEventStream stream = new();
+        DomainEventPump pump = new(stream, []);
+
+        // Fill the buffer to capacity without draining; the pump's undrained cursor pins every event.
+        for (int i = 0; i < 8192; i++)
+        {
+            stream.Publish(new TestMessage(i));
+        }
+
+        pump.Dispose();
+
+        // With the cursor gone, compaction proceeds and publishing no longer hits the overflow guard.
+        Assert.That(() => stream.Publish(new TestMessage(8192)), Throws.Nothing);
+    }
+
     // --- CommandDispatcher depth gating (via DI) ---
 
     [Test]
@@ -76,7 +94,7 @@ public sealed class CommandDispatchingTests
         services.AddSingleton<ICommandHandler<OuterCommand>, OuterCommandHandler>();
         services.AddSingleton<ICommandHandler<InnerCommand>, InnerCommandHandler>();
         services.AddSingleton<SpyHook>();
-        services.AddAlias<IPostDispatchHook, SpyHook>();
+        services.AddAlias<ICommandDispatchHook, SpyHook>();
         services.AddSingleton<CapturingListener>();
         services.AddAlias<IDomainEventListener, CapturingListener>();
         return services.BuildServiceProvider();
@@ -131,7 +149,7 @@ internal sealed class InnerCommandHandler : ICommandHandler<InnerCommand>
     }
 }
 
-internal sealed class SpyHook : IPostDispatchHook
+internal sealed class SpyHook : ICommandDispatchHook
 {
     private readonly Recorder _recorder;
 

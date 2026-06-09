@@ -3,11 +3,11 @@ using GameKit.Architecture;
 namespace GameKit.Architecture.Events;
 
 /// <summary>
-/// A post-dispatch hook that drains the buffered domain events accumulated during a command batch and fans
+/// A command-dispatch hook that drains the buffered domain events accumulated during a command batch and fans
 /// each one out to every <see cref="IDomainEventListener"/>. Recipient filtering and per-type routing are the
-/// listener's concern.
+/// listener's concern. Disposes its cursor so the stream can compact when the pump's provider is disposed.
 /// </summary>
-public sealed class DomainEventPump : IPostDispatchHook
+public sealed class DomainEventPump : ICommandDispatchHook, IDisposable
 {
     private readonly DomainEventCursor _events;
     private readonly IDomainEventListener[] _listeners;
@@ -28,4 +28,6 @@ public sealed class DomainEventPump : IPostDispatchHook
             }
         }
     }
+
+    public void Dispose() => _events.Dispose();
 }

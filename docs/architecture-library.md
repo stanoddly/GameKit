@@ -1,7 +1,7 @@
 # GameKit.Architecture
 
 The CQS + domain-event infrastructure for a Model layer: command/query handler contracts, a command
-dispatcher with post-dispatch hooks, and a pull-based domain-event stream. For the reasoning behind
+dispatcher with command-dispatch hooks, and a pull-based domain-event stream. For the reasoning behind
 the pattern see [architecture-concept.md](architecture-concept.md); for the tests that enforce it see
 [architecture-testing.md](architecture-testing.md).
 
@@ -53,17 +53,20 @@ _dispatcher.Dispatch(new MoveCommand(unit, destination));
 ```
 
 `Dispatch` is depth-gated. A handler may dispatch further commands; those share the same batch. When the
-**top-level** dispatch returns, every `IPostDispatchHook.OnBatchCompleted()` runs once, in registration
-order — re-entrant commands do not re-trigger the hooks.
+top-level command is handled, every `ICommandDispatchHook.OnBatchCompleted()` runs once — still inside the
+dispatch call, before it returns — in registration order. Re-entrant commands do not re-trigger the hooks.
 
 ```csharp
-internal sealed class TurnTriggerHook : IPostDispatchHook
+internal sealed class TurnTriggerHook : ICommandDispatchHook
 {
     public void OnBatchCompleted() { /* run end-of-batch work */ }
 }
 services.AddSingleton<TurnTriggerHook>();
-services.AddAlias<IPostDispatchHook, TurnTriggerHook>();
+services.AddAlias<ICommandDispatchHook, TurnTriggerHook>();
 ```
+
+Hooks run in registration order, so a hook that **publishes** domain events must be registered before the
+pump that drains them; otherwise its events wait for the next top-level dispatch.
 
 ## Domain events
 
@@ -107,7 +110,7 @@ internal sealed class UnitSpritePresenter : IUpdatable
 
 **`DomainEventPump` + `IDomainEventListener`** — for reactions that must run *within the command batch*
 (scenario triggers, AI that issues follow-up commands before control returns). The pump is an
-`IPostDispatchHook` that drains the buffered events after each batch and fans each to every listener.
+`ICommandDispatchHook` that drains the buffered events after each batch and fans each to every listener.
 
 ```csharp
 internal sealed class DialogTrigger : IDomainEventListener
@@ -128,7 +131,7 @@ path instead of the frame loop.
 ```csharp
 services.AddDomainEvents();        // DomainEventStream as IDomainEventPublisher + IDomainEventStream
 services.AddCommandDispatching();  // CommandDispatcher as ICommandDispatcher
-services.AddDomainEventPump();     // DomainEventPump as IPostDispatchHook (drains to IDomainEventListeners)
+services.AddDomainEventPump();     // DomainEventPump as ICommandDispatchHook (drains to IDomainEventListeners)
 ```
 
-Then register the game's handlers (closed types), post-dispatch hooks, and event listeners.
+Then register the game's handlers (closed types), command-dispatch hooks, and event listeners.

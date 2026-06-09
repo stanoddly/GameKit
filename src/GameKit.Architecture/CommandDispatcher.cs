@@ -4,19 +4,20 @@ namespace GameKit.Architecture;
 
 /// <summary>
 /// Resolves the registered <see cref="ICommandHandler{TCommand}"/> for each command and invokes it. After the
-/// top-level command in a batch completes, every <see cref="IPostDispatchHook"/> runs once — re-entrant
-/// commands dispatched by a handler share the same batch and do not re-trigger the hooks.
+/// top-level command in a batch completes, every <see cref="ICommandDispatchHook"/> runs once, in registration
+/// order — re-entrant commands dispatched by a handler share the same batch and do not re-trigger the hooks.
+/// A hook that publishes domain events must be registered before any hook that drains them (the pump).
 /// </summary>
 public sealed class CommandDispatcher : ICommandDispatcher
 {
     private readonly ServiceProvider _services;
-    private readonly IPostDispatchHook[] _postDispatchHooks;
+    private readonly ICommandDispatchHook[] _dispatchHooks;
     private int _dispatchDepth;
 
-    public CommandDispatcher(ServiceProvider services, IEnumerable<IPostDispatchHook> postDispatchHooks)
+    public CommandDispatcher(ServiceProvider services, IEnumerable<ICommandDispatchHook> dispatchHooks)
     {
         _services = services;
-        _postDispatchHooks = postDispatchHooks.ToArray();
+        _dispatchHooks = dispatchHooks.ToArray();
     }
 
     public bool Dispatch<TCommand>(TCommand command)
@@ -28,7 +29,7 @@ public sealed class CommandDispatcher : ICommandDispatcher
             bool handled = handler.Handle(command);
             if (_dispatchDepth == 1)
             {
-                foreach (IPostDispatchHook hook in _postDispatchHooks)
+                foreach (ICommandDispatchHook hook in _dispatchHooks)
                 {
                     hook.OnBatchCompleted();
                 }

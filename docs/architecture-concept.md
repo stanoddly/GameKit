@@ -25,8 +25,9 @@ used as defined in RFC 2119.
 **CQS at the Model boundary:**
 
 - **Command** — a requested mutation, usually user/AI intent ("this unit wants to
-  move there"). Each command type MUST have exactly one handler. A command MUST
-  return void unless it produces an identity the caller cannot predict.
+  move there"). Each command type MUST have exactly one handler. A handler returns
+  a `bool` for whether the command was handled (accepted/applied), not a result —
+  reads are queries.
 - **Query** — a requested read. MUST NOT have side effects.
 - **Event** — notification of a discrete occurrence. MUST be raised by domain
   objects and consumed by Presenters.
