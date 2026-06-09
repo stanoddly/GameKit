@@ -16,4 +16,28 @@ public static class ServiceCollectionExtensions
         services.AddAlias<IDomainEventStream, DomainEventStream>();
         return services;
     }
+
+    /// <summary>
+    /// Registers the <see cref="CommandDispatcher"/> as <see cref="ICommandDispatcher"/>. The game registers its
+    /// <see cref="ICommandHandler{TCommand}"/> implementations as closed types, and any
+    /// <see cref="IPostDispatchHook"/> implementations it wants run after each command batch.
+    /// </summary>
+    public static ServiceCollection AddCommandDispatching(this ServiceCollection services)
+    {
+        services.AddSingleton<CommandDispatcher>();
+        services.AddAlias<ICommandDispatcher, CommandDispatcher>();
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the <see cref="DomainEventPump"/> as an <see cref="IPostDispatchHook"/> so buffered domain
+    /// events are drained to the registered <see cref="IDomainEventListener"/>s after each command batch.
+    /// Requires <see cref="AddDomainEvents"/> and <see cref="AddCommandDispatching"/>.
+    /// </summary>
+    public static ServiceCollection AddDomainEventPump(this ServiceCollection services)
+    {
+        services.AddSingleton<DomainEventPump>();
+        services.AddAlias<IPostDispatchHook, DomainEventPump>();
+        return services;
+    }
 }
