@@ -6,7 +6,7 @@ namespace GameKit.Architecture;
 /// Resolves the registered <see cref="ICommandHandler{TCommand}"/> for each command and invokes it. After the
 /// top-level command in a batch completes, every <see cref="ICommandDispatchHook"/> runs once, in registration
 /// order — re-entrant commands dispatched by a handler share the same batch and do not re-trigger the hooks.
-/// A hook that publishes domain events must be registered before any hook that drains them (the pump).
+/// A hook that publishes domain events must be registered before any hook that drains them.
 /// </summary>
 public sealed class CommandDispatcher : ICommandDispatcher
 {
