@@ -26,7 +26,7 @@ Assert.That(report.Violations, Is.Empty, report.ToString());
   service, not handler chaining.
 - **Query results are recursively readonly** — see below.
 
-`CommandDispatcher`, `DomainEventPump`, and similar infrastructure are not discovered as handlers
+`CommandDispatcher`, `DomainEventDispatchHook`, and similar infrastructure are not discovered as handlers
 (they don't implement the handler interfaces), so they need no exclusion.
 
 ### Readonly query results

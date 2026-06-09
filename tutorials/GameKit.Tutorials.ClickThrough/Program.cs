@@ -27,7 +27,7 @@ static class Program
         });
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(ClickThroughRenderer.Create);
 
-        builder.OnStart((IWindow window, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((Window window, IKeyboardService keyboardService, AppControl appControl) =>
         {
             window.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
 

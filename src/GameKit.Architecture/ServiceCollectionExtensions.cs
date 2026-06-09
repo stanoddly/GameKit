@@ -14,6 +14,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DomainEventStream>();
         services.AddAlias<IDomainEventPublisher, DomainEventStream>();
         services.AddAlias<IDomainEventStream, DomainEventStream>();
+        services.AddTransient<DomainEventCursor>(static sp =>
+            sp.GetRequiredService<IDomainEventStream>().CreateCursor());
         return services;
     }
 
@@ -30,15 +32,15 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers the <see cref="DomainEventPump"/> as an <see cref="ICommandDispatchHook"/> so buffered domain
-    /// events are drained to the registered <see cref="IDomainEventListener"/>s after each command batch.
-    /// Register it after any dispatch hook that publishes events. Requires <see cref="AddDomainEvents"/> and
-    /// <see cref="AddCommandDispatching"/>.
+    /// Registers the <see cref="DomainEventDispatchHook"/> as an <see cref="ICommandDispatchHook"/> so buffered
+    /// domain events are drained to model-owned <see cref="IDomainEventListener"/>s after each command batch,
+    /// before the top-level dispatch call returns. Register it after any dispatch hook that publishes events.
+    /// Requires <see cref="AddDomainEvents"/> and <see cref="AddCommandDispatching"/>.
     /// </summary>
-    public static ServiceCollection AddDomainEventPump(this ServiceCollection services)
+    public static ServiceCollection AddDomainEventDispatchHook(this ServiceCollection services)
     {
-        services.AddSingleton<DomainEventPump>();
-        services.AddAlias<ICommandDispatchHook, DomainEventPump>();
+        services.AddSingleton<DomainEventDispatchHook>();
+        services.AddAlias<ICommandDispatchHook, DomainEventDispatchHook>();
         return services;
     }
 }

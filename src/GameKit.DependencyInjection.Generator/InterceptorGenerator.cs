@@ -13,6 +13,10 @@ enum InterceptionKind
     AddSingletonWithAlias,
     AddSingletonInstanceFactory,
     AddSingletonFactory,
+    AddTransient,
+    AddTransientWithAlias,
+    AddTransientInstanceFactory,
+    AddTransientFactory,
     OnStart,
     GetRequiredServiceEnumerable,
     GetServiceEnumerable
@@ -137,7 +141,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             _ => null
         };
 
-        return methodName is "AddSingleton" or "OnStart" or "GetRequiredService" or "GetService";
+        return methodName is "AddSingleton" or "AddTransient" or "OnStart" or "GetRequiredService" or "GetService";
     }
 
     private static ExtractionResult? ExtractInterception(GeneratorSyntaxContext context, CancellationToken ct)
@@ -185,7 +189,32 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         if (methodName == "AddSingleton")
         {
-            return ExtractAddSingleton(methodSymbol, invocation, context, interceptableLocation, ct);
+            return ExtractAddLifetimeRegistration(
+                methodSymbol,
+                invocation,
+                context,
+                interceptableLocation,
+                ct,
+                InterceptionKind.AddSingleton,
+                InterceptionKind.AddSingletonWithAlias,
+                InterceptionKind.AddSingletonInstanceFactory,
+                InterceptionKind.AddSingletonFactory,
+                "AddSingleton");
+        }
+
+        if (methodName == "AddTransient")
+        {
+            return ExtractAddLifetimeRegistration(
+                methodSymbol,
+                invocation,
+                context,
+                interceptableLocation,
+                ct,
+                InterceptionKind.AddTransient,
+                InterceptionKind.AddTransientWithAlias,
+                InterceptionKind.AddTransientInstanceFactory,
+                InterceptionKind.AddTransientFactory,
+                "AddTransient");
         }
 
         if (methodName == "OnStart")
@@ -245,21 +274,26 @@ public class InterceptorGenerator : IIncrementalGenerator
         ), null);
     }
 
-    private static ExtractionResult? ExtractAddSingleton(
+    private static ExtractionResult? ExtractAddLifetimeRegistration(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
         InterceptableLocation interceptableLocation,
-        CancellationToken ct)
+        CancellationToken ct,
+        InterceptionKind typeKind,
+        InterceptionKind implementationKind,
+        InterceptionKind instanceFactoryKind,
+        InterceptionKind delegateFactoryKind,
+        string methodDisplayName)
     {
-        // AddSingleton<T>(Delegate) — factory overload
-        // Must check parameter type to distinguish from AddSingleton<T>(T instance)
+        // Add{Lifetime}<T>(Delegate) — factory overload.
+        // Must check parameter type to distinguish from singleton AddSingleton<T>(T instance).
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 1
             && methodSymbol.Parameters[0].Type.ToDisplayString() == "System.Delegate")
         {
             string serviceTypeFullName = methodSymbol.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             InterceptionInfo? result = ExtractDelegateInterception(
-                InterceptionKind.AddSingletonFactory,
+                delegateFactoryKind,
                 invocation,
                 context,
                 interceptableLocation,
@@ -268,13 +302,13 @@ public class InterceptorGenerator : IIncrementalGenerator
             return result is { } info ? new ExtractionResult(info, null) : null;
         }
 
-        // AddSingleton<T>() — single type param, no args
+        // Add{Lifetime}<T>() — single type param, no args
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 0)
         {
-            return ExtractAddSingletonType(methodSymbol, invocation, context, interceptableLocation);
+            return ExtractAddLifetimeType(methodSymbol, invocation, context, interceptableLocation, typeKind, methodDisplayName);
         }
 
-        // AddSingleton<TService, TImpl>() — two type params, no args
+        // Add{Lifetime}<TService, TImpl>() — two type params, no args
         if (methodSymbol.TypeArguments.Length == 2 && methodSymbol.Parameters.Length == 0)
         {
             ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
@@ -282,36 +316,50 @@ public class InterceptorGenerator : IIncrementalGenerator
             Conversion conversion = context.SemanticModel.Compilation.ClassifyConversion(secondType, serviceType);
             if (conversion.IsImplicit || conversion.IsIdentity)
             {
-                return ExtractAddSingletonWithAlias(methodSymbol, invocation, context, interceptableLocation);
+                return ExtractAddLifetimeWithImplementation(
+                    methodSymbol,
+                    invocation,
+                    context,
+                    interceptableLocation,
+                    implementationKind,
+                    methodDisplayName);
             }
             else
             {
-                return ExtractAddSingletonInstanceFactory(methodSymbol, invocation, context, interceptableLocation);
+                return ExtractAddLifetimeInstanceFactory(
+                    methodSymbol,
+                    invocation,
+                    context,
+                    interceptableLocation,
+                    instanceFactoryKind,
+                    methodDisplayName);
             }
         }
 
         return null;
     }
 
-    private static ExtractionResult? ExtractAddSingletonType(
+    private static ExtractionResult? ExtractAddLifetimeType(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
-        InterceptableLocation interceptableLocation)
+        InterceptableLocation interceptableLocation,
+        InterceptionKind kind,
+        string methodDisplayName)
     {
         ITypeSymbol implType = methodSymbol.TypeArguments[0];
 
         if (implType is not INamedTypeSymbol implNamedType)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
-                $"AddSingleton<{implType.Name}>() cannot be used with an open generic type parameter. Use AddSingleton<{implType.Name}>(Func<ServiceProvider, {implType.Name}>) instead."));
+                $"{methodDisplayName}<{implType.Name}>() cannot be used with an open generic type parameter. Use {methodDisplayName}<{implType.Name}>(Func<ServiceProvider, {implType.Name}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"AddSingleton<{implType.Name}>() requires exactly one constructor accessible at the call site."));
+                $"{methodDisplayName}<{implType.Name}>() requires exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -319,7 +367,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
-            InterceptionKind.AddSingleton,
+            kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             new EquatableArray<string>(paramTypes),
@@ -332,11 +380,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         ), null);
     }
 
-    private static ExtractionResult? ExtractAddSingletonWithAlias(
+    private static ExtractionResult? ExtractAddLifetimeWithImplementation(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
-        InterceptableLocation interceptableLocation)
+        InterceptableLocation interceptableLocation,
+        InterceptionKind kind,
+        string methodDisplayName)
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
         ITypeSymbol implType = methodSymbol.TypeArguments[1];
@@ -344,14 +394,14 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (implType is not INamedTypeSymbol implNamedType)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
-                $"AddSingleton<{serviceType.Name}, {implType.Name}>() cannot be used with open generic type parameters. Use AddSingleton<{serviceType.Name}>(Func<ServiceProvider, {serviceType.Name}>) instead."));
+                $"{methodDisplayName}<{serviceType.Name}, {implType.Name}>() cannot be used with open generic type parameters. Use {methodDisplayName}<{serviceType.Name}>(Func<ServiceProvider, {serviceType.Name}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"AddSingleton<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one constructor accessible at the call site."));
+                $"{methodDisplayName}<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -359,7 +409,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
-            InterceptionKind.AddSingletonWithAlias,
+            kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             new EquatableArray<string>(paramTypes),
@@ -372,11 +422,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         ), null);
     }
 
-    private static ExtractionResult? ExtractAddSingletonInstanceFactory(
+    private static ExtractionResult? ExtractAddLifetimeInstanceFactory(
         IMethodSymbol methodSymbol,
         InvocationExpressionSyntax invocation,
         GeneratorSyntaxContext context,
-        InterceptableLocation interceptableLocation)
+        InterceptableLocation interceptableLocation,
+        InterceptionKind kind,
+        string methodDisplayName)
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
         ITypeSymbol factoryType = methodSymbol.TypeArguments[1];
@@ -384,7 +436,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (factoryType is not INamedTypeSymbol namedFactoryType)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0003",
-                $"AddSingleton<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to be a concrete type."));
+                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to be a concrete type."));
         }
 
         List<IMethodSymbol> candidates = new();
@@ -400,13 +452,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (candidates.Count == 0)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0003",
-                $"AddSingleton<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to have an accessible instance method returning {serviceType.Name}."));
+                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to have an accessible instance method returning {serviceType.Name}."));
         }
 
         if (candidates.Count > 1)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0004",
-                $"AddSingleton<{serviceType.Name}, {factoryType.Name}>() found multiple methods on {factoryType.Name} returning {serviceType.Name}: {string.Join(", ", candidates.Select(m => m.Name))}."));
+                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() found multiple methods on {factoryType.Name} returning {serviceType.Name}: {string.Join(", ", candidates.Select(m => m.Name))}."));
         }
 
         IMethodSymbol factoryMethod = candidates[0];
@@ -418,7 +470,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         string factoryTypeFullName = factoryType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
         return new ExtractionResult(new InterceptionInfo(
-            InterceptionKind.AddSingletonInstanceFactory,
+            kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
@@ -659,6 +711,18 @@ public class InterceptorGenerator : IIncrementalGenerator
                 case InterceptionKind.AddSingletonFactory:
                     GenerateAddSingletonFactoryInterceptor(sb, info, i, emitTrimAnnotations);
                     break;
+                case InterceptionKind.AddTransient:
+                    GenerateAddTransientInterceptor(sb, info, i, emitTrimAnnotations);
+                    break;
+                case InterceptionKind.AddTransientWithAlias:
+                    GenerateAddTransientWithImplementationInterceptor(sb, info, i, emitTrimAnnotations);
+                    break;
+                case InterceptionKind.AddTransientInstanceFactory:
+                    GenerateAddTransientInstanceFactoryInterceptor(sb, info, i, emitTrimAnnotations);
+                    break;
+                case InterceptionKind.AddTransientFactory:
+                    GenerateAddTransientFactoryInterceptor(sb, info, i, emitTrimAnnotations);
+                    break;
                 case InterceptionKind.OnStart:
                     GenerateOnStartInterceptor(sb, info, i);
                     break;
@@ -801,6 +865,126 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(sp => typedFactory(");
+
+        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        {
+            if (j > 0)
+            {
+                sb.Append(", ");
+            }
+            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+        }
+
+        sb.AppendLine("));");
+        sb.AppendLine($"        }}");
+    }
+
+    private static void GenerateAddTransientInterceptor(StringBuilder sb, InterceptionInfo info, int index, bool emitTrimAnnotations)
+    {
+        sb.AppendLine($"        {info.InterceptsLocationAttribute}");
+        if (emitTrimAnnotations)
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<{DynamicallyAccessedMembersAttribute} T>(");
+        }
+        else
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<T>(");
+        }
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
+        sb.AppendLine($"            where T : class");
+        sb.AppendLine($"        {{");
+        sb.Append($"            collection.AddTransient<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+
+        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        {
+            if (j > 0)
+            {
+                sb.Append(", ");
+            }
+            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+        }
+
+        sb.AppendLine("));");
+        sb.AppendLine($"        }}");
+    }
+
+    private static void GenerateAddTransientWithImplementationInterceptor(StringBuilder sb, InterceptionInfo info, int index, bool emitTrimAnnotations)
+    {
+        sb.AppendLine($"        {info.InterceptsLocationAttribute}");
+        if (emitTrimAnnotations)
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<TService, {DynamicallyAccessedMembersAttribute} TImplementation>(");
+        }
+        else
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<TService, TImplementation>(");
+        }
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
+        sb.AppendLine($"            where TService : class");
+        sb.AppendLine($"            where TImplementation : class");
+        sb.AppendLine($"        {{");
+        sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}, {info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
+
+        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        {
+            if (j > 0)
+            {
+                sb.Append(", ");
+            }
+            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+        }
+
+        sb.AppendLine($"));");
+        sb.AppendLine($"        }}");
+    }
+
+    private static void GenerateAddTransientInstanceFactoryInterceptor(StringBuilder sb, InterceptionInfo info, int index, bool emitTrimAnnotations)
+    {
+        sb.AppendLine($"        {info.InterceptsLocationAttribute}");
+        if (emitTrimAnnotations)
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<TService, {DynamicallyAccessedMembersAttribute} TFactory>(");
+        }
+        else
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<TService, TFactory>(");
+        }
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection)");
+        sb.AppendLine($"            where TService : class");
+        sb.AppendLine($"            where TFactory : class");
+        sb.AppendLine($"        {{");
+        sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}>(static sp => sp.GetRequiredService<{info.FactoryTypeFullName}>().{info.FactoryMethodName}(");
+
+        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        {
+            if (j > 0)
+            {
+                sb.Append(", ");
+            }
+            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+        }
+
+        sb.AppendLine("));");
+        sb.AppendLine($"        }}");
+    }
+
+    private static void GenerateAddTransientFactoryInterceptor(StringBuilder sb, InterceptionInfo info, int index, bool emitTrimAnnotations)
+    {
+        sb.AppendLine($"        {info.InterceptsLocationAttribute}");
+        if (emitTrimAnnotations)
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<{DynamicallyAccessedMembersAttribute} T>(");
+        }
+        else
+        {
+            sb.AppendLine($"        public static void AddTransient_{index}<T>(");
+        }
+        sb.AppendLine($"            this global::GameKit.DependencyInjection.ServiceCollection collection,");
+        sb.AppendLine($"            global::System.Delegate factory)");
+        sb.AppendLine($"            where T : class");
+        sb.AppendLine($"        {{");
+        sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
+        sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}>(sp => typedFactory(");
 
         for (int j = 0; j < info.ParameterTypes.Length; j++)
         {
