@@ -40,6 +40,18 @@ services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRange>, Movement
 Queries are invoked directly — inject `IQueryHandler<TQuery, TResult>` where you need it and call `Handle`.
 Commands go through the dispatcher.
 
+Handlers return `bool` (handled), never the entity they created. When a command creates something the
+caller must reference afterward, the **caller supplies the identity** — a client-generated id passed into
+the command — so it can use that id in follow-up commands and queries without the handler returning anything:
+
+```csharp
+public sealed record SpawnUnitCommand(UnitId Unit, UnitDefinitionId Definition, TilePoint At);
+
+UnitId unit = UnitId.New();                 // caller mints the id
+_dispatcher.Dispatch(new SpawnUnitCommand(unit, definition, tile));
+_dispatcher.Dispatch(new MoveCommand(unit, destination));   // reference it immediately
+```
+
 ## Dispatching commands
 
 `AddCommandDispatching()` registers `ICommandDispatcher`. Inject it and dispatch; it resolves the

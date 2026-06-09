@@ -88,6 +88,12 @@ Ask in order:
   SHOULD be used: a ring buffer with per-consumer cursors lets multiple consumers
   (render, audio, AI) drain at their own pace and tolerates bursts. Naive C#
   events do not.
+- **Caller-assigned identity.** A command that creates an entity SHOULD take the
+  new entity's identity as input (a client-generated id, e.g. a GUID) rather than
+  returning it. The handler stays intent-only, and the caller can reference the
+  entity in follow-up commands and queries without a round trip — which keeps
+  scripted, AI, and LLM-driven command sequences straightforward and preserves
+  replay / lockstep determinism.
 
 ## Examples
 
