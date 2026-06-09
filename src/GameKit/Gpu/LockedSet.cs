@@ -1,4 +1,4 @@
-namespace GameKit.Common;
+namespace GameKit.Gpu;
 
 internal struct LockedSet<T>
 {
@@ -30,14 +30,6 @@ internal struct LockedSet<T>
             T[] copy = _set.ToArray();
             _set.Clear();
             return copy;
-        }
-    }
-
-    public T[] Copy()
-    {
-        lock (_lock)
-        {
-            return _set.ToArray();
         }
     }
 }

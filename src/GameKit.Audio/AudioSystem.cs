@@ -1,6 +1,5 @@
 using System.Text;
 using GameKit.Content;
-using GameKit.Common;
 using GameKit.Utilities;
 using SDL;
 
