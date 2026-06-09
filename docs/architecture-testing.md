@@ -1,6 +1,6 @@
 # Architecture testing
 
-`GameKit.Architecture.Testing` turns the boundary claims in [architecture.md](architecture.md)
+`GameKit.Architecture.Testing` turns the boundary claims in [architecture-concept.md](architecture-concept.md)
 into reflection checks a game runs as ordinary unit tests. Roles are discovered through the
 `GameKit.Architecture` contracts (`ICommandHandler<>`, `IQueryHandler<,>`, `DomainMessage`), not
 name suffixes.
