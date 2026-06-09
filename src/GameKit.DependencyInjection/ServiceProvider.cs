@@ -21,8 +21,7 @@ public class ServiceProvider : IDisposable
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
-    [ThreadStatic]
-    private static HashSet<int>? s_resolvingTransientIds;
+    private readonly HashSet<int> _resolvingTransientIds = new();
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
     private ServiceDescriptor?[]? _transientDescriptors;
     private Dictionary<int, ServiceCollectionRegistration[]>? _serviceCollectionRegistrations;
@@ -375,8 +374,7 @@ public class ServiceProvider : IDisposable
 
     internal object CreateTransient(ServiceDescriptor descriptor)
     {
-        HashSet<int> resolving = s_resolvingTransientIds ??= new HashSet<int>();
-        if (!resolving.Add(descriptor.ServiceTypeId))
+        if (!_resolvingTransientIds.Add(descriptor.ServiceTypeId))
         {
             throw new InvalidOperationException(
                 $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
@@ -399,7 +397,7 @@ public class ServiceProvider : IDisposable
         }
         finally
         {
-            resolving.Remove(descriptor.ServiceTypeId);
+            _resolvingTransientIds.Remove(descriptor.ServiceTypeId);
         }
     }
 
