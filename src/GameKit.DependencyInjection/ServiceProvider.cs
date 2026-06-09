@@ -21,6 +21,7 @@ public class ServiceProvider : IDisposable
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
+    private readonly object _transientResolutionLock = new();
     private readonly HashSet<int> _resolvingTransientIds = new();
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
     private ServiceDescriptor?[]? _transientDescriptors;
@@ -374,30 +375,33 @@ public class ServiceProvider : IDisposable
 
     internal object CreateTransient(ServiceDescriptor descriptor)
     {
-        if (!_resolvingTransientIds.Add(descriptor.ServiceTypeId))
+        lock (_transientResolutionLock)
         {
-            throw new InvalidOperationException(
-                $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
-        }
-
-        try
-        {
-            object instance = descriptor.TypedFactory!(this)
-                ?? throw new InvalidOperationException("Factory delegate returned null.");
-
-            if (instance is IDisposable)
+            if (!_resolvingTransientIds.Add(descriptor.ServiceTypeId))
             {
-                _transientDisposables.Add(instance);
-                _transientDisposableTypes.Add(descriptor.ConcreteType!);
+                throw new InvalidOperationException(
+                    $"Circular dependency detected while resolving {descriptor.ServiceType.Name}.");
             }
 
-            RunActivatedCallbacks(instance, descriptor.ConcreteType!);
+            try
+            {
+                object instance = descriptor.TypedFactory!(this)
+                    ?? throw new InvalidOperationException("Factory delegate returned null.");
 
-            return instance;
-        }
-        finally
-        {
-            _resolvingTransientIds.Remove(descriptor.ServiceTypeId);
+                if (instance is IDisposable)
+                {
+                    _transientDisposables.Add(instance);
+                    _transientDisposableTypes.Add(descriptor.ConcreteType!);
+                }
+
+                RunActivatedCallbacks(instance, descriptor.ConcreteType!);
+
+                return instance;
+            }
+            finally
+            {
+                _resolvingTransientIds.Remove(descriptor.ServiceTypeId);
+            }
         }
     }
 
