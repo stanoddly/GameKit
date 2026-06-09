@@ -14,9 +14,7 @@
         <ProjectReference Include="..\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
         <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                           OutputItemType="Analyzer"
-                          ReferenceOutputAssembly="false"
-                          GlobalPropertiesToRemove="PublishAot;PublishTrimmed;TrimMode;IlcOptimizationPreference"
-                          AdditionalProperties="PublishAot=false;PublishTrimmed=false" />
+                          ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

@@ -19,38 +19,49 @@ public class FileSystemBuilder
 
     public FileSystemBuilder AddContentFromProjectDirectory(string? subdirectory = null)
     {
-        string? projectDirectory = GetProjectDirectory();
-
-        if (projectDirectory == null)
-        {
-            throw new InvalidOperationException(
-                "Unable to determine project directory. Ensure you are running from the project directory or from 'bin/[configuration]/net*' directory.");
-        }
-
-        string contentDirectory = subdirectory != null
-            ? Path.Combine(projectDirectory, subdirectory)
-            : projectDirectory;
+        string contentDirectory = ResolveContentDirectory(AppContext.BaseDirectory, subdirectory);
 
         AddContentFromDirectory(contentDirectory);
 
         return this;
     }
 
-    private static string? GetProjectDirectory()
+    private static string ResolveContentDirectory(string baseDirectory, string? subdirectory)
     {
-        DirectoryInfo? dir = new(AppContext.BaseDirectory);
+        string appDirectory = Path.GetFullPath(baseDirectory);
+        string appContentDirectory = subdirectory != null
+            ? Path.Combine(appDirectory, subdirectory)
+            : appDirectory;
 
-        while (dir != null)
+        if (Directory.Exists(appContentDirectory))
         {
-            if (dir.GetFiles("*.csproj").Length > 0)
-            {
-                return dir.FullName;
-            }
-
-            dir = dir.Parent;
+            return appContentDirectory;
         }
 
-        return AppContext.BaseDirectory;
+        DirectoryInfo? directory = new DirectoryInfo(appDirectory);
+
+        while (directory != null)
+        {
+            if (directory.GetFiles("*.csproj").Length > 0)
+            {
+                string projectContentDirectory = subdirectory != null
+                    ? Path.Combine(directory.FullName, subdirectory)
+                    : directory.FullName;
+
+                if (Directory.Exists(projectContentDirectory))
+                {
+                    return projectContentDirectory;
+                }
+
+                throw new InvalidOperationException(
+                    $"Content directory not found. Checked '{appContentDirectory}' and '{projectContentDirectory}'.");
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException(
+            $"Content directory not found. Checked '{appContentDirectory}' and no project directory was found.");
     }
 
     public FileSystemBuilder AddContentFromZip(string filename)
