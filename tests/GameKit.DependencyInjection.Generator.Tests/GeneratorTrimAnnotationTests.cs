@@ -11,7 +11,7 @@ public class GeneratorTrimAnnotationTests
 {
     private const string DamAttribute = "[global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]";
 
-    // Minimal source that triggers all four intercepted overloads of AddSingleton:
+    // Minimal source that triggers intercepted overloads of AddSingleton and AddTransient:
     // - AddSingleton<T>()
     // - AddSingleton<TService, TImplementation>()
     // - AddSingleton<T>(Delegate factory)
@@ -38,6 +38,10 @@ public class GeneratorTrimAnnotationTests
                 services.AddSingleton<MyService>(() => new MyService());
                 services.AddSingleton<MyFactory>();
                 services.AddSingleton<ProductService, MyFactory>();
+                services.AddTransient<MyService>();
+                services.AddTransient<IMyService, MyServiceImpl>();
+                services.AddTransient<MyService>(() => new MyService());
+                services.AddTransient<ProductService, MyFactory>();
             }
         }
         """;
@@ -119,6 +123,7 @@ public class GeneratorTrimAnnotationTests
         // The interceptors themselves must still be generated — only the attribute is absent
         Assert.That(generated, Does.Contain("ServiceCollectionInterceptors"));
         Assert.That(generated, Does.Contain("AddSingleton_"));
+        Assert.That(generated, Does.Contain("AddTransient_"));
     }
 
     private static string RunGenerator(string? emitTrimAnnotationsPropertyValue)
