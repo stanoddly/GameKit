@@ -3,7 +3,7 @@ namespace GameKit.Audio;
 public interface IAudioSystem
 {
     AudioListener Listener { get; }
-    AudioGroups Groups { get; }
+    DefaultAudioGroups Groups { get; }
     float MasterGain { get; set; }
 
     AudioBuffer LoadBuffer(ReadOnlySpan<char> path);

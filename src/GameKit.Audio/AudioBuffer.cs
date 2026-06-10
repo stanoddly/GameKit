@@ -14,10 +14,25 @@ public unsafe sealed class AudioBuffer : IDisposable
         Pointer = sdlAudio;
     }
 
-    internal Pointer<MIX_Audio> SdlAudio => Pointer;
+    internal Pointer<MIX_Audio> SdlAudio
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return Pointer;
+        }
+    }
 
     public void Dispose()
     {
         _audioSystem.ReleaseBuffer(this);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (Pointer.IsNull)
+        {
+            throw new ObjectDisposedException(nameof(AudioBuffer));
+        }
     }
 }

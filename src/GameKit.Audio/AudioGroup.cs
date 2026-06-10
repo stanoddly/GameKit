@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace GameKit.Audio;
 
 public sealed class AudioGroup
@@ -9,9 +11,12 @@ public sealed class AudioGroup
     {
         _audioSystem = audioSystem;
         Name = name;
+        Utf8Name = new byte[Encoding.UTF8.GetByteCount(name) + 1];
+        Encoding.UTF8.GetBytes(name, Utf8Name);
     }
 
     public string Name { get; }
+    internal byte[] Utf8Name { get; }
 
     public float Gain
     {

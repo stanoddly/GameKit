@@ -1,4 +1,3 @@
-using System.Text;
 using GameKit.Content;
 using GameKit.Common;
 using GameKit.Utilities;
@@ -12,12 +11,14 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     private readonly GameKitFactory _sdlLifetime;
     private readonly VirtualFileSystem _fileSystem;
-    private LockedSet<AudioSource> _sources = new();
-    private LockedSet<AudioBuffer> _buffers = new();
+    private readonly LockedSet<AudioSource> _sources = new();
+    private readonly LockedSet<AudioBuffer> _buffers = new();
+    private readonly Dictionary<string, AudioGroup> _groups = new(StringComparer.Ordinal);
     private Pointer<MIX_Mixer> _mixer;
     private float _masterGain = 1.0f;
     private bool _sdlAudioInitialized;
     private bool _mixerInitialized;
+    private bool _disposed;
 
     internal AudioSystem(
         GameKitFactory sdlLifetime,
@@ -33,11 +34,11 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         _mixerInitialized = mixerInitialized;
 
         Listener = new AudioListener(this);
-        Groups = new AudioGroups(this);
+        Groups = DefaultAudioGroups.Create(this);
     }
 
     public AudioListener Listener { get; }
-    public AudioGroups Groups { get; }
+    public DefaultAudioGroups Groups { get; }
 
     public float MasterGain
     {
@@ -108,15 +109,23 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
             throw new ArgumentException("Audio group name cannot be empty.", nameof(name));
         }
 
-        return new AudioGroup(this, name);
+        if (!_groups.TryGetValue(name, out AudioGroup? group))
+        {
+            group = new AudioGroup(this, name);
+            _groups.Add(name, group);
+        }
+
+        return group;
     }
 
     public void Dispose()
     {
-        if (_mixer.IsNull && !_mixerInitialized && !_sdlAudioInitialized)
+        if (_disposed)
         {
             return;
         }
+
+        _disposed = true;
 
         foreach (AudioSource source in _sources.ClearAndCopy())
         {
@@ -146,14 +155,19 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
             _sdlAudioInitialized = false;
         }
 
+        _groups.Clear();
+
         GC.KeepAlive(_sdlLifetime);
     }
 
     internal void SetSourceGroup(AudioSource source, AudioGroup? oldGroup, AudioGroup? newGroup)
     {
+        ThrowIfDisposed();
+        source.ThrowIfDisposed();
+
         if (oldGroup != null)
         {
-            WithUtf8(oldGroup.Name, tag =>
+            WithUtf8(oldGroup, tag =>
             {
                 SDL3_mixer.MIX_UntagTrack(source.SdlTrack, tag);
             });
@@ -161,7 +175,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
         if (newGroup != null)
         {
-            WithUtf8(newGroup.Name, tag =>
+            WithUtf8(newGroup, tag =>
             {
                 ThrowIfSdlFailed(
                     SDL3_mixer.MIX_TagTrack(source.SdlTrack, tag),
@@ -173,7 +187,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     internal void SetGroupGain(AudioGroup group, float gain)
     {
         ThrowIfDisposed();
-        WithUtf8(group.Name, tag =>
+        WithUtf8(group, tag =>
         {
             ThrowIfSdlFailed(
                 SDL3_mixer.MIX_SetTagGain(_mixer, tag, gain),
@@ -184,7 +198,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     internal void PauseGroup(AudioGroup group)
     {
         ThrowIfDisposed();
-        WithUtf8(group.Name, tag =>
+        WithUtf8(group, tag =>
         {
             ThrowIfSdlFailed(
                 SDL3_mixer.MIX_PauseTag(_mixer, tag),
@@ -195,7 +209,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     internal void ResumeGroup(AudioGroup group)
     {
         ThrowIfDisposed();
-        WithUtf8(group.Name, tag =>
+        WithUtf8(group, tag =>
         {
             ThrowIfSdlFailed(
                 SDL3_mixer.MIX_ResumeTag(_mixer, tag),
@@ -206,7 +220,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     internal void StopGroup(AudioGroup group)
     {
         ThrowIfDisposed();
-        WithUtf8(group.Name, tag =>
+        WithUtf8(group, tag =>
         {
             ThrowIfSdlFailed(
                 SDL3_mixer.MIX_StopTag(_mixer, tag, 0),
@@ -264,12 +278,9 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         }
     }
 
-    private static void WithUtf8(string value, Utf8Action action)
+    private static void WithUtf8(AudioGroup group, Utf8Action action)
     {
-        int byteCount = Encoding.UTF8.GetByteCount(value);
-        byte[] bytes = new byte[byteCount + 1];
-        Encoding.UTF8.GetBytes(value, bytes);
-        fixed (byte* pointer = bytes)
+        fixed (byte* pointer = group.Utf8Name)
         {
             action(pointer);
         }
@@ -277,7 +288,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
     private void ThrowIfDisposed()
     {
-        if (_mixer.IsNull)
+        if (_disposed)
         {
             throw new ObjectDisposedException(nameof(AudioSystem));
         }
