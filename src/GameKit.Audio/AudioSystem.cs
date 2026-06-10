@@ -11,6 +11,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
     private readonly VirtualFileSystem _fileSystem;
     private readonly LockedSet<AudioSource> _sources = new();
     private readonly LockedSet<AudioBuffer> _buffers = new();
+    private readonly LockedSet<AudioStream> _streams = new();
     private readonly Dictionary<string, AudioGroup> _groups = new(StringComparer.Ordinal);
     private Pointer<MIX_Mixer> _mixer;
     private float _masterGain = 1.0f;
@@ -78,6 +79,25 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         }
     }
 
+    public AudioStream OpenStream(ReadOnlySpan<char> path)
+    {
+        ThrowIfDisposed();
+
+        Stream fileStream = _fileSystem.OpenStream(path);
+
+        try
+        {
+            AudioStream stream = new(this, fileStream);
+            _streams.Add(stream);
+            return stream;
+        }
+        catch
+        {
+            fileStream.Dispose();
+            throw;
+        }
+    }
+
     public AudioSource CreateSource()
     {
         ThrowIfDisposed();
@@ -124,6 +144,11 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         foreach (AudioBuffer buffer in _buffers.ClearAndCopy())
         {
             ReleaseBuffer(buffer);
+        }
+
+        foreach (AudioStream stream in _streams.ClearAndCopy())
+        {
+            ReleaseStream(stream);
         }
 
         if (!_mixer.IsNull)
@@ -216,6 +241,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
             return;
         }
 
+        source.Clip = null;
         SDL3_mixer.MIX_DestroyTrack(pointer);
         source.Pointer = Pointer<MIX_Track>.Null;
     }
@@ -231,6 +257,12 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
 
         SDL3_mixer.MIX_DestroyAudio(pointer);
         buffer.Pointer = Pointer<MIX_Audio>.Null;
+    }
+
+    internal void ReleaseStream(AudioStream stream)
+    {
+        _streams.Remove(stream);
+        stream.Release();
     }
 
     internal static void ThrowIfNegative(float value, string parameterName)

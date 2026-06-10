@@ -1,6 +1,7 @@
 # Audio Tutorial
 
 Uses `GameKit.Audio` to load an Ogg buffer and play it through several reusable `AudioSource` instances.
+Short sounds can be loaded with `IAudioSystem.LoadBuffer()` and assigned to `AudioSource.Clip`; longer sounds can be streamed from the virtual file system with `IAudioSystem.OpenStream()`.
 
 ## Asset
 
