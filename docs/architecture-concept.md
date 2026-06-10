@@ -14,9 +14,8 @@ used as defined in RFC 2119.
   math, pathfinding, DI, and framework lifecycle (tick, dispose); MUST NOT depend
   on rendering.
 - **View** — rendering, animation, input adapters. Touches GPU/pixels/screen
-  coordinates. MAY use command/query results handed to it (possibly live
-  read-only handles), but MUST NOT invoke a command or query, and MUST NOT
-  subscribe to Model events.
+  coordinates. MAY use command/query results handed to it, but MUST NOT invoke
+  a command or query, and MUST NOT subscribe to Model events.
 - **Presenter** — the glue. Commands and queries MUST be invoked only by the
   Presenter. It subscribes to Model events and View input, coordinates responses,
   and feeds query results to the View. It MUST contain no game rules and no
@@ -57,14 +56,16 @@ Ask in order:
    determinism.
 2. **What does the View read every frame?** → **Queries**, invoked by the
    Presenter. Anything continuously changing (positions, resource counts, health
-   bars) is a query result the View reads — often a live read-only handle the
-   Presenter hands over once. It MUST NOT be pushed per-frame as events, and the
-   View MUST NOT invoke the query itself.
+   bars) is a query result the Presenter fetches each frame and hands to the
+   View. It MUST NOT be pushed per-frame as events, and the View MUST NOT invoke
+   the query itself.
 3. **What discrete things must other systems react to?** → **Events** (died,
    built, unlocked, came-under-attack, entered-vision). Bounded in volume by
    construction.
 4. **What advances simulation time?** → A non-command **`Step(dt)`** on the
-   Model, called by the game loop / Presenter. The one core operation that is
+   Model, called by the game loop (the host), not by a Presenter — advancing
+   time is not glue. A Presenter is just one consumer of the Model; an AI actor
+   is another, symmetric to it. `Step(dt)` is the one core operation that is
    neither command, query, nor event. Turn-based games hide it inside end-turn;
    real-time games call it every frame.
 5. **How should the Model store state?** → Whatever the simulation needs. The
@@ -80,7 +81,14 @@ Ask in order:
 - **No event-per-frame.** High-frequency continuous change SHOULD NOT be
   published as events; expose it as a query. Only discrete transitions
   (`MovementStarted` / `MovementStopped`) SHOULD be published; in between, the
-  Presenter feeds the View a live query result to read.
+  Presenter re-queries each frame and feeds the View the fresh snapshot.
+- **Query results are temporary.** A result is a snapshot, valid only until the
+  next `Step(dt)` or handled command. Consumers MUST NOT cache it across frames
+  and MUST NOT expect it to update in place — the Model may be out-of-process
+  (e.g. a server) in the future, so results are plain data, not live handles
+  into Model memory. Hot-path queries MAY return pooled or reused buffers that
+  are only valid for the current frame; temporariness is the contract either
+  way.
 - **Commands aren't the simulation.** A `SimulationTickCommand` that mutates
   thousands of entities SHOULD be `Step(dt)` instead. Commands are intent;
   stepping is not.

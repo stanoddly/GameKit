@@ -38,7 +38,8 @@ services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRange>, Movement
 ```
 
 Queries are invoked directly — inject `IQueryHandler<TQuery, TResult>` where you need it and call `Handle`.
-Commands go through the dispatcher.
+Commands go through the dispatcher. A query result is a temporary snapshot: do not cache it across frames
+or expect it to update in place — re-query instead (see [architecture-concept.md](architecture-concept.md)).
 
 Handlers return `bool` (handled), never the entity they created. When a command creates something the
 caller must reference afterward, the **caller supplies the identity** — a client-generated id passed into
