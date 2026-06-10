@@ -21,24 +21,18 @@ internal unsafe sealed class AudioFactory
 
         try
         {
-            if (SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO) == false)
-            {
-                throw new AudioException($"SDL_InitSubSystem(SDL_INIT_AUDIO) failed: {SDL3.SDL_GetError()}");
-            }
-
+            SdlError.ThrowOnFalse(
+                SDL3.SDL_InitSubSystem(SDL_InitFlags.SDL_INIT_AUDIO),
+                nameof(SDL3.SDL_InitSubSystem));
             sdlAudioInitialized = true;
 
-            if (SDL3_mixer.MIX_Init() == false)
-            {
-                throw new AudioException($"MIX_Init failed: {SDL3.SDL_GetError()}");
-            }
-
+            SdlError.ThrowOnFalse(
+                SDL3_mixer.MIX_Init(),
+                nameof(SDL3_mixer.MIX_Init));
             mixerInitialized = true;
+
             mixer = SDL3_mixer.MIX_CreateMixerDevice(SDL3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, null);
-            if (mixer.IsNull)
-            {
-                throw new AudioException($"MIX_CreateMixerDevice failed: {SDL3.SDL_GetError()}");
-            }
+            SdlError.ThrowOnNull(mixer, nameof(SDL3_mixer.MIX_CreateMixerDevice));
 
             return new AudioSystem(_sdlLifetime, fileSystem, mixer, sdlAudioInitialized, mixerInitialized);
         }
