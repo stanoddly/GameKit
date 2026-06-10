@@ -27,12 +27,16 @@ public unsafe sealed class AudioBuffer : AudioClip
 
     internal override void AttachTo(AudioSource source)
     {
-        source.SetTrackAudio(SdlAudio);
+        SdlError.ThrowOnFalse(
+            SDL3_mixer.MIX_SetTrackAudio(source.SdlTrack, SdlAudio),
+            nameof(SDL3_mixer.MIX_SetTrackAudio));
     }
 
     internal override void DetachFrom(AudioSource source)
     {
-        source.SetTrackAudio(Pointer<MIX_Audio>.Null);
+        SdlError.ThrowOnFalse(
+            SDL3_mixer.MIX_SetTrackAudio(source.SdlTrack, Pointer<MIX_Audio>.Null),
+            nameof(SDL3_mixer.MIX_SetTrackAudio));
     }
 
     public override void Dispose()

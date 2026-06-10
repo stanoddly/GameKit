@@ -136,22 +136,6 @@ public unsafe sealed class AudioSource : IDisposable
 
     internal Pointer<MIX_Track> SdlTrack => Pointer;
 
-    internal void SetTrackAudio(Pointer<MIX_Audio> sdlAudio)
-    {
-        ThrowIfDisposed();
-        SdlError.ThrowOnFalse(
-            SDL3_mixer.MIX_SetTrackAudio(SdlTrack, sdlAudio),
-            nameof(SDL3_mixer.MIX_SetTrackAudio));
-    }
-
-    internal void SetTrackStream(Pointer<SDL_IOStream> ioStream)
-    {
-        ThrowIfDisposed();
-        SdlError.ThrowOnFalse(
-            SDL3_mixer.MIX_SetTrackIOStream(SdlTrack, ioStream, false),
-            nameof(SDL3_mixer.MIX_SetTrackIOStream));
-    }
-
     public void Play()
     {
         ThrowIfDisposed();

@@ -26,13 +26,16 @@ public unsafe sealed class AudioStream : AudioClip
     internal override void AttachTo(AudioSource source)
     {
         ThrowIfDisposed();
+        source.ThrowIfDisposed();
 
         if (_source != null && !ReferenceEquals(_source, source))
         {
             throw new InvalidOperationException("Audio stream is already attached to a source.");
         }
 
-        source.SetTrackStream(_sdlIoStream);
+        SdlError.ThrowOnFalse(
+            SDL3_mixer.MIX_SetTrackIOStream(source.SdlTrack, _sdlIoStream, false),
+            nameof(SDL3_mixer.MIX_SetTrackIOStream));
         _source = source;
     }
 
@@ -43,7 +46,9 @@ public unsafe sealed class AudioStream : AudioClip
             return;
         }
 
-        source.SetTrackStream(Pointer<SDL_IOStream>.Null);
+        SdlError.ThrowOnFalse(
+            SDL3_mixer.MIX_SetTrackIOStream(source.SdlTrack, Pointer<SDL_IOStream>.Null, false),
+            nameof(SDL3_mixer.MIX_SetTrackIOStream));
         _source = null;
     }
 
