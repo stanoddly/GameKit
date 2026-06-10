@@ -253,6 +253,7 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
             return;
         }
 
+        buffer.DetachFromSources();
         SDL3_mixer.MIX_DestroyAudio(pointer);
         buffer.Pointer = Pointer<MIX_Audio>.Null;
     }

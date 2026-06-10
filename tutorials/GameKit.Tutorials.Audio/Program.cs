@@ -10,6 +10,8 @@ static class Program
 {
     private const string BeepPath = "audio/beep-example.ogg";
     private const int SourceCount = 4;
+    private const float BufferedGain = 0.45f;
+    private const float StreamGain = 0.15f;
 
     static int Main(string[] args)
     {
@@ -25,13 +27,18 @@ static class Program
         {
             DefaultAudioGroups groups = DefaultAudioGroups.Create(audioSystem);
             AudioBuffer beep = audioSystem.LoadBuffer(BeepPath);
-            AudioSource[] sources = CreateSources(audioSystem, groups, beep);
+            AudioStream streamedBeep = audioSystem.OpenStream(BeepPath);
+            AudioSource[] sources = CreateBufferedSources(audioSystem, groups, beep);
+            AudioSource streamSource = CreateStreamSource(audioSystem, groups, streamedBeep);
             AudioGroup currentGroup = groups.Effects;
             float sourceX = 0.0f;
             int sourceIndex = 0;
 
             Console.WriteLine("Audio tutorial");
-            Console.WriteLine("Space: play the beep");
+            Console.WriteLine("Space: play the buffered beep");
+            Console.WriteLine("M: toggle a looping streamed beep");
+            Console.WriteLine($"Buffered source gain: {BufferedGain:0.00}");
+            Console.WriteLine($"Stream source gain: {StreamGain:0.00}");
             Console.WriteLine("Left/Right: move the source");
             Console.WriteLine("1: effects group, 2: UI group, 3: muted UI group");
             Console.WriteLine("Escape: quit");
@@ -47,6 +54,13 @@ static class Program
                     source.Position = new Vector3(sourceX, 0.0f, 0.0f);
                     source.Play();
                     sourceIndex = (sourceIndex + 1) % sources.Length;
+                    eventArgs.Consume();
+                    return;
+                }
+
+                if (eventArgs.Key == VirtualKey.M)
+                {
+                    ToggleStream(streamSource);
                     eventArgs.Consume();
                     return;
                 }
@@ -106,18 +120,49 @@ static class Program
         return gameKitApp.Run();
     }
 
-    private static AudioSource[] CreateSources(IAudioSystem audioSystem, DefaultAudioGroups groups, AudioBuffer buffer)
+    private static AudioSource[] CreateBufferedSources(IAudioSystem audioSystem, DefaultAudioGroups groups, AudioBuffer buffer)
     {
         AudioSource[] sources = new AudioSource[SourceCount];
         for (int i = 0; i < sources.Length; i++)
         {
             AudioSource source = audioSystem.CreateSource();
             source.Clip = buffer;
-            source.Gain = 0.45f;
+            source.Gain = BufferedGain;
             source.Group = groups.Effects;
             sources[i] = source;
         }
 
         return sources;
+    }
+
+    private static AudioSource CreateStreamSource(IAudioSystem audioSystem, DefaultAudioGroups groups, AudioStream stream)
+    {
+        AudioSource source = audioSystem.CreateSource();
+        source.Clip = stream;
+        source.Gain = StreamGain;
+        source.Group = groups.Music;
+        source.Looping = true;
+        return source;
+    }
+
+    private static void ToggleStream(AudioSource source)
+    {
+        switch (source.State)
+        {
+            case AudioSourceState.Playing:
+                source.Pause();
+                Console.WriteLine("Streamed audio paused");
+                break;
+            case AudioSourceState.Paused:
+                source.Resume();
+                Console.WriteLine("Streamed audio resumed");
+                break;
+            case AudioSourceState.Stopped:
+                source.Play();
+                Console.WriteLine("Streamed audio playing");
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 }

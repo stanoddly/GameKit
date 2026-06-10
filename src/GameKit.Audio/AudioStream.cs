@@ -18,7 +18,6 @@ public unsafe sealed class AudioStream : AudioClip
     {
         _audioSystem = audioSystem;
         _stream = stream;
-        _sdlIoStream = CreateIoStream();
     }
 
     internal override AudioSystem AudioSystem => _audioSystem;
@@ -34,7 +33,7 @@ public unsafe sealed class AudioStream : AudioClip
         }
 
         SdlError.ThrowOnFalse(
-            SDL3_mixer.MIX_SetTrackIOStream(source.SdlTrack, _sdlIoStream, false),
+            SDL3_mixer.MIX_SetTrackIOStream(source.SdlTrack, GetOrCreateIoStream(), false),
             nameof(SDL3_mixer.MIX_SetTrackIOStream));
         _source = source;
     }
@@ -69,15 +68,35 @@ public unsafe sealed class AudioStream : AudioClip
             return;
         }
 
-        _disposed = true;
-
         AudioSource? source = _source;
         if (source != null)
         {
-            DetachFrom(source);
+            if (source.Pointer.IsNull)
+            {
+                _source = null;
+            }
+            else if (ReferenceEquals(source.Clip, this))
+            {
+                source.Clip = null;
+            }
+            else
+            {
+                DetachFrom(source);
+            }
         }
 
-        CloseIoStream();
+        _disposed = true;
+        CloseStream();
+    }
+
+    private Pointer<SDL_IOStream> GetOrCreateIoStream()
+    {
+        if (_sdlIoStream.IsNull)
+        {
+            _sdlIoStream = CreateIoStream();
+        }
+
+        return _sdlIoStream;
     }
 
     private Pointer<SDL_IOStream> CreateIoStream()
@@ -111,6 +130,17 @@ public unsafe sealed class AudioStream : AudioClip
 
         _sdlIoStream = Pointer<SDL_IOStream>.Null;
         SDL3.SDL_CloseIO(ioStream);
+    }
+
+    private void CloseStream()
+    {
+        if (_sdlIoStream.IsNull)
+        {
+            _stream.Dispose();
+            return;
+        }
+
+        CloseIoStream();
     }
 
     private void CloseFromSdl()
