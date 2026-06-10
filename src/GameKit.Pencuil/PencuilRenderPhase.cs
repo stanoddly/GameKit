@@ -90,6 +90,8 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public void Render(TRenderContext renderContext)
     {
+        ResizeRetainedTextureIfNeeded(renderContext.ColorTarget.Size);
+
         // Retained texture dirtiness must enter the build gate because redraw uses
         // freshly rebuilt pencil instructions, even when their content is unchanged.
         bool needsBuild = _pencil.NeedsUpdate | _retainedTextureDirty | _viewRegistry.ConsumeDirty();
@@ -141,5 +143,17 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
         _pencil.CursorJustReleased = false;
         _renderer.Present(renderContext.CommandBuffer, renderContext.ColorTarget, _clearTarget);
+    }
+
+    private void ResizeRetainedTextureIfNeeded(ShortSize targetSize)
+    {
+        if (_renderer.RetainedTexture.Size == targetSize)
+        {
+            return;
+        }
+
+        _pencil.UpdateViewport(targetSize.Width, targetSize.Height);
+        _renderer.Resize(targetSize);
+        _retainedTextureDirty = true;
     }
 }
