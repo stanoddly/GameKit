@@ -17,7 +17,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public int Order { get; }
 
-    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, Window window, PencuilOptions options)
+    public PencuilRenderPhase(Pencil pencil, ViewRegistry viewRegistry, PencuilRenderer renderer, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
@@ -80,12 +80,6 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             }
         });
 
-        window.ResolutionChanged += args =>
-        {
-            pencil.UpdateViewport(args.NewSize.Width, args.NewSize.Height);
-            renderer.Resize(args.NewSize);
-            _retainedTextureDirty = true;
-        };
     }
 
     public void Render(TRenderContext renderContext)

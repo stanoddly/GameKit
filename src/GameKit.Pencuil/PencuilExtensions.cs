@@ -43,7 +43,6 @@ public static class PencuilExtensions
             sp.GetRequiredService<IMouseService>(),
             sp.GetRequiredService<IKeyboardService>(),
             sp.GetRequiredService<ITextInputService>(),
-            sp.GetRequiredService<Window>(),
             sp.GetRequiredService<PencuilOptions>()));
         return builder;
     }
