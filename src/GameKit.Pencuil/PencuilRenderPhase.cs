@@ -90,6 +90,8 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public void Render(TRenderContext renderContext)
     {
+        // Retained texture dirtiness must enter the build gate because redraw uses
+        // freshly rebuilt pencil instructions, even when their content is unchanged.
         bool needsBuild = _pencil.NeedsUpdate | _retainedTextureDirty | _viewRegistry.ConsumeDirty();
         ReadOnlySpan<IView> views = _viewRegistry.Views;
 
