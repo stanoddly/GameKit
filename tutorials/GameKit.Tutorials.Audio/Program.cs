@@ -23,9 +23,10 @@ static class Program
 
         builder.OnStart((IAudioSystem audioSystem, IKeyboardService keyboardService, AppControl appControl) =>
         {
+            DefaultAudioGroups groups = DefaultAudioGroups.Create(audioSystem);
             AudioBuffer beep = audioSystem.LoadBuffer(BeepPath);
-            AudioSource[] sources = CreateSources(audioSystem, beep);
-            AudioGroup currentGroup = audioSystem.Groups.Effects;
+            AudioSource[] sources = CreateSources(audioSystem, groups, beep);
+            AudioGroup currentGroup = groups.Effects;
             float sourceX = 0.0f;
             int sourceIndex = 0;
 
@@ -68,8 +69,8 @@ static class Program
 
                 if (eventArgs.Key == VirtualKey.Number1)
                 {
-                    currentGroup = audioSystem.Groups.Effects;
-                    audioSystem.Groups.Effects.Gain = 1.0f;
+                    currentGroup = groups.Effects;
+                    groups.Effects.Gain = 1.0f;
                     Console.WriteLine($"Source group: {currentGroup.Name}");
                     eventArgs.Consume();
                     return;
@@ -77,8 +78,8 @@ static class Program
 
                 if (eventArgs.Key == VirtualKey.Number2)
                 {
-                    currentGroup = audioSystem.Groups.Ui;
-                    audioSystem.Groups.Ui.Gain = 1.0f;
+                    currentGroup = groups.Ui;
+                    groups.Ui.Gain = 1.0f;
                     Console.WriteLine($"Source group: {currentGroup.Name}");
                     eventArgs.Consume();
                     return;
@@ -86,8 +87,8 @@ static class Program
 
                 if (eventArgs.Key == VirtualKey.Number3)
                 {
-                    currentGroup = audioSystem.Groups.Ui;
-                    audioSystem.Groups.Ui.Gain = 0.0f;
+                    currentGroup = groups.Ui;
+                    groups.Ui.Gain = 0.0f;
                     Console.WriteLine($"Source group: {currentGroup.Name} muted");
                     eventArgs.Consume();
                     return;
@@ -105,7 +106,7 @@ static class Program
         return gameKitApp.Run();
     }
 
-    private static AudioSource[] CreateSources(IAudioSystem audioSystem, AudioBuffer buffer)
+    private static AudioSource[] CreateSources(IAudioSystem audioSystem, DefaultAudioGroups groups, AudioBuffer buffer)
     {
         AudioSource[] sources = new AudioSource[SourceCount];
         for (int i = 0; i < sources.Length; i++)
@@ -113,7 +114,7 @@ static class Program
             AudioSource source = audioSystem.CreateSource();
             source.Clip = buffer;
             source.Gain = 0.45f;
-            source.Group = audioSystem.Groups.Effects;
+            source.Group = groups.Effects;
             sources[i] = source;
         }
 

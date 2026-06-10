@@ -33,11 +33,9 @@ public unsafe sealed class AudioSystem : IAudioSystem, IDisposable
         _mixerInitialized = mixerInitialized;
 
         Listener = new AudioListener(this);
-        Groups = DefaultAudioGroups.Create(this);
     }
 
     public AudioListener Listener { get; }
-    public DefaultAudioGroups Groups { get; }
 
     public float MasterGain
     {

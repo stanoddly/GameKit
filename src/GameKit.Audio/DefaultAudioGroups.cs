@@ -19,7 +19,7 @@ public sealed record DefaultAudioGroups
     public AudioGroup Ambience { get; }
     public AudioGroup Ui { get; }
 
-    internal static DefaultAudioGroups Create(AudioSystem audioSystem)
+    public static DefaultAudioGroups Create(IAudioSystem audioSystem)
     {
         return new DefaultAudioGroups(
             audioSystem.CreateGroup("effects"),
