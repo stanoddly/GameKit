@@ -15,6 +15,14 @@ public enum LayoutDirection
 
 public enum CursorState : byte { None, Hovered, Clicked }
 
+[Flags]
+internal enum PencilInvalidation
+{
+    None = 0,
+    RebuildInstructions = 1,
+    RedrawRetainedTexture = 2,
+}
+
 public readonly struct DirectionDisposer : IDisposable
 {
     private readonly Pencil _context;
@@ -77,14 +85,34 @@ public class Pencil
     internal int _viewportWidth;
     internal int _viewportHeight;
 
-    public bool NeedsUpdate { get; set; } = true;
-    public void Invalidate() => NeedsUpdate = true;
+    internal PencilInvalidation Invalidation { get; private set; } =
+        PencilInvalidation.RebuildInstructions | PencilInvalidation.RedrawRetainedTexture;
+
+    public void Invalidate()
+    {
+        Invalidate(PencilInvalidation.RebuildInstructions);
+    }
 
     internal void UpdateViewport(int width, int height)
     {
         _viewportWidth = width;
         _viewportHeight = height;
-        Invalidate();
+        Invalidate(PencilInvalidation.RebuildInstructions | PencilInvalidation.RedrawRetainedTexture);
+    }
+
+    internal void Invalidate(PencilInvalidation invalidation)
+    {
+        Invalidation |= invalidation;
+    }
+
+    internal bool HasInvalidation(PencilInvalidation invalidation)
+    {
+        return (Invalidation & invalidation) != PencilInvalidation.None;
+    }
+
+    internal void ClearInvalidation(PencilInvalidation invalidation)
+    {
+        Invalidation &= ~invalidation;
     }
 
     public void UpdateCursor(Vector2Int position, bool pressed)
