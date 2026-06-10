@@ -13,6 +13,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     private readonly ITextInputService _textInputService;
     private readonly bool _clearTarget;
     private bool _textInputActive;
+    private bool _retainedTextureDirty;
 
     public int Order { get; }
 
@@ -83,12 +84,13 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         {
             pencil.UpdateViewport(args.NewSize.Width, args.NewSize.Height);
             renderer.Resize(args.NewSize);
+            _retainedTextureDirty = true;
         };
     }
 
     public void Render(TRenderContext renderContext)
     {
-        bool needsBuild = _pencil.HasInvalidation(PencilInvalidation.RebuildInstructions) | _viewRegistry.ConsumeDirty();
+        bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
         ReadOnlySpan<IView> views = _viewRegistry.Views;
 
         foreach (IView view in views)
@@ -98,7 +100,6 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
         if (needsBuild)
         {
-            _pencil.ClearInvalidation(PencilInvalidation.RebuildInstructions);
             _pencil.FocusClaimedThisFrame = false;
 
             foreach (IView view in views)
@@ -111,10 +112,12 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
                 _pencil.Blur();
             }
 
-            if (_pencil.HaveInstructionsChanged() || _pencil.HasInvalidation(PencilInvalidation.RedrawRetainedTexture))
+            _pencil.NeedsUpdate = false;
+
+            if (_pencil.HaveInstructionsChanged() || _retainedTextureDirty)
             {
                 _renderer.Render(renderContext.CommandBuffer, _pencil);
-                _pencil.ClearInvalidation(PencilInvalidation.RedrawRetainedTexture);
+                _retainedTextureDirty = false;
             }
 
             _pencil.CycleInstructions();
