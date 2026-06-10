@@ -1,11 +1,9 @@
-namespace GameKit.Gpu;
+namespace GameKit.Common;
 
-internal struct LockedSet<T>
+public sealed class LockedSet<T>
 {
     private readonly Lock _lock = new();
     private readonly HashSet<T> _set = new();
-
-    public LockedSet() { }
 
     public void Add(T item)
     {
@@ -30,6 +28,14 @@ internal struct LockedSet<T>
             T[] copy = _set.ToArray();
             _set.Clear();
             return copy;
+        }
+    }
+
+    public T[] Copy()
+    {
+        lock (_lock)
+        {
+            return _set.ToArray();
         }
     }
 }

@@ -34,6 +34,14 @@ public static class SdlError
         if (!value) throw new GameKitException(SDL3.SDL_GetError());
     }
 
+    public static void ThrowOnFalse(bool value, string context)
+    {
+        if (!value)
+        {
+            Throw(context);
+        }
+    }
+
     public static void ThrowOnNull<T>(Pointer<T> pointer, string context) where T : unmanaged
     {
         if (!pointer.IsNull)
