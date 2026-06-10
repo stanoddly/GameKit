@@ -44,8 +44,10 @@ side, checked recursively. A type passes when either:
   - arrays (`T[]`) fail — expose `IReadOnlyList<T>` / `ImmutableArray<T>` instead,
   - compiler-generated record backing fields are ignored (judged via their property).
 
-The non-public-setter rule is the escape hatch for live read-only handles: a domain entity may keep
-`internal set` properties (the Model mutates it) while remaining a valid result the View only reads.
+Non-public setters are allowed so the Model can construct and fill result instances internally
+(object initializers, mapping, deserialization) while consumers still cannot mutate them. This does
+not make a result a live handle — a query result is a temporary snapshot, never cached across frames
+(see [architecture-concept.md](architecture-concept.md)).
 
 ## ModelBoundary
 
