@@ -13,6 +13,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
     private readonly ITextInputService _textInputService;
     private readonly bool _clearTarget;
     private bool _textInputActive;
+    private bool _retainedTextureDirty;
 
     public int Order { get; }
 
@@ -83,12 +84,15 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         {
             pencil.UpdateViewport(args.NewSize.Width, args.NewSize.Height);
             renderer.Resize(args.NewSize);
+            _retainedTextureDirty = true;
         };
     }
 
     public void Render(TRenderContext renderContext)
     {
-        bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
+        // Retained texture dirtiness must enter the build gate because redraw uses
+        // freshly rebuilt pencil instructions, even when their content is unchanged.
+        bool needsBuild = _pencil.NeedsUpdate | _retainedTextureDirty | _viewRegistry.ConsumeDirty();
         ReadOnlySpan<IView> views = _viewRegistry.Views;
 
         foreach (IView view in views)
@@ -112,9 +116,10 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
             _pencil.NeedsUpdate = false;
 
-            if (_pencil.HaveInstructionsChanged())
+            if (_pencil.HaveInstructionsChanged() || _retainedTextureDirty)
             {
                 _renderer.Render(renderContext.CommandBuffer, _pencil);
+                _retainedTextureDirty = false;
             }
 
             _pencil.CycleInstructions();
