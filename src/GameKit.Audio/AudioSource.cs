@@ -8,7 +8,7 @@ public unsafe sealed class AudioSource : IDisposable
 {
     private readonly AudioSystem _audioSystem;
     internal Pointer<MIX_Track> Pointer { get; set; }
-    private AudioBuffer? _buffer;
+    private AudioClip? _clip;
     private AudioGroup? _group;
     private Vector3 _position;
     private float _gain = 1.0f;
@@ -20,20 +20,36 @@ public unsafe sealed class AudioSource : IDisposable
         Pointer = track;
     }
 
-    public AudioBuffer? Buffer
+    public IAudioClip? Clip
     {
         get
         {
-            return _buffer;
+            return _clip;
         }
         set
         {
             ThrowIfDisposed();
-            Pointer<MIX_Audio> sdlAudio = value == null ? Pointer<MIX_Audio>.Null : value.SdlAudio;
-            SdlError.ThrowOnFalse(
-                SDL3_mixer.MIX_SetTrackAudio(SdlTrack, sdlAudio),
-                nameof(SDL3_mixer.MIX_SetTrackAudio));
-            _buffer = value;
+
+            if (value is not null and not AudioClip)
+            {
+                throw new ArgumentException("Audio clip must be created by this audio system.", nameof(value));
+            }
+
+            AudioClip? newClip = (AudioClip?)value;
+            if (newClip != null && !ReferenceEquals(newClip.AudioSystem, _audioSystem))
+            {
+                throw new ArgumentException("Audio clip must be created by this audio system.", nameof(value));
+            }
+
+            if (ReferenceEquals(_clip, newClip))
+            {
+                return;
+            }
+
+            _clip?.DetachFrom(this);
+            _clip = null;
+            newClip?.AttachTo(this);
+            _clip = newClip;
         }
     }
 
@@ -120,12 +136,20 @@ public unsafe sealed class AudioSource : IDisposable
 
     internal Pointer<MIX_Track> SdlTrack => Pointer;
 
+    internal void SetTrackAudio(Pointer<MIX_Audio> sdlAudio)
+    {
+        ThrowIfDisposed();
+        SdlError.ThrowOnFalse(
+            SDL3_mixer.MIX_SetTrackAudio(SdlTrack, sdlAudio),
+            nameof(SDL3_mixer.MIX_SetTrackAudio));
+    }
+
     public void Play()
     {
         ThrowIfDisposed();
-        if (_buffer == null)
+        if (_clip == null)
         {
-            throw new InvalidOperationException("Cannot play an audio source without a buffer.");
+            throw new InvalidOperationException("Cannot play an audio source without a clip.");
         }
 
         ApplyLooping();

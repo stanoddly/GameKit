@@ -111,7 +111,7 @@ static class Program
         for (int i = 0; i < sources.Length; i++)
         {
             AudioSource source = audioSystem.CreateSource();
-            source.Buffer = buffer;
+            source.Clip = buffer;
             source.Gain = 0.45f;
             source.Group = audioSystem.Groups.Effects;
             sources[i] = source;

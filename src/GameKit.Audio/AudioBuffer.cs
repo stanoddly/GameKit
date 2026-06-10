@@ -3,7 +3,7 @@ using SDL;
 
 namespace GameKit.Audio;
 
-public unsafe sealed class AudioBuffer : IDisposable
+public unsafe sealed class AudioBuffer : AudioClip
 {
     private readonly AudioSystem _audioSystem;
     internal Pointer<MIX_Audio> Pointer { get; set; }
@@ -14,6 +14,8 @@ public unsafe sealed class AudioBuffer : IDisposable
         Pointer = sdlAudio;
     }
 
+    internal override AudioSystem AudioSystem => _audioSystem;
+
     internal Pointer<MIX_Audio> SdlAudio
     {
         get
@@ -23,7 +25,17 @@ public unsafe sealed class AudioBuffer : IDisposable
         }
     }
 
-    public void Dispose()
+    internal override void AttachTo(AudioSource source)
+    {
+        source.SetTrackAudio(SdlAudio);
+    }
+
+    internal override void DetachFrom(AudioSource source)
+    {
+        source.SetTrackAudio(Pointer<MIX_Audio>.Null);
+    }
+
+    public override void Dispose()
     {
         _audioSystem.ReleaseBuffer(this);
     }
