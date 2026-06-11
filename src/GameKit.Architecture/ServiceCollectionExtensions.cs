@@ -39,29 +39,14 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static ServiceCollection AddDomainEventDispatchHook(this ServiceCollection services)
     {
-        if (services.IsRegistered<DomainEventListenerRegistry>())
+        if (services.IsRegistered<DomainEventDispatchHook>())
         {
             return services;
         }
 
-        DomainEventListenerRegistry listeners = new();
-        services.AddSingleton(listeners);
+        services.AddRegistry<IDomainEventListener>();
         services.AddSingleton<DomainEventDispatchHook>();
         services.AddAlias<ICommandDispatchHook, DomainEventDispatchHook>();
-        services.OnActivated((instance, _) =>
-        {
-            if (instance is IDomainEventListener listener)
-            {
-                listeners.Subscribe(listener);
-            }
-        });
-        services.OnDisposing((instance, _) =>
-        {
-            if (instance is IDomainEventListener listener)
-            {
-                listeners.Unsubscribe(listener);
-            }
-        });
         return services;
     }
 }

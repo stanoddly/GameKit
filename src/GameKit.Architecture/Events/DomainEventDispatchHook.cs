@@ -1,4 +1,5 @@
 using GameKit.Architecture;
+using GameKit.DependencyInjection;
 
 namespace GameKit.Architecture.Events;
 
@@ -16,9 +17,9 @@ namespace GameKit.Architecture.Events;
 public sealed class DomainEventDispatchHook : ICommandDispatchHook
 {
     private readonly DomainEventCursor _events;
-    private readonly DomainEventListenerRegistry _listeners;
+    private readonly ServiceRegistry<IDomainEventListener> _listeners;
 
-    public DomainEventDispatchHook(DomainEventCursor events, DomainEventListenerRegistry listeners)
+    public DomainEventDispatchHook(DomainEventCursor events, ServiceRegistry<IDomainEventListener> listeners)
     {
         _events = events;
         _listeners = listeners;
@@ -28,7 +29,7 @@ public sealed class DomainEventDispatchHook : ICommandDispatchHook
     {
         while (_events.TryRead(out DomainMessage? message))
         {
-            foreach (IDomainEventListener listener in _listeners.Listeners)
+            foreach (IDomainEventListener listener in _listeners.Services)
             {
                 listener.TryProcess(message);
             }

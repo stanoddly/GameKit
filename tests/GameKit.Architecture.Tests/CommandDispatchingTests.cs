@@ -14,9 +14,7 @@ public sealed class CommandDispatchingTests
         DomainEventStream stream = new();
         RecordingListener first = new();
         RecordingListener second = new();
-        DomainEventListenerRegistry listeners = new();
-        listeners.Subscribe(first);
-        listeners.Subscribe(second);
+        ServiceRegistry<IDomainEventListener> listeners = BuildListenerRegistry(first, second);
         DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), listeners);
 
         stream.Publish(new TestMessage(1));
@@ -32,8 +30,7 @@ public sealed class CommandDispatchingTests
     {
         DomainEventStream stream = new();
         RecordingListener listener = new();
-        DomainEventListenerRegistry listeners = new();
-        listeners.Subscribe(listener);
+        ServiceRegistry<IDomainEventListener> listeners = BuildListenerRegistry(listener);
         DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), listeners);
 
         stream.Publish(new TestMessage(1));
@@ -121,6 +118,19 @@ public sealed class CommandDispatchingTests
         services.AddAlias<ICommandDispatchHook, SpyHook>();
         services.AddSingleton<CapturingListener>();
         return services.BuildServiceProvider();
+    }
+
+    private static ServiceRegistry<IDomainEventListener> BuildListenerRegistry(params IDomainEventListener[] listeners)
+    {
+        ServiceCollection services = new();
+        services.AddRegistry<IDomainEventListener>();
+        foreach (IDomainEventListener listener in listeners)
+        {
+            services.AddSingleton(listener);
+        }
+
+        ServiceProvider provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<ServiceRegistry<IDomainEventListener>>();
     }
 }
 

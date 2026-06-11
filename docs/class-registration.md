@@ -203,6 +203,28 @@ Use when:
 
 ---
 
+### `AddRegistry<TService>()`
+
+Registers a `ServiceRegistry<TService>` singleton that tracks activated services assignable to
+`TService`. The registry does not create services by itself; it observes normal service activation.
+Singletons appear during `BuildServiceProvider`, and transients appear when they are resolved.
+Tracked services are removed from the registry when the owning provider disposes them.
+
+```csharp
+services.AddRegistry<IUpdatable>();
+services.AddSingleton<PlayerController>();
+
+ServiceRegistry<IUpdatable> registry =
+    provider.GetRequiredService<ServiceRegistry<IUpdatable>>();
+```
+
+Use when:
+- A subsystem needs a live list of activated services implementing a role.
+- You do not want to force construction by depending on `IEnumerable<TService>`.
+- Implementations should be discovered by implemented interfaces rather than explicit aliases.
+
+---
+
 ### `OnStart(Action<ServiceProvider> action)`
 
 Registers a callback that runs after all services are constructed but before the provider is frozen. No source generator required.

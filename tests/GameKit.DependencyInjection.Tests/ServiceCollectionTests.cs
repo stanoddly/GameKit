@@ -686,6 +686,56 @@ public class ServiceCollectionTests
         Assert.That(activated[0], Is.InstanceOf<MyServiceImpl>());
     }
 
+    // --- ServiceRegistry ---
+
+    [Test]
+    public void AddRegistry_TracksActivatedMatchingSingletons()
+    {
+        ServiceCollection collection = new();
+        collection.AddRegistry<IMyService>();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        collection.AddSingleton<AnotherService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
+        Assert.That(registry.Services, Has.Count.EqualTo(1));
+        Assert.That(registry.Services[0], Is.InstanceOf<MyServiceImpl>());
+    }
+
+    [Test]
+    public void AddRegistry_DoesNotActivateTransientsDuringBuild()
+    {
+        ServiceCollection collection = new();
+        collection.AddRegistry<IMyService>();
+        collection.AddTransient<IMyService, MyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
+        Assert.That(registry.Services, Is.Empty);
+
+        IMyService service = provider.GetRequiredService<IMyService>();
+
+        Assert.That(registry.Services, Is.EqualTo(new[] { service }));
+    }
+
+    [Test]
+    public void AddRegistry_UnsubscribesServicesOnProviderDispose()
+    {
+        ServiceCollection collection = new();
+        collection.AddRegistry<IDisposableFoo>();
+        collection.AddSingleton<IDisposableFoo, DisposableFooImpl>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+        ServiceRegistry<IDisposableFoo> registry = provider.GetRequiredService<ServiceRegistry<IDisposableFoo>>();
+
+        Assert.That(registry.Services, Has.Count.EqualTo(1));
+
+        provider.Dispose();
+
+        Assert.That(registry.Services, Is.Empty);
+    }
+
     // --- OnStart ---
 
     [Test]

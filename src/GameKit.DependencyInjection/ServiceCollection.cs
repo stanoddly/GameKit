@@ -225,6 +225,37 @@ public class ServiceCollection
         return _registeredTypeIds.Contains(ServiceTypeId<T>.Id);
     }
 
+    /// <summary>
+    /// Registers a live registry of activated services assignable to <typeparamref name="TService"/>.
+    /// The registry does not create services by itself; it observes services as normal dependency
+    /// resolution activates them.
+    /// </summary>
+    /// <typeparam name="TService">The service role to track.</typeparam>
+    public void AddRegistry<TService>() where TService : class
+    {
+        if (IsRegistered<ServiceRegistry<TService>>())
+        {
+            return;
+        }
+
+        ServiceRegistry<TService> registry = new();
+        AddSingleton(registry);
+        OnActivated((instance, _) =>
+        {
+            if (instance is TService service)
+            {
+                registry.Subscribe(service);
+            }
+        });
+        OnDisposing((instance, _) =>
+        {
+            if (instance is TService service)
+            {
+                registry.Unsubscribe(service);
+            }
+        });
+    }
+
     /// <summary>Resolves all services, fires <c>OnStart</c> callbacks, freezes the provider, and returns it.</summary>
     /// <returns>The fully constructed and frozen <see cref="ServiceProvider"/>.</returns>
     public ServiceProvider BuildServiceProvider()
