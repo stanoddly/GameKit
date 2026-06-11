@@ -9,7 +9,7 @@ namespace GameKit.Sprites;
     WriteIndented = true,
     PropertyNameCaseInsensitive = true,
     ReadCommentHandling = JsonCommentHandling.Skip,
-    Converters = [typeof(ShortRectangleJsonConverter), typeof(JsonStringEnumConverter<SpriteFlip>)])]
+    Converters = [typeof(ShortRectangleJsonConverter), typeof(Vector2JsonConverter), typeof(JsonStringEnumConverter<SpriteFlip>)])]
 [JsonSerializable(typeof(SpriteDto))]
 [JsonSerializable(typeof(AnimatedSpriteDto))]
 internal partial class SpriteDtosJsonContext : JsonSerializerContext;
