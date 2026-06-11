@@ -135,8 +135,12 @@ internal sealed class DialogTrigger : IDomainEventListener
 
 services.AddDomainEventDispatchHook();                  // requires AddDomainEvents + AddCommandDispatching
 services.AddSingleton<DialogTrigger>();
-services.AddAlias<IDomainEventListener, DialogTrigger>();
 ```
+
+`AddDomainEventDispatchHook()` auto-subscribes activated singleton services that implement
+`IDomainEventListener`, similar to `GameKit.Events`. Do not register listeners as
+`IDomainEventListener` aliases; register their concrete type. A listener may depend on
+`ICommandDispatcher` and dispatch follow-up commands during processing.
 
 Do not push View consumers through the dispatch hook — that ties rendering reactions to the model's dispatch
 path instead of the frame loop. Presenters, View sync, audio, and other consumers with their own cadence

@@ -14,7 +14,10 @@ public sealed class CommandDispatchingTests
         DomainEventStream stream = new();
         RecordingListener first = new();
         RecordingListener second = new();
-        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), [first, second]);
+        DomainEventListenerRegistry listeners = new();
+        listeners.Subscribe(first);
+        listeners.Subscribe(second);
+        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), listeners);
 
         stream.Publish(new TestMessage(1));
         stream.Publish(new TestMessage(2));
@@ -29,7 +32,9 @@ public sealed class CommandDispatchingTests
     {
         DomainEventStream stream = new();
         RecordingListener listener = new();
-        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), [listener]);
+        DomainEventListenerRegistry listeners = new();
+        listeners.Subscribe(listener);
+        DomainEventDispatchHook dispatchHook = new(stream.CreateCursor(), listeners);
 
         stream.Publish(new TestMessage(1));
         dispatchHook.OnBatchCompleted();
@@ -84,6 +89,25 @@ public sealed class CommandDispatchingTests
         Assert.That(provider.GetRequiredService<CapturingListener>().Received, Has.Member(42));
     }
 
+    [Test]
+    public void Dispatch_DomainEventListenerMayDependOnDispatcherAndDispatchFollowUpCommand()
+    {
+        Recorder recorder = new();
+        ServiceCollection services = new();
+        services.AddSingleton(recorder);
+        services.AddDomainEvents();
+        services.AddCommandDispatching();
+        services.AddDomainEventDispatchHook();
+        services.AddSingleton<ICommandHandler<PublishOnlyCommand>, PublishOnlyCommandHandler>();
+        services.AddSingleton<ICommandHandler<FollowUpCommand>, FollowUpCommandHandler>();
+        services.AddSingleton<DispatchingListener>();
+        ServiceProvider provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<ICommandDispatcher>().Dispatch(new PublishOnlyCommand());
+
+        Assert.That(recorder.Log, Is.EqualTo(new[] { "follow-up" }));
+    }
+
     private static ServiceProvider BuildModel(Recorder recorder)
     {
         ServiceCollection services = new();
@@ -96,7 +120,6 @@ public sealed class CommandDispatchingTests
         services.AddSingleton<SpyHook>();
         services.AddAlias<ICommandDispatchHook, SpyHook>();
         services.AddSingleton<CapturingListener>();
-        services.AddAlias<IDomainEventListener, CapturingListener>();
         return services.BuildServiceProvider();
     }
 }
@@ -110,6 +133,10 @@ internal sealed class Recorder
 internal sealed record OuterCommand;
 
 internal sealed record InnerCommand;
+
+internal sealed record PublishOnlyCommand;
+
+internal sealed record FollowUpCommand;
 
 internal sealed class OuterCommandHandler : ICommandHandler<OuterCommand>
 {
@@ -145,6 +172,38 @@ internal sealed class InnerCommandHandler : ICommandHandler<InnerCommand>
     public bool Handle(InnerCommand command)
     {
         _recorder.Log.Add("inner");
+        return true;
+    }
+}
+
+internal sealed class PublishOnlyCommandHandler : ICommandHandler<PublishOnlyCommand>
+{
+    private readonly IDomainEventPublisher _publisher;
+
+    internal PublishOnlyCommandHandler(IDomainEventPublisher publisher)
+    {
+        _publisher = publisher;
+    }
+
+    public bool Handle(PublishOnlyCommand command)
+    {
+        _publisher.Publish(new TestMessage(7));
+        return true;
+    }
+}
+
+internal sealed class FollowUpCommandHandler : ICommandHandler<FollowUpCommand>
+{
+    private readonly Recorder _recorder;
+
+    internal FollowUpCommandHandler(Recorder recorder)
+    {
+        _recorder = recorder;
+    }
+
+    public bool Handle(FollowUpCommand command)
+    {
+        _recorder.Log.Add("follow-up");
         return true;
     }
 }
@@ -187,6 +246,27 @@ internal sealed class CapturingListener : IDomainEventListener
             Received.Add(testMessage.Value);
         }
 
+        return true;
+    }
+}
+
+internal sealed class DispatchingListener : IDomainEventListener
+{
+    private readonly ICommandDispatcher _dispatcher;
+
+    internal DispatchingListener(ICommandDispatcher dispatcher)
+    {
+        _dispatcher = dispatcher;
+    }
+
+    public bool TryProcess(DomainMessage message)
+    {
+        if (message is not TestMessage)
+        {
+            return false;
+        }
+
+        _dispatcher.Dispatch(new FollowUpCommand());
         return true;
     }
 }

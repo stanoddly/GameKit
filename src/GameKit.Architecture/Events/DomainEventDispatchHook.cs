@@ -16,19 +16,19 @@ namespace GameKit.Architecture.Events;
 public sealed class DomainEventDispatchHook : ICommandDispatchHook
 {
     private readonly DomainEventCursor _events;
-    private readonly IDomainEventListener[] _listeners;
+    private readonly DomainEventListenerRegistry _listeners;
 
-    public DomainEventDispatchHook(DomainEventCursor events, IEnumerable<IDomainEventListener> listeners)
+    public DomainEventDispatchHook(DomainEventCursor events, DomainEventListenerRegistry listeners)
     {
         _events = events;
-        _listeners = listeners.ToArray();
+        _listeners = listeners;
     }
 
     public void OnBatchCompleted()
     {
         while (_events.TryRead(out DomainMessage? message))
         {
-            foreach (IDomainEventListener listener in _listeners)
+            foreach (IDomainEventListener listener in _listeners.Listeners)
             {
                 listener.TryProcess(message);
             }
