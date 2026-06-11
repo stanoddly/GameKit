@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text.Json;
 using GameKit.Common;
 using GameKit.Content;
@@ -33,8 +34,12 @@ public sealed class SpriteAssetLoader : ISpriteAssetLoader
 
         Texture texture = _textureLoader.Load(spriteDto.Texture);
         ShortRectangle imageRegion = spriteDto.TextureRegion;
+        Vector2 anchorOffset = spriteDto.AnchorOffset;
 
-        SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion, spriteDto.Flip);
+        SpriteAsset spriteAsset = new SpriteAsset(texture, imageRegion, spriteDto.Flip)
+        {
+            AnchorOffset = anchorOffset,
+        };
 
         _storage.StoreSprite(path.ToString(), spriteAsset);
 
