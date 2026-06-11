@@ -46,6 +46,10 @@ public class InterceptorGenerator : IIncrementalGenerator
     private const string ServiceProviderFullName = "GameKit.DependencyInjection.ServiceProvider";
 
     private const string EmitTrimAnnotationsProperty = "GameKitDIEmitTrimAnnotations";
+    private static readonly SymbolDisplayFormat FullyQualifiedNullableFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+            SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
+            | SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -254,7 +258,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             return null;
         }
 
-        string elementTypeFullName = namedTypeArg.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        string elementTypeFullName = GetTypeName(namedTypeArg.TypeArguments[0]);
 
         InterceptionKind kind = calledMethodName == "GetRequiredService"
             ? InterceptionKind.GetRequiredServiceEnumerable
@@ -291,7 +295,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (methodSymbol.TypeArguments.Length == 1 && methodSymbol.Parameters.Length == 1
             && methodSymbol.Parameters[0].Type.ToDisplayString() == "System.Delegate")
         {
-            string serviceTypeFullName = methodSymbol.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string serviceTypeFullName = GetTypeName(methodSymbol.TypeArguments[0]);
             InterceptionInfo? result = ExtractDelegateInterception(
                 delegateFactoryKind,
                 invocation,
@@ -363,13 +367,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
-            .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .Select(p => GetTypeName(p.Type))
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
-            implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            GetTypeName(implType),
             new EquatableArray<string>(paramTypes),
             null,
             null,
@@ -405,15 +409,15 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
-            .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .Select(p => GetTypeName(p.Type))
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
-            implType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            GetTypeName(implType),
             new EquatableArray<string>(paramTypes),
-            serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            GetTypeName(serviceType),
             null,
             new EquatableArray<string>(ImmutableArray<string>.Empty),
             ReturnsVoid: false,
@@ -463,11 +467,11 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         IMethodSymbol factoryMethod = candidates[0];
         ImmutableArray<string> paramTypes = factoryMethod.Parameters
-            .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .Select(p => GetTypeName(p.Type))
             .ToImmutableArray();
 
-        string serviceTypeFullName = serviceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string factoryTypeFullName = factoryType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        string serviceTypeFullName = GetTypeName(serviceType);
+        string factoryTypeFullName = GetTypeName(factoryType);
 
         return new ExtractionResult(new InterceptionInfo(
             kind,
@@ -528,10 +532,10 @@ public class InterceptorGenerator : IIncrementalGenerator
             IMethodSymbol invokeMethod = namedDelegateType.DelegateInvokeMethod;
 
             ImmutableArray<string> paramTypes = invokeMethod.Parameters
-                .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                .Select(p => GetTypeName(p.Type))
                 .ToImmutableArray();
 
-            string delegateTypeStr = namedDelegateType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string delegateTypeStr = GetTypeName(namedDelegateType);
             bool returnsVoid = invokeMethod.ReturnsVoid;
 
             return new InterceptionInfo(
@@ -560,7 +564,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         ImmutableArray<string> methodParamTypes = targetMethod.Parameters
-            .Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+            .Select(p => GetTypeName(p.Type))
             .ToImmutableArray();
 
         // Build the appropriate Func<> or Action<> delegate type string
@@ -580,7 +584,7 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
         else
         {
-            string returnType = targetMethod.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            string returnType = GetTypeName(targetMethod.ReturnType);
             if (methodParamTypes.Length == 0)
             {
                 methodDelegateTypeStr = $"global::System.Func<{returnType}>";
@@ -628,6 +632,11 @@ public class InterceptorGenerator : IIncrementalGenerator
 
             current = current.BaseType;
         }
+    }
+
+    private static string GetTypeName(ITypeSymbol type)
+    {
+        return type.ToDisplayString(FullyQualifiedNullableFormat);
     }
 
     private static IMethodSymbol? GetSingleAccessibleConstructor(INamedTypeSymbol type, SemanticModel semanticModel, int position)
