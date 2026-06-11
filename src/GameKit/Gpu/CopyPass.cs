@@ -28,7 +28,7 @@ public class CopyPass: ICopyPass
             size = sizeBytes
         };
         SDL_GPUTransferBuffer* transferBuffer = SDL3.SDL_CreateGPUTransferBuffer(_gpuDevice.SdlGpuDevice, &sdlGpuTransferBufferCreateInfo);
-        SdlError.ThrowOnError();
+        SdlError.ThrowOnNull(transferBuffer);
 
         _transferBuffers ??= new();
         _transferBuffers.Add(transferBuffer);
@@ -305,7 +305,6 @@ public class CopyPass: ICopyPass
         (ushort width, ushort height) = image.Size;
         uint sizeInBytes = (uint)imageData.Length;
 
-        SdlError.ThrowOnError();
         unsafe
         {
             SDL_GPUTextureCreateInfo sdlGpuTextureCreateInfo = new SDL_GPUTextureCreateInfo
@@ -319,18 +318,18 @@ public class CopyPass: ICopyPass
                 usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
             };
             Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
-            SdlError.ThrowOnError();
+            SdlError.ThrowOnNull(sdlGpuTexture);
 
             SDL_GPUTransferBuffer* textureTransferBuffer = CreateAndTrackTransferBuffer((uint)(width * height * 4));
 
             ushort* textureTransfer = (ushort*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, false);
+            SdlError.ThrowOnNull(textureTransfer);
             fixed (byte* textureDataPointer = imageData)
             {
                 Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
             }
-            
+
             SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer);
-            SdlError.ThrowOnError();
 
             SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo
             {
@@ -351,7 +350,6 @@ public class CopyPass: ICopyPass
                 &sdlGpuTextureTransferInfo,
                 &sdlGpuTextureRegion,
                 false);
-            SdlError.ThrowOnError();
 
             Texture texture = new UserTexture(_gpuDevice, sdlGpuTexture, (width, height), TextureFormat.R8G8B8A8Unorm);
             _gpuDevice.RegisterTexture(texture);
@@ -397,7 +395,7 @@ public class CopyPass: ICopyPass
                 usage = SDL_GPUTextureUsageFlags.SDL_GPU_TEXTUREUSAGE_SAMPLER
             };
             Pointer<SDL_GPUTexture> sdlGpuTexture = SDL3.SDL_CreateGPUTexture(_gpuDevice.SdlGpuDevice, &sdlGpuTextureCreateInfo);
-            SdlError.ThrowOnError();
+            SdlError.ThrowOnNull(sdlGpuTexture);
 
             for (int layer = 0; layer < images.Length; layer++)
             {
@@ -407,12 +405,12 @@ public class CopyPass: ICopyPass
                 SDL_GPUTransferBuffer* textureTransferBuffer = CreateAndTrackTransferBuffer(bytesPerLayer);
 
                 byte* textureTransfer = (byte*)SDL3.SDL_MapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer, false);
+                SdlError.ThrowOnNull(textureTransfer);
                 fixed (byte* textureDataPointer = imageData)
                 {
                     Buffer.MemoryCopy(textureDataPointer, textureTransfer, sizeInBytes, sizeInBytes);
                 }
                 SDL3.SDL_UnmapGPUTransferBuffer(_gpuDevice.SdlGpuDevice, textureTransferBuffer);
-                SdlError.ThrowOnError();
 
                 SDL_GPUTextureTransferInfo sdlGpuTextureTransferInfo = new SDL_GPUTextureTransferInfo
                 {
@@ -434,7 +432,6 @@ public class CopyPass: ICopyPass
                     &sdlGpuTextureTransferInfo,
                     &sdlGpuTextureRegion,
                     false);
-                SdlError.ThrowOnError();
             }
 
             TextureArray textureArray = new TextureArray(_gpuDevice, sdlGpuTexture, size, (ushort)layerCount, TextureFormat.R8G8B8A8Unorm);
