@@ -5,7 +5,16 @@ public sealed class ServiceRegistry<TService>
 {
     private readonly List<TService> _services = new();
 
+    internal ServiceRegistry()
+    {
+    }
+
     public IReadOnlyList<TService> Services => _services;
+
+    public List<TService>.Enumerator GetEnumerator()
+    {
+        return _services.GetEnumerator();
+    }
 
     internal void Subscribe(TService service)
     {

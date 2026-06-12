@@ -34,7 +34,7 @@ public class GameKitApp : IGameKitApp
             // then process events
             eventService.Process();
 
-            Update(updatables.Services);
+            Update(updatables);
 
             if (appControl.QuitRequested)
             {
@@ -51,11 +51,11 @@ public class GameKitApp : IGameKitApp
         ServiceProvider.Dispose();
     }
 
-    private static void Update(IReadOnlyList<IUpdatable> updatables)
+    private static void Update(ServiceRegistry<IUpdatable> updatables)
     {
-        for (int i = 0; i < updatables.Count; i++)
+        foreach (IUpdatable updatable in updatables)
         {
-            updatables[i].Update();
+            updatable.Update();
         }
     }
 }

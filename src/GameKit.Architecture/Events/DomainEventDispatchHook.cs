@@ -29,7 +29,7 @@ public sealed class DomainEventDispatchHook : ICommandDispatchHook
     {
         while (_events.TryRead(out DomainMessage? message))
         {
-            foreach (IDomainEventListener listener in _listeners.Services)
+            foreach (IDomainEventListener listener in _listeners)
             {
                 listener.TryProcess(message);
             }

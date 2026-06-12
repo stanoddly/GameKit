@@ -704,6 +704,21 @@ public class ServiceCollectionTests
     }
 
     [Test]
+    public void ServiceRegistry_GetEnumerator_ReturnsListEnumerator()
+    {
+        ServiceCollection collection = new();
+        collection.AddRegistry<IMyService>();
+        collection.AddSingleton<IMyService, MyServiceImpl>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
+
+        List<IMyService>.Enumerator enumerator = registry.GetEnumerator();
+
+        Assert.That(enumerator.MoveNext(), Is.True);
+        Assert.That(enumerator.Current, Is.InstanceOf<MyServiceImpl>());
+    }
+
+    [Test]
     public void AddRegistry_DoesNotActivateTransientsDuringBuild()
     {
         ServiceCollection collection = new();
