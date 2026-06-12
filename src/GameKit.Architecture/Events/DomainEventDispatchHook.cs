@@ -1,4 +1,5 @@
 using GameKit.Architecture;
+using GameKit.DependencyInjection;
 
 namespace GameKit.Architecture.Events;
 
@@ -16,12 +17,12 @@ namespace GameKit.Architecture.Events;
 public sealed class DomainEventDispatchHook : ICommandDispatchHook
 {
     private readonly DomainEventCursor _events;
-    private readonly IDomainEventListener[] _listeners;
+    private readonly ServiceRegistry<IDomainEventListener> _listeners;
 
-    public DomainEventDispatchHook(DomainEventCursor events, IEnumerable<IDomainEventListener> listeners)
+    public DomainEventDispatchHook(DomainEventCursor events, ServiceRegistry<IDomainEventListener> listeners)
     {
         _events = events;
-        _listeners = listeners.ToArray();
+        _listeners = listeners;
     }
 
     public void OnBatchCompleted()

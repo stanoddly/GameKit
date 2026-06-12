@@ -23,7 +23,7 @@ public class GameKitApp : IGameKitApp
         EventService eventService = ServiceProvider.GetRequiredService<EventService>();
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
         IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
-        UpdateLoop updateLoop = ServiceProvider.GetRequiredService<UpdateLoop>();
+        ServiceRegistry<IUpdatable> updatables = ServiceProvider.GetRequiredService<ServiceRegistry<IUpdatable>>();
         StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
         while (true)
@@ -34,7 +34,7 @@ public class GameKitApp : IGameKitApp
             // then process events
             eventService.Process();
 
-            updateLoop.Update();
+            Update(updatables);
 
             if (appControl.QuitRequested)
             {
@@ -49,5 +49,13 @@ public class GameKitApp : IGameKitApp
     public void Dispose()
     {
         ServiceProvider.Dispose();
+    }
+
+    private static void Update(ServiceRegistry<IUpdatable> updatables)
+    {
+        foreach (IUpdatable updatable in updatables)
+        {
+            updatable.Update();
+        }
     }
 }

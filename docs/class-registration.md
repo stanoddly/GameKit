@@ -203,6 +203,28 @@ Use when:
 
 ---
 
+### `AddRegistry<TService>()`
+
+Registers a `ServiceRegistry<TService>` singleton that tracks activated services assignable to
+`TService`. The registry does not create services by itself; it observes normal service activation.
+Singletons appear during `BuildServiceProvider`, and transients appear when they are resolved.
+Tracked services are removed from the registry when the owning provider disposes them.
+
+```csharp
+services.AddRegistry<IUpdatable>();
+services.AddSingleton<PlayerController>();
+
+ServiceRegistry<IUpdatable> registry =
+    provider.GetRequiredService<ServiceRegistry<IUpdatable>>();
+```
+
+Use when:
+- A subsystem needs a live list of activated services implementing a role.
+- You do not want to force construction by depending on `IEnumerable<TService>`.
+- Implementations should be discovered by implemented interfaces rather than explicit aliases.
+
+---
+
 ### `OnStart(Action<ServiceProvider> action)`
 
 Registers a callback that runs after all services are constructed but before the provider is frozen. No source generator required.
@@ -315,29 +337,23 @@ Multi-registrations compose across the hierarchy: parent entries appear first, f
 
 `OnActivated` and `OnDisposing` callbacks registered on the parent's `ServiceCollection` are **merged into the child provider**. When the child provider constructs a service, the parent's `OnActivated` callbacks fire first, then the child's own. When the child provider disposes, its `OnDisposing` callbacks fire first, then the parent's.
 
-This means child services automatically participate in any lifecycle hooks the parent set up. For example, `GameKitAppBuilder` registers `OnActivated` callbacks that add `IUpdatable` services to the `UpdateLoop` and `IView` services to the `ViewRegistry`. A child provider built with `BuildServiceProvider(parent: root)` inherits these callbacks — any `IUpdatable` or `IView` registered in the child is automatically discovered and unregistered on disposal.
+This means child services automatically participate in any lifecycle hooks the parent set up. `AddRegistry<TService>()` is built on these callbacks, so a child provider built with `BuildServiceProvider(parent: root)` contributes matching services to registries created by the parent and removes them on disposal. Some higher-level systems still use callbacks directly when they need richer behavior than a plain role list.
 
 ```csharp
-// Root sets up lifecycle hooks
+// Root sets up a registry-backed role list
 ServiceCollection rootCollection = new();
-UpdateLoop updateLoop = new();
-rootCollection.AddSingleton(updateLoop);
-rootCollection.OnActivated((instance, _) =>
-{
-    if (instance is IUpdatable updatable) { updateLoop.Register(updatable); }
-});
-rootCollection.OnDisposing((instance, _) =>
-{
-    if (instance is IUpdatable updatable) { updateLoop.Unregister(updatable); }
-});
+rootCollection.AddRegistry<IUpdatable>();
 ServiceProvider root = rootCollection.BuildServiceProvider();
+ServiceRegistry<IUpdatable> updatables =
+    root.GetRequiredService<ServiceRegistry<IUpdatable>>();
 
-// Child inherits the hooks — PhysicsSystem is auto-registered with UpdateLoop
+// Child inherits the registry callbacks — PhysicsSystem appears in the root registry
 ServiceCollection stageCollection = new();
 stageCollection.AddSingleton<IUpdatable, PhysicsSystem>();
 ServiceProvider stage = stageCollection.BuildServiceProvider(parent: root);
+Assert.That(updatables.Services, Has.Some.InstanceOf<PhysicsSystem>());
 
-// Disposing the child auto-unregisters PhysicsSystem from UpdateLoop
+// Disposing the child removes PhysicsSystem from the registry
 stage.Dispose();
 ```
 

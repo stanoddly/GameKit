@@ -39,6 +39,12 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static ServiceCollection AddDomainEventDispatchHook(this ServiceCollection services)
     {
+        if (services.IsRegistered<DomainEventDispatchHook>())
+        {
+            return services;
+        }
+
+        services.AddRegistry<IDomainEventListener>();
         services.AddSingleton<DomainEventDispatchHook>();
         services.AddAlias<ICommandDispatchHook, DomainEventDispatchHook>();
         return services;
