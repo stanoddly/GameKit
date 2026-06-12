@@ -7,8 +7,6 @@ public sealed class ServiceRegistry<TService>
 
     public IReadOnlyList<TService> Services => _services;
 
-    public int Version { get; private set; }
-
     internal void Subscribe(TService service)
     {
         for (int i = 0; i < _services.Count; i++)
@@ -20,14 +18,10 @@ public sealed class ServiceRegistry<TService>
         }
 
         _services.Add(service);
-        Version++;
     }
 
     internal void Unsubscribe(TService service)
     {
-        if (_services.Remove(service))
-        {
-            Version++;
-        }
+        _services.Remove(service);
     }
 }

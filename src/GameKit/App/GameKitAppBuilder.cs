@@ -19,7 +19,6 @@ public class GameKitAppBuilder : ServiceCollection
     private void WireUpdatableLifecycle()
     {
         AddRegistry<IUpdatable>();
-        AddSingleton<UpdateLoop>();
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)

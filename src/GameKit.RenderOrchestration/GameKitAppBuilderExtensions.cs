@@ -8,14 +8,25 @@ public static class GameKitAppBuilderExtensions
 {
     public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IRenderContext
     {
-        builder.AddRegistry<IRenderPhase<TRenderContext>>();
-        builder.AddSingleton<RenderPhaseRegistry<TRenderContext>>(sp =>
-            new RenderPhaseRegistry<TRenderContext>(
-                sp.GetRequiredService<ServiceRegistry<IRenderPhase<TRenderContext>>>()));
+        RenderPhaseRegistry<TRenderContext> renderPhaseRegistry = new();
+        builder.OnActivated((instance, _) =>
+        {
+            if (instance is IRenderPhase<TRenderContext> renderPhase)
+            {
+                renderPhaseRegistry.Register(renderPhase);
+            }
+        });
+        builder.OnDisposing((instance, _) =>
+        {
+            if (instance is IRenderPhase<TRenderContext> renderPhase)
+            {
+                renderPhaseRegistry.Unregister(renderPhase);
+            }
+        });
         builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<TRenderContext>(
             sp.GetRequiredService<GpuMemorySystem>(),
             sp.GetRequiredService<IRenderContextProvider<TRenderContext>>(),
-            sp.GetRequiredService<RenderPhaseRegistry<TRenderContext>>()));
+            renderPhaseRegistry));
         return builder;
     }
 
