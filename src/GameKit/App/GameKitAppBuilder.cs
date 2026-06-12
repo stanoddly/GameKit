@@ -18,23 +18,8 @@ public class GameKitAppBuilder : ServiceCollection
 
     private void WireUpdatableLifecycle()
     {
-        UpdateLoop updateLoop = new();
-        AddSingleton(updateLoop);
-        OnActivated((instance, _) =>
-        {
-            if (instance is IUpdatable updatable)
-            {
-                updateLoop.Register(updatable);
-            }
-        });
-
-        OnDisposing((instance, _) =>
-        {
-            if (instance is IUpdatable updatable)
-            {
-                updateLoop.Unregister(updatable);
-            }
-        });
+        AddRegistry<IUpdatable>();
+        AddSingleton<UpdateLoop>();
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
