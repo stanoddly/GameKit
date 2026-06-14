@@ -29,6 +29,17 @@ internal sealed class UnitsInRangeQueryHandler : IQueryHandler<UnitsInRangeQuery
     public int Handle(UnitsInRangeQuery query) => query.Radius;
 }
 
+internal sealed record UnitsInRangeResult(IReadOnlyList<int> UnitIds);
+
+internal sealed class UnitsInRangeResultQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeResult>
+{
+    internal UnitsInRangeResultQueryHandler()
+    {
+    }
+
+    public UnitsInRangeResult Handle(UnitsInRangeQuery query) => new([]);
+}
+
 // Deliberate violations, each isolated so a single rule fires.
 
 // Command is a class, not a record, and carries behaviour.

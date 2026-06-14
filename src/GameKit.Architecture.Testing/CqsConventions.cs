@@ -17,16 +17,26 @@ public static class CqsConventions
 {
     public static ArchitectureReport Check(params Assembly[] assemblies)
     {
+        return Check(null, assemblies);
+    }
+
+    public static ArchitectureReport Check(Action<CqsConventionsOptions>? configure, params Assembly[] assemblies)
+    {
         if (assemblies.Length == 0)
         {
             throw new ArgumentException("At least one assembly must be supplied.", nameof(assemblies));
         }
 
-        return CheckTypes(assemblies.SelectMany(assembly => assembly.GetTypes()));
+        return CheckTypes(assemblies.SelectMany(assembly => assembly.GetTypes()), configure);
     }
 
-    internal static ArchitectureReport CheckTypes(IEnumerable<Type> types)
+    internal static ArchitectureReport CheckTypes(
+        IEnumerable<Type> types,
+        Action<CqsConventionsOptions>? configure = null)
     {
+        CqsConventionsOptions options = new();
+        configure?.Invoke(options);
+
         Type[] concreteTypes = types
             .Where(type => !type.IsDefined(typeof(CompilerGeneratedAttribute), false))
             .Where(type => type.IsClass && !type.IsAbstract)
@@ -65,6 +75,7 @@ public static class CqsConventions
         CheckHandlersHaveNoPublicConstructors(commandHandlers.Concat(queryHandlers), violations);
         CheckCommandHandlersDoNotDependOnHandlers(commandHandlers, violations);
         CheckQueryResultsAreReadonly(queryResultTypes, violations);
+        CheckQueryResultSuffix(queryResultTypes, options, violations);
 
         return new ArchitectureReport(violations);
     }
@@ -150,6 +161,28 @@ public static class CqsConventions
             {
                 violations.Add($"Query result {resultType.FullName} must be readonly: {reason}");
             }
+        }
+    }
+
+    private static void CheckQueryResultSuffix(
+        Type[] resultTypes,
+        CqsConventionsOptions options,
+        List<string> violations)
+    {
+        if (!options.RequiresQueryResultSuffix)
+        {
+            return;
+        }
+
+        foreach (Type resultType in resultTypes)
+        {
+            if (resultType.Name.EndsWith("Result", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            violations.Add(
+                $"Query result {resultType.FullName} should be a named result type ending with 'Result'.");
         }
     }
 
