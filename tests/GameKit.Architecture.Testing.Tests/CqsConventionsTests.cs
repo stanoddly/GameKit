@@ -13,6 +13,27 @@ public sealed class CqsConventionsTests
     }
 
     [Test]
+    public void RequireQueryResultSuffix_WithResultType_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(UnitsInRangeResultQueryHandler)],
+            options => options.RequireQueryResultSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireQueryResultSuffix_WithScalarResult_IsReported()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(UnitsInRangeQueryHandler)],
+            options => options.RequireQueryResultSuffix());
+
+        Assert.That(report.Violations, Has.Exactly(1).Items);
+        Assert.That(report.Violations[0], Does.Contain("System.Int32").And.Contain("ending with 'Result'"));
+    }
+
+    [Test]
     public void NonRecordCommandWithBehaviour_IsReported()
     {
         ArchitectureReport report = CqsConventions.CheckTypes([typeof(BadCommandHandler)]);
