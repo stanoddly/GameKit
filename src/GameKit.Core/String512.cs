@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Text;
 
+namespace GameKit;
+
 public readonly struct String512 : IEquatable<String512>
 {
     private readonly Vector256<byte> _buffer;

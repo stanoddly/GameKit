@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
+      <ProjectReference Include="..\GameKit.Core\GameKit.Core.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 //[JsonConverter(typeof(PointJsonConverter))]
 public readonly record struct Location(short X, short Y)

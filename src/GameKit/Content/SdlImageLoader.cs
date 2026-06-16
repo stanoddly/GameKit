@@ -1,4 +1,3 @@
-using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Utilities;
 using SDL;

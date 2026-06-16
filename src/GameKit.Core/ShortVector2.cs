@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 /// <summary>
 /// Represents a 2D vector using short integers for X and Y coordinates.

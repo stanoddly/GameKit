@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 public readonly record struct Rectangle(int X, int Y, int Width, int Height)
 {

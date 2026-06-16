@@ -1,5 +1,4 @@
 using System.Numerics;
-using GameKit.Common;
 using GameKit.Gpu;
 
 namespace GameKit.Pencuil;

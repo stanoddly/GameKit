@@ -10,7 +10,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GameKit.Collections\GameKit.Collections.csproj" />
-      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
+      <ProjectReference Include="..\GameKit.Core\GameKit.Core.csproj" />
       <ProjectReference Include="..\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
       <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                         OutputItemType="Analyzer"

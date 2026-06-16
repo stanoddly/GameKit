@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 public readonly record struct UShortVector2(ushort X, ushort Y)
 {

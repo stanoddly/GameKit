@@ -1,4 +1,4 @@
-namespace GameKit.Common;
+namespace GameKit;
 
 public sealed class LockedSet<T>
 {

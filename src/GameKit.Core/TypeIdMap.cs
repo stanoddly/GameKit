@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 /// <summary>Domain root for a runtime type id allocator. Supports both compile-time id lookup via <see cref="TypeIdMap{TDomain, T}.Id"/> and runtime <see cref="Type"/> → id resolution via <see cref="GetId(Type)"/>.</summary>
 /// <typeparam name="TDomain">The marker class that defines this id domain; must derive from <see cref="TypeIdMap{TDomain}"/>.</typeparam>
