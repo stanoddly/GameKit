@@ -26,7 +26,7 @@
       <ProjectReference Include="..\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false" />
-      <ProjectReference Include="..\GameKit.Common\GameKit.Common.csproj" />
+      <ProjectReference Include="..\GameKit.Core\GameKit.Core.csproj" />
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>
 

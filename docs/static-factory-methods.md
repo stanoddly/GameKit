@@ -5,7 +5,7 @@ This guide shows how to implement static factory methods for complex object crea
 ## Recommended Pattern - Static Factory Method on Class
 
 ```csharp
-using GameKit.Common;
+using GameKit;
 
 public class MyService
 {

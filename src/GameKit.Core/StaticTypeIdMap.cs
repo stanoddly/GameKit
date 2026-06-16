@@ -1,4 +1,4 @@
-namespace GameKit.Common;
+namespace GameKit;
 
 /// <summary>Domain root for a compile-time type id allocator. The self-referential <typeparamref name="TDomain"/> constraint scopes the id sequence — each closed <see cref="StaticTypeIdMap{TDomain}"/> has its own counter.</summary>
 /// <typeparam name="TDomain">The marker class that defines this id domain; must derive from <see cref="StaticTypeIdMap{TDomain}"/>.</typeparam>

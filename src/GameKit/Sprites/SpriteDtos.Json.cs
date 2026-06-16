@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GameKit.Common;
 using GameKit.Utilities;
 
 namespace GameKit.Sprites;

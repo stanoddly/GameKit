@@ -1,5 +1,4 @@
 using GameKit.App;
-using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Pencuil;
 using GameKit.Text;

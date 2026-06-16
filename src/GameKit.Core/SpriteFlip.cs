@@ -1,4 +1,4 @@
-namespace GameKit.Common;
+namespace GameKit;
 
 [Flags]
 public enum SpriteFlip

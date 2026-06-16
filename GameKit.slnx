@@ -5,7 +5,7 @@
     <Project Path="src/GameKit.AStar/GameKit.AStar.csproj" />
     <Project Path="src/GameKit.Audio/GameKit.Audio.csproj" />
     <Project Path="src/GameKit.Collections/GameKit.Collections.csproj" />
-    <Project Path="src/GameKit.Common/GameKit.Common.csproj" />
+    <Project Path="src/GameKit.Core/GameKit.Core.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
     <Project Path="src/GameKit.Events/GameKit.Events.csproj" />
     <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />

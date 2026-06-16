@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 public readonly record struct ShortSize(ushort Width, ushort Height)
 {

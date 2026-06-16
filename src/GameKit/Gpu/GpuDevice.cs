@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using GameKit.Common;
 using GameKit.Shaders;
 using GameKit.Utilities;
 using SDL;

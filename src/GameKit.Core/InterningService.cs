@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 public abstract class InterningService<T, TKey>
     where T: notnull

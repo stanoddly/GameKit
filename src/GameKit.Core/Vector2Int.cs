@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace GameKit.Common;
+namespace GameKit;
 
 public readonly record struct Vector2Int(int X, int Y)
 {

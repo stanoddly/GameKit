@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Numerics;
-using GameKit.Common;
 
 namespace GameKit.Sprites;
 

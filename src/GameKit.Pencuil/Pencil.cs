@@ -1,6 +1,5 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
-using GameKit.Common;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.Sprites;
