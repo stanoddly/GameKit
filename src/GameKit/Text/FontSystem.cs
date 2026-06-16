@@ -11,7 +11,7 @@ internal class FontSystem: IFontSystem, IUpdatable
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;
     private readonly List<Font> _fonts = new();
-    private readonly Dictionary<(string path, ushort size), Font> _fontCache = new();
+    private readonly Dictionary<(string path, ushort size, FontRasterizationMode rasterizationMode, FontHintingMode hintingMode), Font> _fontCache = new();
     private readonly Dictionary<(string text, Font font), (WeakReference<TextSpriteAsset> WeakRef, Texture Texture)> _textSpriteCache = new();
 
     private FontSystem(GpuMemorySystem gpuMemorySystem, VirtualFileSystem fileSystem)
@@ -30,9 +30,14 @@ internal class FontSystem: IFontSystem, IUpdatable
         return new FontSystem(gpuMemorySystem, fileSystem);
     }
 
-    public Font Load(string path, ushort size)
+    public Font Load(
+        string path,
+        ushort size,
+        FontRasterizationMode rasterizationMode = FontRasterizationMode.Blended,
+        FontHintingMode hintingMode = FontHintingMode.Normal)
     {
-        var cacheKey = (path, size);
+        (string path, ushort size, FontRasterizationMode rasterizationMode, FontHintingMode hintingMode) cacheKey =
+            (path, size, rasterizationMode, hintingMode);
         if (_fontCache.TryGetValue(cacheKey, out Font? cachedFont))
         {
             return cachedFont;
@@ -54,7 +59,9 @@ internal class FontSystem: IFontSystem, IUpdatable
             Pointer<TTF_Font> ttfFont = SDL3_ttf.TTF_OpenFontIO(sdlStream, true, size);
             SdlError.ThrowOnNull(ttfFont, nameof(SDL3_ttf.TTF_OpenFontIO));
 
-            Font font = new Font(this, ttfFont, nativeFontData, path, size);
+            SDL3_ttf.TTF_SetFontHinting(ttfFont, ToSdlHintingMode(hintingMode));
+
+            Font font = new Font(this, ttfFont, nativeFontData, path, size, rasterizationMode, hintingMode);
             _fonts.Add(font);
             _fontCache[cacheKey] = font;
 
@@ -122,77 +129,73 @@ internal class FontSystem: IFontSystem, IUpdatable
             SDL_Color white = (SDL_Color)usedColor;
             // length is in bytes, length=0 means till '\0'
             // TODO: allow changing wrap_width
-            Pointer<SDL_Surface> surface = SDL3_ttf.TTF_RenderText_Blended_Wrapped(font.TtfFont, text, 0, white, 0);
-            SdlError.ThrowOnNull(surface, nameof(SDL3_ttf.TTF_RenderText_Blended_Wrapped));
+            Pointer<SDL_Surface> surface = font.RasterizationMode switch
+            {
+                FontRasterizationMode.Solid => SDL3_ttf.TTF_RenderText_Solid_Wrapped(font.TtfFont, text, 0, white, 0),
+                FontRasterizationMode.Lcd => SDL3_ttf.TTF_RenderText_LCD_Wrapped(font.TtfFont, text, 0, white, default, 0),
+                _ => SDL3_ttf.TTF_RenderText_Blended_Wrapped(font.TtfFont, text, 0, white, 0)
+            };
+            string renderFunctionName = font.RasterizationMode switch
+            {
+                FontRasterizationMode.Solid => nameof(SDL3_ttf.TTF_RenderText_Solid_Wrapped),
+                FontRasterizationMode.Lcd => nameof(SDL3_ttf.TTF_RenderText_LCD_Wrapped),
+                _ => nameof(SDL3_ttf.TTF_RenderText_Blended_Wrapped)
+            };
+            SdlError.ThrowOnNull(surface, renderFunctionName);
 
             return new Pointer<SDL_Surface>(surface);
         }
+    }
+
+    private static TTF_HintingFlags ToSdlHintingMode(FontHintingMode hintingMode)
+    {
+        return hintingMode switch
+        {
+            FontHintingMode.Light => TTF_HintingFlags.TTF_HINTING_LIGHT,
+            FontHintingMode.Mono => TTF_HintingFlags.TTF_HINTING_MONO,
+            FontHintingMode.None => TTF_HintingFlags.TTF_HINTING_NONE,
+            FontHintingMode.LightSubpixel => TTF_HintingFlags.TTF_HINTING_LIGHT_SUBPIXEL,
+            _ => TTF_HintingFlags.TTF_HINTING_NORMAL
+        };
     }
 
     private Texture CreateTextureFromSurface(Pointer<SDL_Surface> surface)
     {
         unsafe
         {
-            SDL_Surface* sdlSurface = surface;
-            var size = new ShortSize((ushort)sdlSurface->w, (ushort)sdlSurface->h);
-            var pitch = sdlSurface->pitch;
-            var pixelData = (byte*)sdlSurface->pixels;
-            var totalBytes = pitch * sdlSurface->h;
+            Pointer<SDL_Surface> convertedSurface = SDL3.SDL_ConvertSurface(surface, SDL_PixelFormat.SDL_PIXELFORMAT_ABGR8888);
+            SdlError.ThrowOnNull(convertedSurface, nameof(SDL3.SDL_ConvertSurface));
 
-            var pixelFormat = (PixelFormat)sdlSurface->format;
-
-            byte[] data;
-            PixelFormat targetFormat;
-
-            if (pixelFormat == PixelFormat.Argb8888)
+            try
             {
+                SDL_Surface* sdlSurface = convertedSurface;
+                ShortSize size = new ShortSize((ushort)sdlSurface->w, (ushort)sdlSurface->h);
+                int pitch = sdlSurface->pitch;
+                byte* pixelData = (byte*)sdlSurface->pixels;
                 int width = sdlSurface->w;
                 int height = sdlSurface->h;
-                data = new byte[width * height * 4];
+                byte[] data = new byte[width * height * 4];
 
                 fixed (byte* dataPtr = data)
                 {
                     byte* dst = dataPtr;
-
                     for (int y = 0; y < height; y++)
                     {
                         byte* src = pixelData + (y * pitch);
-
-                        for (int x = 0; x < width; x++)
-                        {
-                            byte b = src[0];
-                            byte g = src[1];
-                            byte r = src[2];
-                            byte a = src[3];
-
-                            dst[0] = r;
-                            dst[1] = g;
-                            dst[2] = b;
-                            dst[3] = a;
-
-                            src += 4;
-                            dst += 4;
-                        }
+                        Buffer.MemoryCopy(src, dst, width * 4, width * 4);
+                        dst += width * 4;
                     }
                 }
 
-                targetFormat = PixelFormat.Rgba8888;
+                RawImage image = new RawImage(data, size, PixelFormat.Rgba8888);
+                Texture texture = _gpuMemorySystem.CreateTexture(image);
+
+                return texture;
             }
-            else
+            finally
             {
-                data = new byte[totalBytes];
-                fixed (byte* dataPtr = data)
-                {
-                    Buffer.MemoryCopy(pixelData, dataPtr, totalBytes, totalBytes);
-                }
-                targetFormat = pixelFormat;
+                SDL3.SDL_DestroySurface(convertedSurface);
             }
-
-            var image = new RawImage(data, size, targetFormat);
-
-            Texture texture = _gpuMemorySystem.CreateTexture(image);
-
-            return texture;
         }
     }
 
@@ -236,7 +239,7 @@ internal class FontSystem: IFontSystem, IUpdatable
     public void ReleaseFont(Font font)
     {
         _fonts.Remove(font);
-        _fontCache.Remove((font.Path, font.Size));
+        _fontCache.Remove((font.Path, font.Size, font.RasterizationMode, font.HintingMode));
 
         unsafe
         {
