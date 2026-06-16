@@ -2,17 +2,6 @@
 
 namespace GameKit;
 
-public abstract class FrameContext
-{
-    public ulong FrameNumber { get; protected set; }
-    
-    public TimeSpan ElapsedTime { get; protected set; }
-    public ulong ElapsedNanoseconds { get; protected set; }
-
-    public float TimeDelta { get; protected set; }
-    public double TimeDelta64 { get; protected set; }
-}
-
 public class GameKitFrameContext: FrameContext
 {
     // 100 ms = 0.1 seconds maximum delta time
@@ -76,24 +65,5 @@ public class GameKitFrameContext: FrameContext
         _pausedNanoseconds += pauseEndNanoseconds - _pauseStartNanoseconds;
         _pauseStartNanoseconds = 0;
         _paused = false;
-    }
-}
-
-public class TestFrameContext: FrameContext
-{
-    public void StartTestFrame(ulong elapsedMilliseconds)
-    {
-        ulong previousElapsedNanoseconds = ElapsedNanoseconds;
-        
-        ElapsedNanoseconds = elapsedMilliseconds * 1_000_000;
-
-        // Yup divide! No rounding, that would give wrong results!
-        // Also divide by 100, because TimeSpan accepts "ticks", where 1 tick = nanoseconds / 100
-        ElapsedTime = new TimeSpan((long)(ElapsedNanoseconds / 100));
-
-        TimeDelta64 = (ElapsedNanoseconds - previousElapsedNanoseconds) / 1_000_000_000.0;
-        TimeDelta = (float)TimeDelta64;
-
-        FrameNumber = +1;
     }
 }
