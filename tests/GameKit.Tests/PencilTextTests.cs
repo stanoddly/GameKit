@@ -39,7 +39,12 @@ public class PencilTextTests
 
     private sealed class ThrowingFontSystem : IFontSystem
     {
-        public Font Load(string path, ushort size) => throw new AssertionException("Font system should not be called.");
+        public Font Load(
+            string path,
+            ushort size,
+            FontRasterizationMode rasterizationMode = FontRasterizationMode.Blended,
+            FontHintingMode hintingMode = FontHintingMode.Normal) =>
+            throw new AssertionException("Font system should not be called.");
 
         public TextSpriteAsset CreateTextSprite(string text, Font font) => throw new AssertionException("Font system should not be called.");
 
