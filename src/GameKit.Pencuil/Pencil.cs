@@ -511,6 +511,17 @@ public class Pencil
             !CollectionsMarshal.AsSpan(_textureRegionInstructions).SequenceEqual(CollectionsMarshal.AsSpan(_previousTextureRegionInstructions));
     }
 
+    // Interaction-test rectangles are populated during a build pass and read by input
+    // handlers until the next build, so they must be cleared at the start of each build
+    // rather than in CycleInstructions, which runs after the build completes
+    internal void ResetInteractionTests()
+    {
+        _hoverTests.Clear();
+        _hoverInTests.Clear();
+        _hoverOutTests.Clear();
+        _clickTests.Clear();
+    }
+
     internal void CycleInstructions()
     {
         (_coloredRectangleInstructions, _previousColoredRectangleInstructions) =
