@@ -98,6 +98,7 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
         if (needsBuild)
         {
             _pencil.FocusClaimedThisFrame = false;
+            _pencil.ResetInteractionTests();
 
             foreach (IView view in views)
             {
