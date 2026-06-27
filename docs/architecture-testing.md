@@ -51,22 +51,35 @@ not make a result a live handle — a query result is a temporary snapshot, neve
 
 ## ModelBoundary
 
-`ModelBoundary.Check(assembly, configure)` enforces the central claim — *the boundary contract is
+`ModelBoundary.Check(assembly, configure)` checks the central claim — *the boundary contract is
 commands / queries / events*:
 
-- **InternalsVisibleTo whitelist** — the Model exposes internals only to assemblies you allow.
+- **InternalsVisibleTo policy** — ordered rules allow or disallow friend assemblies.
 - **Reachability** — every public type must be reachable from the CQS surface (commands, queries,
-  events, and declared surface seeds). A public type nothing on the surface references is a leak.
+  events, and declared surface seeds), or be handled by an outside-surface rule.
 
 All policy is caller-supplied through the options:
 
 ```csharp
 ArchitectureReport report = ModelBoundary.Check(typeof(GameModule).Assembly, options => options
-    .AllowInternalsTo("Game.Editor")                                  // InternalsVisibleTo targets
-    .TreatAsSurface(type => type.Name.EndsWith("Module"))             // extra surface roots (DI modules)
+    .AllowInternalsTo("Game.Editor", "Required for editor integration.")
+    .DisallowInternalsTo(
+        new Regex(@"Game\.Tests(?:\..*)?"),
+        "Tests must exercise the public boundary.")
+    .DisallowInternalsTo(new Regex(@".*"), "No other assembly may access Model internals.")
+    .TreatAsSurface(type => type.Name.EndsWith("Module"))
     .TreatAsSurface(type => typeof(IMarkerRoot).IsAssignableFrom(type))
-    .Exclude(typeof(SomeIntentionalPublicType)));                     // exempt from the leak check
+    .AllowOutsideSurface(typeof(SomeIntentionalPublicType), "Required by the serializer.")
+    .DisallowOutsideSurface(
+        new Regex(@".*"),
+        "All other public types must be reachable from the boundary surface."));
 ```
+
+Rules are evaluated in declaration order. A rule handles and removes every matching candidate, so the first
+matching rule decides each assembly or outside-surface type. Exact `string`/`Type` overloads use exact matching;
+`Regex` overloads must match the candidate's entire name. Candidates left unmatched after all rules are allowed.
+Put specific decisions before a final `.*` disallow rule when the policy should be closed by default. Every rule
+requires a reason, which is included in diagnostics from disallow rules.
 
 Reachability seeds from handler `Handle` signatures (including internal handlers), so query result
 types are reachable through the contract rather than only through incidental references.
@@ -86,8 +99,12 @@ public void CqsConventions_AreHeld()
 public void Model_ExposesOnlyItsCqsSurface()
 {
     ArchitectureReport report = ModelBoundary.Check(typeof(GameModule).Assembly, options => options
-        .AllowInternalsTo("Game.Editor")
-        .TreatAsSurface(type => type.Name.EndsWith("Module")));
+        .AllowInternalsTo("Game.Editor", "Required for editor integration.")
+        .DisallowInternalsTo(new Regex(@".*"), "No other assembly may access Model internals.")
+        .TreatAsSurface(type => type.Name.EndsWith("Module"))
+        .DisallowOutsideSurface(
+            new Regex(@".*"),
+            "Public types must be reachable from the boundary surface."));
     Assert.That(report.Violations, Is.Empty, report.ToString());
 }
 ```
