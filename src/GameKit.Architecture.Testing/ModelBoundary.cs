@@ -6,9 +6,9 @@ namespace GameKit.Architecture.Testing;
 
 /// <summary>
 /// Verifies the central claim of docs/architecture.md — "the boundary contract <i>is</i> commands / queries /
-/// events" — against a Model assembly: it exposes internals only to whitelisted assemblies, and every public
-/// type is reachable from the CQS surface (commands, queries, events, and caller-declared surface seeds).
-/// A public type that nothing on the surface references is a leak.
+/// events" — against a Model assembly. Ordered caller-supplied rules decide whether assemblies may see Model
+/// internals and whether public types may remain outside the CQS surface (commands, queries, events, and
+/// caller-declared surface seeds).
 /// </summary>
 public static class ModelBoundary
 {
@@ -22,11 +22,11 @@ public static class ModelBoundary
             .ToArray();
         Type[] publicTypes = assembly.GetExportedTypes();
         string[] internalsTargets = assembly.GetCustomAttributes<InternalsVisibleToAttribute>()
-            .Select(attribute => attribute.AssemblyName)
+            .Select(attribute => new AssemblyName(attribute.AssemblyName).Name ?? attribute.AssemblyName)
             .ToArray();
 
         List<string> violations = new();
-        violations.AddRange(InternalsVisibleToViolations(internalsTargets, options.AllowedInternalsTargets));
+        violations.AddRange(InternalsVisibleToViolations(internalsTargets, options.InternalsRules));
         violations.AddRange(ReachabilityViolations(
             publicTypes, allTypes, type => type.Assembly == assembly, options));
 
@@ -34,14 +34,12 @@ public static class ModelBoundary
     }
 
     internal static List<string> InternalsVisibleToViolations(
-        IEnumerable<string> actualTargets, IEnumerable<string> allowedTargets)
+        IEnumerable<string> actualTargets, IReadOnlyCollection<BoundaryRule<string>> rules)
     {
-        HashSet<string> allowed = new(allowedTargets, StringComparer.Ordinal);
-        return actualTargets
-            .Where(target => !allowed.Contains(target))
-            .Select(target => $"Model exposes internals to '{target}', which is not whitelisted. "
-                + "Drive the Model through its public CQS surface instead.")
-            .ToList();
+        return BoundaryRuleEvaluator.Violations(
+            actualTargets,
+            rules,
+            (target, reason) => $"Model exposes internals to '{target}', which is disallowed: {reason}");
     }
 
     internal static List<string> ReachabilityViolations(
@@ -92,13 +90,16 @@ public static class ModelBoundary
 
         WalkReachableGraph(belongsToModel, allTypes, reachable, toVisit);
 
-        return publicTypes
-            .Where(type => !reachable.Contains(type) && !options.ExcludedTypes.Contains(type))
-            .Select(type => type.FullName ?? type.Name)
-            .OrderBy(name => name, StringComparer.Ordinal)
-            .Select(name => $"Public type {name} is not reachable from the CQS surface (commands / queries / "
-                + "events). Either it leaks Model internals, or declare it part of the surface via TreatAsSurface.")
-            .ToList();
+        Type[] outsideSurface = publicTypes
+            .Where(type => !reachable.Contains(type))
+            .OrderBy(type => type.FullName ?? type.Name, StringComparer.Ordinal)
+            .ToArray();
+
+        return BoundaryRuleEvaluator.Violations(
+            outsideSurface,
+            options.OutsideSurfaceRules,
+            (type, reason) => $"Public type {type.FullName ?? type.Name} is not reachable from the CQS surface "
+                + $"(commands / queries / events), which is disallowed: {reason}");
     }
 
     private static void WalkReachableGraph(
