@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 namespace GameKit.AStar;
 
@@ -24,7 +24,7 @@ internal class ChebyshevDistanceHeuristicProvider : IDistanceHeuristicProvider<V
 
 public interface IPathFinderMap<TPoint>
 {
-    List<(TPoint position, float cost)> ExpandPosition(TPoint origin);
+    void ExpandPosition(TPoint origin, ICollection<(TPoint Position, float Cost)> neighbors);
 }
 
 public readonly record struct AreaEdge<TPoint>(TPoint Inside, TPoint Outside)
@@ -42,7 +42,6 @@ public record AreaResult<TPoint>(Dictionary<TPoint, TPoint> CameFrom, Dictionary
 public interface IPathFinder<TPoint> where TPoint : struct
 {
     AreaResult<TPoint> ExpandArea(TPoint start, float maxCost);
-    //bool TryEvaluatePathCost(IEnumerable<TPoint> path, out float cost);
 }
 
 public class PathFinder<TPoint> : IPathFinder<TPoint> where TPoint : struct
@@ -55,27 +54,27 @@ public class PathFinder<TPoint> : IPathFinder<TPoint> where TPoint : struct
     {
         _map = map;
         _distanceHeuristicProvider = distanceHeuristicProvider;
-        //_distanceHeuristicProvider = new ChebychevDistanceHeuristicProvider();
         _expansionLimit = int.MaxValue;
     }
 
     public AreaResult<TPoint> ExpandArea(TPoint start, float maxCost)
     {
-        //List<AreaEdge> edges = new();
-        HashSet<TPoint> outside = new();
-        Dictionary<TPoint, float> costs = new();
-        HashSet<TPoint> open = new();
-        Dictionary<TPoint, TPoint> cameFrom = new();
+        HashSet<TPoint> outside = new HashSet<TPoint>();
+        Dictionary<TPoint, float> costs = new Dictionary<TPoint, float>();
+        PriorityQueue<TPoint, float> open = new PriorityQueue<TPoint, float>();
+        Dictionary<TPoint, TPoint> cameFrom = new Dictionary<TPoint, TPoint>();
+        List<(TPoint Position, float Cost)> neighbors = new List<(TPoint Position, float Cost)>();
 
         costs[start] = 0;
+        open.Enqueue(start, 0);
 
-        open.Add(start);
-
-        while (open.Count > 0)
+        while (open.TryDequeue(out TPoint evaluatedLocation, out float queuedCost))
         {
-            var evaluatedLocation = open.First();
-            open.Remove(evaluatedLocation);
-            var evaluatedLocationCost = costs[evaluatedLocation];
+            float evaluatedLocationCost = costs[evaluatedLocation];
+            if (queuedCost > evaluatedLocationCost)
+            {
+                continue;
+            }
 
             if (evaluatedLocationCost > maxCost)
             {
@@ -83,128 +82,77 @@ public class PathFinder<TPoint> : IPathFinder<TPoint> where TPoint : struct
                 continue;
             }
 
-            /*bool wouldNeigborsBeExpensiveAnyway = (evaluatedLocationCost + _map.MinimalCost) > maxCost;
-            if (wouldNeigborsBeExpensiveAnyway)
+            neighbors.Clear();
+            _map.ExpandPosition(evaluatedLocation, neighbors);
+
+            foreach ((TPoint neighborLocation, float neighborCost) in neighbors)
             {
-                continue;
-            }*/
-
-            List<(TPoint Location, float Cost)> neighbors = _map.ExpandPosition(evaluatedLocation);
-            if (neighbors.Count == 0) continue;
-
-            foreach ((var neighborLocation, var neighborCost) in neighbors)
-            {
-                var neighborFinalCost = evaluatedLocationCost + neighborCost;
-                if (!costs.TryGetValue(neighborLocation, out var existingLocationCost))
-                    existingLocationCost = float.PositiveInfinity;
-
-                var isTooExpensive = neighborFinalCost > maxCost;
-                if (isTooExpensive)
+                float neighborFinalCost = evaluatedLocationCost + neighborCost;
+                if (neighborFinalCost > maxCost)
                 {
                     outside.Add(neighborLocation);
                     continue;
                 }
 
-                var isMoreExpensiveThanPreviousFrom = existingLocationCost <= neighborFinalCost;
-                if (isMoreExpensiveThanPreviousFrom) continue;
+                if (costs.TryGetValue(neighborLocation, out float existingLocationCost)
+                    && existingLocationCost <= neighborFinalCost)
+                {
+                    continue;
+                }
 
                 costs[neighborLocation] = neighborFinalCost;
                 cameFrom[neighborLocation] = evaluatedLocation;
-                open.Add(neighborLocation);
+                open.Enqueue(neighborLocation, neighborFinalCost);
                 outside.Remove(neighborLocation);
             }
         }
 
-        List<AreaEdge<TPoint>> edges = new();
-        foreach (var outsidePosition in outside)
+        List<AreaEdge<TPoint>> edges = new List<AreaEdge<TPoint>>();
+        foreach (TPoint outsidePosition in outside)
         {
-            if (cameFrom.ContainsKey(outsidePosition) || outsidePosition.Equals(start)) continue;
-
-            List<(TPoint Location, float Cost)> neighbors = _map.ExpandPosition(outsidePosition);
-            if (neighbors.Count != 0)
-                foreach ((var neighborLocation, var _) in neighbors)
-                    if (cameFrom.ContainsKey(neighborLocation))
-                        edges.Add(new AreaEdge<TPoint> { Inside = neighborLocation, Outside = outsidePosition });
-        }
-
-        /*
-        if (edges.Count > 0)
-        {
-            for (int i = edges.Count - 1; i >= 0; i--)
+            if (cameFrom.ContainsKey(outsidePosition) || outsidePosition.Equals(start))
             {
-                if (cameFrom.ContainsKey(edges[i].Outside))
+                continue;
+            }
+
+            neighbors.Clear();
+            _map.ExpandPosition(outsidePosition, neighbors);
+            foreach ((TPoint neighborLocation, float _) in neighbors)
+            {
+                if (cameFrom.ContainsKey(neighborLocation))
                 {
-                    edges[i] = edges[^1];
-                    edges.RemoveAt(edges.Count - 1);
+                    edges.Add(new AreaEdge<TPoint>(neighborLocation, outsidePosition));
                 }
             }
         }
-        */
 
         return new AreaResult<TPoint>(cameFrom, costs, edges);
     }
 
-    private static (TPoint, float) FindPointWithLowCost(Dictionary<TPoint, float> potentialCosts)
-    {
-        float? bestCost = null;
-        var bestPoint = default(TPoint);
-
-        foreach ((var evaluatedPoint, var evaluatedCost) in potentialCosts)
-            if (!bestCost.HasValue || evaluatedCost < bestCost.Value)
-            {
-                bestCost = evaluatedCost;
-                bestPoint = evaluatedPoint;
-            }
-
-        // it can't be null because potentialCosts always contains a value
-        return (bestPoint, bestCost!.Value);
-    }
-
-    private void Reconstruct(IDictionary<TPoint, TPoint> cameFrom, Dictionary<TPoint, float> costs, TPoint current,
-        List<(TPoint, float)> result)
-    {
-        // skip the last one
-        //if (_loose == true)
-        //{
-        //    current = cameFrom[current];
-        //}
-
-        while (cameFrom.ContainsKey(current))
-        {
-            var cost = costs[current];
-            result.Add((current, cost));
-            current = cameFrom[current];
-        }
-
-        // TODO: improve
-        result.Reverse();
-    }
-
     public PathResult FindPath(TPoint start, TPoint destination, List<(TPoint, float)> result)
     {
-        var expansionsCount = 0;
-        var neighbors = new List<(TPoint, float)>();
-        // TODO: perhaps open and potentialCosts could be merged
-        var open = new HashSet<TPoint>();
-        var potentialCosts = new Dictionary<TPoint, float>();
-        var closed = new HashSet<TPoint>();
-        var cameFrom = new Dictionary<TPoint, TPoint>();
-        var costs = new Dictionary<TPoint, float>();
+        int expansionsCount = 0;
+        PriorityQueue<TPoint, float> open = new PriorityQueue<TPoint, float>();
+        HashSet<TPoint> closed = new HashSet<TPoint>();
+        Dictionary<TPoint, TPoint> cameFrom = new Dictionary<TPoint, TPoint>();
+        Dictionary<TPoint, float> costs = new Dictionary<TPoint, float>();
+        List<(TPoint Position, float Cost)> neighbors = new List<(TPoint Position, float Cost)>();
 
         costs[start] = 0;
+        open.Enqueue(start, _distanceHeuristicProvider.GetCost(start, destination));
 
-        var cost = _distanceHeuristicProvider.GetCost(start, destination);
-        open.Add(start);
-        potentialCosts.Add(start, cost);
-
-        while (open.Count > 0)
+        while (open.TryDequeue(out TPoint current, out float potentialCost))
         {
-            expansionsCount += 1;
-            if (expansionsCount >= _expansionLimit) return PathResult.ExpansionLimitExceeded;
-            //TODO: use something more suitable to get rid of O(n) complexity
-            (var current, var potentialCost) = FindPointWithLowCost(potentialCosts);
-            open.Remove(current);
-            potentialCosts.Remove(current);
+            if (closed.Contains(current))
+            {
+                continue;
+            }
+
+            expansionsCount++;
+            if (expansionsCount >= _expansionLimit)
+            {
+                return PathResult.ExpansionLimitExceeded;
+            }
 
             if (float.IsInfinity(potentialCost))
             {
@@ -219,29 +167,46 @@ public class PathFinder<TPoint> : IPathFinder<TPoint> where TPoint : struct
             }
 
             closed.Add(current);
-            neighbors = _map.ExpandPosition(current);
-            if (neighbors.Count == 0) continue;
+            neighbors.Clear();
+            _map.ExpandPosition(current, neighbors);
 
-            foreach ((var neighborLocation, var neighborCost) in neighbors)
+            foreach ((TPoint neighborLocation, float neighborCost) in neighbors)
             {
                 if (closed.Contains(neighborLocation))
-                    continue;
-
-                cost = costs[current] + neighborCost;
-
-                if (!costs.ContainsKey(neighborLocation) || cost < costs[neighborLocation])
                 {
-                    cameFrom[neighborLocation] = current;
-                    costs[neighborLocation] = cost;
-
-                    // let's calculate potential cost
-                    cost = cost + _distanceHeuristicProvider.GetCost(neighborLocation, destination);
-                    if (!open.Contains(neighborLocation)) open.Add(neighborLocation);
-                    potentialCosts[neighborLocation] = cost;
+                    continue;
                 }
+
+                float cost = costs[current] + neighborCost;
+                if (costs.TryGetValue(neighborLocation, out float existingCost) && cost >= existingCost)
+                {
+                    continue;
+                }
+
+                cameFrom[neighborLocation] = current;
+                costs[neighborLocation] = cost;
+                float potentialNeighborCost =
+                    cost + _distanceHeuristicProvider.GetCost(neighborLocation, destination);
+                open.Enqueue(neighborLocation, potentialNeighborCost);
             }
         }
 
         return PathResult.NotFound;
+    }
+
+    private static void Reconstruct(
+        IDictionary<TPoint, TPoint> cameFrom,
+        Dictionary<TPoint, float> costs,
+        TPoint current,
+        List<(TPoint, float)> result)
+    {
+        while (cameFrom.ContainsKey(current))
+        {
+            float cost = costs[current];
+            result.Add((current, cost));
+            current = cameFrom[current];
+        }
+
+        result.Reverse();
     }
 }
