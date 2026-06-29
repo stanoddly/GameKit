@@ -20,13 +20,13 @@ public sealed class CommandDispatcher : ICommandDispatcher
         _dispatchHooks = dispatchHooks.ToArray();
     }
 
-    public bool Dispatch<TCommand>(TCommand command)
+    public CommandResult Dispatch<TCommand>(TCommand command)
     {
         _dispatchDepth++;
         try
         {
             ICommandHandler<TCommand> handler = _services.GetRequiredService<ICommandHandler<TCommand>>();
-            bool handled = handler.Handle(command);
+            CommandResult result = handler.Handle(command);
             if (_dispatchDepth == 1)
             {
                 foreach (ICommandDispatchHook hook in _dispatchHooks)
@@ -35,7 +35,7 @@ public sealed class CommandDispatcher : ICommandDispatcher
                 }
             }
 
-            return handled;
+            return result;
         }
         finally
         {

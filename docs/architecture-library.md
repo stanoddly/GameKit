@@ -7,11 +7,12 @@ the pattern see [architecture-concept.md](architecture-concept.md); for the test
 
 ## Commands and queries
 
-A command is a mutation request. Its handler returns `true` when the command is accepted and its requested
-postcondition holds, including an accepted idempotent no-op. It returns `false` for an expected domain
-rejection and must not apply the requested state change in that case. Invalid program state and infrastructure
-failures use exceptions. This boolean is an acceptance outcome, not model data. A query is a side-effect-free
-read; its handler returns the result.
+A command is a mutation request. Its handler returns `CommandResult.Success` when the command is accepted and
+its requested postcondition holds, including an accepted idempotent no-op. It returns `CommandResult.FromError`
+for an expected domain rejection and must not apply the requested state change in that case. Invalid program
+state and infrastructure failures use exceptions. The result carries an integer code (0 = success) and a
+localized error message; it converts to `bool` implicitly. A query is a side-effect-free read; its handler
+returns the result.
 
 ```csharp
 public sealed record MoveCommand(UnitId Unit, TilePoint Destination);
@@ -21,7 +22,7 @@ internal sealed class MoveCommandHandler : ICommandHandler<MoveCommand>
     private readonly UnitRegistry _units;
     internal MoveCommandHandler(UnitRegistry units) => _units = units;
 
-    public bool Handle(MoveCommand command) { /* mutate */ return true; }
+    public CommandResult Handle(MoveCommand command) { /* mutate */ return CommandResult.Success; }
 }
 
 public sealed record MovementRangeQuery(UnitId Unit);
@@ -44,7 +45,7 @@ Queries are invoked directly — inject `IQueryHandler<TQuery, TResult>` where y
 Commands go through the dispatcher. A query result is a temporary snapshot: do not cache it across frames
 or expect it to update in place — re-query instead (see [architecture-concept.md](architecture-concept.md)).
 
-Handlers return command acceptance, never the entity they created. When a command creates something the
+Handlers return a `CommandResult`, never the entity they created. When a command creates something the
 caller must reference afterward, the **caller supplies the identity** — a client-generated id passed into
 the command — so it can use that id in follow-up commands and queries without the handler returning anything:
 

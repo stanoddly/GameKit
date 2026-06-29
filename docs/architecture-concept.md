@@ -25,12 +25,12 @@ used as defined in RFC 2119.
 
 - **Command** — a requested mutation, usually user/AI intent ("this unit wants to
   move there"). Each command type MUST have exactly one handler. A handler returns
-  `true` when the command is accepted and its requested postcondition holds. This
-  includes an accepted idempotent no-op when the postcondition already holds. It
-  returns `false` for an expected domain rejection and MUST NOT apply the requested
-  state change in that case. Invalid program state and infrastructure failures use
-  exceptions. The boolean is an acceptance outcome, not model data — reads are
-  queries.
+  `CommandResult.Success` when the command is accepted and its requested
+  postcondition holds. This includes an accepted idempotent no-op when the
+  postcondition already holds. It returns `CommandResult.FromError` for an expected
+  domain rejection and MUST NOT apply the requested state change in that case.
+  Invalid program state and infrastructure failures use exceptions. The result is
+  an acceptance outcome, not model data — reads are queries.
 - **Query** — a requested read. MUST NOT have side effects.
 - **Event** — notification of a discrete occurrence. MUST be raised by domain
   objects and consumed by Presenters.

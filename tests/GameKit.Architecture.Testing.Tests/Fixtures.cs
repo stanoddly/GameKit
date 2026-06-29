@@ -15,7 +15,7 @@ internal sealed class MoveCommandHandler : ICommandHandler<MoveCommand>
         _ = service;
     }
 
-    public bool Handle(MoveCommand command) => true;
+    public CommandResult Handle(MoveCommand command) => CommandResult.Success;
 }
 
 internal record UnitsInRangeQuery(int Radius);
@@ -56,7 +56,7 @@ internal sealed class BadCommandHandler : ICommandHandler<BadCommand>
     {
     }
 
-    public bool Handle(BadCommand command) => true;
+    public CommandResult Handle(BadCommand command) => CommandResult.Success;
 }
 
 // Handler is public and has a public constructor.
@@ -68,7 +68,7 @@ public sealed class PublicCommandHandler : ICommandHandler<PublicCommand>
     {
     }
 
-    public bool Handle(PublicCommand command) => true;
+    public CommandResult Handle(PublicCommand command) => CommandResult.Success;
 }
 
 // Command handler depends on another command handler.
@@ -81,7 +81,7 @@ internal sealed class ChainingCommandHandler : ICommandHandler<ChainingCommand>
         _ = other;
     }
 
-    public bool Handle(ChainingCommand command) => true;
+    public CommandResult Handle(ChainingCommand command) => CommandResult.Success;
 }
 
 // Handler whose name does not end with the required suffix.
@@ -93,5 +93,5 @@ internal sealed class OddlyNamedExecutor : ICommandHandler<OddlyNamedCommand>
     {
     }
 
-    public bool Handle(OddlyNamedCommand command) => true;
+    public CommandResult Handle(OddlyNamedCommand command) => CommandResult.Success;
 }

@@ -6,5 +6,5 @@ namespace GameKit.Architecture;
 public interface ICommandDispatcher
 {
     /// <inheritdoc cref="ICommandHandler{TCommand}.Handle(TCommand)"/>
-    bool Dispatch<TCommand>(TCommand command);
+    CommandResult Dispatch<TCommand>(TCommand command);
 }
