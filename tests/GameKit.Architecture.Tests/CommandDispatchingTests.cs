@@ -66,9 +66,9 @@ public sealed class CommandDispatchingTests
         Recorder recorder = new();
         ServiceProvider provider = BuildModel(recorder);
 
-        bool handled = provider.GetRequiredService<ICommandDispatcher>().Dispatch(new OuterCommand());
+        CommandResult result = provider.GetRequiredService<ICommandDispatcher>().Dispatch(new OuterCommand());
 
-        Assert.That(handled, Is.True);
+        Assert.That(result.IsSuccess, Is.True);
         // Inner command runs inside the outer handler; both log, but the hook fires only once at depth 1.
         Assert.That(recorder.Log, Is.EqualTo(new[] { "inner", "outer" }));
         Assert.That(recorder.HookCalls, Is.EqualTo(1));
@@ -161,12 +161,12 @@ internal sealed class OuterCommandHandler : ICommandHandler<OuterCommand>
         _recorder = recorder;
     }
 
-    public bool Handle(OuterCommand command)
+    public CommandResult Handle(OuterCommand command)
     {
         _dispatcher.Dispatch(new InnerCommand());
         _recorder.Log.Add("outer");
         _publisher.Publish(new TestMessage(42));
-        return true;
+        return CommandResult.Success;
     }
 }
 
@@ -179,10 +179,10 @@ internal sealed class InnerCommandHandler : ICommandHandler<InnerCommand>
         _recorder = recorder;
     }
 
-    public bool Handle(InnerCommand command)
+    public CommandResult Handle(InnerCommand command)
     {
         _recorder.Log.Add("inner");
-        return true;
+        return CommandResult.Success;
     }
 }
 
@@ -195,10 +195,10 @@ internal sealed class PublishOnlyCommandHandler : ICommandHandler<PublishOnlyCom
         _publisher = publisher;
     }
 
-    public bool Handle(PublishOnlyCommand command)
+    public CommandResult Handle(PublishOnlyCommand command)
     {
         _publisher.Publish(new TestMessage(7));
-        return true;
+        return CommandResult.Success;
     }
 }
 
@@ -211,10 +211,10 @@ internal sealed class FollowUpCommandHandler : ICommandHandler<FollowUpCommand>
         _recorder = recorder;
     }
 
-    public bool Handle(FollowUpCommand command)
+    public CommandResult Handle(FollowUpCommand command)
     {
         _recorder.Log.Add("follow-up");
-        return true;
+        return CommandResult.Success;
     }
 }
 

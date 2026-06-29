@@ -18,7 +18,7 @@ internal sealed class SpawnCommandHandler : ICommandHandler<SpawnCommand>
     {
     }
 
-    public bool Handle(SpawnCommand command) => true;
+    public CommandResult Handle(SpawnCommand command) => CommandResult.Success;
 }
 
 // Query whose result type is public and reachable only via the (internal) handler's Handle return type.
