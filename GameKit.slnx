@@ -28,6 +28,7 @@
     <Project Path="tests/GameKit.Content.Tests/GameKit.Content.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileLib.Tests/GameKit.SdlangCompileLib.Tests.csproj" />
     <Project Path="tests/GameKit.SdlangCompileTask.Tests/GameKit.SdlangCompileTask.Tests.csproj" />
+    <Project Path="tests/GameKit.DependencyInjection.Generator.Tests/GameKit.DependencyInjection.Generator.Tests.csproj" />
     <Project Path="tests/GameKit.DependencyInjection.Tests/GameKit.DependencyInjection.Tests.csproj" />
     <Project Path="tests/GameKit.Architecture.Tests/GameKit.Architecture.Tests.csproj" />
     <Project Path="tests/GameKit.Architecture.Testing.Tests/GameKit.Architecture.Testing.Tests.csproj" />
