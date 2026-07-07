@@ -114,7 +114,8 @@ public class Base40EncodingTests
         Assert.Multiple(() =>
         {
             Assert.That(success, Is.True);
-            Assert.That(value, Is.EqualTo((UInt128)39));
+            // NUnit2021 false positive: analyzer does not recognize UInt128 equality
+            Assert.That(value == (UInt128)39, Is.True);
         });
     }
 
@@ -127,9 +128,10 @@ public class Base40EncodingTests
         Assert.Multiple(() =>
         {
             Assert.That(characterSuccess, Is.False);
-            Assert.That(characterValue, Is.EqualTo((UInt128)0));
+            // NUnit2021 false positive: analyzer does not recognize UInt128 equality
+            Assert.That(characterValue == UInt128.Zero, Is.True);
             Assert.That(byteSuccess, Is.False);
-            Assert.That(byteValue, Is.EqualTo((UInt128)0));
+            Assert.That(byteValue == UInt128.Zero, Is.True);
         });
     }
 
@@ -142,9 +144,10 @@ public class Base40EncodingTests
         Assert.Multiple(() =>
         {
             Assert.That(invalidLengthSuccess, Is.False);
-            Assert.That(invalidLengthValue, Is.EqualTo((UInt128)0));
+            // NUnit2021 false positive: analyzer does not recognize UInt128 equality
+            Assert.That(invalidLengthValue == UInt128.Zero, Is.True);
             Assert.That(invalidCharacterSuccess, Is.False);
-            Assert.That(invalidCharacterValue, Is.EqualTo((UInt128)0));
+            Assert.That(invalidCharacterValue == UInt128.Zero, Is.True);
         });
     }
 
