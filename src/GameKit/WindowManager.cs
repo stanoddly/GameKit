@@ -14,7 +14,7 @@ public class WindowManager
     public Window PrimaryWindow { get; }
     public IReadOnlyList<Window> Windows => _windows;
 
-    internal WindowManager(Window primaryWindow, GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    public WindowManager(Window primaryWindow, GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo)
     {
         PrimaryWindow = primaryWindow;
         _factory = factory;

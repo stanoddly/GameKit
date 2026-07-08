@@ -72,12 +72,7 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<Window, GameKitFactory>();
 
-        AddSingleton<WindowManager>(sp => new WindowManager(
-            sp.GetRequiredService<Window>(),
-            sp.GetRequiredService<GameKitFactory>(),
-            sp.GetRequiredService<GpuDevice>(),
-            sp.GetRequiredService<GameKitFrameContext>(),
-            sp.GetRequiredService<PlatformInfo>()));
+        AddSingleton<WindowManager>();
 
         AddSingleton<GpuDevice, GameKitFactory>();
 
