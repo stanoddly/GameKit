@@ -79,6 +79,10 @@ public class Pencil
     public bool NeedsUpdate { get; set; } = true;
     public void Invalidate() => NeedsUpdate = true;
 
+    // Set by the update phase when a build pass produces different instructions than the
+    // previous frame; read and cleared by the render phase to decide whether to re-render.
+    public bool InstructionsChanged { get; set; }
+
     internal void UpdateViewport(int width, int height)
     {
         _viewportWidth = width;

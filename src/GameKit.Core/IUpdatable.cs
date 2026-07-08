@@ -1,6 +1,6 @@
 namespace GameKit;
 
-public interface IUpdatable
+public interface IUpdatable : IOrderable
 {
     void Update();
 }

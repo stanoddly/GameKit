@@ -38,12 +38,9 @@ public static class PencuilExtensions
 
         builder.AddSingleton<IRenderPhase<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
             sp.GetRequiredService<Pencil>(),
-            viewRegistry,
             sp.GetRequiredService<PencuilRenderer>(),
-            sp.GetRequiredService<IMouseService>(),
-            sp.GetRequiredService<IKeyboardService>(),
-            sp.GetRequiredService<ITextInputService>(),
             sp.GetRequiredService<PencuilOptions>()));
+        builder.AddSingleton<PencuilUpdatePhase>();
         return builder;
     }
 
