@@ -37,7 +37,7 @@ public class PencuilRenderer
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
-        Window window)
+        WindowManager windowManager)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [
@@ -54,8 +54,8 @@ public class PencuilRenderer
         FragmentShader tintedTextureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_tinted_texture_fragment");
         FragmentShader textureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_texture_fragment");
 
-        var colorTargetFormat = window.ColorTargetFormat;
-        var renderSize = window.RenderSizeInPixels;
+        TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
+        ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)

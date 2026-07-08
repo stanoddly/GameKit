@@ -26,9 +26,9 @@ static class Program
         });
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(ClickThroughRenderer.Create);
 
-        builder.OnStart((Window window, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, AppControl appControl) =>
         {
-            window.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
+            windowManager.PrimaryWindow.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
 
             keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs e) =>
             {

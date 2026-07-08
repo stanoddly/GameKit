@@ -114,7 +114,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly Window _window;
+    private readonly WindowManager _windowManager;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -123,20 +123,26 @@ public class GraphicsPipelineBuilder
     /// </summary>
     public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, Window window, IShaderLoader shaderLoader)
+    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, WindowManager windowManager, IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
-        _window = window;
+        _windowManager = windowManager;
         _shaderLoader = shaderLoader;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
-        AddColorTarget(_window.ColorTargetFormat, blendingState, colorWriteMask);
+        AddColorTarget(_windowManager.PrimaryWindow.ColorTargetFormat, blendingState, colorWriteMask);
 
         return this;
     }
-    
+
+    public GraphicsPipelineBuilder AddColorFormatFromDisplay(Window window, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
+    {
+        AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
+        return this;
+    }
+
     public GraphicsPipelineBuilder AddColorTarget(TextureFormat textureFormat, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
         SDL_GPUColorTargetDescription description = new SDL_GPUColorTargetDescription

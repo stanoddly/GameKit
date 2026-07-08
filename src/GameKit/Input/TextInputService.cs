@@ -26,21 +26,20 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly Window _window;
+    private readonly WindowManager _windowManager;
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive
+    public bool IsActive => IsActiveFor(_windowManager.PrimaryWindow);
+
+    public bool IsActiveFor(Window window)
     {
-        get
+        unsafe
         {
-            unsafe
-            {
-                return SDL3.SDL_TextInputActive(_window.SdlWindow);
-            }
+            return SDL3.SDL_TextInputActive(window.SdlWindow);
         }
     }
 
@@ -68,23 +67,33 @@ public class TextInputService : ITextInputService
 
     public void Start()
     {
+        Start(_windowManager.PrimaryWindow);
+    }
+
+    public void Start(Window window)
+    {
         unsafe
         {
-            SDL3.SDL_StartTextInput(_window.SdlWindow);
+            SDL3.SDL_StartTextInput(window.SdlWindow);
         }
     }
 
     public void Stop()
     {
+        Stop(_windowManager.PrimaryWindow);
+    }
+
+    public void Stop(Window window)
+    {
         unsafe
         {
-            SDL3.SDL_StopTextInput(_window.SdlWindow);
+            SDL3.SDL_StopTextInput(window.SdlWindow);
         }
     }
 
-    internal TextInputService(Window window)
+    internal TextInputService(WindowManager windowManager)
     {
-        _window = window;
+        _windowManager = windowManager;
     }
 
     internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)

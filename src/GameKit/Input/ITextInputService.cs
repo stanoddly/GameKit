@@ -7,6 +7,10 @@ public interface ITextInputService
     void Start();
     void Stop();
 
+    bool IsActiveFor(Window window);
+    void Start(Window window);
+    void Stop(Window window);
+
     event TextInputHandler TextInput;
     event TextEditingHandler TextEditing;
 
