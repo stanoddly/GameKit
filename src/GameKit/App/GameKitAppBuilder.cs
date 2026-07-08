@@ -70,8 +70,6 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<PlatformInfo, GameKitFactory>();
 
-        AddSingleton<Window, GameKitFactory>();
-
         AddSingleton<WindowManager>();
 
         AddSingleton<GpuDevice, GameKitFactory>();

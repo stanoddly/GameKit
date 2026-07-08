@@ -23,8 +23,9 @@ static class Program
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
-        builder.OnStart((Window window, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
+        builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {
+            Window window = windowManager.PrimaryWindow;
             using RawImage icon = CreateIcon(32, 32);
             window.SetIcon(icon);
 

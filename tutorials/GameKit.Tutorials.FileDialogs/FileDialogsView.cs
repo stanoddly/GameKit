@@ -59,10 +59,10 @@ public class FileDialogsView : View<FileDialogsViewModel>
     private readonly Window _window;
     private readonly Font _font;
 
-    public FileDialogsView(FileDialogsViewModel viewModel, Window window, IFontSystem fontSystem)
+    public FileDialogsView(FileDialogsViewModel viewModel, WindowManager windowManager, IFontSystem fontSystem)
         : base(viewModel)
     {
-        _window = window;
+        _window = windowManager.PrimaryWindow;
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
     }
 

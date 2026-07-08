@@ -22,9 +22,9 @@ static class Program
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(static () => new ClearRenderPhase(FColors.SkyBlue));
 
-        builder.OnStart((Window window, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
         {
-            window.Draggable = true;
+            windowManager.PrimaryWindow.Draggable = true;
 
             mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs e) =>
             {

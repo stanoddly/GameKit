@@ -2,7 +2,7 @@ using GameKit.Gpu;
 
 namespace GameKit;
 
-public class WindowManager
+public class WindowManager : IDisposable
 {
     private readonly GameKitFactory _factory;
     private readonly GpuDevice _gpuDevice;
@@ -14,15 +14,16 @@ public class WindowManager
     public Window PrimaryWindow { get; }
     public IReadOnlyList<Window> Windows => _windows;
 
-    public WindowManager(Window primaryWindow, GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    public WindowManager(GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
     {
-        PrimaryWindow = primaryWindow;
         _factory = factory;
         _gpuDevice = gpuDevice;
         _frameContext = frameContext;
         _platformInfo = platformInfo;
-        _windows.Add(primaryWindow);
-        _windowsById.Add(primaryWindow.Id, primaryWindow);
+
+        PrimaryWindow = factory.CreateWindow(gpuDevice, frameContext, config, platformInfo);
+        _windows.Add(PrimaryWindow);
+        _windowsById.Add(PrimaryWindow.Id, PrimaryWindow);
     }
 
     public Window CreateWindow(WindowOptions options)
@@ -49,5 +50,10 @@ public class WindowManager
     internal bool TryGetWindow(uint windowId, out Window window)
     {
         return _windowsById.TryGetValue(windowId, out window!);
+    }
+
+    public void Dispose()
+    {
+        PrimaryWindow.Dispose();
     }
 }

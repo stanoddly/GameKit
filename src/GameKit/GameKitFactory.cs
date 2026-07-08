@@ -195,11 +195,11 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(Window window)
+    internal MouseService CreateMouseService(WindowManager windowManager)
     {
         EnsureSdlInitialized();
 
-        return new MouseService(IsMouseInWindow(window));
+        return new MouseService(IsMouseInWindow(windowManager.PrimaryWindow));
     }
 
     private static bool IsMouseInWindow(Window window)
@@ -217,11 +217,11 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal TextInputService CreateTextInputService(Window window)
+    internal TextInputService CreateTextInputService(WindowManager windowManager)
     {
         EnsureSdlInitialized();
 
-        return new TextInputService(window);
+        return new TextInputService(windowManager);
     }
 
     internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
