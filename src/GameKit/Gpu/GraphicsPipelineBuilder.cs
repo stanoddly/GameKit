@@ -136,7 +136,13 @@ public class GraphicsPipelineBuilder
 
         return this;
     }
-    
+
+    public GraphicsPipelineBuilder AddColorFormatFromDisplay(Window window, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
+    {
+        AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
+        return this;
+    }
+
     public GraphicsPipelineBuilder AddColorTarget(TextureFormat textureFormat, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
         SDL_GPUColorTargetDescription description = new SDL_GPUColorTargetDescription

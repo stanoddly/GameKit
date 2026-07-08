@@ -9,16 +9,16 @@ public class EventService
     private readonly GamepadService _gamepadService;
     private readonly MouseService _mouseService;
     private readonly TextInputService _textInputService;
-    private readonly Window _window;
+    private readonly WindowManager _windowManager;
     private readonly AppControl _appControl;
 
-    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, Window window, AppControl appControl)
+    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
     {
         _keyboardService = keyboardService;
         _gamepadService = gamepadService;
         _mouseService = mouseService;
         _textInputService = textInputService;
-        _window = window;
+        _windowManager = windowManager;
         _appControl = appControl;
     }
 
@@ -75,14 +75,14 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER)
                 {
-                    if ((uint)evt.window.windowID == _window.Id)
+                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
                     {
                         _mouseService.OnMouseWindowPresenceEvent(evt.window, true);
                     }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE)
                 {
-                    if ((uint)evt.window.windowID == _window.Id)
+                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
                     {
                         _mouseService.OnMouseWindowPresenceEvent(evt.window, false);
                     }
@@ -97,7 +97,24 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
-                    _window.OnPixelSizeChanged(evt.window.timestamp);
+                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window pixelSizeWindow))
+                    {
+                        pixelSizeWindow.OnPixelSizeChanged(evt.window.timestamp);
+                    }
+                }
+                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+                {
+                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window closedWindow))
+                    {
+                        if (closedWindow == _windowManager.PrimaryWindow)
+                        {
+                            _appControl.Quit();
+                        }
+                        else
+                        {
+                            _windowManager.DestroyWindow(closedWindow);
+                        }
+                    }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
                 {

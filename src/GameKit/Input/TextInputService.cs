@@ -33,14 +33,13 @@ public class TextInputService : ITextInputService
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive
+    public bool IsActive => IsActiveFor(_window);
+
+    public bool IsActiveFor(Window window)
     {
-        get
+        unsafe
         {
-            unsafe
-            {
-                return SDL3.SDL_TextInputActive(_window.SdlWindow);
-            }
+            return SDL3.SDL_TextInputActive(window.SdlWindow);
         }
     }
 
@@ -68,17 +67,27 @@ public class TextInputService : ITextInputService
 
     public void Start()
     {
+        Start(_window);
+    }
+
+    public void Start(Window window)
+    {
         unsafe
         {
-            SDL3.SDL_StartTextInput(_window.SdlWindow);
+            SDL3.SDL_StartTextInput(window.SdlWindow);
         }
     }
 
     public void Stop()
     {
+        Stop(_window);
+    }
+
+    public void Stop(Window window)
+    {
         unsafe
         {
-            SDL3.SDL_StopTextInput(_window.SdlWindow);
+            SDL3.SDL_StopTextInput(window.SdlWindow);
         }
     }
 

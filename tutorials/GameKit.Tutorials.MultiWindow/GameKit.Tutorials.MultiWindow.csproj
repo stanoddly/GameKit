@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PublishAot>true</PublishAot>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
+      <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Content\shaders\.generated\" />
+    </ItemGroup>
+
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile">
+        <ItemGroup>
+            <SdlangShader Include="Content\shaders\*.slang" />
+        </ItemGroup>
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+    </Target>
+
+</Project>
