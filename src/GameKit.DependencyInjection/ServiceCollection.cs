@@ -296,7 +296,7 @@ public class ServiceCollection
 
         // Set build-time resolvers so generated factories can trigger on-demand resolution
         provider.SetBuildTimeResolver(
-            id => ResolveServiceById(id, provider, parent, descriptorMap, resolving),
+            (id, type) => ResolveServiceById(id, type, provider, parent, descriptorMap, resolving),
             id => TryResolveServiceById(id, provider, parent, descriptorMap, resolving),
             id => ResolveServiceCollectionById(id, provider, parent, descriptorMap, resolving));
 
@@ -596,6 +596,7 @@ public class ServiceCollection
 
     private object ResolveServiceById(
         int id,
+        Type serviceType,
         ServiceProvider provider,
         ServiceProvider? parent,
         Dictionary<int, ServiceDescriptor> descriptorMap,
@@ -636,7 +637,7 @@ public class ServiceCollection
         }
 
         throw new InvalidOperationException(
-            $"Cannot resolve service with id {id}.");
+            $"Cannot resolve service {serviceType.Name} with id {id}.");
     }
 
     private object? TryResolveServiceById(

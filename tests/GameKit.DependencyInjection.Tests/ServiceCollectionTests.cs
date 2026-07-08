@@ -195,7 +195,10 @@ public class ServiceCollectionTests
         ServiceCollection collection = new();
         collection.AddSingleton<ServiceWithDependency>();
 
-        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+        InvalidOperationException? exception = Assert.Throws<InvalidOperationException>(
+            () => collection.BuildServiceProvider());
+
+        Assert.That(exception!.Message, Does.Contain(nameof(SimpleService)));
     }
 
     [Test]

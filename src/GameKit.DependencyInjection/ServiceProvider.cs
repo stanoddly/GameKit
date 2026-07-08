@@ -17,7 +17,7 @@ public class ServiceProvider : IDisposable
     private List<ServiceProvider>? _children;
     private List<ServiceActivatedCallback>? _activatedCallbacks;
     private List<ServiceDisposingCallback>? _disposingCallbacks;
-    private Func<int, object>? _buildTimeResolver;
+    private Func<int, Type, object>? _buildTimeResolver;
     private Func<int, object?>? _buildTimeTryResolver;
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
@@ -109,7 +109,7 @@ public class ServiceProvider : IDisposable
         _serviceCollectionRegistrations = registrations;
     }
 
-    internal void SetBuildTimeResolver(Func<int, object>? resolver, Func<int, object?>? tryResolver, Func<int, object[]>? collectionResolver)
+    internal void SetBuildTimeResolver(Func<int, Type, object>? resolver, Func<int, object?>? tryResolver, Func<int, object[]>? collectionResolver)
     {
         _buildTimeResolver = resolver;
         _buildTimeTryResolver = tryResolver;
@@ -430,7 +430,7 @@ public class ServiceProvider : IDisposable
 
         if (_buildTimeResolver != null)
         {
-            return (T)_buildTimeResolver(id);
+            return (T)_buildTimeResolver(id, typeof(T));
         }
 
         throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
