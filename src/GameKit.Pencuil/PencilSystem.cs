@@ -2,14 +2,14 @@ using GameKit.Input;
 
 namespace GameKit.Pencuil;
 
-public class PencuilUpdatePhase : IUpdatable
+public class PencilSystem : IUpdatable
 {
     private readonly Pencil _pencil;
     private readonly ViewRegistry _viewRegistry;
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencuilUpdatePhase(Pencil pencil, ViewRegistry viewRegistry, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;

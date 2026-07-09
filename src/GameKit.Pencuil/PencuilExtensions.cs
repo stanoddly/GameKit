@@ -41,7 +41,7 @@ public static class PencuilExtensions
             sp.GetRequiredService<Pencil>(),
             sp.GetRequiredService<PencuilRenderer>(),
             sp.GetRequiredService<PencuilOptions>()));
-        builder.AddSingleton<PencuilUpdatePhase>();
+        builder.AddSingleton<PencilSystem>();
         return builder;
     }
 
