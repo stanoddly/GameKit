@@ -53,9 +53,14 @@ public class GameKitApp : IGameKitApp
         ServiceProvider.Dispose();
     }
 
+    private static int GetOrder(IUpdatable updatable)
+    {
+        return updatable is IOrderable orderable ? orderable.Order : 0;
+    }
+
     private static void SortUpdatables(ServiceRegistry<IUpdatable> updatables)
     {
-        updatables.Sort(static (left, right) => left.Order.CompareTo(right.Order));
+        updatables.Sort(static (left, right) => GetOrder(left).CompareTo(GetOrder(right)));
     }
 
     private static void Update(ServiceRegistry<IUpdatable> updatables)
