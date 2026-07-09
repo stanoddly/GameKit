@@ -26,7 +26,12 @@ public class GameKitApp : IGameKitApp
         ServiceRegistry<IUpdatable> updatables = ServiceProvider.GetRequiredService<ServiceRegistry<IUpdatable>>();
         StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
-        SortUpdatables(updatables);
+        updatables.Sort(static (left, right) =>
+        {
+            int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
+            int rightOrder = right is IOrderable rightOrderable ? rightOrderable.Order : 0;
+            return leftOrder.CompareTo(rightOrder);
+        });
 
         while (true)
         {
@@ -53,17 +58,7 @@ public class GameKitApp : IGameKitApp
         ServiceProvider.Dispose();
     }
 
-    private static int GetOrder(IUpdatable updatable)
-    {
-        return updatable is IOrderable orderable ? orderable.Order : 0;
-    }
-
-    private static void SortUpdatables(ServiceRegistry<IUpdatable> updatables)
-    {
-        updatables.Sort(static (left, right) => GetOrder(left).CompareTo(GetOrder(right)));
-    }
-
-    private static void Update(ServiceRegistry<IUpdatable> updatables)
+private static void Update(ServiceRegistry<IUpdatable> updatables)
     {
         foreach (IUpdatable updatable in updatables)
         {
