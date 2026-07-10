@@ -58,7 +58,7 @@ public class GameKitApp : IGameKitApp
         ServiceProvider.Dispose();
     }
 
-private static void Update(ServiceRegistry<IUpdatable> updatables)
+    private static void Update(ServiceRegistry<IUpdatable> updatables)
     {
         foreach (IUpdatable updatable in updatables)
         {

@@ -68,6 +68,9 @@ public class Pencil
     private List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
     private List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
 
+    internal List<ColoredRectangleInstruction> CompletedColoredRectangleInstructions => _previousColoredRectangleInstructions;
+    internal List<TextureRegionInstruction> CompletedTextureRegionInstructions => _previousTextureRegionInstructions;
+
     private readonly List<Rectangle> _hoverTests = new();
     private readonly List<Rectangle> _hoverInTests = new();
     private readonly List<Rectangle> _hoverOutTests = new();
