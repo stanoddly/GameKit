@@ -36,14 +36,12 @@ public static class PencuilExtensions
             }
         });
 
+        // Factory overload required: TRenderContext is a type parameter, so the source generator cannot intercept it.
         builder.AddSingleton<IRenderPhase<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
             sp.GetRequiredService<Pencil>(),
-            viewRegistry,
             sp.GetRequiredService<PencuilRenderer>(),
-            sp.GetRequiredService<IMouseService>(),
-            sp.GetRequiredService<IKeyboardService>(),
-            sp.GetRequiredService<ITextInputService>(),
             sp.GetRequiredService<PencuilOptions>()));
+        builder.AddSingleton<PencilSystem>();
         return builder;
     }
 

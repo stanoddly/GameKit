@@ -104,7 +104,10 @@ public class PencuilRenderer
 
     public void Render(CommandBuffer commandBuffer, Pencil pencil)
     {
-        if (pencil._coloredRectangleInstructions.Count == 0 && pencil._textureRegionInstructions.Count == 0)
+        List<ColoredRectangleInstruction> coloredRectangleInstructions = pencil.CompletedColoredRectangleInstructions;
+        List<TextureRegionInstruction> textureRegionInstructions = pencil.CompletedTextureRegionInstructions;
+
+        if (coloredRectangleInstructions.Count == 0 && textureRegionInstructions.Count == 0)
         {
             using IRenderPass clearPass = new RenderPassBuilder(commandBuffer)
                 .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
@@ -113,7 +116,7 @@ public class PencuilRenderer
             return;
         }
 
-        _maxDepthValue = pencil._coloredRectangleInstructions.Count + pencil._textureRegionInstructions.Count;
+        _maxDepthValue = coloredRectangleInstructions.Count + textureRegionInstructions.Count;
 
         using IRenderPass renderPass = new RenderPassBuilder(commandBuffer)
             .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
@@ -125,7 +128,7 @@ public class PencuilRenderer
         renderPass.BindGraphicsPipeline(_colorPipeline);
         renderPass.BindVertexBuffer(_vertexBuffer);
 
-        foreach (var instruction in pencil._coloredRectangleInstructions)
+        foreach (ColoredRectangleInstruction instruction in coloredRectangleInstructions)
         {
             Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
                 instruction.Area.Width,
@@ -145,12 +148,12 @@ public class PencuilRenderer
             renderPass.DrawPrimitive();
         }
 
-        if (pencil._textureRegionInstructions.Count > 0)
+        if (textureRegionInstructions.Count > 0)
         {
             renderPass.BindGraphicsPipeline(_tintedTexturePipeline);
             renderPass.BindVertexBuffer(_vertexBuffer);
 
-            foreach (var instruction in pencil._textureRegionInstructions)
+            foreach (TextureRegionInstruction instruction in textureRegionInstructions)
             {
                 Matrix4x4 scaleMatrix = Matrix4x4.CreateScale(
                     instruction.Area.Width,

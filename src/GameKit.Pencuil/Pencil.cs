@@ -68,6 +68,9 @@ public class Pencil
     private List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
     private List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
 
+    internal List<ColoredRectangleInstruction> CompletedColoredRectangleInstructions => _previousColoredRectangleInstructions;
+    internal List<TextureRegionInstruction> CompletedTextureRegionInstructions => _previousTextureRegionInstructions;
+
     private readonly List<Rectangle> _hoverTests = new();
     private readonly List<Rectangle> _hoverInTests = new();
     private readonly List<Rectangle> _hoverOutTests = new();
@@ -78,6 +81,10 @@ public class Pencil
 
     public bool NeedsUpdate { get; set; } = true;
     public void Invalidate() => NeedsUpdate = true;
+
+    // Set by the update phase when a build pass produces different instructions than the
+    // previous frame; read and cleared by the render phase to decide whether to re-render.
+    public bool InstructionsChanged { get; set; }
 
     internal void UpdateViewport(int width, int height)
     {

@@ -26,6 +26,13 @@ public class GameKitApp : IGameKitApp
         ServiceRegistry<IUpdatable> updatables = ServiceProvider.GetRequiredService<ServiceRegistry<IUpdatable>>();
         StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
+        updatables.Sort(static (left, right) =>
+        {
+            int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
+            int rightOrder = right is IOrderable rightOrderable ? rightOrderable.Order : 0;
+            return leftOrder.CompareTo(rightOrder);
+        });
+
         while (true)
         {
             // start the frame before applying queued stage transitions

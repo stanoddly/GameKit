@@ -29,6 +29,11 @@ public sealed class ServiceRegistry<TService>
         _services.Add(service);
     }
 
+    public void Sort(Comparison<TService> comparison)
+    {
+        _services.Sort(comparison);
+    }
+
     internal void Unsubscribe(TService service)
     {
         _services.Remove(service);
