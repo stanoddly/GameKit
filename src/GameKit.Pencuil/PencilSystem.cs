@@ -9,21 +9,12 @@ public class PencilSystem : IUpdatable
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    private PencilSystem(Pencil pencil, ViewRegistry viewRegistry, ITextInputService textInputService)
+    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
         _textInputService = textInputService;
-    }
 
-    internal static PencilSystem CreateForTests(Pencil pencil, ViewRegistry viewRegistry, ITextInputService textInputService)
-    {
-        return new PencilSystem(pencil, viewRegistry, textInputService);
-    }
-
-    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
-        : this(pencil, viewRegistry, textInputService)
-    {
         ShortSize initialSize = window.RenderSizeInPixels;
         pencil.UpdateViewport(initialSize.Width, initialSize.Height);
 
