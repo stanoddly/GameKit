@@ -17,11 +17,6 @@ public class PencilSystem : IUpdatable
         _window = window;
         _textInputService = textInputService;
 
-        window.ResolutionChanged += eventArgs =>
-        {
-            pencil.UpdateViewport(eventArgs.NewSize.Width, eventArgs.NewSize.Height);
-        };
-
         mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
         {
             pencil.CursorPosition = (Vector2Int)args.Position;
