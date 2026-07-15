@@ -6,13 +6,15 @@ public class PencilSystem : IUpdatable
 {
     private readonly Pencil _pencil;
     private readonly ViewRegistry _viewRegistry;
+    private readonly Window _window;
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
+        _window = window;
         _textInputService = textInputService;
 
         mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
@@ -72,6 +74,9 @@ public class PencilSystem : IUpdatable
 
     public void Update()
     {
+        ShortSize renderSize = _window.RenderSizeInPixels;
+        _pencil.UpdateViewport(renderSize.Width, renderSize.Height);
+
         bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
         ReadOnlySpan<IView> views = _viewRegistry.Views;
 
@@ -97,6 +102,7 @@ public class PencilSystem : IUpdatable
 
             _pencil.NeedsUpdate = false;
             _pencil.InstructionsChanged = _pencil.HaveInstructionsChanged();
+            _pencil.MarkInstructionsCompleted();
             _pencil.CycleInstructions();
         }
 

@@ -86,8 +86,16 @@ public class Pencil
     // previous frame; read and cleared by the render phase to decide whether to re-render.
     public bool InstructionsChanged { get; set; }
 
+    internal ShortSize ViewportSize => new ShortSize((ushort)_viewportWidth, (ushort)_viewportHeight);
+    internal ShortSize CompletedInstructionViewportSize { get; private set; }
+
     internal void UpdateViewport(int width, int height)
     {
+        if (_viewportWidth == width && _viewportHeight == height)
+        {
+            return;
+        }
+
         _viewportWidth = width;
         _viewportHeight = height;
         Invalidate();
@@ -527,6 +535,11 @@ public class Pencil
         _hoverInTests.Clear();
         _hoverOutTests.Clear();
         _clickTests.Clear();
+    }
+
+    internal void MarkInstructionsCompleted()
+    {
+        CompletedInstructionViewportSize = ViewportSize;
     }
 
     internal void CycleInstructions()
