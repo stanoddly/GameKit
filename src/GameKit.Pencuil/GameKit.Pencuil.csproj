@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="GameKit.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\GameKit.Core\GameKit.Core.csproj" />
       <ProjectReference Include="..\GameKit.Componentize\GameKit.Componentize.csproj" />
       <ProjectReference Include="..\GameKit\GameKit.csproj" />

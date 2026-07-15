@@ -9,11 +9,28 @@ public class PencilSystem : IUpdatable
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+    private PencilSystem(Pencil pencil, ViewRegistry viewRegistry, ITextInputService textInputService)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
         _textInputService = textInputService;
+    }
+
+    internal static PencilSystem CreateForTests(Pencil pencil, ViewRegistry viewRegistry, ITextInputService textInputService)
+    {
+        return new PencilSystem(pencil, viewRegistry, textInputService);
+    }
+
+    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+        : this(pencil, viewRegistry, textInputService)
+    {
+        ShortSize initialSize = window.RenderSizeInPixels;
+        pencil.UpdateViewport(initialSize.Width, initialSize.Height);
+
+        window.ResolutionChanged += eventArgs =>
+        {
+            pencil.UpdateViewport(eventArgs.NewSize.Width, eventArgs.NewSize.Height);
+        };
 
         mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
         {
@@ -97,6 +114,7 @@ public class PencilSystem : IUpdatable
 
             _pencil.NeedsUpdate = false;
             _pencil.InstructionsChanged = _pencil.HaveInstructionsChanged();
+            _pencil.MarkInstructionsCompleted();
             _pencil.CycleInstructions();
         }
 

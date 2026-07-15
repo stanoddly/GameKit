@@ -109,10 +109,7 @@ public class PencuilRenderer
 
         if (coloredRectangleInstructions.Count == 0 && textureRegionInstructions.Count == 0)
         {
-            using IRenderPass clearPass = new RenderPassBuilder(commandBuffer)
-                .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
-                .Build();
-
+            Clear(commandBuffer);
             return;
         }
 
@@ -176,6 +173,13 @@ public class PencuilRenderer
             }
         }
 
+    }
+
+    public void Clear(CommandBuffer commandBuffer)
+    {
+        using IRenderPass clearPass = new RenderPassBuilder(commandBuffer)
+            .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
+            .Build();
     }
 
     public void Present(CommandBuffer commandBuffer, Texture target, bool clearTarget)

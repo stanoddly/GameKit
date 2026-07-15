@@ -22,7 +22,21 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
 
     public void Render(TRenderContext renderContext)
     {
-        ResizeRetainedTextureIfNeeded(renderContext.ColorTarget.Size);
+        ShortSize targetSize = renderContext.ColorTarget.Size;
+        ResizeRetainedTextureIfNeeded(targetSize);
+
+        if (_pencil.ViewportSize != targetSize)
+        {
+            _pencil.UpdateViewport(targetSize.Width, targetSize.Height);
+        }
+
+        if (_pencil.CompletedInstructionViewportSize != _pencil.ViewportSize)
+        {
+            _renderer.Clear(renderContext.CommandBuffer);
+            _retainedTextureDirty = true;
+            _renderer.Present(renderContext.CommandBuffer, renderContext.ColorTarget, _clearTarget);
+            return;
+        }
 
         // Retained texture dirtiness forces a redraw even when instruction content is
         // unchanged, since the retained texture itself was just resized.
@@ -43,7 +57,6 @@ public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
             return;
         }
 
-        _pencil.UpdateViewport(targetSize.Width, targetSize.Height);
         _renderer.Resize(targetSize);
         _retainedTextureDirty = true;
     }
