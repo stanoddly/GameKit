@@ -6,6 +6,7 @@ public class PencilSystem : IUpdatable
 {
     private readonly Pencil _pencil;
     private readonly ViewRegistry _viewRegistry;
+    private readonly Window _window;
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
@@ -13,10 +14,8 @@ public class PencilSystem : IUpdatable
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
+        _window = window;
         _textInputService = textInputService;
-
-        ShortSize initialSize = window.RenderSizeInPixels;
-        pencil.UpdateViewport(initialSize.Width, initialSize.Height);
 
         window.ResolutionChanged += eventArgs =>
         {
@@ -80,6 +79,9 @@ public class PencilSystem : IUpdatable
 
     public void Update()
     {
+        ShortSize renderSize = _window.RenderSizeInPixels;
+        _pencil.UpdateViewport(renderSize.Width, renderSize.Height);
+
         bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
         ReadOnlySpan<IView> views = _viewRegistry.Views;
 
