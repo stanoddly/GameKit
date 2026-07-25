@@ -6,7 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <!-- The tests drive the compiler through SdlangCompiler.CreateFromAssemblyDirectory() -->
+        <CopySlangToOutput>true</CopySlangToOutput>
     </PropertyGroup>
+
+    <Import Project="../../src/GameKit.SdlangCompileLib/build/GameKit.SdlangCompileLib.props" />
+    <Import Project="../../src/GameKit.SdlangCompileLib/build/GameKit.SdlangCompileLib.targets" />
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="10.0.1"/>

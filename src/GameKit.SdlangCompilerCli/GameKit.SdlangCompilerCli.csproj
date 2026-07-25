@@ -6,7 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
+        <!-- Standalone tool: it ships the Slang distribution next to its own binaries -->
+        <CopySlangToOutput>true</CopySlangToOutput>
     </PropertyGroup>
+
+    <Import Project="..\GameKit.SdlangCompileLib\build\GameKit.SdlangCompileLib.props" />
+    <Import Project="..\GameKit.SdlangCompileLib\build\GameKit.SdlangCompileLib.targets" />
 
     <ItemGroup>
       <PackageReference Include="System.CommandLine" Version="2.0.10" />

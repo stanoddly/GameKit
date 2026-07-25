@@ -40,19 +40,16 @@
     <!-- Unlike other projects that compile shaders BeforeTargets="CoreCompile" to embed them as
          resources, this target compiles from $(OutputPath) where test shaders are copied to,
          so it must run after CopyFilesToOutputDirectory. -->
-    <Target Name="CompileSdlangShaders" AfterTargets="CopyFilesToOutputDirectory">
+    <Target Name="CompileTestSdlangShaders" AfterTargets="CopyFilesToOutputDirectory">
         <!-- Define shaders to compile -->
         <ItemGroup>
-            <SdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
+            <TestSdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
         </ItemGroup>
-        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
+        <SdlangCompileTask InputFile="%(TestSdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)" />
     </Target>
 
     <!-- Test that builds succeed when no shaders match the glob pattern (issue #71) -->
-    <Target Name="CompileEmptySdlangShaders" BeforeTargets="CoreCompile">
-        <ItemGroup>
-            <EmptySdlangShader Include="Content\empty\*.slang" />
-        </ItemGroup>
-        <SdlangCompileTask InputFile="%(EmptySdlangShader.Identity)" />
-    </Target>
+    <ItemGroup>
+        <SdlangShader Include="Content\empty\*.slang" />
+    </ItemGroup>
 </Project>

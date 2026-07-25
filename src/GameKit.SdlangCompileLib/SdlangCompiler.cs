@@ -28,8 +28,9 @@ public class SdlangCompiler
 {
     private const string GeneratedShaderDirectory = ".generated";
     private const int MaxReflectionTraversalDepth = 64;
-    private static readonly string SlangCompilerPath = GetSlangCompilerPath();
     private static readonly string SlangVersion = GetSlangVersion();
+
+    private readonly string _slangCompilerPath;
     
     private static readonly Dictionary<ShaderFormatDto, string> TargetsWithExtensions = new()
     {
@@ -38,22 +39,33 @@ public class SdlangCompiler
         { ShaderFormatDto.Msl, "metal" }
     };
 
-    private static string GetSlangCompilerPath()
+    /// <param name="slangCompilerPath">Path to the slangc executable to compile shaders with.</param>
+    public SdlangCompiler(string slangCompilerPath)
     {
-        string? assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        if (!File.Exists(slangCompilerPath))
+        {
+            throw new FileNotFoundException($"slangc compiler not found at {slangCompilerPath}");
+        }
+
+        _slangCompilerPath = slangCompilerPath;
+    }
+
+    /// <summary>
+    /// Creates a compiler that uses the Slang distribution shipped next to the executing assembly.
+    /// Intended for standalone tools that carry their own copy of Slang; build integrations should
+    /// pass the path explicitly instead.
+    /// </summary>
+    public static SdlangCompiler CreateFromAssemblyDirectory()
+    {
+        string? assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         if (string.IsNullOrEmpty(assemblyDir))
         {
             throw new InvalidOperationException("Unable to determine assembly directory");
         }
+
         string slangExe = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
-        string slangPath = Path.Combine(assemblyDir, "bin", slangExe);
 
-        if (!File.Exists(slangPath))
-        {
-            throw new FileNotFoundException($"slangc compiler not found at {slangPath}");
-        }
-
-        return slangPath;
+        return new SdlangCompiler(Path.Combine(assemblyDir, "bin", slangExe));
     }
 
     private static string GetSlangVersion()
@@ -133,7 +145,7 @@ public class SdlangCompiler
         { ShaderFormatDto.Msl, [] }
     };
 
-    private static (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
+    private (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
         FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
@@ -162,7 +174,7 @@ public class SdlangCompiler
             shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, "main"));
         }
 
-        Console.WriteLine($"Executing shader compilation: {SlangCompilerPath} {string.Join(" ", args)}");
+        Console.WriteLine($"Executing shader compilation: {_slangCompilerPath} {string.Join(" ", args)}");
 
         // slangc reads from stdin even when given a file argument. Without redirecting and closing
         // stdin, it inherits the parent's stdin and blocks indefinitely when stdin is a pipe.
@@ -170,7 +182,7 @@ public class SdlangCompiler
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = SlangCompilerPath,
+                FileName = _slangCompilerPath,
                 Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
                 RedirectStandardInput = true,
                 RedirectStandardOutput = false,
@@ -901,7 +913,7 @@ public class SdlangCompiler
         };
     }
 
-    private static void CompileShader(FileInfo filePath, bool force = false)
+    private void CompileShader(FileInfo filePath, bool force = false)
     {
         DirectoryInfo parentDir = filePath.Directory!;
         DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, GeneratedShaderDirectory));

@@ -17,6 +17,47 @@ Content/shaders/
 
 Shaders are automatically compiled during build. The build system generates SPIR-V binaries and metadata files in the `.generated/` directory.
 
+## Build Integration
+
+Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare the shaders to compile:
+
+```xml
+<ItemGroup>
+    <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj"
+                      ReferenceOutputAssembly="false" />
+</ItemGroup>
+
+<Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+<Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+<ItemGroup>
+    <SdlangShader Include="Content\shaders\*.slang" />
+</ItemGroup>
+```
+
+The targets file compiles every `SdlangShader` item before `CoreCompile`. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
+
+The Slang compiler is downloaded into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. It is build-host tooling and is never copied into the output or publish directory of a project that compiles shaders. A project that needs Slang next to its own binaries (a standalone tool, or a test that calls `SdlangCompiler.CreateFromAssemblyDirectory()`) opts in with `<CopySlangToOutput>true</CopySlangToOutput>` and imports `GameKit.SdlangCompileLib`'s props and targets directly.
+
+### Custom compilation targets
+
+The `SdlangShader` item plus the shared target covers the normal case. To compile from somewhere else, or at a different point in the build, invoke the task directly and pass the compiler path:
+
+```xml
+<Target Name="CompileGeneratedShaders" AfterTargets="CopyFilesToOutputDirectory">
+    <ItemGroup>
+        <GeneratedShader Include="$(OutputPath)\Generated\*.slang" />
+    </ItemGroup>
+    <SdlangCompileTask InputFile="%(GeneratedShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)" />
+</Target>
+```
+
+Do not name a custom target `CompileSdlangShaders`; a target defined in the project overrides the imported one of the same name.
+
+### Migrating from a hand-rolled target
+
+Earlier versions required each project to define its own target calling the task. Replace it with the `SdlangShader` item group shown above. Projects that still call the task without `SlangCompilerPath` fail the build with a message pointing here.
+
 ## Basic Vertex Shader
 
 ```csharp

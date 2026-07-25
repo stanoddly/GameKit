@@ -1,0 +1,29 @@
+<Project>
+    <!-- Slang configuration -->
+    <!-- Slang is a shader compilation dependency downloaded during the build.
+         It stays in obj/ (intermediate build artifacts) rather than the project root
+         because it's not source code and will be extracted/regenerated on each build.
+         It is build-time tooling, so it is never copied into the output of consuming
+         projects; the compiler is located through $(SlangCompilerPath) instead. -->
+    <PropertyGroup>
+        <SlangVersion>2026.12.2</SlangVersion>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">macos-x86_64</SlangPlatform>
+        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">macos-aarch64</SlangPlatform>
+        <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
+        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
+        <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
+        <!-- Use absolute paths so the location is identical no matter which project imports this file,
+             and to avoid issues with Environment.CurrentDirectory during parallel builds -->
+        <SlangObjDir>$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
+        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
+        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
+        <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
+        <SlangLibDir>$(SlangBaseDir)/lib</SlangLibDir>
+        <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
+        <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
+        <SlangCompilerPath>$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
+    </PropertyGroup>
+</Project>

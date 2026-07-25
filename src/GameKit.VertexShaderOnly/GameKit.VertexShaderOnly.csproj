@@ -9,7 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\GameKit\GameKit.csproj" />
-        <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" />
+        <ProjectReference Include="..\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <!-- Import the task's props and targets files -->
@@ -17,12 +17,9 @@
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
     <!-- Compile shaders before build -->
-    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile">
-        <ItemGroup>
-            <SdlangShader Include="Content\shaders\*.slang" />
-        </ItemGroup>
-        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" />
-    </Target>
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\*.slang" />
+    </ItemGroup>
 
     <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
     <!-- WithCulture=false is required because .NET SDK interprets "metadata" in filenames like
