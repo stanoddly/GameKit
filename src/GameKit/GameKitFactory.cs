@@ -159,6 +159,10 @@ public class GameKitFactory: IDisposable
                 shaderDrawParamsFeatures.shaderDrawParameters = 1;
 
                 SDL_GPUVulkanOptions vulkanOptions = default;
+                // Request Vulkan 1.3.0 ((1 << 22) | (3 << 12) | 0). SDL defaults to
+                // Vulkan 1.0, where feature_list is ignored, and Slang's stable SPIR-V
+                // target support starts at SPIR-V 1.3:
+                // https://shader-slang.org/slang/user-guide/spirv-target-specific
                 vulkanOptions.vulkan_api_version = (1 << 22) | (3 << 12) | 0;
                 vulkanOptions.feature_list = (IntPtr)(&shaderDrawParamsFeatures);
 
