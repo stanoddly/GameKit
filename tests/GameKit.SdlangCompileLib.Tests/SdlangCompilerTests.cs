@@ -220,7 +220,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "test_shader.slang");
         File.WriteAllText(shaderPath, ShaderContent);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         // Act
         compiler.Compile([shaderPath], force: true);
@@ -250,7 +250,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "system_values.slang");
         File.WriteAllText(shaderPath, VertexShaderWithSystemValueInputs);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "system_values.metadata.json");
@@ -269,7 +269,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "valid_vertex.slang");
         File.WriteAllText(shaderPath, ValidVertexShaderWithBindings);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_vertex.metadata.json");
@@ -282,7 +282,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "valid_fragment.slang");
         File.WriteAllText(shaderPath, ValidFragmentShaderWithBindings);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_fragment.metadata.json");
@@ -295,7 +295,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "valid_compute.slang");
         File.WriteAllText(shaderPath, ValidComputeShaderWithBindings);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_compute.metadata.json");
@@ -318,7 +318,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "invalid_fragment.slang");
         File.WriteAllText(shaderPath, FragmentShaderWrongUniformSpace);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
@@ -334,7 +334,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "invalid_vertex.slang");
         File.WriteAllText(shaderPath, VertexShaderWrongUniformSpace);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
@@ -350,7 +350,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "invalid_texture.slang");
         File.WriteAllText(shaderPath, FragmentShaderWrongTextureSpace);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
@@ -365,7 +365,7 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, "invalid_order.slang");
         File.WriteAllText(shaderPath, FragmentShaderWrongIndexOrder);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
@@ -380,7 +380,7 @@ public class SdlangCompilerTests
     {
         string shaderPath = CreateTemporaryShaderFile(shaderContent);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
 
         ShaderBindingValidationException? ex = Assert.Throws<ShaderBindingValidationException>(() =>
             compiler.Compile([shaderPath], force: true));
@@ -425,7 +425,7 @@ public class SdlangCompilerTests
     public void CompileShader_FragmentShaderWithStructStorageBuffer_StoresElementSize()
     {
         string shaderPath = CreateTemporaryShaderFile(FragmentShaderWithStructStorageBuffer);
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.ChangeExtension(
@@ -445,7 +445,7 @@ public class SdlangCompilerTests
     public void CompileShader_FragmentShaderWithPrimitiveStorageBuffer_StoresElementSize()
     {
         string shaderPath = CreateTemporaryShaderFile(FragmentShaderWithPrimitiveStorageBuffer);
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.ChangeExtension(
@@ -492,7 +492,7 @@ public class SdlangCompilerTests
     {
         string shaderPath = CreateTemporaryShaderFile(VertexShaderWithStorageAndUniformBuffers);
 
-        SdlangCompiler compiler = new SdlangCompiler();
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
         string metalPath = Path.Combine(

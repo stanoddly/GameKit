@@ -6,107 +6,16 @@
         <Nullable>enable</Nullable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
-
-        <!-- Slang configuration -->
-        <!-- Slang is a shader compilation dependency downloaded during the build.
-             It's stored in obj/ (intermediate build artifacts) rather than the project root
-             because it's not source code and will be extracted/regenerated on each build.
-             The final binaries are then copied to the output directory for runtime use. -->
-        <SlangVersion>2026.12.2</SlangVersion>
-        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
-        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
-        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
-        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">macos-x86_64</SlangPlatform>
-        <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">macos-aarch64</SlangPlatform>
-        <SlangDirName>slang-$(SlangVersion)-$(SlangPlatform)</SlangDirName>
-        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
-        <SlangDownloadUrl>https://github.com/shader-slang/slang/releases/download/v$(SlangVersion)/$(SlangZipFile)</SlangDownloadUrl>
-        <!-- Use absolute paths to avoid issues with Environment.CurrentDirectory during parallel builds -->
-        <SlangObjDir>$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)</SlangObjDir>
-        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
-        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
-        <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
-        <SlangLibDir>$(SlangBaseDir)/lib</SlangLibDir>
     </PropertyGroup>
 
-    <!-- Validate that SlangPlatform was set (fails on unsupported OS/architecture combinations) -->
-    <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang">
-        <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
-               Condition="'$(SlangPlatform)' == ''" />
-    </Target>
+    <!-- Slang download and extraction. Projects that need to locate slangc import these too. -->
+    <Import Project="build\GameKit.SdlangCompileLib.props" />
+    <Import Project="build\GameKit.SdlangCompileLib.targets" />
 
-    <!-- Download Slang if not already present -->
-    <Target Name="DownloadSlang" BeforeTargets="BeforeBuild">
-        <!-- Download Slang zip if not already present -->
-        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
-        <DownloadFile SourceUrl="$(SlangDownloadUrl)"
-                      DestinationFolder="$(SlangObjDir)"
-                      DestinationFileName="$(SlangZipFile)"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('$(SlangZipPath)')" />
-        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
-               Condition="!Exists('$(SlangZipPath)')" />
-    </Target>
+    <ItemGroup>
+      <None Include="build\**" />
+    </ItemGroup>
 
-    <!-- Extract Slang zip file and clean up unnecessary files -->
-    <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild">
-        <!-- Only extract and clean up if bin directory doesn't exist -->
-        <PropertyGroup>
-            <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
-        </PropertyGroup>
-
-        <Message Text="Extracting Slang to $(SlangBaseDir)..." Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
-        <Unzip SourceFiles="$(SlangZipPath)"
-               DestinationFolder="$(SlangBaseDir)"
-               Condition="'$(NeedsExtraction)' == 'true'" />
-
-        <!-- Clean up unnecessary files and directories after extraction -->
-        <RemoveDir Directories="$(SlangBaseDir)/include;$(SlangBaseDir)/share;$(SlangBaseDir)/lib/cmake"
-                   Condition="'$(NeedsExtraction)' == 'true'" />
-        <Delete Files="$(SlangBaseDir)/LICENSE;$(SlangBaseDir)/README.md"
-                Condition="'$(NeedsExtraction)' == 'true'" />
-
-        <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
-    </Target>
-
-    <!-- Copy Slang files to output directory after extraction -->
-    <!-- This must run after extraction so the files exist, and before the build completes -->
-    <Target Name="CopySlangToOutput" AfterTargets="ExtractSlang" BeforeTargets="Build">
-        <ItemGroup>
-            <SlangBinFiles Include="$(SlangBinDir)/**/*" />
-            <SlangLibFiles Include="$(SlangLibDir)/**/*" />
-        </ItemGroup>
-
-        <Copy SourceFiles="@(SlangBinFiles)"
-              DestinationFiles="@(SlangBinFiles->'$(OutputPath)bin/%(RecursiveDir)%(Filename)%(Extension)')"
-              SkipUnchangedFiles="true" />
-        <Copy SourceFiles="@(SlangLibFiles)"
-              DestinationFiles="@(SlangLibFiles->'$(OutputPath)lib/%(RecursiveDir)%(Filename)%(Extension)')"
-              SkipUnchangedFiles="true" />
-    </Target>
-
-    <!-- Add Slang files to content collection for transitive copying to dependent projects -->
-    <!-- This runs after extraction and before GetCopyToOutputDirectoryItems collects items -->
-    <Target Name="AddSlangContentItems" DependsOnTargets="ExtractSlang" BeforeTargets="GetCopyToOutputDirectoryItems;AssignTargetPaths">
-        <!-- Collect files first, then add to Content with computed TargetPath -->
-        <ItemGroup>
-            <_SlangBinContent Include="$(SlangBinDir)/**/*" />
-            <_SlangLibContent Include="$(SlangLibDir)/**/*" />
-        </ItemGroup>
-
-        <!-- Add to ContentWithTargetPath directly for proper copying -->
-        <ItemGroup>
-            <ContentWithTargetPath Include="@(_SlangBinContent)">
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-                <TargetPath>bin/$([MSBuild]::MakeRelative('$(SlangBinDir)/', '%(FullPath)'))</TargetPath>
-            </ContentWithTargetPath>
-            <ContentWithTargetPath Include="@(_SlangLibContent)">
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-                <TargetPath>lib/$([MSBuild]::MakeRelative('$(SlangLibDir)/', '%(FullPath)'))</TargetPath>
-            </ContentWithTargetPath>
-        </ItemGroup>
-    </Target>
     <ItemGroup>
       <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj" />
     </ItemGroup>

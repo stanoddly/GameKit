@@ -7,4 +7,8 @@
     <!-- For project references, we need to point to the bin folder -->
     <SdlangCompileTaskAssembly Condition="'$(SdlangCompileTaskAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\GameKit.SdlangCompileTask.dll</SdlangCompileTaskAssembly>
   </PropertyGroup>
+
+  <!-- Defines $(SlangCompilerPath). Slang lives in GameKit.SdlangCompileLib's obj directory and is
+       never copied into the consuming project's output, because it is build-host tooling. -->
+  <Import Project="$(MSBuildThisFileDirectory)..\..\GameKit.SdlangCompileLib\build\GameKit.SdlangCompileLib.props" />
 </Project>

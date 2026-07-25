@@ -1,4 +1,12 @@
 <Project>
   <!-- Register the SdlangCompileTask -->
   <UsingTask TaskName="GameKit.SdlangCompileTask.SdlangCompileTask" AssemblyFile="$(SdlangCompileTaskAssembly)" />
+
+  <!-- Compiles every shader declared as a SdlangShader item, for example:
+       <ItemGroup>
+         <SdlangShader Include="Content\shaders\*.slang" />
+       </ItemGroup> -->
+  <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" Condition="'@(SdlangShader)' != ''">
+    <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)" />
+  </Target>
 </Project>

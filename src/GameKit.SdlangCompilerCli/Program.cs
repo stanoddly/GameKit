@@ -30,7 +30,7 @@ class Program
 
         try
         {
-            SdlangCompiler sdlangCompiler = new();
+            SdlangCompiler sdlangCompiler = SdlangCompiler.CreateFromAssemblyDirectory();
             string[] filenames = parseResult.GetValue(filenamesOption) ?? [];
             sdlangCompiler.Compile(filenames, parseResult.GetValue(forceOption));
             return 0;
