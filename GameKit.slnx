@@ -58,8 +58,4 @@
     <Project Path="tutorials/GameKit.Tutorials.MouseWindowPresence/GameKit.Tutorials.MouseWindowPresence.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Audio/GameKit.Tutorials.Audio.csproj" />
   </Folder>
-  <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/GameKit.AStar.Benchmarks/GameKit.AStar.Benchmarks.csproj" />
-    <Project Path="benchmarks/GameKit.DependencyInjection.Benchmarks/GameKit.DependencyInjection.Benchmarks.csproj" />
-  </Folder>
 </Solution>
