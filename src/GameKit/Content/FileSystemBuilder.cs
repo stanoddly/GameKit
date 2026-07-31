@@ -72,6 +72,17 @@ public class FileSystemBuilder
         return this;
     }
 
+    public FileSystemBuilder AddContentFromZipPattern(string pattern)
+    {
+        string[] filenames = Directory.GetFiles(AppContext.BaseDirectory, pattern);
+        foreach (string filename in filenames)
+        {
+            AddContentFromZip(filename);
+        }
+
+        return this;
+    }
+
     public FileSystemBuilder WithCache()
     {
         _cached = true;
