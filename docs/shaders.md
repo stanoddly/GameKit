@@ -63,9 +63,17 @@ The `SdlangShader` item plus the shared target covers the normal case. To compil
 
 Do not name a custom target `CompileSdlangShaders`; a target defined in the project overrides the imported one of the same name.
 
-### Migrating from a hand-rolled target
+### Migrating existing projects
+
+Projects that already declare entry-point shaders with `SdlangShader` need no changes. Generated files use the normal content flow automatically; do not add `CopyToOutputDirectory`, `CopyToPublishDirectory`, or a custom copy target.
+
+Remove any existing target that copies files from `.generated` into build or publish output. The shared targets now own that behavior.
 
 Earlier versions required each project to define its own target calling the task. Replace it with the `SdlangShader` item group shown above. Projects that still call the task without `SlangCompilerPath` fail the build with a message pointing here.
+
+If a project embeds generated files with an `EmbeddedResource` glob over `.generated`, remove that glob and set `OutputItemType` and `OutputLogicalNamePrefix` on `SdlangShader` as shown above. This lets clean builds declare the resources before the generated files exist.
+
+Only entry-point shaders belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
 
 ## Basic Vertex Shader
 
