@@ -6,6 +6,31 @@
        <ItemGroup>
          <SdlangShader Include="Content\shaders\*.slang" />
        </ItemGroup> -->
+  <Target Name="_DeclareSdlangShaderOutputs" BeforeTargets="AssignTargetPaths" Condition="'@(SdlangShader)' != ''">
+    <Error Text="Unsupported SdlangShader OutputItemType '%(SdlangShader.OutputItemType)'. Supported values are Content and EmbeddedResource."
+           Condition="'%(SdlangShader.OutputItemType)' != '' and
+                      '%(SdlangShader.OutputItemType)' != 'Content' and
+                      '%(SdlangShader.OutputItemType)' != 'EmbeddedResource'" />
+
+    <ItemGroup>
+      <_SdlangGeneratedFile Include="@(SdlangShader->'%(RootDir)%(Directory).generated/%(Filename).spv')" />
+      <_SdlangGeneratedFile Include="@(SdlangShader->'%(RootDir)%(Directory).generated/%(Filename).metal')" />
+      <_SdlangGeneratedFile Include="@(SdlangShader->'%(RootDir)%(Directory).generated/%(Filename).metadata.json')" />
+
+      <Content Include="@(_SdlangGeneratedFile)"
+               Condition="'%(_SdlangGeneratedFile.OutputItemType)' == '' or
+                          '%(_SdlangGeneratedFile.OutputItemType)' == 'Content'">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <EmbeddedResource Include="@(_SdlangGeneratedFile)"
+                        Condition="'%(_SdlangGeneratedFile.OutputItemType)' == 'EmbeddedResource'">
+        <WithCulture>false</WithCulture>
+        <LogicalName Condition="'%(_SdlangGeneratedFile.OutputLogicalNamePrefix)' != ''">%(_SdlangGeneratedFile.OutputLogicalNamePrefix)%(_SdlangGeneratedFile.Filename)%(_SdlangGeneratedFile.Extension)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+
   <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" Condition="'@(SdlangShader)' != ''">
     <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)" />
   </Target>

@@ -825,6 +825,25 @@ public class SdlangCompiler
                 return false;
             }
 
+            if (!root.TryGetProperty("shaders", out JsonElement shaders) || shaders.ValueKind != JsonValueKind.Array)
+            {
+                return false;
+            }
+
+            foreach (JsonElement shader in shaders.EnumerateArray())
+            {
+                if (!shader.TryGetProperty("filename", out JsonElement filenameElement))
+                {
+                    return false;
+                }
+
+                string? filename = filenameElement.GetString();
+                if (string.IsNullOrEmpty(filename) || !File.Exists(Path.Combine(outputDir.FullName, filename)))
+                {
+                    return false;
+                }
+            }
+
             string currentHash = CalculateFileHash(filePath);
             return metadata.SourceHash == currentHash;
         }

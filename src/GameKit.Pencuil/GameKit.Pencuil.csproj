@@ -29,17 +29,10 @@
 
     <!-- Compile shaders before build -->
     <ItemGroup>
-        <SdlangShader Include="Content\shaders\*.slang" />
-    </ItemGroup>
-
-    <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
-    <ItemGroup>
-        <Content Remove="Content\shaders\.generated\**\*" />
-        <None Remove="Content\shaders\.generated\**\*" />
-        <EmbeddedResource Include="Content\shaders\.generated\**\*">
-            <WithCulture>false</WithCulture>
-            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/.generated/','shaders/.generated/').Replace('\','/'))</LogicalName>
-        </EmbeddedResource>
+        <SdlangShader Include="Content\shaders\*.slang">
+            <OutputItemType>EmbeddedResource</OutputItemType>
+            <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
+        </SdlangShader>
     </ItemGroup>
 
 </Project>
