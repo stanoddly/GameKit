@@ -75,6 +75,8 @@ If a project embeds generated files with an `EmbeddedResource` glob over `.gener
 
 Only entry-point shaders belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
 
+Generated metadata records the normalized source dependencies and an aggregate source hash for each entry shader. Changing an included or imported source therefore recompiles every entry shader that consumes it. Slang's raw dependency file is a temporary compiler intermediate and is deleted after compilation.
+
 ## Basic Vertex Shader
 
 ```csharp

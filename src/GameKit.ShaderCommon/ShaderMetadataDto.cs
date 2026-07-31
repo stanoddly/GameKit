@@ -41,6 +41,7 @@ public record ShaderMetadataHeaderDto
 {
     public required ShaderStageDto Stage { get; init; }
     public required string SourceHash { get; init; }
+    public List<string>? SourceDependencies { get; init; }
     public string? SlangVersion { get; init; }
 }
 
@@ -53,6 +54,7 @@ public record VertexShaderMetadataDto
     public ShaderSystemValueInputs SystemValueInputs { get; init; }
     public required List<ShaderInstanceDto> Shaders { get; init; }
     public required string SourceHash { get; init; }
+    public List<string>? SourceDependencies { get; init; }
     public string? SlangVersion { get; init; }
 }
 
@@ -62,6 +64,7 @@ public record FragmentShaderMetadataDto
     public required ShaderBindingLayout BindingLayout { get; init; }
     public required List<ShaderInstanceDto> Shaders { get; init; }
     public required string SourceHash { get; init; }
+    public List<string>? SourceDependencies { get; init; }
     public string? SlangVersion { get; init; }
 }
 
@@ -71,6 +74,7 @@ public record ComputeShaderMetadataDto
     public required ShaderBindingLayout BindingLayout { get; init; }
     public required List<ShaderInstanceDto> Shaders { get; init; }
     public required string SourceHash { get; init; }
+    public List<string>? SourceDependencies { get; init; }
     public string? SlangVersion { get; init; }
     public required uint ThreadCountX { get; init; }
     public required uint ThreadCountY { get; init; }
