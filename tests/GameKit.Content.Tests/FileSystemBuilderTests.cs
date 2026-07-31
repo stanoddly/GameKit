@@ -76,6 +76,7 @@ public class FileSystemBuilderTests
     }
 
     [Test]
+    // The process working directory is shared by all tests in this assembly.
     [NonParallelizable]
     public void AddContentFromZipPatternResolvesPatternRelativeToAppBaseDirectory()
     {
