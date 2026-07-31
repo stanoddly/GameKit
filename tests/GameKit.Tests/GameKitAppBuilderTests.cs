@@ -11,15 +11,12 @@ public class GameKitAppBuilderTests
     public void AddContentFromZipPatternResolvesPatternRelativeToAppBaseDirectory()
     {
         string originalWorkingDirectory = Directory.GetCurrentDirectory();
-        string temporaryWorkingDirectory = Path.Combine(
-            Path.GetTempPath(),
-            $"GameKit.Tests-{Guid.NewGuid():N}");
         string archiveFilename = $"content-{Guid.NewGuid():N}.pk3";
         string archivePath = Path.Combine(AppContext.BaseDirectory, archiveFilename);
+        DirectoryInfo temporaryWorkingDirectory = Directory.CreateTempSubdirectory("GameKit.Tests-");
 
         try
         {
-            Directory.CreateDirectory(temporaryWorkingDirectory);
             using (ZipArchive archive = System.IO.Compression.ZipFile.Open(archivePath, ZipArchiveMode.Create))
             {
                 ZipArchiveEntry entry = archive.CreateEntry("marker.txt");
@@ -27,7 +24,7 @@ public class GameKitAppBuilderTests
                 writer.Write("from app directory");
             }
 
-            Directory.SetCurrentDirectory(temporaryWorkingDirectory);
+            Directory.SetCurrentDirectory(temporaryWorkingDirectory.FullName);
 
             using IGameKitApp app = new GameKitAppBuilder()
                 .AddContentFromZipPattern(archiveFilename)
@@ -41,9 +38,9 @@ public class GameKitAppBuilderTests
         {
             Directory.SetCurrentDirectory(originalWorkingDirectory);
             File.Delete(archivePath);
-            if (Directory.Exists(temporaryWorkingDirectory))
+            if (temporaryWorkingDirectory.Exists)
             {
-                Directory.Delete(temporaryWorkingDirectory, true);
+                temporaryWorkingDirectory.Delete(true);
             }
         }
     }
