@@ -22,6 +22,7 @@
                           '%(_SdlangGeneratedFile.OutputItemType)' == 'Content'">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <TargetPath Condition="'%(_SdlangGeneratedFile.Link)' != ''">$([System.Text.RegularExpressions.Regex]::Replace('%(_SdlangGeneratedFile.Link)', '[^\\/]+$', '')).generated/%(_SdlangGeneratedFile.Filename)%(_SdlangGeneratedFile.Extension)</TargetPath>
       </Content>
       <EmbeddedResource Include="@(_SdlangGeneratedFile)"
                         Condition="'%(_SdlangGeneratedFile.OutputItemType)' == 'EmbeddedResource'">

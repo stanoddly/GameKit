@@ -18,10 +18,16 @@ public class SdlangBuildIntegrationTests
             "BuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "BuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string externalGeneratedDirectory = Path.Combine(
+            projectDirectory,
+            "..",
+            "ExternalShaders",
+            ".generated");
         string outputDirectory = Path.Combine(projectDirectory, "bin");
         string intermediateDirectory = Path.Combine(projectDirectory, "obj");
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
 
@@ -35,10 +41,13 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(buildGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(buildGeneratedDirectory);
+        AssertExternalGeneratedShadersDoNotExist(Path.Combine(outputDirectory, "Debug", "net10.0"));
         AssertEmbeddedShadersAreNotCopied(buildGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(outputDirectory, "Debug", "net10.0", "BuildIntegration.dll"));
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
 
@@ -57,6 +66,8 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(publishGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(publishGeneratedDirectory);
+        AssertExternalGeneratedShadersDoNotExist(publishDirectory);
         AssertEmbeddedShadersAreNotCopied(publishGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(publishDirectory, "BuildIntegration.dll"));
 
@@ -77,6 +88,8 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(noBuildGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(noBuildGeneratedDirectory);
+        AssertExternalGeneratedShadersDoNotExist(noBuildPublishDirectory);
         AssertEmbeddedShadersAreNotCopied(noBuildGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(noBuildPublishDirectory, "BuildIntegration.dll"));
     }
@@ -98,6 +111,26 @@ public class SdlangBuildIntegrationTests
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.spv")), Is.False);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metal")), Is.False);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metadata.json")), Is.False);
+        });
+    }
+
+    private static void AssertExternalGeneratedShadersExist(string generatedDirectory)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metal")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metadata.json")), Is.True);
+        });
+    }
+
+    private static void AssertExternalGeneratedShadersDoNotExist(string outputDirectory)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.spv")), Is.False);
+            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.metal")), Is.False);
+            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.metadata.json")), Is.False);
         });
     }
 
