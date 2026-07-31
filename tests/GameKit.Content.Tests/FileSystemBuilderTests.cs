@@ -76,7 +76,7 @@ public class FileSystemBuilderTests
     }
 
     [Test]
-    // The process working directory is shared by all tests in this assembly.
+    // Directory.SetCurrentDirectory affects the entire test process, so this test cannot run in parallel.
     [NonParallelizable]
     public void AddContentFromZipPatternResolvesPatternRelativeToAppBaseDirectory()
     {
