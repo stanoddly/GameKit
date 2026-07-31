@@ -24,8 +24,7 @@ public class ServiceProvider : IDisposable
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
     private ServiceDescriptor?[]? _transientDescriptors;
     private Dictionary<int, ServiceCollectionRegistration[]>? _serviceCollectionRegistrations;
-    private readonly List<object> _transientDisposables = new();
-    private readonly List<Type> _transientDisposableTypes = new();
+    private readonly List<TransientDisposalRecord> _transientDisposalRecords = new();
     // Tracks slot indices in the order services were first stored, for reverse-order disposal.
     private readonly List<ServiceCreationRecord> _creationRecords = new();
 
@@ -41,21 +40,17 @@ public class ServiceProvider : IDisposable
         public object? TypedServices { get; set; }
     }
 
-    private readonly struct ServiceCreationRecord
-    {
-        public ServiceCreationRecord(
-            int slot,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type concreteType)
-        {
-            Slot = slot;
-            ConcreteType = concreteType;
-        }
+    private readonly record struct ServiceCreationRecord(
+        int Slot,
+        [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+        [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+        Type ConcreteType);
 
-        public int Slot { get; }
-
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
-        public Type ConcreteType { get; }
-    }
+    private readonly record struct TransientDisposalRecord(
+        object Instance,
+        [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+        [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
+        Type ConcreteType);
 
     internal ServiceProvider(ServiceProvider? parent)
     {
@@ -378,8 +373,7 @@ public class ServiceProvider : IDisposable
 
         if (instance is IDisposable)
         {
-            _transientDisposables.Add(instance);
-            _transientDisposableTypes.Add(descriptor.ConcreteType!);
+            _transientDisposalRecords.Add(new TransientDisposalRecord(instance, descriptor.ConcreteType!));
         }
 
         RunActivatedCallbacks(instance, descriptor.ConcreteType!);
@@ -579,16 +573,16 @@ public class ServiceProvider : IDisposable
         // Dispose in reverse creation order; deduplicate to avoid double-disposing aliased instances
         HashSet<object> alreadyDisposed = new(ReferenceEqualityComparer.Instance);
 
-        for (int i = _transientDisposables.Count - 1; i >= 0; i--)
+        for (int i = _transientDisposalRecords.Count - 1; i >= 0; i--)
         {
-            object service = _transientDisposables[i];
+            TransientDisposalRecord record = _transientDisposalRecords[i];
+            object service = record.Instance;
             if (!alreadyDisposed.Add(service))
             {
                 continue;
             }
 
-            Type serviceType = _transientDisposableTypes[i];
-            RunDisposingCallbacks(service, serviceType);
+            RunDisposingCallbacks(service, record.ConcreteType);
 
             ((IDisposable)service).Dispose();
         }
@@ -642,8 +636,7 @@ public class ServiceProvider : IDisposable
         _buildTimeResolver = null;
         _buildTimeTryResolver = null;
         _buildTimeCollectionResolver = null;
-        _transientDisposables.Clear();
-        _transientDisposableTypes.Clear();
+        _transientDisposalRecords.Clear();
     }
 }
 

@@ -156,7 +156,7 @@ public class ServiceCollection
     /// <typeparam name="TService">The alias service type (interface or base class) to register.</typeparam>
     /// <typeparam name="TImplementation">The concrete type whose existing instance will be shared. Must already be registered.</typeparam>
     /// <exception cref="InvalidOperationException">Thrown if <typeparamref name="TImplementation"/> has not been registered before calling this method.</exception>
-    public void AddAlias<TService, TImplementation>()
+    public void AddAlias<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImplementation>()
         where TService : class
         where TImplementation : class, TService
     {
