@@ -41,7 +41,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder AddContentFromZipPattern(string pattern)
     {
-        string[] filenames = Directory.GetFiles(Directory.GetCurrentDirectory(), pattern);
+        string[] filenames = Directory.GetFiles(AppContext.BaseDirectory, pattern);
         foreach (string filename in filenames)
         {
             _fileSystemBuilder.AddContentFromZip(filename);
