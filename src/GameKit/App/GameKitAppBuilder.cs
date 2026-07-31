@@ -39,6 +39,12 @@ public class GameKitAppBuilder : ServiceCollection
         return this;
     }
 
+    public GameKitAppBuilder AddContentFromDirectoryPattern(string pattern)
+    {
+        _fileSystemBuilder.AddContentFromDirectoryPattern(pattern);
+        return this;
+    }
+
     public GameKitAppBuilder AddContentFromZipPattern(string pattern)
     {
         _fileSystemBuilder.AddContentFromZipPattern(pattern);

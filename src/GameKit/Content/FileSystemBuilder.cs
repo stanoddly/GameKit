@@ -26,6 +26,19 @@ public class FileSystemBuilder
         return this;
     }
 
+    public FileSystemBuilder AddContentFromDirectoryPattern(string pattern)
+    {
+        string[] directories = Directory.GetDirectories(AppContext.BaseDirectory, pattern);
+        Array.Sort(directories, StringComparer.Ordinal);
+
+        foreach (string directory in directories)
+        {
+            AddContentFromDirectory(directory);
+        }
+
+        return this;
+    }
+
     private static string ResolveContentDirectory(string baseDirectory, string? subdirectory)
     {
         string appDirectory = Path.GetFullPath(baseDirectory);
