@@ -1,3 +1,5 @@
+using System.IO.Compression;
+
 namespace GameKit.Content.Tests;
 
 public class FileSystemBuilderTests
@@ -71,5 +73,43 @@ public class FileSystemBuilderTests
         Assert.That(fileSystem is NativeFileSystem);
         NativeFileSystem nativeFileSystem = (NativeFileSystem)fileSystem;
         Assert.That(nativeFileSystem.RootPath, Is.EqualTo(expectedPath));
+    }
+
+    [Test]
+    [NonParallelizable]
+    public void AddContentFromZipPatternResolvesPatternRelativeToAppBaseDirectory()
+    {
+        string originalWorkingDirectory = Directory.GetCurrentDirectory();
+        string archiveFilename = $"content-{Guid.NewGuid():N}.pk3";
+        string archivePath = Path.Combine(AppContext.BaseDirectory, archiveFilename);
+        DirectoryInfo temporaryWorkingDirectory = Directory.CreateTempSubdirectory("GameKit.Content.Tests-");
+
+        try
+        {
+            using (ZipArchive archive = System.IO.Compression.ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            {
+                ZipArchiveEntry entry = archive.CreateEntry("marker.txt");
+                using StreamWriter writer = new(entry.Open());
+                writer.Write("from app directory");
+            }
+
+            Directory.SetCurrentDirectory(temporaryWorkingDirectory.FullName);
+
+            using VirtualFileSystem fileSystem = new FileSystemBuilder()
+                .AddContentFromZipPattern(archiveFilename)
+                .Create();
+            using StreamReader reader = new(fileSystem.OpenStream("marker.txt"));
+
+            Assert.That(reader.ReadToEnd(), Is.EqualTo("from app directory"));
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalWorkingDirectory);
+            File.Delete(archivePath);
+            if (temporaryWorkingDirectory.Exists)
+            {
+                temporaryWorkingDirectory.Delete(true);
+            }
+        }
     }
 }
