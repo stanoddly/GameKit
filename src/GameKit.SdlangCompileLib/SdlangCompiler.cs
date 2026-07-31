@@ -1,6 +1,8 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using GameKit.ShaderCommon;
@@ -31,7 +33,7 @@ public class SdlangCompiler
     private static readonly string SlangVersion = GetSlangVersion();
 
     private readonly string _slangCompilerPath;
-    
+
     private static readonly Dictionary<ShaderFormatDto, string> TargetsWithExtensions = new()
     {
         { ShaderFormatDto.SpirV, "spv" },
@@ -122,12 +124,34 @@ public class SdlangCompiler
         }
     }
 
-    private static string CalculateFileHash(FileInfo filePath)
+    private static string CalculateSourceHash(FileInfo filePath, IEnumerable<string> sourceDependencies)
     {
-        using SHA256 sha256 = SHA256.Create();
-        using FileStream stream = filePath.OpenRead();
-        byte[] hash = sha256.ComputeHash(stream);
+        using IncrementalHash sourceHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        Span<byte> pathLength = stackalloc byte[sizeof(int)];
+
+        foreach (string sourceDependency in sourceDependencies)
+        {
+            byte[] dependencyPath = Encoding.UTF8.GetBytes(sourceDependency);
+            BinaryPrimitives.WriteInt32LittleEndian(pathLength, dependencyPath.Length);
+            sourceHash.AppendData(pathLength);
+            sourceHash.AppendData(dependencyPath);
+
+            FileInfo dependencyFile = ResolveSourceDependency(filePath, sourceDependency);
+            using FileStream stream = dependencyFile.OpenRead();
+            sourceHash.AppendData(SHA256.HashData(stream));
+        }
+
+        byte[] hash = sourceHash.GetHashAndReset();
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static FileInfo ResolveSourceDependency(FileInfo filePath, string sourceDependency)
+    {
+        string platformPath = sourceDependency.Replace('/', Path.DirectorySeparatorChar);
+        string dependencyPath = Path.IsPathRooted(platformPath)
+            ? platformPath
+            : Path.Combine(filePath.Directory!.FullName, platformPath);
+        return new FileInfo(Path.GetFullPath(dependencyPath));
     }
 
     private static string GetTargetString(ShaderFormatDto format) => format switch
@@ -145,17 +169,19 @@ public class SdlangCompiler
         { ShaderFormatDto.Msl, [] }
     };
 
-    private (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
+    private (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
         FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
         FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
+        FileInfo dependencyFile = new FileInfo(Path.Combine(tempDir.FullName, "dependencies.d"));
 
         List<string> args = new List<string>
         {
             filePath.FullName,
             "-warnings-disable", "39001,39013,39029",
-            "-reflection-json", reflectionFile.FullName
+            "-reflection-json", reflectionFile.FullName,
+            "-depfile", dependencyFile.FullName
         };
 
         List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
@@ -212,7 +238,113 @@ public class SdlangCompiler
             NormalizeMetalBufferBindings(outputFile);
         }
 
-        return (reflectionFile, shaderInstances);
+        return (reflectionFile, dependencyFile, shaderInstances);
+    }
+
+    private static List<string> ReadSourceDependencies(FileInfo filePath, FileInfo dependencyFile)
+    {
+        HashSet<string> sourceDependencies = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (string statement in File.ReadLines(dependencyFile.FullName))
+        {
+            int separatorIndex = FindDependencySeparator(statement);
+            if (separatorIndex < 0)
+            {
+                throw new ShaderCompilationException($"Invalid dependency statement: {statement}");
+            }
+
+            foreach (string dependency in ParseDependencyPaths(statement.AsSpan(separatorIndex + 1)))
+            {
+                string absolutePath = Path.GetFullPath(dependency);
+                string relativePath = Path.GetRelativePath(filePath.Directory!.FullName, absolutePath);
+                string normalizedPath = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+                sourceDependencies.Add(normalizedPath);
+            }
+        }
+
+        string normalizedInputPath = Path.GetRelativePath(filePath.Directory!.FullName, filePath.FullName)
+            .Replace(Path.DirectorySeparatorChar, '/');
+        if (!sourceDependencies.Contains(normalizedInputPath))
+        {
+            throw new ShaderCompilationException(
+                $"Dependency output for {filePath.FullName} does not contain the input shader");
+        }
+
+        return sourceDependencies.Order(StringComparer.Ordinal).ToList();
+    }
+
+    private static int FindDependencySeparator(string statement)
+    {
+        bool escaped = false;
+        for (int index = 0; index < statement.Length; index++)
+        {
+            char character = statement[index];
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+
+            if (character == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+
+            if (character == ':')
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    private static List<string> ParseDependencyPaths(ReadOnlySpan<char> dependencyList)
+    {
+        List<string> dependencies = new List<string>();
+        StringBuilder dependency = new StringBuilder();
+
+        for (int index = 0; index < dependencyList.Length; index++)
+        {
+            char character = dependencyList[index];
+            if (character == '\\')
+            {
+                if (++index >= dependencyList.Length)
+                {
+                    throw new ShaderCompilationException("Dependency path ends with an escape character");
+                }
+
+                dependency.Append(dependencyList[index]);
+                continue;
+            }
+
+            if (character == '$' && index + 1 < dependencyList.Length && dependencyList[index + 1] == '$')
+            {
+                dependency.Append('$');
+                index++;
+                continue;
+            }
+
+            if (char.IsWhiteSpace(character))
+            {
+                if (dependency.Length > 0)
+                {
+                    dependencies.Add(dependency.ToString());
+                    dependency.Clear();
+                }
+                continue;
+            }
+
+            dependency.Append(character);
+        }
+
+        if (dependency.Length > 0)
+        {
+            dependencies.Add(dependency.ToString());
+        }
+
+        return dependencies;
     }
 
     private static void NormalizeMetalBufferBindings(FileInfo outputFile)
@@ -751,7 +883,8 @@ public class SdlangCompiler
     }
 
     private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
-        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string fileHash,
+        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string sourceHash,
+        List<string> sourceDependencies,
         ShaderSystemValueInputs systemValueInputs,
         uint threadCountX = 0, uint threadCountY = 0, uint threadCountZ = 0)
     {
@@ -766,7 +899,8 @@ public class SdlangCompiler
                     BindingLayout = resources,
                     SystemValueInputs = systemValueInputs,
                     Shaders = shaderInstances,
-                    SourceHash = fileHash,
+                    SourceHash = sourceHash,
+                    SourceDependencies = sourceDependencies,
                     SlangVersion = SlangVersion
                 };
                 JsonSerializer.Serialize(stream, vertexMetadata, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
@@ -776,7 +910,8 @@ public class SdlangCompiler
                 {
                     BindingLayout = resources,
                     Shaders = shaderInstances,
-                    SourceHash = fileHash,
+                    SourceHash = sourceHash,
+                    SourceDependencies = sourceDependencies,
                     SlangVersion = SlangVersion
                 };
                 JsonSerializer.Serialize(stream, fragmentMetadata, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
@@ -786,7 +921,8 @@ public class SdlangCompiler
                 {
                     BindingLayout = resources,
                     Shaders = shaderInstances,
-                    SourceHash = fileHash,
+                    SourceHash = sourceHash,
+                    SourceDependencies = sourceDependencies,
                     SlangVersion = SlangVersion,
                     ThreadCountX = threadCountX,
                     ThreadCountY = threadCountY,
@@ -801,22 +937,34 @@ public class SdlangCompiler
 
     private static bool ShouldSkipCompilation(FileInfo filePath, DirectoryInfo outputDir, bool force)
     {
-        if (force) return false;
+        if (force)
+        {
+            return false;
+        }
 
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
 
-        if (!metadataFile.Exists) return false;
+        if (!metadataFile.Exists)
+        {
+            return false;
+        }
 
         try
         {
             string json = File.ReadAllText(metadataFile.FullName);
             ShaderMetadataHeaderDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.ShaderMetadataHeaderDto);
 
-            if (metadata?.SourceHash == null) return false;
+            if (metadata?.SourceHash == null || metadata.SourceDependencies is not { Count: > 0 })
+            {
+                return false;
+            }
 
             // Force recompilation if slang version is missing or different
-            if (metadata.SlangVersion == null || metadata.SlangVersion != SlangVersion) return false;
+            if (metadata.SlangVersion == null || metadata.SlangVersion != SlangVersion)
+            {
+                return false;
+            }
 
             using JsonDocument document = JsonDocument.Parse(json);
             JsonElement root = document.RootElement;
@@ -844,7 +992,7 @@ public class SdlangCompiler
                 }
             }
 
-            string currentHash = CalculateFileHash(filePath);
+            string currentHash = CalculateSourceHash(filePath, metadata.SourceDependencies);
             return metadata.SourceHash == currentHash;
         }
         catch (JsonException)
@@ -852,6 +1000,18 @@ public class SdlangCompiler
             return false;
         }
         catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (NotSupportedException)
         {
             return false;
         }
@@ -937,8 +1097,6 @@ public class SdlangCompiler
         DirectoryInfo parentDir = filePath.Directory!;
         DirectoryInfo outputDir = new DirectoryInfo(Path.Combine(parentDir.FullName, GeneratedShaderDirectory));
 
-        string currentHash = CalculateFileHash(filePath);
-
         if (ShouldSkipCompilation(filePath, outputDir, force))
         {
             Console.WriteLine($"Skipping {filePath.FullName} (unchanged)");
@@ -959,7 +1117,10 @@ public class SdlangCompiler
 
             // Step 1: Compile all targets in a single slangc invocation
             List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV, ShaderFormatDto.Msl];
-            (FileInfo reflectionFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(filePath, tempDir, outputDir, targets);
+            (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) =
+                CompileTargets(filePath, tempDir, outputDir, targets);
+            List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
+            string sourceHash = CalculateSourceHash(filePath, sourceDependencies);
 
             // Step 2: Parse reflection data
             (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
@@ -977,7 +1138,8 @@ public class SdlangCompiler
                 stage,
                 bindingLayout,
                 shaderInstances,
-                currentHash,
+                sourceHash,
+                sourceDependencies,
                 systemValueInputs,
                 threadCountX,
                 threadCountY,

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using GameKit.ShaderCommon;
 
 namespace GameKit.SdlangCompileLib.Tests;
@@ -12,6 +13,45 @@ public class SdlangCompilerTests
                                              return float4(position, 1.0);
                                          }
                                          """;
+
+    private const string ShaderWithSourceDependencies = """
+                                                        #include "shared $ sources/included # [value].slang"
+                                                        import imported;
+
+                                                        [shader("fragment")]
+                                                        float4 main() : SV_Target
+                                                        {
+                                                            return includedColor() + importedColor();
+                                                        }
+                                                        """;
+
+    private const string IncludedShaderSource = """
+                                                 float4 includedColor()
+                                                 {
+                                                     return float4(0.25, 0.0, 0.0, 0.0);
+                                                 }
+                                                 """;
+
+    private const string UpdatedIncludedShaderSource = """
+                                                        float4 includedColor()
+                                                        {
+                                                            return float4(0.5, 0.0, 0.0, 0.0);
+                                                        }
+                                                        """;
+
+    private const string ImportedShaderSource = """
+                                                 public float4 importedColor()
+                                                 {
+                                                     return float4(0.0, 0.25, 0.0, 1.0);
+                                                 }
+                                                 """;
+
+    private const string UpdatedImportedShaderSource = """
+                                                        public float4 importedColor()
+                                                        {
+                                                            return float4(0.0, 0.5, 0.0, 1.0);
+                                                        }
+                                                        """;
 
     private const string ValidVertexShaderWithBindings = """
                                                          struct VertexInput {
@@ -230,13 +270,14 @@ public class SdlangCompilerTests
         Assert.That(File.Exists(metadataPath), Is.True, "Metadata file should be created");
 
         string json = File.ReadAllText(metadataPath);
-        
+
         VertexShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
         Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
         Assert.That(metadata.SourceHash, Is.Not.Empty);
+        Assert.That(metadata.SourceDependencies, Is.EqualTo(new[] { "test_shader.slang" }));
         Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.False);
         Assert.That(metadata.SystemValueInputs.UsesInstanceId, Is.False);
 
@@ -259,6 +300,79 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: false);
 
         Assert.That(File.Exists(generatedShaderPath), Is.True);
+    }
+
+    [Test]
+    public void CompileShader_MissingSourceDependencies_Recompiles()
+    {
+        string shaderPath = Path.Combine(_testDir, "legacy_metadata.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string generatedShaderPath = Path.Combine(generatedDirectory, "legacy_metadata.spv");
+        string metadataPath = Path.Combine(generatedDirectory, "legacy_metadata.metadata.json");
+        JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        metadata.Remove("sourceDependencies");
+        File.WriteAllText(metadataPath, metadata.ToJsonString());
+        File.WriteAllBytes(generatedShaderPath, [0]);
+
+        compiler.Compile([shaderPath], force: false);
+
+        Assert.That(new FileInfo(generatedShaderPath).Length, Is.GreaterThan(1));
+    }
+
+    [Test]
+    public void CompileShader_SourceDependencyChanges_RecompilesGeneratedShaders()
+    {
+        string shaderPath = Path.Combine(_testDir, "dependency_shader.slang");
+        string includedDirectory = Path.Combine(_testDir, "shared $ sources");
+        string includedShaderPath = Path.Combine(includedDirectory, "included # [value].slang");
+        string importedShaderPath = Path.Combine(_testDir, "imported.slang");
+        Directory.CreateDirectory(includedDirectory);
+        File.WriteAllText(shaderPath, ShaderWithSourceDependencies);
+        File.WriteAllText(includedShaderPath, IncludedShaderSource);
+        File.WriteAllText(importedShaderPath, ImportedShaderSource);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string spirvPath = Path.Combine(generatedDirectory, "dependency_shader.spv");
+        string metalPath = Path.Combine(generatedDirectory, "dependency_shader.metal");
+        string metadataPath = Path.Combine(generatedDirectory, "dependency_shader.metadata.json");
+        byte[] originalSpirv = File.ReadAllBytes(spirvPath);
+        string originalMetal = File.ReadAllText(metalPath);
+        FragmentShaderMetadataDto originalMetadata = ReadFragmentMetadata(metadataPath);
+
+        Assert.That(originalMetadata.SourceDependencies, Is.EqualTo(new[]
+        {
+            "dependency_shader.slang",
+            "imported.slang",
+            "shared $ sources/included # [value].slang"
+        }));
+
+        File.WriteAllText(includedShaderPath, UpdatedIncludedShaderSource);
+        compiler.Compile([shaderPath], force: false);
+
+        byte[] includedUpdateSpirv = File.ReadAllBytes(spirvPath);
+        string includedUpdateMetal = File.ReadAllText(metalPath);
+        FragmentShaderMetadataDto includedUpdateMetadata = ReadFragmentMetadata(metadataPath);
+        Assert.That(includedUpdateMetadata.SourceHash, Is.Not.EqualTo(originalMetadata.SourceHash));
+        Assert.That(includedUpdateSpirv, Is.Not.EqualTo(originalSpirv));
+        Assert.That(includedUpdateMetal, Is.Not.EqualTo(originalMetal));
+
+        File.WriteAllText(importedShaderPath, UpdatedImportedShaderSource);
+        compiler.Compile([shaderPath], force: false);
+
+        FragmentShaderMetadataDto importedUpdateMetadata = ReadFragmentMetadata(metadataPath);
+        Assert.That(importedUpdateMetadata.SourceHash, Is.Not.EqualTo(includedUpdateMetadata.SourceHash));
+        Assert.That(File.ReadAllBytes(spirvPath), Is.Not.EqualTo(includedUpdateSpirv));
+        Assert.That(File.ReadAllText(metalPath), Is.Not.EqualTo(includedUpdateMetal));
+        Assert.That(File.Exists(Path.Combine(generatedDirectory, "imported.spv")), Is.False);
+        Assert.That(File.Exists(Path.Combine(generatedDirectory, "included # [value].spv")), Is.False);
     }
 
     [Test]
@@ -547,5 +661,14 @@ public class SdlangCompilerTests
         string shaderPath = Path.Combine(_testDir, filename);
         File.WriteAllText(shaderPath, shaderContent);
         return shaderPath;
+    }
+
+    private static FragmentShaderMetadataDto ReadFragmentMetadata(string metadataPath)
+    {
+        string json = File.ReadAllText(metadataPath);
+        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(
+            json,
+            ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+        return metadata ?? throw new InvalidOperationException($"Unable to read shader metadata from {metadataPath}");
     }
 }
