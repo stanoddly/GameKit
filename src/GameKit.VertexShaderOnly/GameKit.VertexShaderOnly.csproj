@@ -18,20 +18,10 @@
 
     <!-- Compile shaders before build -->
     <ItemGroup>
-        <SdlangShader Include="Content\shaders\*.slang" />
-    </ItemGroup>
-
-    <!-- Embed compiled shaders as resources with proper paths for VirtualFileSystem -->
-    <!-- WithCulture=false is required because .NET SDK interprets "metadata" in filenames like
-         noop.metadata.json as a culture name, placing them in satellite assemblies instead of
-         the main assembly. See: https://github.com/dotnet/sdk/issues/2644 -->
-    <ItemGroup>
-        <Content Remove="Content\shaders\.generated\**\*" />
-        <None Remove="Content\shaders\.generated\**\*" />
-        <EmbeddedResource Include="Content\shaders\.generated\**\*">
-            <WithCulture>false</WithCulture>
-            <LogicalName>$([System.String]::new('%(RelativeDir)%(Filename)%(Extension)').Replace('Content/shaders/.generated/','shaders/.generated/').Replace('\','/'))</LogicalName>
-        </EmbeddedResource>
+        <SdlangShader Include="Content\shaders\*.slang">
+            <OutputItemType>EmbeddedResource</OutputItemType>
+            <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
+        </SdlangShader>
     </ItemGroup>
 
 </Project>

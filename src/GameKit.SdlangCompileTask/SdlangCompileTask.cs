@@ -9,6 +9,8 @@ namespace GameKit.SdlangCompileTask;
 /// </summary>
 public class SdlangCompileTask : Microsoft.Build.Utilities.Task
 {
+    private static readonly string[] GeneratedFileExtensions = ["spv", "metal", "metadata.json"];
+
     /// <summary>
     /// The input shader file to compile. If empty or null, the task succeeds without compiling.
     /// </summary>
@@ -22,8 +24,16 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
     /// </summary>
     public string? SlangCompilerPath { get; set; }
 
+    /// <summary>
+    /// Files generated for the input shader.
+    /// </summary>
+    [Output]
+    public ITaskItem[] GeneratedFiles { get; private set; } = [];
+
     public override bool Execute()
     {
+        GeneratedFiles = [];
+
         if (string.IsNullOrEmpty(InputFile))
         {
             return true;
@@ -43,6 +53,7 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
         {
             SdlangCompiler sdlangCompiler = new(SlangCompilerPath);
             sdlangCompiler.Compile([InputFile], false);
+            GeneratedFiles = GetGeneratedFiles(InputFile);
             return true;
         }
         catch (Exception ex)
@@ -50,5 +61,29 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
             Log.LogError(ex.Message);
             return false;
         }
+    }
+
+    private static ITaskItem[] GetGeneratedFiles(string inputFile)
+    {
+        string inputPath = Path.GetFullPath(inputFile);
+        string inputDirectory = Path.GetDirectoryName(inputPath)!;
+        string generatedDirectory = Path.Combine(inputDirectory, ".generated");
+        string generatedFilename = Path.GetFileNameWithoutExtension(inputPath);
+
+        string[] generatedFiles = GeneratedFileExtensions
+            .Select(extension => Path.Combine(generatedDirectory, $"{generatedFilename}.{extension}"))
+            .ToArray();
+
+        string? missingGeneratedFile = generatedFiles.FirstOrDefault(path => !File.Exists(path));
+        if (missingGeneratedFile != null)
+        {
+            throw new FileNotFoundException(
+                $"Shader compilation did not produce the expected file {missingGeneratedFile}",
+                missingGeneratedFile);
+        }
+
+        return generatedFiles
+            .Select(path => (ITaskItem)new TaskItem(path))
+            .ToArray();
     }
 }

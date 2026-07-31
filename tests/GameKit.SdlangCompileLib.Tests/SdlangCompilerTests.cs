@@ -245,6 +245,23 @@ public class SdlangCompilerTests
     }
 
     [Test]
+    public void CompileShader_MissingGeneratedShader_Recompiles()
+    {
+        string shaderPath = Path.Combine(_testDir, "missing_output.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedShaderPath = Path.Combine(_testDir, ".generated", "missing_output.spv");
+        File.Delete(generatedShaderPath);
+
+        compiler.Compile([shaderPath], force: false);
+
+        Assert.That(File.Exists(generatedShaderPath), Is.True);
+    }
+
+    [Test]
     public void CompileShader_VertexShaderWithSystemValueInputs_CreatesSystemValueMetadata()
     {
         string shaderPath = Path.Combine(_testDir, "system_values.slang");

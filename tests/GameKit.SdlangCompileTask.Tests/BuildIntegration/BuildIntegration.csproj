@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPublishable>true</IsPublishable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <Import Project="..\..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\copy_output.slang" />
+        <SdlangShader Include="Content\shaders\embedded_output.slang">
+            <OutputItemType>EmbeddedResource</OutputItemType>
+            <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
+        </SdlangShader>
+    </ItemGroup>
+
+    <Target Name="RejectUnexpectedShaderCompilation"
+            BeforeTargets="CompileSdlangShaders"
+            Condition="'$(RejectUnexpectedShaderCompilation)' == 'true'">
+        <Error Text="Shader compilation was not expected for this build." />
+    </Target>
+</Project>
