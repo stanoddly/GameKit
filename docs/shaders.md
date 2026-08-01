@@ -35,17 +35,17 @@ Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare
 </ItemGroup>
 ```
 
-The targets file declares every generated output as an MSBuild item before target paths are assigned, then compiles every `SdlangShader` item before `CoreCompile`. Generated files are copied to the same project-relative paths in build and publish output. For example, outputs for `Content/shaders/vertex.slang` are copied under `Content/shaders/.generated`. Declaring the expected output paths independently of their existence makes clean builds work even though `.generated` does not exist when MSBuild evaluates the project. It also lets publish reuse an existing build without invoking the shader compiler. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
+The targets file compiles every `SdlangShader` item before `CoreCompile`. Generated files remain beside their shader sources and are not added to build or publish output by default. This lets a project own its complete content pipeline independently of shader compilation. Enumerate content inside an execution-time target so files created during the build are included. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
 
-Set `OutputItemType` to `None` when another build target owns the generated files, such as a target that copies an entire content directory after compilation:
+Generated files can opt into the normal MSBuild content pipeline:
 
 ```xml
-<SdlangShader Include="..\Game.Executable\Content\shaders\*.slang">
-    <OutputItemType>None</OutputItemType>
+<SdlangShader Include="Content\shaders\*.slang">
+    <OutputItemType>Content</OutputItemType>
 </SdlangShader>
 ```
 
-The shaders are still compiled beside their sources, but their generated files are not copied or embedded by the shared targets. Enumerate files inside the owning copy target so files created during the build are included.
+The targets declare the expected outputs before target paths are assigned, so clean builds copy them to the same project-relative paths even though `.generated` does not exist during project evaluation. Publish can also reuse an existing build without invoking the shader compiler.
 
 Generated files can instead be embedded without also copying them as standalone content:
 
@@ -75,9 +75,7 @@ Do not name a custom target `CompileSdlangShaders`; a target defined in the proj
 
 ### Migrating existing projects
 
-Projects that already declare entry-point shaders with `SdlangShader` need no changes. Generated files use the normal content flow automatically; do not add `CopyToOutputDirectory`, `CopyToPublishDirectory`, or a custom copy target.
-
-Remove any existing target that copies files from `.generated` into build or publish output. The shared targets now own that behavior.
+Projects that want generated files copied individually must set `OutputItemType` to `Content`. Projects whose build targets copy or package a complete content directory should leave `OutputItemType` unset.
 
 Earlier versions required each project to define its own target calling the task. Replace it with the `SdlangShader` item group shown above. Projects that still call the task without `SlangCompilerPath` fail the build with a message pointing here.
 

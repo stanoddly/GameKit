@@ -13,10 +13,10 @@
     <Import Project="..\..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
     <ItemGroup>
-        <SdlangShader Include="Content\shaders\copy_output.slang" />
-        <SdlangShader Include="..\ExternalShaders\*.slang">
-            <OutputItemType>None</OutputItemType>
+        <SdlangShader Include="Content\shaders\copy_output.slang">
+            <OutputItemType>Content</OutputItemType>
         </SdlangShader>
+        <SdlangShader Include="..\ExternalShaders\*.slang" />
         <SdlangShader Include="Content\shaders\embedded_output.slang">
             <OutputItemType>EmbeddedResource</OutputItemType>
             <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
