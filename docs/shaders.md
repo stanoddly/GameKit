@@ -37,46 +37,7 @@ Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare
 
 The targets file compiles every `SdlangShader` item before `CoreCompile` and exposes the generated files as `@(SdlangShaderOutput)`. Generated files remain beside their shader sources; the compilation targets do not copy, package, or embed them. This lets each project own its complete content pipeline independently of shader compilation. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
 
-Enumerate content inside an execution-time target so files created during the build are included. For example, a project can copy its complete content tree after the normal build output has been copied:
-
-```xml
-<PropertyGroup>
-    <ContentSourceDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'Content'))</ContentSourceDirectory>
-</PropertyGroup>
-
-<Target Name="CopyContentToBuildOutput"
-        AfterTargets="CopyFilesToOutputDirectory">
-    <ItemGroup>
-        <_ContentForBuild Include="$(ContentSourceDirectory)\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_ContentForBuild)"
-          DestinationFiles="@(_ContentForBuild->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true">
-        <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
-    </Copy>
-</Target>
-```
-
-A library can instead embed its generated shaders. Register embedded resources before `AssignTargetPaths`, force shader compilation when building, and derive every logical name relative to the library's content root so nested shader directories are preserved:
-
-```xml
-<Target Name="EmbedShaderOutputs"
-        BeforeTargets="AssignTargetPaths"
-        DependsOnTargets="CompileSdlangShaders"
-        Condition="'$(NoBuild)' != 'true'">
-    <ItemGroup>
-        <_ShaderResource Include="@(SdlangShaderOutput)">
-            <ContentRelativePath>$([MSBuild]::MakeRelative('$(ContentSourceDirectory)', '%(FullPath)'))</ContentRelativePath>
-        </_ShaderResource>
-        <EmbeddedResource Include="@(_ShaderResource)">
-            <WithCulture>false</WithCulture>
-            <LogicalName>$([System.String]::Copy('%(ContentRelativePath)').Replace('\', '/'))</LogicalName>
-        </EmbeddedResource>
-    </ItemGroup>
-</Target>
-```
-
-The `NoBuild` condition prevents `publish --no-build` from invoking the shader compiler; the existing assembly already contains the embedded resources.
+Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
 The Slang compiler is downloaded into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. It is build-host tooling and is never copied into the output or publish directory of a project that compiles shaders. A project that needs Slang next to its own binaries (a standalone tool, or a test that calls `SdlangCompiler.CreateFromAssemblyDirectory()`) opts in with `<CopySlangToOutput>true</CopySlangToOutput>` and imports `GameKit.SdlangCompileLib`'s props and targets directly.
 
@@ -99,7 +60,7 @@ Do not name a custom target `CompileSdlangShaders`; a target defined in the proj
 
 Earlier versions required each project to define its own target calling the task. Replace it with the `SdlangShader` item group shown above. Projects that still call the task without `SlangCompilerPath` fail the build with a message pointing here.
 
-Remove `OutputItemType` and `OutputLogicalNamePrefix` metadata from `SdlangShader`. Projects that copy or package content should enumerate their content tree after compilation. Projects that embed generated shaders should consume `@(SdlangShaderOutput)` before `AssignTargetPaths`, as shown above.
+Remove `OutputItemType` and `OutputLogicalNamePrefix` metadata from `SdlangShader`. Projects that copy or package content should enumerate their content tree after compilation. Projects that embed generated shaders should consume `@(SdlangShaderOutput)` before `AssignTargetPaths`, as described in [Content distribution](content-distribution.md).
 
 Only entry-point shaders belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
 

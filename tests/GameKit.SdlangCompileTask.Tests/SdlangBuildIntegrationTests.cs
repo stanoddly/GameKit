@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
@@ -97,6 +98,51 @@ public class SdlangBuildIntegrationTests
         AssertEmbeddedShadersExist(Path.Combine(noBuildPublishDirectory, "BuildIntegration.dll"));
     }
 
+    [Test]
+    public async Task PublishPackagesGeneratedShadersInZip()
+    {
+        string repositoryDirectory = GetRepositoryDirectory();
+        string projectDirectory = Path.Combine(
+            repositoryDirectory,
+            "tests",
+            "GameKit.SdlangCompileTask.Tests",
+            "ZipBuildIntegration");
+        string projectPath = Path.Combine(projectDirectory, "ZipBuildIntegration.csproj");
+        string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string outputDirectory = Path.Combine(projectDirectory, "bin");
+        string intermediateDirectory = Path.Combine(projectDirectory, "obj");
+
+        DeleteDirectory(generatedDirectory);
+        DeleteDirectory(outputDirectory);
+        DeleteDirectory(intermediateDirectory);
+
+        string publishDirectory = Path.Combine(outputDirectory, "publish");
+        await RunDotnetAsync(
+            projectDirectory,
+            "publish",
+            projectPath,
+            "--nologo",
+            "--output",
+            publishDirectory);
+
+        AssertPackagedShadersExist(Path.Combine(publishDirectory, "Content.pk3"));
+        Assert.That(Directory.Exists(Path.Combine(publishDirectory, "Content")), Is.False);
+
+        string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
+        await RunDotnetAsync(
+            projectDirectory,
+            "publish",
+            projectPath,
+            "--nologo",
+            "--no-build",
+            "--property:RejectUnexpectedShaderCompilation=true",
+            "--output",
+            noBuildPublishDirectory);
+
+        AssertPackagedShadersExist(Path.Combine(noBuildPublishDirectory, "Content.pk3"));
+        Assert.That(Directory.Exists(Path.Combine(noBuildPublishDirectory, "Content")), Is.False);
+    }
+
     private static void AssertGeneratedShadersExist(string generatedDirectory)
     {
         Assert.Multiple(() =>
@@ -157,6 +203,21 @@ public class SdlangBuildIntegrationTests
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.spv"));
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metal"));
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metadata.json"));
+        });
+    }
+
+    private static void AssertPackagedShadersExist(string archivePath)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        string[] entryNames = archive.Entries
+            .Select(entry => entry.FullName)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.spv"));
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metal"));
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metadata.json"));
         });
     }
 

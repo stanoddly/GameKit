@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <ContentSourceDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'Content'))</ContentSourceDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\*.slang" />
+    </ItemGroup>
+
+    <Target Name="CopyContentToBuildOutput"
+            AfterTargets="CopyFilesToOutputDirectory">
+        <ItemGroup>
+            <_ContentForBuild Include="$(ContentSourceDirectory)\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_ContentForBuild)"
+              DestinationFiles="@(_ContentForBuild->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true">
+            <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
+        </Copy>
+    </Target>
+
+    <Target Name="PackageContent"
+            AfterTargets="Publish">
+        <ZipDirectory SourceDirectory="$(ContentSourceDirectory)"
+                      DestinationFile="$(PublishDir)Content.pk3"
+                      Overwrite="true" />
+    </Target>
+
+</Project>
