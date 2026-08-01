@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
-        <VertexShaderOnlyContentDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'Content'))</VertexShaderOnlyContentDirectory>
+        <VertexShaderOnlyContentDirectory>$(MSBuildProjectDirectory)/Content</VertexShaderOnlyContentDirectory>
     </PropertyGroup>
 
     <ItemGroup>

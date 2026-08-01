@@ -19,6 +19,7 @@
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
         <Compile Remove="BuildIntegration\**\*.cs" />
+        <Compile Remove="ZipBuildIntegration\**\*.cs" />
     </ItemGroup>
 
     <!-- Copy shader files to output directory -->
