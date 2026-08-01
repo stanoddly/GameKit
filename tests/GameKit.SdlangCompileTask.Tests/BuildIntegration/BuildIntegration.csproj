@@ -46,7 +46,7 @@
         <Copy SourceFiles="@(_BuildIntegrationContent)"
               DestinationFiles="@(_BuildIntegrationContent->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true">
-            <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
+            <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
         </Copy>
     </Target>
 

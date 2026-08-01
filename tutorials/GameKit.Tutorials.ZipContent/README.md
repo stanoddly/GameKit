@@ -20,4 +20,6 @@ dotnet /tmp/gamekit-zip-content/GameKit.Tutorials.ZipContent.dll
 
 `AddContentFromZipPattern` and `AddContentFromDirectoryPattern` both resolve beside the application. The directory source is registered last, so it overrides the archive when both contain the same virtual path.
 
-The package target reads directly from the source `Content` tree. It does not first publish a loose directory and does not need to remove one. This packages every file in that tree, including the Slang source. Use a separate staging directory when a release must exclude source files.
+The build copy records its destinations in `@(FileWrites)`, allowing MSBuild's incremental cleanup to remove outputs whose source files were deleted. Publishing packages that tracked build content under `$(IntermediateOutputPath)` and registers `Content.pk3` through `@(ResolvedFileToPublish)`. The SDK then owns the final copy into `$(PublishDir)` and its incremental cleanup.
+
+This packages every file in the build content tree, including the Slang source. Filter the build content items when a release must exclude source files.

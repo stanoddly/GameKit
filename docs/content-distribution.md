@@ -24,7 +24,7 @@ Use one of these policies:
 
 - **Loose directory:** copy the content tree to `$(OutDir)` for direct loading and iteration.
 - **Embedded resources:** add generated files to `@(EmbeddedResource)` before `AssignTargetPaths`; suitable for content owned by a library.
-- **ZIP archive:** package the source content tree after `Publish`; suitable for an application-owned content bundle.
+- **ZIP archive:** package the tracked build content and register the archive through `@(ResolvedFileToPublish)`; suitable for an application-owned content bundle.
 
 The policies are independent of file type. Generated shaders motivate the execution-time integration, but the same content tree can contain textures, fonts, audio, and data files.
 
@@ -37,4 +37,4 @@ The embedded tutorial follows the policy used by `GameKit.Pencuil`. The ZIP tuto
 
 ## Publish without building
 
-`dotnet publish --no-build` does not refresh generated content. Run a normal build first. An embedded-content target should also test `$(NoBuild)` so publishing an existing assembly does not invoke its content producers. A ZIP target can package the existing source content tree, including generated files left by the preceding build.
+`dotnet publish --no-build` does not refresh generated content. Run a normal build first. An embedded-content target should also test `$(NoBuild)` so publishing an existing assembly does not invoke its content producers. A ZIP target packages the tracked content from the preceding build.

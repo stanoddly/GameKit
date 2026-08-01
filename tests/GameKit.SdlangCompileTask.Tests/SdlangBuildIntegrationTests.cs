@@ -109,6 +109,7 @@ public class SdlangBuildIntegrationTests
             "ZipBuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "ZipBuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string transientContentPath = Path.Combine(projectDirectory, "Content", "transient.txt");
         string outputDirectory = Path.Combine(projectDirectory, "bin");
         string intermediateDirectory = Path.Combine(projectDirectory, "obj");
 
@@ -116,31 +117,60 @@ public class SdlangBuildIntegrationTests
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
 
-        string publishDirectory = Path.Combine(outputDirectory, "publish");
-        await RunDotnetAsync(
-            projectDirectory,
-            "publish",
-            projectPath,
-            "--nologo",
-            "--output",
-            publishDirectory);
+        try
+        {
+            File.WriteAllText(transientContentPath, "transient");
 
-        AssertPackagedShadersExist(Path.Combine(publishDirectory, "Content.pk3"));
-        Assert.That(Directory.Exists(Path.Combine(publishDirectory, "Content")), Is.False);
+            string publishDirectory = Path.Combine(outputDirectory, "publish");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--output",
+                publishDirectory);
 
-        string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
-        await RunDotnetAsync(
-            projectDirectory,
-            "publish",
-            projectPath,
-            "--nologo",
-            "--no-build",
-            "--property:RejectUnexpectedShaderCompilation=true",
-            "--output",
-            noBuildPublishDirectory);
+            string archivePath = Path.Combine(publishDirectory, "Content.pk3");
+            AssertPackagedShadersExist(archivePath);
+            AssertArchiveContains(archivePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(publishDirectory, "Content")), Is.False);
 
-        AssertPackagedShadersExist(Path.Combine(noBuildPublishDirectory, "Content.pk3"));
-        Assert.That(Directory.Exists(Path.Combine(noBuildPublishDirectory, "Content")), Is.False);
+            File.Delete(transientContentPath);
+
+            string publishAfterDeleteDirectory = Path.Combine(outputDirectory, "publish-after-delete");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--output",
+                publishAfterDeleteDirectory);
+
+            string archiveAfterDeletePath = Path.Combine(publishAfterDeleteDirectory, "Content.pk3");
+            AssertPackagedShadersExist(archiveAfterDeletePath);
+            AssertArchiveDoesNotContain(archiveAfterDeletePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(publishAfterDeleteDirectory, "Content")), Is.False);
+
+            string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--no-build",
+                "--property:RejectUnexpectedShaderCompilation=true",
+                "--output",
+                noBuildPublishDirectory);
+
+            string noBuildArchivePath = Path.Combine(noBuildPublishDirectory, "Content.pk3");
+            AssertPackagedShadersExist(noBuildArchivePath);
+            AssertArchiveDoesNotContain(noBuildArchivePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(noBuildPublishDirectory, "Content")), Is.False);
+        }
+        finally
+        {
+            File.Delete(transientContentPath);
+        }
     }
 
     private static void AssertGeneratedShadersExist(string generatedDirectory)
@@ -219,6 +249,18 @@ public class SdlangBuildIntegrationTests
             Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metal"));
             Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metadata.json"));
         });
+    }
+
+    private static void AssertArchiveContains(string archivePath, string entryName)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Contains.Item(entryName));
+    }
+
+    private static void AssertArchiveDoesNotContain(string archivePath, string entryName)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain(entryName));
     }
 
     private static async Task RunDotnetAsync(string workingDirectory, params string[] arguments)

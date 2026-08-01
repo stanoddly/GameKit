@@ -29,15 +29,27 @@
         <Copy SourceFiles="@(_ContentForBuild)"
               DestinationFiles="@(_ContentForBuild->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true">
-            <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
+            <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
         </Copy>
     </Target>
 
     <Target Name="PackageContent"
-            AfterTargets="Publish">
-        <ZipDirectory SourceDirectory="$(ContentSourceDirectory)"
-                      DestinationFile="$(PublishDir)Content.pk3"
+            BeforeTargets="ComputeFilesToPublish">
+        <ZipDirectory SourceDirectory="$(OutDir)Content"
+                      DestinationFile="$(IntermediateOutputPath)Content.pk3"
                       Overwrite="true" />
+        <ItemGroup>
+            <ResolvedFileToPublish Include="$(IntermediateOutputPath)Content.pk3">
+                <RelativePath>Content.pk3</RelativePath>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CleanContentPackage"
+            AfterTargets="Clean">
+        <Delete Files="$(IntermediateOutputPath)Content.pk3" />
     </Target>
 
 </Project>
