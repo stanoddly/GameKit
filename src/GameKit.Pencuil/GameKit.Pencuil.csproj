@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PencuilContentDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'Content'))</PencuilContentDirectory>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);GameKit.DependencyInjection.Generated</InterceptorsNamespaces>
     </PropertyGroup>
 
@@ -27,12 +28,23 @@
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <!-- Compile shaders before build -->
     <ItemGroup>
-        <SdlangShader Include="Content\shaders\*.slang">
-            <OutputItemType>EmbeddedResource</OutputItemType>
-            <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
-        </SdlangShader>
+        <SdlangShader Include="Content\shaders\*.slang" />
     </ItemGroup>
+
+    <Target Name="EmbedPencuilShaderOutputs"
+            BeforeTargets="AssignTargetPaths"
+            DependsOnTargets="CompileSdlangShaders"
+            Condition="'$(NoBuild)' != 'true'">
+        <ItemGroup>
+            <_PencuilShaderResource Include="@(SdlangShaderOutput)">
+                <ContentRelativePath>$([MSBuild]::MakeRelative('$(PencuilContentDirectory)', '%(FullPath)'))</ContentRelativePath>
+            </_PencuilShaderResource>
+            <EmbeddedResource Include="@(_PencuilShaderResource)">
+                <WithCulture>false</WithCulture>
+                <LogicalName>$([System.String]::Copy('%(ContentRelativePath)').Replace('\', '/'))</LogicalName>
+            </EmbeddedResource>
+        </ItemGroup>
+    </Target>
 
 </Project>

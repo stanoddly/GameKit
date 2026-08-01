@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
+        <VertexShaderOnlyContentDirectory>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'Content'))</VertexShaderOnlyContentDirectory>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,12 +17,23 @@
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
     <Import Project="..\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
 
-    <!-- Compile shaders before build -->
     <ItemGroup>
-        <SdlangShader Include="Content\shaders\*.slang">
-            <OutputItemType>EmbeddedResource</OutputItemType>
-            <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
-        </SdlangShader>
+        <SdlangShader Include="Content\shaders\*.slang" />
     </ItemGroup>
+
+    <Target Name="EmbedVertexShaderOnlyOutputs"
+            BeforeTargets="AssignTargetPaths"
+            DependsOnTargets="CompileSdlangShaders"
+            Condition="'$(NoBuild)' != 'true'">
+        <ItemGroup>
+            <_VertexShaderOnlyResource Include="@(SdlangShaderOutput)">
+                <ContentRelativePath>$([MSBuild]::MakeRelative('$(VertexShaderOnlyContentDirectory)', '%(FullPath)'))</ContentRelativePath>
+            </_VertexShaderOnlyResource>
+            <EmbeddedResource Include="@(_VertexShaderOnlyResource)">
+                <WithCulture>false</WithCulture>
+                <LogicalName>$([System.String]::Copy('%(ContentRelativePath)').Replace('\', '/'))</LogicalName>
+            </EmbeddedResource>
+        </ItemGroup>
+    </Target>
 
 </Project>

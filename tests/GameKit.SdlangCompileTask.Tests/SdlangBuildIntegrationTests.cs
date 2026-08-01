@@ -18,6 +18,7 @@ public class SdlangBuildIntegrationTests
             "BuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "BuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string nestedGeneratedDirectory = Path.Combine(projectDirectory, "Content", "shaders", "nested", ".generated");
         string externalGeneratedDirectory = Path.Combine(
             projectDirectory,
             "..",
@@ -27,6 +28,7 @@ public class SdlangBuildIntegrationTests
         string intermediateDirectory = Path.Combine(projectDirectory, "obj");
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(nestedGeneratedDirectory);
         DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
@@ -43,10 +45,11 @@ public class SdlangBuildIntegrationTests
         AssertGeneratedShadersExist(buildGeneratedDirectory);
         AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
         AssertExternalGeneratedShadersAreNotCopied(Path.Combine(outputDirectory, "Debug", "net10.0"));
-        AssertEmbeddedShadersAreNotCopied(buildGeneratedDirectory);
+        AssertEmbeddedShadersAreNotCopied(Path.Combine(outputDirectory, "Debug", "net10.0"));
         AssertEmbeddedShadersExist(Path.Combine(outputDirectory, "Debug", "net10.0", "BuildIntegration.dll"));
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(nestedGeneratedDirectory);
         DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
@@ -68,7 +71,7 @@ public class SdlangBuildIntegrationTests
         AssertGeneratedShadersExist(publishGeneratedDirectory);
         AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
         AssertExternalGeneratedShadersAreNotCopied(publishDirectory);
-        AssertEmbeddedShadersAreNotCopied(publishGeneratedDirectory);
+        AssertEmbeddedShadersAreNotCopied(publishDirectory);
         AssertEmbeddedShadersExist(Path.Combine(publishDirectory, "BuildIntegration.dll"));
 
         string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
@@ -90,7 +93,7 @@ public class SdlangBuildIntegrationTests
         AssertGeneratedShadersExist(noBuildGeneratedDirectory);
         AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
         AssertExternalGeneratedShadersAreNotCopied(noBuildPublishDirectory);
-        AssertEmbeddedShadersAreNotCopied(noBuildGeneratedDirectory);
+        AssertEmbeddedShadersAreNotCopied(noBuildPublishDirectory);
         AssertEmbeddedShadersExist(Path.Combine(noBuildPublishDirectory, "BuildIntegration.dll"));
     }
 
@@ -104,13 +107,16 @@ public class SdlangBuildIntegrationTests
         });
     }
 
-    private static void AssertEmbeddedShadersAreNotCopied(string generatedDirectory)
+    private static void AssertEmbeddedShadersAreNotCopied(string outputDirectory)
     {
         Assert.Multiple(() =>
         {
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.spv")), Is.False);
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metal")), Is.False);
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metadata.json")), Is.False);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metadata.json", SearchOption.AllDirectories), Is.Empty);
         });
     }
 
@@ -148,6 +154,9 @@ public class SdlangBuildIntegrationTests
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.spv"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metal"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metadata.json"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.spv"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metal"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metadata.json"));
         });
     }
 
