@@ -41,8 +41,8 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(buildGeneratedDirectory);
-        AssertExternalGeneratedShadersExist(buildGeneratedDirectory);
-        AssertExternalGeneratedShadersDoNotExist(Path.Combine(outputDirectory, "Debug", "net10.0"));
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(Path.Combine(outputDirectory, "Debug", "net10.0"));
         AssertEmbeddedShadersAreNotCopied(buildGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(outputDirectory, "Debug", "net10.0", "BuildIntegration.dll"));
 
@@ -66,8 +66,8 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(publishGeneratedDirectory);
-        AssertExternalGeneratedShadersExist(publishGeneratedDirectory);
-        AssertExternalGeneratedShadersDoNotExist(publishDirectory);
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(publishDirectory);
         AssertEmbeddedShadersAreNotCopied(publishGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(publishDirectory, "BuildIntegration.dll"));
 
@@ -88,8 +88,8 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(noBuildGeneratedDirectory);
-        AssertExternalGeneratedShadersExist(noBuildGeneratedDirectory);
-        AssertExternalGeneratedShadersDoNotExist(noBuildPublishDirectory);
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(noBuildPublishDirectory);
         AssertEmbeddedShadersAreNotCopied(noBuildGeneratedDirectory);
         AssertEmbeddedShadersExist(Path.Combine(noBuildPublishDirectory, "BuildIntegration.dll"));
     }
@@ -124,13 +124,13 @@ public class SdlangBuildIntegrationTests
         });
     }
 
-    private static void AssertExternalGeneratedShadersDoNotExist(string outputDirectory)
+    private static void AssertExternalGeneratedShadersAreNotCopied(string outputDirectory)
     {
         Assert.Multiple(() =>
         {
-            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.spv")), Is.False);
-            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.metal")), Is.False);
-            Assert.That(File.Exists(Path.Combine(outputDirectory, "external_output.metadata.json")), Is.False);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
         });
     }
 

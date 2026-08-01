@@ -37,15 +37,15 @@ Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare
 
 The targets file declares every generated output as an MSBuild item before target paths are assigned, then compiles every `SdlangShader` item before `CoreCompile`. Generated files are copied to the same project-relative paths in build and publish output. For example, outputs for `Content/shaders/vertex.slang` are copied under `Content/shaders/.generated`. Declaring the expected output paths independently of their existence makes clean builds work even though `.generated` does not exist when MSBuild evaluates the project. It also lets publish reuse an existing build without invoking the shader compiler. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
 
-For shader sources outside the consuming project, set standard MSBuild `Link` metadata to their logical paths inside the project:
+Set `OutputItemType` to `None` when another build target owns the generated files, such as a target that copies an entire content directory after compilation:
 
 ```xml
 <SdlangShader Include="..\Game.Executable\Content\shaders\*.slang">
-    <Link>Content\shaders\%(Filename)%(Extension)</Link>
+    <OutputItemType>None</OutputItemType>
 </SdlangShader>
 ```
 
-The generated files are compiled beside the external sources, but are copied to the linked directory followed by `.generated`. In this example, `vertex.slang` produces build and publish output under `Content/shaders/.generated`. Do not add a separate `Content` glob for the generated files.
+The shaders are still compiled beside their sources, but their generated files are not copied or embedded by the shared targets. Enumerate files inside the owning copy target so files created during the build are included.
 
 Generated files can instead be embedded without also copying them as standalone content:
 

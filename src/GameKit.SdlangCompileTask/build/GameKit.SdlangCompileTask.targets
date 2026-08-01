@@ -7,10 +7,11 @@
          <SdlangShader Include="Content\shaders\*.slang" />
        </ItemGroup> -->
   <Target Name="_DeclareSdlangShaderOutputs" BeforeTargets="AssignTargetPaths" Condition="'@(SdlangShader)' != ''">
-    <Error Text="Unsupported SdlangShader OutputItemType '%(SdlangShader.OutputItemType)'. Supported values are Content and EmbeddedResource."
+    <Error Text="Unsupported SdlangShader OutputItemType '%(SdlangShader.OutputItemType)'. Supported values are Content, EmbeddedResource, and None."
            Condition="'%(SdlangShader.OutputItemType)' != '' and
                       '%(SdlangShader.OutputItemType)' != 'Content' and
-                      '%(SdlangShader.OutputItemType)' != 'EmbeddedResource'" />
+                      '%(SdlangShader.OutputItemType)' != 'EmbeddedResource' and
+                      '%(SdlangShader.OutputItemType)' != 'None'" />
 
     <ItemGroup>
       <_SdlangGeneratedFile Include="@(SdlangShader->'%(RootDir)%(Directory).generated/%(Filename).spv')" />
@@ -22,13 +23,14 @@
                           '%(_SdlangGeneratedFile.OutputItemType)' == 'Content'">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        <TargetPath Condition="'%(_SdlangGeneratedFile.Link)' != ''">$([System.Text.RegularExpressions.Regex]::Replace('%(_SdlangGeneratedFile.Link)', '[^\\/]+$', '')).generated/%(_SdlangGeneratedFile.Filename)%(_SdlangGeneratedFile.Extension)</TargetPath>
       </Content>
       <EmbeddedResource Include="@(_SdlangGeneratedFile)"
                         Condition="'%(_SdlangGeneratedFile.OutputItemType)' == 'EmbeddedResource'">
         <WithCulture>false</WithCulture>
         <LogicalName Condition="'%(_SdlangGeneratedFile.OutputLogicalNamePrefix)' != ''">%(_SdlangGeneratedFile.OutputLogicalNamePrefix)%(_SdlangGeneratedFile.Filename)%(_SdlangGeneratedFile.Extension)</LogicalName>
       </EmbeddedResource>
+      <None Include="@(_SdlangGeneratedFile)"
+            Condition="'%(_SdlangGeneratedFile.OutputItemType)' == 'None'" />
     </ItemGroup>
   </Target>
 

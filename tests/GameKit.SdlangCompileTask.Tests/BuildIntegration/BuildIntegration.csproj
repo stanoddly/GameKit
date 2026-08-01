@@ -15,7 +15,7 @@
     <ItemGroup>
         <SdlangShader Include="Content\shaders\copy_output.slang" />
         <SdlangShader Include="..\ExternalShaders\*.slang">
-            <Link>Content\shaders\%(Filename)%(Extension)</Link>
+            <OutputItemType>None</OutputItemType>
         </SdlangShader>
         <SdlangShader Include="Content\shaders\embedded_output.slang">
             <OutputItemType>EmbeddedResource</OutputItemType>
