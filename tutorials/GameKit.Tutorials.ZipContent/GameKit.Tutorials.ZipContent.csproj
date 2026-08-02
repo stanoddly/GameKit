@@ -21,6 +21,8 @@
         <SdlangShader Include="Content\shaders\*.slang" />
     </ItemGroup>
 
+    <!-- Enumerate content after compilation so clean builds include generated files. Recording every
+         destination in FileWrites lets MSBuild remove stale build output. -->
     <Target Name="CopyContentToBuildOutput"
             AfterTargets="CopyFilesToOutputDirectory">
         <ItemGroup>
@@ -33,6 +35,7 @@
         </Copy>
     </Target>
 
+    <!-- Package the content used at runtime, then let the SDK copy the archive to the publish directory. -->
     <Target Name="PackageContent"
             BeforeTargets="ComputeFilesToPublish">
         <ZipDirectory SourceDirectory="$(OutDir)Content"
@@ -42,11 +45,13 @@
             <ResolvedFileToPublish Include="$(IntermediateOutputPath)Content.pk3">
                 <RelativePath>Content.pk3</RelativePath>
                 <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <!-- The content archive remains external when the application is published as a single file. -->
                 <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
             </ResolvedFileToPublish>
         </ItemGroup>
     </Target>
 
+    <!-- Publish creates the intermediate archive after the normal incremental cleanup has run. -->
     <Target Name="CleanContentPackage"
             AfterTargets="Clean">
         <Delete Files="$(IntermediateOutputPath)Content.pk3" />

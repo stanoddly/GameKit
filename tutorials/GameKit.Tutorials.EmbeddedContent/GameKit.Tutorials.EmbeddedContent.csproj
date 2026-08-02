@@ -21,6 +21,8 @@
         <SdlangShader Include="Content\shaders\**\*.slang" />
     </ItemGroup>
 
+    <!-- Generated files do not exist during project evaluation. Compile them before MSBuild assigns
+         resource paths, while publishing without a build reuses the resources in the existing assembly. -->
     <Target Name="EmbedShaderOutputs"
             BeforeTargets="AssignTargetPaths"
             DependsOnTargets="CompileSdlangShaders"

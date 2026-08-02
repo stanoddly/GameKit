@@ -49,6 +49,7 @@
         <Delete Files="$(IntermediateOutputPath)Content.pk3" />
     </Target>
 
+    <!-- The no-build publish test enables this guard to prove that publishing does not invoke the compiler. -->
     <Target Name="RejectUnexpectedShaderCompilation"
             BeforeTargets="CompileSdlangShaders"
             Condition="'$(RejectUnexpectedShaderCompilation)' == 'true'">
