@@ -6,8 +6,8 @@
         <Nullable>enable</Nullable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
-        <!-- These files live in this project's obj directory, so only this project may create them. -->
-        <OwnsSlangInstallation>true</OwnsSlangInstallation>
+        <!-- Internal ownership marker for files stored in this project's obj directory. -->
+        <_OwnsSlangInstallation>true</_OwnsSlangInstallation>
     </PropertyGroup>
 
     <!-- Slang configuration and installation. Projects that need to locate slangc import the configuration too. -->
