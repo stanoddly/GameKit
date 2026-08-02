@@ -6,9 +6,11 @@
         <Nullable>enable</Nullable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
+        <!-- These files live in this project's obj directory, so only this project may create them. -->
+        <OwnsSlangInstallation>true</OwnsSlangInstallation>
     </PropertyGroup>
 
-    <!-- Slang download and extraction. Projects that need to locate slangc import these too. -->
+    <!-- Slang configuration and installation. Projects that need to locate slangc import the configuration too. -->
     <Import Project="build\GameKit.SdlangCompileLib.props" />
     <Import Project="build\GameKit.SdlangCompileLib.targets" />
 
