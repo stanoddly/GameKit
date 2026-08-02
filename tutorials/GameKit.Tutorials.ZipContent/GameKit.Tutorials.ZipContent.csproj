@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <ContentSourceDirectory>$(MSBuildProjectDirectory)/Content</ContentSourceDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\*.slang" />
+    </ItemGroup>
+
+    <!-- Enumerate content after compilation so clean builds include generated files. Recording every
+         destination in FileWrites lets MSBuild remove stale build output. -->
+    <Target Name="CopyContentToBuildOutput"
+            AfterTargets="CopyFilesToOutputDirectory">
+        <ItemGroup>
+            <_ContentForBuild Include="$(ContentSourceDirectory)\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_ContentForBuild)"
+              DestinationFiles="@(_ContentForBuild->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true">
+            <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+        </Copy>
+    </Target>
+
+    <!-- Package the content used at runtime, then let the SDK copy the archive to the publish directory. -->
+    <Target Name="PackageContent"
+            BeforeTargets="ComputeFilesToPublish">
+        <ZipDirectory SourceDirectory="$(OutDir)Content"
+                      DestinationFile="$(IntermediateOutputPath)Content.pk3"
+                      Overwrite="true" />
+        <ItemGroup>
+            <ResolvedFileToPublish Include="$(IntermediateOutputPath)Content.pk3">
+                <RelativePath>Content.pk3</RelativePath>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <!-- The content archive remains external when the application is published as a single file. -->
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
+        </ItemGroup>
+    </Target>
+
+    <!-- Publish creates the intermediate archive after the normal incremental cleanup has run. -->
+    <Target Name="CleanContentPackage"
+            AfterTargets="Clean">
+        <Delete Files="$(IntermediateOutputPath)Content.pk3" />
+    </Target>
+
+</Project>

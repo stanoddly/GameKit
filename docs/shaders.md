@@ -35,16 +35,9 @@ Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare
 </ItemGroup>
 ```
 
-The targets file declares every generated output as an MSBuild item before target paths are assigned, then compiles every `SdlangShader` item before `CoreCompile`. Generated files are copied to the same project-relative paths in build and publish output. For example, outputs for `Content/shaders/vertex.slang` are copied under `Content/shaders/.generated`. Declaring the expected output paths independently of their existence makes clean builds work even though `.generated` does not exist when MSBuild evaluates the project. It also lets publish reuse an existing build without invoking the shader compiler. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
+The targets file compiles every `SdlangShader` item before `CoreCompile` and exposes the generated files as `@(SdlangShaderOutput)`. Generated files remain beside their shader sources; the compilation targets do not copy, package, or embed them. This lets each project own its complete content pipeline independently of shader compilation. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
 
-Generated files can instead be embedded without also copying them as standalone content:
-
-```xml
-<SdlangShader Include="Content\shaders\*.slang">
-    <OutputItemType>EmbeddedResource</OutputItemType>
-    <OutputLogicalNamePrefix>shaders/.generated/</OutputLogicalNamePrefix>
-</SdlangShader>
-```
+Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
 The Slang compiler is downloaded into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. It is build-host tooling and is never copied into the output or publish directory of a project that compiles shaders. A project that needs Slang next to its own binaries (a standalone tool, or a test that calls `SdlangCompiler.CreateFromAssemblyDirectory()`) opts in with `<CopySlangToOutput>true</CopySlangToOutput>` and imports `GameKit.SdlangCompileLib`'s props and targets directly.
 
@@ -65,13 +58,9 @@ Do not name a custom target `CompileSdlangShaders`; a target defined in the proj
 
 ### Migrating existing projects
 
-Projects that already declare entry-point shaders with `SdlangShader` need no changes. Generated files use the normal content flow automatically; do not add `CopyToOutputDirectory`, `CopyToPublishDirectory`, or a custom copy target.
-
-Remove any existing target that copies files from `.generated` into build or publish output. The shared targets now own that behavior.
-
 Earlier versions required each project to define its own target calling the task. Replace it with the `SdlangShader` item group shown above. Projects that still call the task without `SlangCompilerPath` fail the build with a message pointing here.
 
-If a project embeds generated files with an `EmbeddedResource` glob over `.generated`, remove that glob and set `OutputItemType` and `OutputLogicalNamePrefix` on `SdlangShader` as shown above. This lets clean builds declare the resources before the generated files exist.
+Remove `OutputItemType` and `OutputLogicalNamePrefix` metadata from `SdlangShader`. Projects that copy or package content should enumerate their content tree after compilation. Projects that embed generated shaders should consume `@(SdlangShaderOutput)` before `AssignTargetPaths`, as described in [Content distribution](content-distribution.md).
 
 Only entry-point shaders belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
 

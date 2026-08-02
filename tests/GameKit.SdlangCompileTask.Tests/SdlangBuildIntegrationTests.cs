@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
@@ -18,10 +19,18 @@ public class SdlangBuildIntegrationTests
             "BuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "BuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string nestedGeneratedDirectory = Path.Combine(projectDirectory, "Content", "shaders", "nested", ".generated");
+        string externalGeneratedDirectory = Path.Combine(
+            projectDirectory,
+            "..",
+            "ExternalShaders",
+            ".generated");
         string outputDirectory = Path.Combine(projectDirectory, "bin");
         string intermediateDirectory = Path.Combine(projectDirectory, "obj");
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(nestedGeneratedDirectory);
+        DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
 
@@ -35,10 +44,14 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(buildGeneratedDirectory);
-        AssertEmbeddedShadersAreNotCopied(buildGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(Path.Combine(outputDirectory, "Debug", "net10.0"));
+        AssertEmbeddedShadersAreNotCopied(Path.Combine(outputDirectory, "Debug", "net10.0"));
         AssertEmbeddedShadersExist(Path.Combine(outputDirectory, "Debug", "net10.0", "BuildIntegration.dll"));
 
         DeleteDirectory(generatedDirectory);
+        DeleteDirectory(nestedGeneratedDirectory);
+        DeleteDirectory(externalGeneratedDirectory);
         DeleteDirectory(outputDirectory);
         DeleteDirectory(intermediateDirectory);
 
@@ -57,7 +70,9 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(publishGeneratedDirectory);
-        AssertEmbeddedShadersAreNotCopied(publishGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(publishDirectory);
+        AssertEmbeddedShadersAreNotCopied(publishDirectory);
         AssertEmbeddedShadersExist(Path.Combine(publishDirectory, "BuildIntegration.dll"));
 
         string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
@@ -77,8 +92,85 @@ public class SdlangBuildIntegrationTests
             "shaders",
             ".generated");
         AssertGeneratedShadersExist(noBuildGeneratedDirectory);
-        AssertEmbeddedShadersAreNotCopied(noBuildGeneratedDirectory);
+        AssertExternalGeneratedShadersExist(externalGeneratedDirectory);
+        AssertExternalGeneratedShadersAreNotCopied(noBuildPublishDirectory);
+        AssertEmbeddedShadersAreNotCopied(noBuildPublishDirectory);
         AssertEmbeddedShadersExist(Path.Combine(noBuildPublishDirectory, "BuildIntegration.dll"));
+    }
+
+    [Test]
+    public async Task PublishPackagesGeneratedShadersInZip()
+    {
+        string repositoryDirectory = GetRepositoryDirectory();
+        string projectDirectory = Path.Combine(
+            repositoryDirectory,
+            "tests",
+            "GameKit.SdlangCompileTask.Tests",
+            "ZipBuildIntegration");
+        string projectPath = Path.Combine(projectDirectory, "ZipBuildIntegration.csproj");
+        string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
+        string transientContentPath = Path.Combine(projectDirectory, "Content", "transient.txt");
+        string outputDirectory = Path.Combine(projectDirectory, "bin");
+        string intermediateDirectory = Path.Combine(projectDirectory, "obj");
+
+        DeleteDirectory(generatedDirectory);
+        DeleteDirectory(outputDirectory);
+        DeleteDirectory(intermediateDirectory);
+
+        try
+        {
+            File.WriteAllText(transientContentPath, "transient");
+
+            string publishDirectory = Path.Combine(outputDirectory, "publish");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--output",
+                publishDirectory);
+
+            string archivePath = Path.Combine(publishDirectory, "Content.pk3");
+            AssertPackagedShadersExist(archivePath);
+            AssertArchiveContains(archivePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(publishDirectory, "Content")), Is.False);
+
+            File.Delete(transientContentPath);
+
+            string publishAfterDeleteDirectory = Path.Combine(outputDirectory, "publish-after-delete");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--output",
+                publishAfterDeleteDirectory);
+
+            string archiveAfterDeletePath = Path.Combine(publishAfterDeleteDirectory, "Content.pk3");
+            AssertPackagedShadersExist(archiveAfterDeletePath);
+            AssertArchiveDoesNotContain(archiveAfterDeletePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(publishAfterDeleteDirectory, "Content")), Is.False);
+
+            string noBuildPublishDirectory = Path.Combine(outputDirectory, "publish-no-build");
+            await RunDotnetAsync(
+                projectDirectory,
+                "publish",
+                projectPath,
+                "--nologo",
+                "--no-build",
+                "--property:RejectUnexpectedShaderCompilation=true",
+                "--output",
+                noBuildPublishDirectory);
+
+            string noBuildArchivePath = Path.Combine(noBuildPublishDirectory, "Content.pk3");
+            AssertPackagedShadersExist(noBuildArchivePath);
+            AssertArchiveDoesNotContain(noBuildArchivePath, "transient.txt");
+            Assert.That(Directory.Exists(Path.Combine(noBuildPublishDirectory, "Content")), Is.False);
+        }
+        finally
+        {
+            File.Delete(transientContentPath);
+        }
     }
 
     private static void AssertGeneratedShadersExist(string generatedDirectory)
@@ -91,13 +183,36 @@ public class SdlangBuildIntegrationTests
         });
     }
 
-    private static void AssertEmbeddedShadersAreNotCopied(string generatedDirectory)
+    private static void AssertEmbeddedShadersAreNotCopied(string outputDirectory)
     {
         Assert.Multiple(() =>
         {
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.spv")), Is.False);
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metal")), Is.False);
-            Assert.That(File.Exists(Path.Combine(generatedDirectory, "embedded_output.metadata.json")), Is.False);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metadata.json", SearchOption.AllDirectories), Is.Empty);
+        });
+    }
+
+    private static void AssertExternalGeneratedShadersExist(string generatedDirectory)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metal")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metadata.json")), Is.True);
+        });
+    }
+
+    private static void AssertExternalGeneratedShadersAreNotCopied(string outputDirectory)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.metal", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
         });
     }
 
@@ -115,7 +230,37 @@ public class SdlangBuildIntegrationTests
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.spv"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metal"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metadata.json"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.spv"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metal"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metadata.json"));
         });
+    }
+
+    private static void AssertPackagedShadersExist(string archivePath)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        string[] entryNames = archive.Entries
+            .Select(entry => entry.FullName)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.spv"));
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metal"));
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metadata.json"));
+        });
+    }
+
+    private static void AssertArchiveContains(string archivePath, string entryName)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Contains.Item(entryName));
+    }
+
+    private static void AssertArchiveDoesNotContain(string archivePath, string entryName)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(archivePath);
+        Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain(entryName));
     }
 
     private static async Task RunDotnetAsync(string workingDirectory, params string[] arguments)

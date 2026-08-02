@@ -9,6 +9,7 @@
 - `docs/components.md` - GameWorld, GameObject, GameComponent lifecycle, Services<T>, UpdateSystem
 - `docs/pipeline-configuration.md` - GraphicsPipelineBuilder API (vertex types, shaders, depth testing)
 - `docs/shaders.md` - Writing and using shaders (Slang, constant buffers, vertex/fragment stages)
+- `docs/content-distribution.md` - Virtual content sources, source precedence, and build/publish distribution policies
 - `docs/render-pass-flow.md` - Rendering architecture overview, CommandBuffer vs RenderPass, push constants, binding order
 - `docs/subrenderers.md` - Composing multiple renderers within IRenderPhase<T> (IOrderable, IEnumerable injection)
 - `docs/architecture-concept.md` - MVP + CQS + Events: layer responsibilities, boundary contract vs. internal representation, per-genre decision framework
