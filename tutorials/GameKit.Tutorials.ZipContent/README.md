@@ -15,7 +15,7 @@ Publish and run the ZIP distribution:
 
 ```bash
 dotnet publish tutorials/GameKit.Tutorials.ZipContent -o /tmp/gamekit-zip-content
-dotnet /tmp/gamekit-zip-content/GameKit.Tutorials.ZipContent.dll
+/tmp/gamekit-zip-content/GameKit.Tutorials.ZipContent
 ```
 
 `AddContentFromZipPattern` and `AddContentFromDirectoryPattern` both resolve beside the application. The directory source is registered last, so it overrides the archive when both contain the same virtual path.
