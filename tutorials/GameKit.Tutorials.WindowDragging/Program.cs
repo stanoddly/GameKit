@@ -1,3 +1,4 @@
+using System.Numerics;
 using GameKit;
 using GameKit.App;
 using GameKit.Gpu;
@@ -22,21 +23,79 @@ static class Program
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(static () => new ClearRenderPhase(FColors.SkyBlue));
 
-        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            windowManager.PrimaryWindow.Draggable = true;
+            Window window = windowManager.PrimaryWindow;
 
-            mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs e) =>
+            if (window.SupportsSetWindowPosition)
             {
-                if (e.Button == MouseButton.Right)
+                Console.WriteLine("Active window dragging path: programmatic positioning");
+                Console.WriteLine("Hold the middle mouse button to drag the window.");
+
+                bool wasMiddleButtonPressed = false;
+                Vector2 initialCursorPosition = default;
+                Vector2 initialWindowPosition = default;
+
+                updateSystem.Add(() =>
+                {
+                    MouseState mouseState = mouseService.GetGlobalState();
+                    bool middleButtonPressed = mouseState.IsPressed(MouseButton.Middle);
+
+                    if (middleButtonPressed && !wasMiddleButtonPressed)
+                    {
+                        initialCursorPosition = mouseState.Position;
+                        initialWindowPosition = window.Position;
+                    }
+
+                    if (middleButtonPressed)
+                    {
+                        Vector2 targetPosition = initialWindowPosition
+                            + mouseState.Position
+                            - initialCursorPosition;
+
+                        window.Position = new Vector2Int(
+                            (int)MathF.Round(targetPosition.X),
+                            (int)MathF.Round(targetPosition.Y));
+                    }
+
+                    wasMiddleButtonPressed = middleButtonPressed;
+                });
+            }
+            else
+            {
+                Console.WriteLine("Active window dragging path: native window-manager dragging");
+                Console.WriteLine("Hold Ctrl and drag with the left mouse button.");
+
+                keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+                {
+                    if (eventArgs.Scancode == Scancode.LeftCtrl || eventArgs.Scancode == Scancode.RightCtrl)
+                    {
+                        window.Draggable = keyboard.Ctrl;
+                    }
+                };
+
+                keyboardService.KeyUp += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+                {
+                    if (eventArgs.Scancode == Scancode.LeftCtrl || eventArgs.Scancode == Scancode.RightCtrl)
+                    {
+                        window.Draggable = keyboard.Ctrl;
+                    }
+                };
+            }
+
+            Console.WriteLine("Right mouse button or Escape: quit");
+
+            mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs eventArgs) =>
+            {
+                if (eventArgs.Button == MouseButton.Right)
                 {
                     appControl.Quit();
                 }
             };
 
-            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs e) =>
+            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
             {
-                if (e.Key == VirtualKey.Escape)
+                if (eventArgs.Key == VirtualKey.Escape)
                 {
                     appControl.Quit();
                 }
