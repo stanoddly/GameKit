@@ -21,8 +21,8 @@ public class ComputeShaderLoader : IComputeShaderLoader
     public ComputeShader Load(ReadOnlySpan<char> path)
     {
         string pathString = path.ToString();
-        string name = pathString.Split('/')[^1];
-        string? directoryName = Path.GetDirectoryName(pathString);
+        string name = VirtualPath.GetFileName(pathString);
+        string? directoryName = VirtualPath.GetDirectoryName(pathString);
 
         string generatedDirectoryName;
         if (directoryName == null)
@@ -31,10 +31,10 @@ public class ComputeShaderLoader : IComputeShaderLoader
         }
         else
         {
-            generatedDirectoryName = Path.Combine(directoryName, GeneratedShaderDirectory);
+            generatedDirectoryName = VirtualPath.Combine(directoryName, GeneratedShaderDirectory);
         }
 
-        string metadataFilename = Path.Combine(generatedDirectoryName, $"{name}.metadata.json");
+        string metadataFilename = VirtualPath.Combine(generatedDirectoryName, $"{name}.metadata.json");
         ComputeShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
 
         foreach (ShaderInstance shaderInstance in shaderMetadata.Shaders)
@@ -50,7 +50,7 @@ public class ComputeShaderLoader : IComputeShaderLoader
 
     private ComputeShader CreateComputeShader(string directory, ShaderInstance shaderInstance, ComputeShaderMetadata shaderMetadata)
     {
-        string filePath = Path.Combine(directory, shaderInstance.Filename);
+        string filePath = VirtualPath.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(filePath);
         using Stream stream = file.Open();
 

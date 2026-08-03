@@ -36,7 +36,7 @@ public static class EmbeddedFileSystem
         
         foreach(var resourceName in assembly.GetManifestResourceNames())
         {
-            string? directory = Path.GetDirectoryName(resourceName);
+            string? directory = VirtualPath.GetDirectoryName(resourceName);
             
             string parentDirectory = directory ?? string.Empty;
 
@@ -51,7 +51,7 @@ public static class EmbeddedFileSystem
             while (directory != null)
             {
                 string previous = directory;
-                directory = Path.GetDirectoryName(previous);
+                directory = VirtualPath.GetDirectoryName(previous);
                 parentDirectory = directory ?? string.Empty;
                 
                 List<string> directories = directoryToDirectoriesLookup.GetValueOrNew(parentDirectory);
