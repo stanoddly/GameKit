@@ -46,7 +46,7 @@ public class ShaderLoader : IShaderLoader
         ShaderSystemValueInputs systemValueInputs,
         ShaderStage shaderStage)
     {
-        string path = Path.Combine(directory, shaderInstance.Filename);
+        string path = VirtualPath.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(path);
         using Stream stream = file.Open();
         
@@ -113,8 +113,8 @@ public class ShaderLoader : IShaderLoader
     private GraphicsShader Load(ReadOnlySpan<char> path, ShaderStage expectedStage)
     {
         string pathString = path.ToString();
-        string name = pathString.Split('/')[^1];
-        string? directoryName = Path.GetDirectoryName(pathString);
+        string name = VirtualPath.GetFileName(pathString);
+        string? directoryName = VirtualPath.GetDirectoryName(pathString);
 
         string generatedDirectoryName;
         if (directoryName == null)
@@ -123,10 +123,10 @@ public class ShaderLoader : IShaderLoader
         }
         else
         {
-            generatedDirectoryName = Path.Combine(directoryName, GeneratedShaderDirectory);
+            generatedDirectoryName = VirtualPath.Combine(directoryName, GeneratedShaderDirectory);
         }
 
-        string metadataFilename = Path.Combine(generatedDirectoryName, $"{name}.metadata.json");
+        string metadataFilename = VirtualPath.Combine(generatedDirectoryName, $"{name}.metadata.json");
 
         GraphicsShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
         if (shaderMetadata.Stage != expectedStage)
