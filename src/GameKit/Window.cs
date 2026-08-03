@@ -142,6 +142,14 @@ public class Window : IDisposable
         }
     }
 
+    public bool SupportsSetWindowPosition
+    {
+        get
+        {
+            return _platformInfo.SupportsSetWindowPosition;
+        }
+    }
+
     public bool AlwaysOnTop
     {
         get

@@ -21,12 +21,35 @@ public class Mouse
     }
 
     public SDL_MouseID MouseId { get; }
-    public Vector2 Position { get; internal set; }
-    public int ButtonFlags { get; internal set; }
+    public MouseState State { get; private set; }
+
+    public Vector2 Position
+    {
+        get
+        {
+            return State.Position;
+        }
+        internal set
+        {
+            State = State with { Position = value };
+        }
+    }
+
+    public int ButtonFlags
+    {
+        get
+        {
+            return State.ButtonFlags;
+        }
+        internal set
+        {
+            State = State with { ButtonFlags = value };
+        }
+    }
 
     public bool IsPressed(MouseButton button)
     {
-        return (ButtonFlags & (1 << ((int)button - 1))) != 0;
+        return State.IsPressed(button);
     }
 
     internal bool Set(MouseButton button)
@@ -110,6 +133,20 @@ public class MouseService : IMouseService
     }
 
     public bool IsInWindow { get; private set; }
+
+    public MouseState GetGlobalState()
+    {
+        float x;
+        float y;
+        SDL_MouseButtonFlags buttonFlags;
+
+        unsafe
+        {
+            buttonFlags = SDL3.SDL_GetGlobalMouseState(&x, &y);
+        }
+
+        return new MouseState(new Vector2(x, y), (int)buttonFlags);
+    }
 
     public event MouseButtonPressedHandler ButtonPress
     {

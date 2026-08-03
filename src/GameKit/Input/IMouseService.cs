@@ -11,6 +11,8 @@ public interface IMouseService
 
     bool IsInWindow { get; }
 
+    MouseState GetGlobalState();
+
     void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler);
     void SubscribeButtonRelease(int priority, MouseButtonReleasedHandler handler);
     void SubscribeMotion(int priority, MouseMotionHandler handler);
