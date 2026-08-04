@@ -42,8 +42,8 @@
         <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
     </Target>
 
-    <!-- Opt-in for tools that invoke SdlangCompiler.CreateFromAssemblyDirectory() and therefore ship
-         the Slang distribution next to their own binaries. Build must finish first so the project
+    <!-- Opt-in for tools that use a directory-based SdlangCompiler factory and therefore ship the
+         Slang distribution next to their own binaries. Build must finish first so the project
          reference to the Slang installation owner has prepared the shared directory. Projects that
          only compile shaders during the build should not enable this: Slang does not belong in their runtime bundle. -->
     <Target Name="CopySlangToOutput" AfterTargets="Build"
@@ -59,6 +59,28 @@
         <Copy SourceFiles="@(SlangLibFile)"
               DestinationFiles="@(SlangLibFile->'$(OutputPath)lib/%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true" />
+    </Target>
+
+    <!-- Publish the Slang distribution as external files. slangc must be executable by path, so it
+         and its native libraries cannot be embedded in a single-file application bundle. -->
+    <Target Name="IncludeSlangInPublish"
+            AfterTargets="ComputeResolvedFilesToPublishList"
+            Condition="'$(CopySlangToOutput)' == 'true'">
+        <ItemGroup>
+            <SlangBinPublishFile Include="$(SlangBinDir)/**/*" />
+            <SlangLibPublishFile Include="$(SlangLibDir)/**/*" />
+
+            <ResolvedFileToPublish Include="@(SlangBinPublishFile)">
+                <RelativePath>bin/%(SlangBinPublishFile.RecursiveDir)%(Filename)%(Extension)</RelativePath>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
+            <ResolvedFileToPublish Include="@(SlangLibPublishFile)">
+                <RelativePath>lib/%(SlangLibPublishFile.RecursiveDir)%(Filename)%(Extension)</RelativePath>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
+        </ItemGroup>
     </Target>
 
 </Project>

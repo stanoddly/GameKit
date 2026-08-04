@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,6 +58,7 @@ public class SdlangCompiler
     /// Intended for standalone tools that carry their own copy of Slang; build integrations should
     /// pass the path explicitly instead.
     /// </summary>
+    [RequiresAssemblyFiles("Use CreateFromApplicationDirectory() for single-file applications.")]
     public static SdlangCompiler CreateFromAssemblyDirectory()
     {
         string? assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -68,6 +70,18 @@ public class SdlangCompiler
         string slangExe = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
 
         return new SdlangCompiler(Path.Combine(assemblyDir, "bin", slangExe));
+    }
+
+    /// <summary>
+    /// Creates a compiler that uses the Slang distribution shipped next to the application.
+    /// Compatible with single-file applications because the distribution remains external to the
+    /// application bundle.
+    /// </summary>
+    public static SdlangCompiler CreateFromApplicationDirectory()
+    {
+        string slangExe = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
+
+        return new SdlangCompiler(Path.Combine(AppContext.BaseDirectory, "bin", slangExe));
     }
 
     private static string GetSlangVersion()
