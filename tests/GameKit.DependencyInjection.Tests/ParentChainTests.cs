@@ -182,6 +182,40 @@ public class ParentChainTests
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(parentInstance));
     }
 
+    [Test]
+    public void GetRequiredService_NullChildSingletonFactory_FallsBackToParent()
+    {
+        SimpleService parentInstance = new();
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton(parentInstance);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.AddSingleton<SimpleService>(
+            (Func<ServiceProvider, SimpleService?>)(_ => null));
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(parentInstance));
+        Assert.That(child.GetServices<SimpleService>(), Is.EqualTo(new[] { parentInstance }));
+    }
+
+    [Test]
+    public void GetRequiredService_NullChildTransientFactory_FallsBackToParent()
+    {
+        MyServiceImpl parentInstance = new();
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton<IMyService>(parentInstance);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = new();
+        childCollection.AddTransient<IMyService>(
+            (Func<ServiceProvider, IMyService?>)(_ => null));
+        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+
+        Assert.That(child.GetRequiredService<IMyService>(), Is.SameAs(parentInstance));
+        Assert.That(child.GetServices<IMyService>(), Is.EqualTo(new[] { parentInstance }));
+    }
+
     // -------------------------------------------------------------------------
     // 2. GetServices multi-level chain
     // -------------------------------------------------------------------------

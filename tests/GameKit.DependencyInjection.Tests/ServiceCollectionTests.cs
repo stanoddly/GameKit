@@ -12,6 +12,12 @@ public class MyServiceImpl : IMyService;
 
 public class AnotherServiceImpl : IMyService;
 
+public sealed record FactoryCondition(bool Enabled);
+
+public interface IConditionalService;
+
+public sealed class ConditionalService : IConditionalService;
+
 public class InternalConstructorMyServiceImpl : IMyService
 {
     public SimpleService Simple { get; }
@@ -1049,12 +1055,36 @@ public class ServiceCollectionTests
     // --- Factory returning null ---
 
     [Test]
-    public void AddSingleton_Factory_ReturnsNull_Throws()
+    public void AddSingleton_Factory_ReturnsNull_ContributesNoService()
     {
         ServiceCollection collection = new();
-        collection.AddSingleton<SimpleService>((Func<SimpleService>)(() => null!));
+        int factoryCalls = 0;
+        collection.AddSingleton<SimpleService>((Func<SimpleService?>)(() =>
+        {
+            factoryCalls++;
+            return null;
+        }));
 
-        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(factoryCalls, Is.EqualTo(1));
+        Assert.That(collection.IsRegistered<SimpleService>(), Is.True);
+        Assert.That(provider.GetService<SimpleService>(), Is.Null);
+        Assert.That(provider.GetServices<SimpleService>(), Is.Empty);
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<SimpleService>());
+    }
+
+    [Test]
+    public void AddSingleton_DelegateFactory_UsesDependencyToConditionallyContributeService()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<IConditionalService>((FactoryCondition condition) =>
+            condition.Enabled ? new ConditionalService() : null);
+        collection.AddSingleton(new FactoryCondition(false));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetService<IConditionalService>(), Is.Null);
     }
 
     // --- ServiceCollection reuse ---
@@ -1307,14 +1337,46 @@ public class ServiceCollectionTests
     // --- Null factory in ResolveNonLastDescriptor ---
 
     [Test]
-    public void GetServices_NonLastWinsFactory_ReturnsNull_Throws()
+    public void GetServices_NonLastWinsFactory_ReturnsNull_ExcludesResult()
     {
         ServiceCollection collection = new();
 
-        collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService>)(_ => null!));
+        collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService?>)(_ => null));
         collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService>)(_ => new SimpleService()));
 
-        Assert.Throws<InvalidOperationException>(() => collection.BuildServiceProvider());
+        ServiceProvider provider = collection.BuildServiceProvider();
+        IReadOnlyList<SimpleService> services = provider.GetServices<SimpleService>();
+
+        Assert.That(services, Has.Count.EqualTo(1));
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(services[0]));
+    }
+
+    [Test]
+    public void GetRequiredService_LastNullSingletonFactory_FallsBackToEarlierRegistration()
+    {
+        SimpleService fallback = new();
+        ServiceCollection collection = new();
+        collection.AddSingleton(fallback);
+        collection.AddSingleton<SimpleService>((Func<ServiceProvider, SimpleService?>)(_ => null));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetRequiredService<SimpleService>(), Is.SameAs(fallback));
+        Assert.That(provider.GetServices<SimpleService>(), Is.EqualTo(new[] { fallback }));
+    }
+
+    [Test]
+    public void AddAlias_ToAbsentSingletonImplementation_ContributesNoService()
+    {
+        ServiceCollection collection = new();
+        collection.AddSingleton<MyServiceImpl>(
+            (Func<ServiceProvider, MyServiceImpl?>)(_ => null));
+        collection.AddAlias<IMyService, MyServiceImpl>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetService<IMyService>(), Is.Null);
+        Assert.That(provider.GetServices<IMyService>(), Is.Empty);
     }
 
     // --- Aliased services must not be double-disposed ---

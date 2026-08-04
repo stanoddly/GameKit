@@ -128,6 +128,42 @@ public sealed class TransientServiceTests
     }
 
     [Test]
+    public void AddTransient_FactoryReturnsNull_ContributesNoServicePerResolution()
+    {
+        int factoryCalls = 0;
+        ServiceCollection collection = new();
+        collection.AddTransient<ITransientContract>(
+            (Func<ServiceProvider, ITransientContract?>)(_ =>
+            {
+                factoryCalls++;
+                return null;
+            }));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(factoryCalls, Is.Zero);
+        Assert.That(provider.GetService<ITransientContract>(), Is.Null);
+        Assert.That(provider.GetServices<ITransientContract>(), Is.Empty);
+        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<ITransientContract>());
+        Assert.That(factoryCalls, Is.EqualTo(3));
+    }
+
+    [Test]
+    public void GetRequiredService_LastNullTransientFactory_FallsBackToEarlierSingleton()
+    {
+        TransientService fallback = new();
+        ServiceCollection collection = new();
+        collection.AddSingleton<ITransientContract>(fallback);
+        collection.AddTransient<ITransientContract>(
+            (Func<ServiceProvider, ITransientContract?>)(_ => null));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetRequiredService<ITransientContract>(), Is.SameAs(fallback));
+        Assert.That(provider.GetServices<ITransientContract>(), Is.EqualTo(new[] { fallback }));
+    }
+
+    [Test]
     public void AddTransient_InstanceFactory_UsesFactoryServiceAndMethodDependencies()
     {
         ServiceCollection collection = new();
@@ -301,6 +337,20 @@ public sealed class TransientServiceTests
         Assert.That(first, Is.InstanceOf<TransientService>());
         Assert.That(second, Is.InstanceOf<TransientService>());
         Assert.That(second, Is.Not.SameAs(first));
+    }
+
+    [Test]
+    public void AddAlias_ToAbsentTransientImplementation_ContributesNoService()
+    {
+        ServiceCollection collection = new();
+        collection.AddTransient<TransientService>(
+            (Func<ServiceProvider, TransientService?>)(_ => null));
+        collection.AddAlias<ITransientContract, TransientService>();
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        Assert.That(provider.GetService<ITransientContract>(), Is.Null);
+        Assert.That(provider.GetServices<ITransientContract>(), Is.Empty);
     }
 
     [Test]

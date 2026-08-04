@@ -22,9 +22,8 @@ internal class ServiceDescriptor
     public ServiceDescriptorKind Kind { get; }
     public ServiceLifetime Lifetime { get; }
     public object? Instance { get; private init; }
-    public Func<ServiceProvider, object>? TypedFactory { get; private init; }
+    public Func<ServiceProvider, object?>? TypedFactory { get; private init; }
     public int AliasSourceId { get; private init; }
-    public string? AliasSourceName { get; private init; }
 
     // The concrete implementation type — used for typed activation/disposal callbacks.
     // For Instance and TypedFactory descriptors this equals the T in ForInstance<T>/ForTypedFactory<T>.
@@ -52,17 +51,17 @@ internal class ServiceDescriptor
         };
     }
 
-    public static ServiceDescriptor ForTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T> typedFactory) where T : class
+    public static ServiceDescriptor ForTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T?> typedFactory) where T : class
     {
         return ForTypedFactory(typedFactory, ServiceLifetime.Singleton);
     }
 
-    public static ServiceDescriptor ForTransientTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T> typedFactory) where T : class
+    public static ServiceDescriptor ForTransientTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T?> typedFactory) where T : class
     {
         return ForTypedFactory(typedFactory, ServiceLifetime.Transient);
     }
 
-    private static ServiceDescriptor ForTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T> typedFactory, ServiceLifetime lifetime) where T : class
+    private static ServiceDescriptor ForTypedFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>(Func<ServiceProvider, T?> typedFactory, ServiceLifetime lifetime) where T : class
     {
         return new ServiceDescriptor(ServiceTypeId<T>.Id, typeof(T), ServiceDescriptorKind.TypedFactory, lifetime)
         {
@@ -75,7 +74,7 @@ internal class ServiceDescriptor
     // Used when the service type and implementation type differ (AddSingleton<TService, TImpl>(...))
     // so that activation/disposal callbacks receive typeof(TImpl) rather than typeof(TService).
     public static ServiceDescriptor ForTypedFactoryWithConcreteType<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
-        Func<ServiceProvider, TImpl> typedFactory)
+        Func<ServiceProvider, TImpl?> typedFactory)
         where TService : class
         where TImpl : class, TService
     {
@@ -83,7 +82,7 @@ internal class ServiceDescriptor
     }
 
     public static ServiceDescriptor ForTransientTypedFactoryWithConcreteType<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
-        Func<ServiceProvider, TImpl> typedFactory)
+        Func<ServiceProvider, TImpl?> typedFactory)
         where TService : class
         where TImpl : class, TService
     {
@@ -91,7 +90,7 @@ internal class ServiceDescriptor
     }
 
     private static ServiceDescriptor ForTypedFactoryWithConcreteType<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TImpl>(
-        Func<ServiceProvider, TImpl> typedFactory,
+        Func<ServiceProvider, TImpl?> typedFactory,
         ServiceLifetime lifetime)
         where TService : class
         where TImpl : class, TService
@@ -110,8 +109,7 @@ internal class ServiceDescriptor
     {
         return new ServiceDescriptor(ServiceTypeId<TService>.Id, typeof(TService), ServiceDescriptorKind.Alias, ServiceLifetime.Singleton)
         {
-            AliasSourceId = ServiceTypeId<TImplementation>.Id,
-            AliasSourceName = ServiceTypeId<TImplementation>.Name
+            AliasSourceId = ServiceTypeId<TImplementation>.Id
         };
     }
 }
