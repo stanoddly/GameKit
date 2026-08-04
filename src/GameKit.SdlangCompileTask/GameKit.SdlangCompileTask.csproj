@@ -27,7 +27,9 @@
         <None Include="build\GameKit.SdlangCompileTask.targets" Link="GameKit.SdlangCompileTask.targets" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\GameKit.SdlangCompileLib\GameKit.SdlangCompileLib.csproj" />
+      <!-- The compiler library runs in MSBuild and is not part of a consuming application's publish. -->
+      <ProjectReference Include="..\GameKit.SdlangCompileLib\GameKit.SdlangCompileLib.csproj"
+                        GlobalPropertiesToRemove="PublishSingleFile" />
     </ItemGroup>
 
 </Project>
