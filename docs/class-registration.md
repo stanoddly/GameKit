@@ -7,6 +7,7 @@ GameKit's DI container (`GameKit.DependencyInjection`) supports singleton and tr
 - Singleton services have one instance per `ServiceProvider`.
 - Transient services create a new instance for each resolution or injection site.
 - `BuildServiceProvider` resolves singleton services immediately before returning and records transient factories for later resolution.
+- Factory registrations may return `null` to contribute no service. Resolution skips null results.
 - `ServiceProvider` supports a parent chain: resolution falls back to the parent provider when a type is not registered locally.
 - `ServiceProvider` itself is automatically registered and resolvable.
 - Registration is done through `ServiceCollection`; the built `ServiceProvider` is immutable after `BuildServiceProvider` returns.
@@ -89,13 +90,15 @@ services.AddSingleton<Camera>(Camera.CreateDefault);
 services.AddSingleton<RenderConfig>(RenderConfig.Create);
 ```
 
+If the delegate returns `null`, that registration contributes no service.
+
 Use when:
 - Construction logic lives in a static factory method.
 - The factory has service dependencies as parameters.
 
 ---
 
-### `AddSingleton<T>(Func<ServiceProvider, T> factory)`
+### `AddSingleton<T>(Func<ServiceProvider, T?> factory)`
 
 Registers a typed factory that receives the `ServiceProvider` directly. No source generator required.
 
@@ -113,7 +116,7 @@ Use when:
 
 ---
 
-### `AddSingleton<TService, TImpl>(Func<ServiceProvider, TImpl> factory)`
+### `AddSingleton<TService, TImpl>(Func<ServiceProvider, TImpl?> factory)`
 
 Registers a typed factory that produces `TImpl` instances under the service type `TService`. Activation and disposal callbacks receive `typeof(TImpl)` rather than `typeof(TService)`. No source generator required.
 
@@ -167,9 +170,11 @@ Registers a transient factory delegate whose parameters are resolved as services
 services.AddTransient<ParticleEmitter>(ParticleEmitter.Create);
 ```
 
+If the delegate returns `null`, that registration contributes no service for that resolution.
+
 ---
 
-### `AddTransient<T>(Func<ServiceProvider, T> factory)`
+### `AddTransient<T>(Func<ServiceProvider, T?> factory)`
 
 Registers a typed transient factory that receives the provider directly. No source generator required.
 
@@ -180,9 +185,30 @@ services.AddTransient<DomainEventCursor>(static sp =>
 
 ---
 
-### `AddTransient<TService, TImpl>(Func<ServiceProvider, TImpl> factory)`
+### `AddTransient<TService, TImpl>(Func<ServiceProvider, TImpl?> factory)`
 
 Registers a typed transient factory under an interface or base service type. Activation and disposal callbacks receive `typeof(TImpl)`.
+
+### Nullable factory results
+
+All singleton and transient factory overloads may return `null`. A null result means that descriptor contributes no service:
+
+```csharp
+services.AddSingleton<IWindowPositioningStrategy>((PlatformInfo platformInfo) =>
+    platformInfo.SupportsSetWindowPosition
+        ? new ProgrammaticWindowPositioningStrategy()
+        : null);
+```
+
+- `GetRequiredService<T>()` returns the latest non-null result and throws if none exists.
+- `GetService<T>()` returns the latest non-null result or `null` if none exists.
+- `GetServices<T>()` excludes null results while preserving registration order.
+- Resolution falls back through earlier registrations and then parent providers.
+- Singleton factories are evaluated once during provider construction, including null results.
+- Transient factories are evaluated for every resolution.
+- Activation, disposal, registry, and alias behavior ignores null results.
+
+`IsRegistered<T>()` reports whether a descriptor was registered; it remains `true` even when that descriptor's factory eventually returns `null`.
 
 ---
 
@@ -313,7 +339,7 @@ ServiceProvider child = childServices.BuildServiceProvider(parent: provider);
 
 ### Service resolution
 
-A child provider flattens the parent's singleton service array and transient descriptor array into its own at freeze time. Child registrations override parent registrations for the same type (last-wins). After freezing, singleton resolution is a single array lookup; transient resolution uses the flattened transient descriptor array.
+A child provider flattens the parent's singleton service array and registration lists into its own at freeze time. Child registrations take precedence for single-service resolution, while a null result falls back through earlier child registrations and then parent registrations. After freezing, singleton-only resolution uses a single array lookup; types containing transient registrations use the flattened registration list.
 
 ```csharp
 ServiceCollection rootCollection = new();
@@ -331,7 +357,7 @@ IView view = stage.GetRequiredService<IView>();
 
 ### Service collections (`GetServices<T>`)
 
-Multi-registrations compose across the hierarchy: parent entries appear first, followed by child entries. This is the opposite of single-service resolution (where child wins) — collections accumulate. Singleton-only collections are cached as `T[]` and returned without allocation. Collections containing any transient registration are rebuilt on each `GetServices<T>()` call so transient entries are fresh per collection resolution.
+Multi-registrations compose across the hierarchy: parent entries appear first, followed by child entries. This is the opposite of single-service resolution (where the latest non-null child registration wins) — collections accumulate. Null results are excluded. Singleton-only collections are cached as `T[]` and returned without allocation. Collections containing any transient registration are rebuilt on each `GetServices<T>()` call so transient entries are fresh per collection resolution.
 
 ### Callback merging
 
@@ -395,7 +421,7 @@ When `T` is `IEnumerable<TElement>`, the source generator intercepts the call an
 
 ### `GetServices<T>()`
 
-Returns all instances registered under `T` as `IReadOnlyList<T>`. If every entry is a singleton, the list is a real `T[]` built at `BuildServiceProvider` time and returned without allocation or copying. If any entry is transient, `GetServices<T>()` returns a new `T[]` each call; singleton entries are reused and transient entries are newly constructed.
+Returns all non-null instances registered under `T` as `IReadOnlyList<T>`. If every entry is a singleton, the list is a real `T[]` built at `BuildServiceProvider` time and returned without allocation or copying. If any entry is transient, `GetServices<T>()` returns a new `T[]` each call; singleton entries are reused and transient entries are newly constructed.
 
 ```csharp
 IReadOnlyList<IRenderer> renderers = provider.GetServices<IRenderer>();
@@ -424,14 +450,14 @@ Disposes provider-owned services in reverse creation order. Transient `IDisposab
 
 ## Multi-Registration and `GetServices<T>`
 
-Registering the same type more than once is allowed. For single-service resolution (`GetRequiredService`, `GetService`), the last registration wins. All registrations are preserved in the collection returned by `GetServices<T>`.
+Registering the same type more than once is allowed. For single-service resolution (`GetRequiredService`, `GetService`), the latest non-null registration wins. All non-null results are preserved in registration order in the collection returned by `GetServices<T>`.
 
 ```csharp
 services.AddSingleton<IRenderer>(new BackgroundRenderer());
 services.AddTransient<IRenderer, SpriteRenderer>();
 services.AddSingleton<IRenderer>(new UiRenderer());
 
-// GetRequiredService returns only UiRenderer (last wins)
+// GetRequiredService returns only UiRenderer (latest non-null wins)
 IRenderer last = provider.GetRequiredService<IRenderer>();
 
 // GetServices returns all three in registration order; SpriteRenderer is fresh per call
@@ -486,9 +512,9 @@ services.AddSingleton<RenderPipeline>();
 If you need a generic registration helper, use the non-intercepted overload with a factory:
 
 ```csharp
-void Register<T>(ServiceCollection services, Func<ServiceProvider, T> factory) where T : class
+void Register<T>(ServiceCollection services, Func<ServiceProvider, T?> factory) where T : class
 {
-    services.AddSingleton<T>(factory); // Func<ServiceProvider, T> overload — no generator needed
+    services.AddSingleton<T>(factory); // Func<ServiceProvider, T?> overload — no generator needed
 }
 ```
 

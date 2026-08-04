@@ -22,10 +22,9 @@ public class ServiceProvider : IDisposable
     private Func<int, object[]>? _buildTimeCollectionResolver;
     private bool _disposed;
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
-    private ServiceDescriptor?[]? _transientDescriptors;
     private Dictionary<int, ServiceCollectionRegistration[]>? _serviceCollectionRegistrations;
     private readonly List<TransientDisposalRecord> _transientDisposalRecords = new();
-    // Tracks slot indices in the order services were first stored, for reverse-order disposal.
+    // Tracks singleton instances in creation order for reverse-order disposal.
     private readonly List<ServiceCreationRecord> _creationRecords = new();
 
     private sealed class ServiceCollectionCache
@@ -41,7 +40,7 @@ public class ServiceProvider : IDisposable
     }
 
     private readonly record struct ServiceCreationRecord(
-        int Slot,
+        object Instance,
         [param: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
         [property: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]
         Type ConcreteType);
@@ -92,11 +91,6 @@ public class ServiceProvider : IDisposable
         {
             _serviceCollections.Add(kvp.Key, new ServiceCollectionCache(kvp.Value));
         }
-    }
-
-    internal void SetTransientDescriptors(ServiceDescriptor?[]? descriptors)
-    {
-        _transientDescriptors = descriptors;
     }
 
     internal void SetServiceCollectionRegistrations(Dictionary<int, ServiceCollectionRegistration[]> registrations)
@@ -184,8 +178,8 @@ public class ServiceProvider : IDisposable
             }
         }
 
-        // Overlay child's own pending slots; these are already tracked in _creationRecords
-        // (populated by SetServiceWithType during build), so no _creationRecords mutation is needed here.
+        // Overlay the child's own effective singleton slots. Creation ownership was recorded
+        // when each non-null singleton descriptor was evaluated.
         foreach (KeyValuePair<int, object> kvp in pending)
         {
             services[kvp.Key] = kvp.Value;
@@ -321,22 +315,6 @@ public class ServiceProvider : IDisposable
         return null;
     }
 
-    internal ServiceDescriptor? GetTransientDescriptorById(int id)
-    {
-        ServiceDescriptor?[]? descriptors = _transientDescriptors;
-        if (descriptors != null && id < descriptors.Length)
-        {
-            return descriptors[id];
-        }
-
-        return null;
-    }
-
-    internal ServiceDescriptor?[]? GetTransientDescriptors()
-    {
-        return _transientDescriptors;
-    }
-
     internal ServiceCollectionRegistration[]? GetMergedServiceCollectionRegistrationsById(int id)
     {
         if (_serviceCollectionRegistrations != null &&
@@ -353,23 +331,21 @@ public class ServiceProvider : IDisposable
         _pending![id] = service;
     }
 
-    internal void SetServiceWithType(
-        int id,
+    internal void TrackSingleton(
         object service,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type concreteType)
     {
-        if (!_pending!.ContainsKey(id))
-        {
-            _creationRecords.Add(new ServiceCreationRecord(id, concreteType));
-        }
-
-        _pending[id] = service;
+        _creationRecords.Add(new ServiceCreationRecord(service, concreteType));
     }
 
-    internal object CreateTransient(ServiceDescriptor descriptor)
+    internal object? CreateTransient(ServiceDescriptor descriptor)
     {
-        object instance = descriptor.TypedFactory!(this)
-            ?? throw new InvalidOperationException("Factory delegate returned null.");
+        object? instance = descriptor.TypedFactory!(this);
+
+        if (instance == null)
+        {
+            return null;
+        }
 
         if (instance is IDisposable)
         {
@@ -379,6 +355,27 @@ public class ServiceProvider : IDisposable
         RunActivatedCallbacks(instance, descriptor.ConcreteType!);
 
         return instance;
+    }
+
+    private object? ResolveLatestRegistration(ServiceCollectionRegistration[] registrations)
+    {
+        for (int i = registrations.Length - 1; i >= 0; i--)
+        {
+            object? instance = ResolveRegistration(registrations[i]);
+            if (instance != null)
+            {
+                return instance;
+            }
+        }
+
+        return null;
+    }
+
+    private object? ResolveRegistration(ServiceCollectionRegistration registration)
+    {
+        return registration.TransientDescriptor != null
+            ? CreateTransient(registration.TransientDescriptor)
+            : registration.SingletonInstance;
     }
 
     /// <summary>Returns the service registered for <typeparamref name="T"/>, throwing if the type is not registered.</summary>
@@ -394,6 +391,18 @@ public class ServiceProvider : IDisposable
         object?[]? services = _services;
         if (services != null)
         {
+            if (_serviceCollectionRegistrations != null &&
+                _serviceCollectionRegistrations.TryGetValue(id, out ServiceCollectionRegistration[]? registrations))
+            {
+                object? registered = ResolveLatestRegistration(registrations);
+                if (registered != null)
+                {
+                    return Unsafe.As<T>(registered);
+                }
+
+                throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
+            }
+
             // Frozen path: _services is the fully-flattened ancestor-to-child array built at
             // FreezeServices() time. Single bounds-check + index — no parent traversal.
             if (id < services.Length)
@@ -405,12 +414,6 @@ public class ServiceProvider : IDisposable
                     // controls registration and always stores services under their correct type.
                     return Unsafe.As<T>(frozen);
                 }
-            }
-
-            ServiceDescriptor? transientDescriptor = GetTransientDescriptorById(id);
-            if (transientDescriptor != null)
-            {
-                return Unsafe.As<T>(CreateTransient(transientDescriptor));
             }
 
             throw new InvalidOperationException($"Service of type {typeof(T).Name} is not registered.");
@@ -443,19 +446,34 @@ public class ServiceProvider : IDisposable
 
         int id = ServiceTypeId<T>.Id;
 
+        // During provider construction the local collection map has not yet been merged with
+        // the parent. The build-time resolver sees the complete hierarchy.
+        if (_services == null && _buildTimeCollectionResolver != null)
+        {
+            object[] buildTimeServices = _buildTimeCollectionResolver(id);
+            T[] typedBuildTimeServices = new T[buildTimeServices.Length];
+            for (int i = 0; i < buildTimeServices.Length; i++)
+            {
+                typedBuildTimeServices[i] = (T)buildTimeServices[i];
+            }
+
+            return typedBuildTimeServices;
+        }
+
         if (_serviceCollectionRegistrations != null &&
             _serviceCollectionRegistrations.TryGetValue(id, out ServiceCollectionRegistration[]? registrations))
         {
-            T[] resolved = new T[registrations.Length];
+            List<T> resolved = new(registrations.Length);
             for (int i = 0; i < registrations.Length; i++)
             {
-                ServiceCollectionRegistration registration = registrations[i];
-                resolved[i] = registration.TransientDescriptor != null
-                    ? Unsafe.As<T>(CreateTransient(registration.TransientDescriptor))
-                    : Unsafe.As<T>(registration.SingletonInstance!);
+                object? instance = ResolveRegistration(registrations[i]);
+                if (instance != null)
+                {
+                    resolved.Add(Unsafe.As<T>(instance));
+                }
             }
 
-            return resolved;
+            return resolved.ToArray();
         }
 
         if (_serviceCollections != null)
@@ -484,18 +502,6 @@ public class ServiceProvider : IDisposable
             }
         }
 
-        // Unfrozen (build-time) path.
-        if (_buildTimeCollectionResolver != null)
-        {
-            object[] resolved = _buildTimeCollectionResolver(id);
-            T[] typed = new T[resolved.Length];
-            for (int i = 0; i < resolved.Length; i++)
-            {
-                typed[i] = (T)resolved[i];
-            }
-            return typed;
-        }
-
         return Array.Empty<T>();
     }
 
@@ -511,6 +517,13 @@ public class ServiceProvider : IDisposable
         object?[]? services = _services;
         if (services != null)
         {
+            if (_serviceCollectionRegistrations != null &&
+                _serviceCollectionRegistrations.TryGetValue(id, out ServiceCollectionRegistration[]? registrations))
+            {
+                object? registered = ResolveLatestRegistration(registrations);
+                return registered == null ? null : Unsafe.As<T>(registered);
+            }
+
             // Frozen path: _services is the fully-flattened ancestor-to-child array.
             // Single bounds-check + index — no parent traversal.
             if (id < services.Length)
@@ -520,12 +533,6 @@ public class ServiceProvider : IDisposable
                 {
                     return Unsafe.As<T>(frozen);
                 }
-            }
-
-            ServiceDescriptor? transientDescriptor = GetTransientDescriptorById(id);
-            if (transientDescriptor != null)
-            {
-                return Unsafe.As<T>(CreateTransient(transientDescriptor));
             }
 
             return null;
@@ -590,23 +597,9 @@ public class ServiceProvider : IDisposable
         for (int i = _creationRecords.Count - 1; i >= 0; i--)
         {
             ServiceCreationRecord record = _creationRecords[i];
-            int slot = record.Slot;
-            object? service = null;
+            object service = record.Instance;
 
-            object?[]? services = _services;
-            if (services != null)
-            {
-                if (slot < services.Length)
-                {
-                    service = services[slot];
-                }
-            }
-            else
-            {
-                service = _pending?.GetValueOrDefault(slot);
-            }
-
-            if (service == null || ReferenceEquals(service, this))
+            if (ReferenceEquals(service, this))
             {
                 continue;
             }
@@ -629,7 +622,6 @@ public class ServiceProvider : IDisposable
         _services = null;
         _pending = null;
         _serviceCollections = null;
-        _transientDescriptors = null;
         _serviceCollectionRegistrations = null;
         _activatedCallbacks = null;
         _disposingCallbacks = null;

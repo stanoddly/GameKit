@@ -94,6 +94,24 @@ public sealed class ServiceCallbackTests
     }
 
     [Test]
+    public void Callbacks_AreNotInvokedForNullSingletonFactoryResult()
+    {
+        int activationCount = 0;
+        int disposingCount = 0;
+        ServiceCollection collection = new();
+        collection.OnActivated((_, _) => activationCount++);
+        collection.OnDisposing((_, _) => disposingCount++);
+        collection.AddSingleton<CallbackDisposableService>(
+            (Func<ServiceProvider, CallbackDisposableService?>)(_ => null));
+
+        ServiceProvider provider = collection.BuildServiceProvider();
+        provider.Dispose();
+
+        Assert.That(activationCount, Is.Zero);
+        Assert.That(disposingCount, Is.Zero);
+    }
+
+    [Test]
     public void OnDisposing_FiresBeforeOwnDispose()
     {
         List<string> events = new();
