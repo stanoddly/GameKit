@@ -54,15 +54,18 @@ public class ZipFileSystem : VirtualFileSystem
         // Index all entries
         foreach (ZipArchiveEntry entry in _archive.Entries)
         {
-            // Skip directory entries
+            string normalizedPath = NormalizePath(entry.FullName);
+
             if (string.IsNullOrEmpty(entry.Name))
+            {
+                AddDirectoryToHierarchy(normalizedPath);
                 continue;
-            
-            string normalizedPath = entry.FullName.Replace('\\', '/');
+            }
+
             string directory = GetDirectoryPath(normalizedPath);
             
             // Add file to its directory
-            if (!_filesByDirectory.TryGetValue(directory, out var files))
+            if (!_filesByDirectory.TryGetValue(directory, out List<ZipFile>? files))
             {
                 files = new List<ZipFile>();
                 _filesByDirectory[directory] = files;
@@ -78,7 +81,9 @@ public class ZipFileSystem : VirtualFileSystem
     private void AddDirectoryToHierarchy(string directory)
     {
         if (string.IsNullOrEmpty(directory))
+        {
             return;
+        }
             
         // Split path into components
         string[] parts = directory.Split('/');
@@ -90,12 +95,14 @@ public class ZipFileSystem : VirtualFileSystem
             
             // Build current path
             if (i > 0)
+            {
                 currentPath += "/";
+            }
                 
             currentPath += parts[i];
             
             // Add current directory to parent's children
-            if (!_directoriesByParent.TryGetValue(parentPath, out var children))
+            if (!_directoriesByParent.TryGetValue(parentPath, out List<string>? children))
             {
                 children = new List<string>();
                 _directoriesByParent[parentPath] = children;
@@ -105,6 +112,11 @@ public class ZipFileSystem : VirtualFileSystem
             {
                 children.Add(currentPath);
             }
+        }
+
+        if (!_directoriesByParent.ContainsKey(directory))
+        {
+            _directoriesByParent[directory] = new List<string>();
         }
     }
     
@@ -153,29 +165,9 @@ public class ZipFileSystem : VirtualFileSystem
 
         string normalizedPath = NormalizePath(path);
 
-        if (_directoriesByParent.TryGetValue(normalizedPath, out var directories))
+        if (_directoriesByParent.TryGetValue(normalizedPath, out List<string>? directories))
         {
-            // Extract just the directory names (not full paths)
-            string[] foundDirectories = new string[directories.Count];
-
-            for (int i = 0; i < directories.Count; i++)
-            {
-                string fullPath = directories[i];
-                int lastSlash = fullPath.LastIndexOf('/');
-
-                if (lastSlash >= 0)
-                {
-                    // Return just the last segment of the path
-                    foundDirectories[i] = fullPath.Substring(lastSlash + 1);
-                }
-                else
-                {
-                    // No slashes, it's directly in the root
-                    foundDirectories[i] = fullPath;
-                }
-            }
-
-            result = foundDirectories;
+            result = directories.ToArray();
             return true;
         }
 
