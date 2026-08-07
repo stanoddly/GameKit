@@ -3,8 +3,9 @@ using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace GameKit.SdlangCompileTask.Tests;
+namespace GameKit.SdlangBuildIntegration.Tests;
 
+[Category("BuildIntegration")]
 [NonParallelizable]
 public class SdlangBuildIntegrationTests
 {
@@ -15,7 +16,7 @@ public class SdlangBuildIntegrationTests
         string projectDirectory = Path.Combine(
             repositoryDirectory,
             "tests",
-            "GameKit.SdlangCompileTask.Tests",
+            "GameKit.SdlangBuildIntegration.Tests",
             "BuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "BuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
@@ -105,7 +106,7 @@ public class SdlangBuildIntegrationTests
         string projectDirectory = Path.Combine(
             repositoryDirectory,
             "tests",
-            "GameKit.SdlangCompileTask.Tests",
+            "GameKit.SdlangBuildIntegration.Tests",
             "ZipBuildIntegration");
         string projectPath = Path.Combine(projectDirectory, "ZipBuildIntegration.csproj");
         string generatedDirectory = Path.Combine(projectDirectory, "Content", "shaders", ".generated");
@@ -286,11 +287,6 @@ public class SdlangBuildIntegrationTests
             startInfo.ArgumentList.Add(argument);
         }
 
-        // Reuse the task copy in the test output. Rebuilding its source project would try to
-        // overwrite dependencies that the outer test build has loaded, which Windows prevents.
-        string taskAssemblyPath = typeof(global::GameKit.SdlangCompileTask.SdlangCompileTask).Assembly.Location;
-        startInfo.ArgumentList.Add($"-p:SdlangCompileTaskAssembly={taskAssemblyPath}");
-        startInfo.ArgumentList.Add("-p:BuildProjectReferences=false");
         startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
 
         using Process process = Process.Start(startInfo)!;

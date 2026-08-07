@@ -22,7 +22,13 @@ jobs:
         run: dotnet build GameKit.slnx -p:TreatWarningsAsErrors=true
 
       - name: Run tests
-        run: dotnet test GameKit.slnx --no-build -p:TreatWarningsAsErrors=true
+        run: dotnet test GameKit.slnx --no-build --filter 'TestCategory!=BuildIntegration' -p:TreatWarningsAsErrors=true
+
+      - name: Stop build servers
+        run: dotnet build-server shutdown
+
+      - name: Run shader build integration tests
+        run: dotnet test tests/GameKit.SdlangBuildIntegration.Tests/GameKit.SdlangBuildIntegration.Tests.csproj --no-build --filter 'TestCategory=BuildIntegration' -p:TreatWarningsAsErrors=true
 
       - name: Verify conditional logging in Release
         run: dotnet test tests/GameKit.Logging.Tests/GameKit.Logging.Tests.csproj --configuration Release -p:TreatWarningsAsErrors=true
