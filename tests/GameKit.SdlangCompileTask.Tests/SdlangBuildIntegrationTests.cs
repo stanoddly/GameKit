@@ -286,8 +286,10 @@ public class SdlangBuildIntegrationTests
             startInfo.ArgumentList.Add(argument);
         }
 
-        // The outer test build has the MSBuild task assembly loaded. Rebuilding project references
-        // would try to overwrite its dependencies, which Windows prevents while they are loaded.
+        // Reuse the task copy in the test output. Rebuilding its source project would try to
+        // overwrite dependencies that the outer test build has loaded, which Windows prevents.
+        string taskAssemblyPath = typeof(global::GameKit.SdlangCompileTask.SdlangCompileTask).Assembly.Location;
+        startInfo.ArgumentList.Add($"-p:SdlangCompileTaskAssembly={taskAssemblyPath}");
         startInfo.ArgumentList.Add("-p:BuildProjectReferences=false");
         startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
 
