@@ -38,16 +38,3 @@ The embedded tutorial follows the policy used by `GameKit.Pencuil`. The ZIP tuto
 ## Publish without building
 
 `dotnet publish --no-build` does not refresh generated content. Run a normal build first. An embedded-content target should also test `$(NoBuild)` so publishing an existing assembly does not invoke its content producers. A ZIP target packages the tracked content from the preceding build.
-
-## Build integration tests
-
-`GameKit.SdlangBuildIntegration.Tests` verifies clean build, publish, embedded-resource, and ZIP behavior by launching nested `dotnet` processes. Its tests are explicit so a normal `dotnet test GameKit.slnx` cannot run them concurrently with projects that have the shader MSBuild task loaded.
-
-Shut down persistent build servers and select the integration-test category deliberately:
-
-```shell
-dotnet build-server shutdown
-dotnet test tests/GameKit.SdlangBuildIntegration.Tests/GameKit.SdlangBuildIntegration.Tests.csproj --filter 'TestCategory=BuildIntegration'
-```
-
-The fixture is non-parallelizable, so its build and publish scenarios execute sequentially.
