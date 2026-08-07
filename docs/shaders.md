@@ -1,6 +1,6 @@
 # Shaders
 
-Guide to writing and using shaders with GameKit. Shaders are written in Slang and compiled to SPIR-V at build time.
+Guide to writing and using shaders with GameKit. Shaders are written in Slang and compiled to SPIR-V, DXIL, and MSL at build time.
 
 ## File Structure
 
@@ -10,12 +10,16 @@ Content/shaders/
 ├── fragment.slang
 └── .generated/           # Generated at build time
     ├── vertex.spv
+    ├── vertex.dxil
+    ├── vertex.metal
     ├── vertex.metadata.json
     ├── fragment.spv
+    ├── fragment.dxil
+    ├── fragment.metal
     └── fragment.metadata.json
 ```
 
-Shaders are automatically compiled during build. The build system generates SPIR-V binaries and metadata files in the `.generated/` directory.
+Shaders are automatically compiled during build. The build system generates SPIR-V binaries for Vulkan, DXIL binaries for Direct3D 12, MSL source for Metal, and metadata files in the `.generated/` directory.
 
 ## Build Integration
 
@@ -39,7 +43,7 @@ The targets file compiles every `SdlangShader` item before `CoreCompile` and exp
 
 Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
-The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output. `GameKit.SdlangCompileLib` alone owns the shared download and extraction. Slang is build-host tooling and is never copied into the output or publish directory of a project that compiles shaders. A project that needs Slang next to its own binaries opts in with `<CopySlangToOutput>true</CopySlangToOutput>` and imports `GameKit.SdlangCompileLib`'s props and targets directly. The property copies the Slang `bin/` and `lib/` directories to build and publish outputs. They remain external when publishing a single-file application because `slangc` must be executable by path.
+The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `GameKit.SdlangCompileLib` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into the output or publish directory of a project that only compiles shaders. A project that needs Slang next to its own binaries opts in with `<CopySlangToOutput>true</CopySlangToOutput>` and imports `GameKit.SdlangCompileLib`'s props and targets directly. The property copies the complete Slang distribution, including DXC, to build and publish outputs. They remain external when publishing a single-file application because `slangc` must be executable by path.
 
 Standalone applications should call `SdlangCompiler.CreateFromApplicationDirectory()`. It locates Slang relative to the application directory and supports single-file publishing. `SdlangCompiler.CreateFromAssemblyDirectory()` locates Slang relative to `GameKit.SdlangCompileLib.dll` and requires assembly files on disk, so it is not compatible with single-file applications. Build integrations should pass `$(SlangCompilerPath)` to the `SdlangCompiler` constructor instead of using either factory.
 
@@ -154,7 +158,7 @@ GraphicsPipeline pipeline = graphicsPipelineBuilder
     .Build();
 ```
 
-Paths are relative to `Content/` directory and exclude the `.slang` extension. The loader automatically finds compiled `.spv` files and their metadata.
+Paths are relative to the `Content/` directory and exclude the `.slang` extension. The loader reads the metadata and selects the first compiled format supported by the active GPU backend.
 
 **Option 2: Load separately**
 
@@ -168,6 +172,47 @@ GraphicsPipeline pipeline = graphicsPipelineBuilder
 ```
 
 Use this when you need to reuse shader objects across multiple pipelines.
+
+## GPU Backend Selection
+
+GameKit lets SDL choose the GPU backend automatically by default. Register `GameKitConfig` before building the application to request a specific backend:
+
+```csharp
+builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Direct3D12));
+```
+
+`GpuBackend` supports `Automatic`, `Vulkan`, `Direct3D12`, and `Metal`. An explicit choice is passed to SDL as `vulkan`, `direct3d12`, or `metal` and advertises only that backend's shader format; device creation fails if the requested driver is unavailable. Automatic Windows device creation advertises both SPIR-V and DXIL, allowing SDL to select Vulkan or Direct3D 12. Vulkan-specific device options remain enabled whenever Vulkan can be selected.
+
+The selected SDL driver is available from `GpuDevice.Driver` for diagnostics.
+
+### Manual Direct3D 12 validation
+
+On a GPU-equipped Windows system, add the following registrations to each application under test:
+
+```csharp
+builder.AddSingleton(new GameKitConfig(
+    EnableGpuValidation: true,
+    GpuBackend: GpuBackend.Direct3D12));
+
+builder.OnStart((GpuDevice gpuDevice) =>
+{
+    if (gpuDevice.Driver != "direct3d12")
+    {
+        throw new InvalidOperationException($"Expected direct3d12, got {gpuDevice.Driver}");
+    }
+});
+```
+
+Run these representative workloads and confirm that each renders without SDL GPU validation errors:
+
+```shell
+dotnet run --project tutorials/GameKit.Tutorials.Triangle
+dotnet run --project tutorials/GameKit.Tutorials.ImageLoading
+dotnet run --project tutorials/GameKit.Tutorials.StorageBuffer
+dotnet run --project tutorials/GameKit.Tutorials.ComputeShader
+```
+
+Together these cover basic graphics, texture/sampler bindings, storage buffers, and compute dispatch.
 
 ## Vertex Attribute Mapping
 
@@ -245,6 +290,16 @@ For each shader, the build generates a `.metadata.json` file:
       "format": "SpirV",
       "filename": "vertex.spv",
       "entryPoint": "main"
+    },
+    {
+      "format": "Dxil",
+      "filename": "vertex.dxil",
+      "entryPoint": "main"
+    },
+    {
+      "format": "Msl",
+      "filename": "vertex.metal",
+      "entryPoint": "main_0"
     }
   ]
 }
@@ -255,10 +310,9 @@ This metadata is used by the loader to validate bindings and create GPU shader o
 ## Notes
 
 - Shaders are compiled at build time using Slangc compiler
-- Entry point is always `main`
-- Shader compilation is cached based on source file hash
-- Recompilation only happens when source changes
-- Shader format is SPIR-V (cross-platform, works with Vulkan/Metal/D3D12)
+- The source entry point is always `main`; generated MSL exposes it as `main_0`
+- Shader compilation is cached based on the source hash, Slang version, and expected target formats
+- SPIR-V is used by Vulkan, DXIL by Direct3D 12, and MSL by Metal
 - Always use explicit register bindings for constant buffers
 - Space3 is used for constant buffers by convention
 - Uniform data is pushed per-draw call before rendering

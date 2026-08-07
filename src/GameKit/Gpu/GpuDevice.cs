@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using GameKit.Shaders;
 using GameKit.Utilities;
 using SDL;
@@ -17,6 +18,8 @@ public class GpuDevice : IDisposable
     private LockedSet<GraphicsShader> _shaders = new();
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
+
+    public string Driver { get; }
 
     public GpuMemoryStats MemoryStats
     {
@@ -38,6 +41,13 @@ public class GpuDevice : IDisposable
     internal GpuDevice(Pointer<SDL_GPUDevice> sdlGpuDevice)
     {
         SdlGpuDevice = sdlGpuDevice;
+
+        unsafe
+        {
+            byte* driver = SDL3.Unsafe_SDL_GetGPUDeviceDriver(sdlGpuDevice);
+            Driver = Marshal.PtrToStringUTF8((IntPtr)driver) ??
+                     throw new GameKitInitializationException("SDL_GetGPUDeviceDriver returned null");
+        }
     }
 
     public ShaderFormats GetSupportedShaderFormats()

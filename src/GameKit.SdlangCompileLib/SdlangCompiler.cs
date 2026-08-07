@@ -32,6 +32,8 @@ public class SdlangCompiler
     private const string GeneratedShaderDirectory = ".generated";
     private const int MaxReflectionTraversalDepth = 64;
     private static readonly string SlangVersion = GetSlangVersion();
+    private static readonly ShaderFormatDto[] TargetFormats =
+        [ShaderFormatDto.SpirV, ShaderFormatDto.Dxil, ShaderFormatDto.Msl];
 
     private readonly string _slangCompilerPath;
 
@@ -179,12 +181,12 @@ public class SdlangCompiler
     private static readonly Dictionary<ShaderFormatDto, List<string>> CommandLineOptions = new()
     {
         { ShaderFormatDto.SpirV, [] },
-        { ShaderFormatDto.Dxil, ["-profile", "sm_6_3"] },
+        { ShaderFormatDto.Dxil, ["-profile", "sm_6_0"] },
         { ShaderFormatDto.Msl, [] }
     };
 
     private (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
-        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, List<ShaderFormatDto> targets)
+        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, IReadOnlyList<ShaderFormatDto> targets)
     {
         string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
         FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
@@ -226,18 +228,28 @@ public class SdlangCompiler
                 Arguments = string.Join(" ", args.Select(arg => arg.Contains(' ') ? $"\"{arg}\"" : arg)),
                 RedirectStandardInput = true,
                 RedirectStandardOutput = false,
-                RedirectStandardError = false,
+                RedirectStandardError = true,
                 UseShellExecute = false
             }
         };
 
         process.Start();
         process.StandardInput.Close();
+        string standardError = process.StandardError.ReadToEnd();
         process.WaitForExit();
 
         if (process.ExitCode != 0)
         {
-            throw new ShaderCompilationException($"Shader compilation failed with exit code {process.ExitCode}");
+            string diagnostic = string.IsNullOrWhiteSpace(standardError)
+                ? "Slang did not provide an error message."
+                : standardError.Trim();
+            throw new ShaderCompilationException(
+                $"Shader compilation failed with exit code {process.ExitCode}:{Environment.NewLine}{diagnostic}");
+        }
+
+        if (!string.IsNullOrEmpty(standardError))
+        {
+            Console.Error.Write(standardError);
         }
 
         foreach (ShaderFormatDto format in targets)
@@ -992,8 +1004,17 @@ public class SdlangCompiler
                 return false;
             }
 
+            HashSet<ShaderFormatDto> cachedFormats = [];
             foreach (JsonElement shader in shaders.EnumerateArray())
             {
+                if (!shader.TryGetProperty("format", out JsonElement formatElement) ||
+                    formatElement.ValueKind != JsonValueKind.String ||
+                    !Enum.TryParse(formatElement.GetString(), ignoreCase: true, out ShaderFormatDto format) ||
+                    !cachedFormats.Add(format))
+                {
+                    return false;
+                }
+
                 if (!shader.TryGetProperty("filename", out JsonElement filenameElement))
                 {
                     return false;
@@ -1004,6 +1025,11 @@ public class SdlangCompiler
                 {
                     return false;
                 }
+            }
+
+            if (!cachedFormats.SetEquals(TargetFormats))
+            {
+                return false;
             }
 
             string currentHash = CalculateSourceHash(filePath, metadata.SourceDependencies);
@@ -1130,9 +1156,8 @@ public class SdlangCompiler
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
             // Step 1: Compile all targets in a single slangc invocation
-            List<ShaderFormatDto> targets = [ShaderFormatDto.SpirV, ShaderFormatDto.Msl];
             (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) =
-                CompileTargets(filePath, tempDir, outputDir, targets);
+                CompileTargets(filePath, tempDir, outputDir, TargetFormats);
             List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
             string sourceHash = CalculateSourceHash(filePath, sourceDependencies);
 

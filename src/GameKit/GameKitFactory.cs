@@ -143,16 +143,43 @@ public class GameKitFactory: IDisposable
         {
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
             SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, _config.EnableGpuValidation);
-            if (OperatingSystem.IsMacOS())
+
+            string? driverName = _config.GpuBackend switch
             {
-                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
+                GpuBackend.Automatic => null,
+                GpuBackend.Vulkan => "vulkan",
+                GpuBackend.Direct3D12 => "direct3d12",
+                GpuBackend.Metal => "metal",
+                _ => throw new ArgumentOutOfRangeException(nameof(_config.GpuBackend), _config.GpuBackend, "Unknown GPU backend")
+            };
+            if (driverName != null)
+            {
+                SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, driverName);
             }
-            else
+
+            bool advertiseSpirV = _config.GpuBackend == GpuBackend.Vulkan ||
+                                  (_config.GpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
+            bool advertiseDxil = _config.GpuBackend == GpuBackend.Direct3D12 ||
+                                 (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsWindows());
+            bool advertiseMsl = _config.GpuBackend == GpuBackend.Metal ||
+                                (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsMacOS());
+
+            if (advertiseSpirV)
             {
                 SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
             }
 
-            if (!OperatingSystem.IsMacOS())
+            if (advertiseDxil)
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
+            }
+
+            if (advertiseMsl)
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
+            }
+
+            if (advertiseSpirV)
             {
                 VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
                 shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;

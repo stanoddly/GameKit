@@ -275,7 +275,7 @@ public class SdlangCompilerTests
 
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
-        Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
+        AssertGeneratedTargets(metadata.Shaders, "test_shader");
         Assert.That(metadata.SourceHash, Is.Not.Empty);
         Assert.That(metadata.SourceDependencies, Is.EqualTo(new[] { "test_shader.slang" }));
         Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.False);
@@ -322,6 +322,34 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: false);
 
         Assert.That(new FileInfo(generatedShaderPath).Length, Is.GreaterThan(1));
+    }
+
+    [Test]
+    public void CompileShader_LegacyTargetSet_RecompilesWithDxil()
+    {
+        string shaderPath = Path.Combine(_testDir, "legacy_targets.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string dxilPath = Path.Combine(generatedDirectory, "legacy_targets.dxil");
+        string metadataPath = Path.Combine(generatedDirectory, "legacy_targets.metadata.json");
+        JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        JsonArray shaders = metadata["shaders"]!.AsArray();
+        JsonNode dxilShader = shaders.Single(shader => shader!["format"]!.GetValue<string>() == "Dxil")!;
+        shaders.Remove(dxilShader);
+        File.WriteAllText(metadataPath, metadata.ToJsonString());
+        File.WriteAllBytes(dxilPath, [0]);
+
+        compiler.Compile([shaderPath], force: false);
+
+        VertexShaderMetadataDto updatedMetadata = JsonSerializer.Deserialize(
+            File.ReadAllText(metadataPath),
+            ShaderMetadataJsonContext.Default.VertexShaderMetadataDto)!;
+        Assert.That(new FileInfo(dxilPath).Length, Is.GreaterThan(1));
+        AssertGeneratedTargets(updatedMetadata.Shaders, "legacy_targets");
     }
 
     [Test]
@@ -404,7 +432,10 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_vertex.metadata.json");
-        Assert.That(File.Exists(metadataPath), Is.True);
+        VertexShaderMetadataDto metadata = JsonSerializer.Deserialize(
+            File.ReadAllText(metadataPath),
+            ShaderMetadataJsonContext.Default.VertexShaderMetadataDto)!;
+        AssertGeneratedTargets(metadata.Shaders, "valid_vertex");
     }
 
     [Test]
@@ -417,7 +448,10 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_fragment.metadata.json");
-        Assert.That(File.Exists(metadataPath), Is.True);
+        FragmentShaderMetadataDto metadata = JsonSerializer.Deserialize(
+            File.ReadAllText(metadataPath),
+            ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto)!;
+        AssertGeneratedTargets(metadata.Shaders, "valid_fragment");
     }
 
     [Test]
@@ -440,7 +474,7 @@ public class SdlangCompilerTests
         Assert.That(metadata.ThreadCountX, Is.EqualTo(8));
         Assert.That(metadata.ThreadCountY, Is.EqualTo(8));
         Assert.That(metadata.ThreadCountZ, Is.EqualTo(1));
-        Assert.That(metadata.Shaders.Count, Is.GreaterThan(0));
+        AssertGeneratedTargets(metadata.Shaders, "valid_compute");
     }
 
     [Test]
@@ -670,5 +704,18 @@ public class SdlangCompilerTests
             json,
             ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
         return metadata ?? throw new InvalidOperationException($"Unable to read shader metadata from {metadataPath}");
+    }
+
+    private void AssertGeneratedTargets(IReadOnlyCollection<ShaderInstanceDto> shaders, string filename)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                shaders.Select(shader => shader.Format),
+                Is.EqualTo(new[] { ShaderFormatDto.SpirV, ShaderFormatDto.Dxil, ShaderFormatDto.Msl }));
+            Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.dxil")), Is.True);
+            Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.metal")), Is.True);
+        });
     }
 }
