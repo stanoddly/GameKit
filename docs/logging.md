@@ -2,7 +2,7 @@
 
 `GameKit.Logging` integrates ZLogger with GameKit's service collection. The logger factory belongs to the root service provider, remains available across stage transitions, and drains queued entries when the application is disposed.
 
-See the [logging tutorial](../tutorials/GameKit.Tutorials.Logging/Program.cs) for a complete runnable example with file and debug-console providers, category registration, conditional diagnostics, and exception logging.
+See the [logging tutorial](../tutorials/GameKit.Tutorials.Logging) for a complete runnable example with file and debug-console providers and an injected category logger inside a registered service.
 
 ## Registration
 

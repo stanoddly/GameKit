@@ -6,7 +6,7 @@ using ZLogger;
 
 namespace GameKit.Tutorials.Logging;
 
-sealed class Program
+static class Program
 {
     static int Main(string[] args)
     {
@@ -35,24 +35,12 @@ sealed class Program
             });
 #endif
         });
-        builder.AddLogger<Program>();
+        builder.AddLogger<PlayerInputService>();
+        builder.AddSingleton<PlayerInputService>();
         builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Logging" });
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
-        ILogger<Program> logger = gameKitApp.GetRequiredService<ILogger<Program>>();
-
-        logger.ZLogInformation($"Application started in process {Environment.ProcessId}");
-        logger.ZLogConditionalDebug($"Debug diagnostics are enabled");
-
-        try
-        {
-            return gameKitApp.Run();
-        }
-        catch (Exception exception)
-        {
-            logger.ZLogError(exception, $"Application terminated unexpectedly");
-            return 1;
-        }
+        return gameKitApp.Run();
     }
 }
