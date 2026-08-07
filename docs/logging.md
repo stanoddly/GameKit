@@ -4,7 +4,7 @@
 
 ## Registration
 
-Choose a writable directory supplied by the application or platform, then register the logger factory and category loggers:
+Register the logger factory and category loggers:
 
 ```csharp
 using GameKit.App;
@@ -12,14 +12,11 @@ using GameKit.Logging;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
-string logDirectory = GetWritableLogDirectory();
-
 GameKitAppBuilder builder = new();
 builder.AddZLogger(logging =>
 {
     logging.SetMinimumLevel(LogLevel.Information);
     logging.AddZLoggerFileWithRetention(
-        logDirectory,
         "game",
         static options =>
         {
@@ -43,7 +40,19 @@ builder.AddLogger<PlayerSystem>();
 {prefix}_20260807_090416Z_pid48545.log
 ```
 
-The timestamp is UTC and the process ID is labeled explicitly. The application must provide a dedicated log directory. Before opening the new file, the helper keeps the latest nine existing matching files, leaving at most 10 after the new file is created. Other prefixes and unrelated files are not changed.
+The timestamp is UTC and the process ID is labeled explicitly. When no directory is supplied, the helper first attempts `AppContext.BaseDirectory`, then falls back to `LocalApplicationData/GameKit/Logs`. A failed preferred location is reported through `InternalErrorLogger`. Before opening the new file, the helper keeps the latest nine existing matching files, leaving at most 10 after the new file is created. Other prefixes and unrelated files are not changed.
+
+Pass a directory explicitly when the application has a platform-provided location. Explicit paths are strict and do not fall back:
+
+```csharp
+logging.AddZLoggerFileWithRetention(
+    logDirectory,
+    "game",
+    static options =>
+    {
+        options.InternalErrorLogger = static exception => Console.Error.WriteLine(exception);
+    });
+```
 
 The file provider uses an unbounded asynchronous buffer. Logging does not wait for file I/O, but a sustained output failure can retain queued entries and their captured values until writing recovers or the application shuts down. The integration sets `BackgroundBufferFullMode.Grow` explicitly and does not enable shared-file mode.
 

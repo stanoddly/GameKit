@@ -8,6 +8,72 @@ namespace GameKit.Logging.Tests;
 public class RetainedFileTests
 {
     [Test]
+    public void Provider_WithoutDirectoryUsesExecutableDirectory()
+    {
+        string fileNamePrefix = $"gamekit-test-{Guid.NewGuid():N}";
+        FixedTimeProvider timeProvider = new(new DateTimeOffset(2026, 8, 7, 9, 4, 16, TimeSpan.Zero));
+        string expectedPath = Path.Combine(
+            AppContext.BaseDirectory,
+            $"{fileNamePrefix}_20260807_090416Z_pid{Environment.ProcessId}.log");
+
+        try
+        {
+            ServiceCollection services = new();
+            services.AddZLogger(logging => logging.AddZLoggerFileWithRetention(
+                fileNamePrefix,
+                options =>
+                {
+                    options.TimeProvider = timeProvider;
+                    options.InternalErrorLogger = static _ => { };
+                }));
+            services.AddLogger<RetainedFileTests>();
+
+            using (ServiceProvider serviceProvider = services.BuildServiceProvider())
+            {
+                ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+                logger.ZLogInformation($"default directory");
+            }
+
+            Assert.That(File.ReadAllText(expectedPath), Does.Contain("default directory"));
+        }
+        finally
+        {
+            File.Delete(expectedPath);
+        }
+    }
+
+    [Test]
+    public void Provider_WhenPreferredDirectoryFails_ReportsAndUsesFallback()
+    {
+        using TemporaryDirectory temporaryDirectory = new();
+        string blockedPath = Path.Combine(temporaryDirectory.Path, "not-a-directory");
+        string fallbackPath = Path.Combine(temporaryDirectory.Path, "fallback");
+        File.WriteAllText(blockedPath, "occupied");
+        List<Exception> errors = new();
+        ServiceCollection services = new();
+        services.AddZLogger(logging => RetainedFileLoggingExtensions.AddZLoggerFileWithRetention(
+            logging,
+            [blockedPath, fallbackPath],
+            "game",
+            options => options.InternalErrorLogger = errors.Add,
+            true));
+        services.AddLogger<RetainedFileTests>();
+
+        using (ServiceProvider serviceProvider = services.BuildServiceProvider())
+        {
+            ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+            logger.ZLogInformation($"fallback directory");
+        }
+
+        string logPath = Directory.GetFiles(fallbackPath, "game_*.log").Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.ReadAllText(logPath), Does.Contain("fallback directory"));
+            Assert.That(errors, Is.Not.Empty);
+        });
+    }
+
+    [Test]
     public void Provider_WritesTimestampedFileAndPreservesOrder()
     {
         using TemporaryDirectory temporaryDirectory = new();

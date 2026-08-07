@@ -10,12 +10,6 @@ static class Program
 {
     static int Main(string[] args)
     {
-        string logDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "GameKit",
-            "Triangle",
-            "Logs");
-
         GameKitAppBuilder builder = new GameKitAppBuilder()
             //.AddContentFromZipPattern("data*.pak")
             .AddContentFromProjectDirectory("Content")
@@ -25,7 +19,6 @@ static class Program
         {
             logging.SetMinimumLevel(LogLevel.Information);
             logging.AddZLoggerFileWithRetention(
-                logDirectory,
                 "triangle",
                 static options =>
                 {

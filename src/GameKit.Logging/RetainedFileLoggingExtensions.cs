@@ -12,12 +12,42 @@ public static class RetainedFileLoggingExtensions
 
     public static ILoggingBuilder AddZLoggerFileWithRetention(
         this ILoggingBuilder builder,
+        string fileNamePrefix,
+        Action<ZLoggerFileOptions> configure)
+    {
+        return AddZLoggerFileWithRetention(
+            builder,
+            GetDefaultDirectoryPaths(),
+            fileNamePrefix,
+            configure,
+            true);
+    }
+
+    public static ILoggingBuilder AddZLoggerFileWithRetention(
+        this ILoggingBuilder builder,
         string directoryPath,
         string fileNamePrefix,
         Action<ZLoggerFileOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
+
+        return AddZLoggerFileWithRetention(
+            builder,
+            [Path.GetFullPath(directoryPath)],
+            fileNamePrefix,
+            configure,
+            false);
+    }
+
+    internal static ILoggingBuilder AddZLoggerFileWithRetention(
+        ILoggingBuilder builder,
+        IReadOnlyList<string> directoryPaths,
+        string fileNamePrefix,
+        Action<ZLoggerFileOptions> configure,
+        bool allowFallback)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(fileNamePrefix);
         ArgumentNullException.ThrowIfNull(configure);
 
@@ -27,8 +57,6 @@ public static class RetainedFileLoggingExtensions
         {
             throw new ArgumentException("The file name prefix contains invalid or wildcard characters.", nameof(fileNamePrefix));
         }
-
-        string fullDirectoryPath = Path.GetFullPath(directoryPath);
 
         builder.Services.AddSingleton<ILoggerProvider>(_ =>
         {
@@ -48,26 +76,79 @@ public static class RetainedFileLoggingExtensions
             string fileName = string.Create(
                 CultureInfo.InvariantCulture,
                 $"{fileNamePrefix}_{timestamp:yyyyMMdd_HHmmss}Z_pid{Environment.ProcessId}.log");
-            string filePath = Path.Combine(fullDirectoryPath, fileName);
-            LogFileRetention retention = new(
-                fullDirectoryPath,
-                $"{fileNamePrefix}_*.log",
-                RetainedFileCount - 1,
-                options.InternalErrorLogger);
-            retention.Apply();
+            Exception? lastException = null;
 
-            try
+            foreach (string directoryPath in directoryPaths)
             {
-                return new ZLoggerFileLoggerProvider(filePath, options);
+                try
+                {
+                    return CreateProvider(directoryPath, fileNamePrefix, fileName, options);
+                }
+                catch (Exception exception) when (allowFallback)
+                {
+                    ReportError(options.InternalErrorLogger, exception);
+                    lastException = exception;
+                }
+                catch (Exception exception)
+                {
+                    ReportError(options.InternalErrorLogger, exception);
+                    throw;
+                }
             }
-            catch (Exception exception)
-            {
-                retention.ReportError(exception);
-                throw;
-            }
+
+            throw new InvalidOperationException("No writable log directory is available.", lastException);
         });
 
         return builder;
+    }
+
+    private static ZLoggerFileLoggerProvider CreateProvider(
+        string directoryPath,
+        string fileNamePrefix,
+        string fileName,
+        ZLoggerFileOptions options)
+    {
+        LogFileRetention retention = new(
+            directoryPath,
+            $"{fileNamePrefix}_*.log",
+            RetainedFileCount - 1,
+            options.InternalErrorLogger!);
+        retention.Apply();
+
+        string filePath = Path.Combine(directoryPath, fileName);
+        return new ZLoggerFileLoggerProvider(filePath, options);
+    }
+
+    private static IReadOnlyList<string> GetDefaultDirectoryPaths()
+    {
+        List<string> directoryPaths = [Path.GetFullPath(AppContext.BaseDirectory)];
+        string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+        if (!string.IsNullOrWhiteSpace(localApplicationData))
+        {
+            string fallbackPath = Path.GetFullPath(Path.Combine(localApplicationData, "GameKit", "Logs"));
+            StringComparison comparison = OperatingSystem.IsWindows()
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
+            if (!string.Equals(directoryPaths[0], fallbackPath, comparison))
+            {
+                directoryPaths.Add(fallbackPath);
+            }
+        }
+
+        return directoryPaths;
+    }
+
+    private static void ReportError(Action<Exception> internalErrorLogger, Exception exception)
+    {
+        try
+        {
+            internalErrorLogger(exception);
+        }
+        catch
+        {
+        }
     }
 }
 
@@ -92,30 +173,23 @@ internal sealed class LogFileRetention
 
     public void Apply()
     {
-        try
+        Directory.CreateDirectory(_directoryPath);
+
+        FileInfo[] files = new DirectoryInfo(_directoryPath)
+            .EnumerateFiles(_searchPattern, SearchOption.TopDirectoryOnly)
+            .OrderByDescending(static file => file.Name, StringComparer.Ordinal)
+            .ToArray();
+
+        for (int i = _retainedFileCount; i < files.Length; i++)
         {
-            Directory.CreateDirectory(_directoryPath);
-
-            FileInfo[] files = new DirectoryInfo(_directoryPath)
-                .EnumerateFiles(_searchPattern, SearchOption.TopDirectoryOnly)
-                .OrderByDescending(static file => file.Name, StringComparer.Ordinal)
-                .ToArray();
-
-            for (int i = _retainedFileCount; i < files.Length; i++)
+            try
             {
-                try
-                {
-                    files[i].Delete();
-                }
-                catch (Exception exception)
-                {
-                    ReportError(exception);
-                }
+                files[i].Delete();
             }
-        }
-        catch (Exception exception)
-        {
-            ReportError(exception);
+            catch (Exception exception)
+            {
+                ReportError(exception);
+            }
         }
     }
 
