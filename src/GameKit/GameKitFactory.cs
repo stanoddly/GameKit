@@ -157,23 +157,29 @@ public class GameKitFactory: IDisposable
                 SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, driverName);
             }
 
-            if (OperatingSystem.IsMacOS())
+            bool advertiseSpirV = _config.GpuBackend == GpuBackend.Vulkan ||
+                                  (_config.GpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
+            bool advertiseDxil = _config.GpuBackend == GpuBackend.Direct3D12 ||
+                                 (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsWindows());
+            bool advertiseMsl = _config.GpuBackend == GpuBackend.Metal ||
+                                (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsMacOS());
+
+            if (advertiseSpirV)
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+            }
+
+            if (advertiseDxil)
+            {
+                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
+            }
+
+            if (advertiseMsl)
             {
                 SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
             }
-            else
-            {
-                SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
 
-                if (OperatingSystem.IsWindows())
-                {
-                    SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
-                }
-            }
-
-            bool canSelectVulkan = _config.GpuBackend == GpuBackend.Vulkan ||
-                                   (_config.GpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
-            if (canSelectVulkan)
+            if (advertiseSpirV)
             {
                 VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
                 shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;

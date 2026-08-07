@@ -181,7 +181,7 @@ GameKit lets SDL choose the GPU backend automatically by default. Register `Game
 builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Direct3D12));
 ```
 
-`GpuBackend` supports `Automatic`, `Vulkan`, `Direct3D12`, and `Metal`. An explicit choice is passed to SDL as `vulkan`, `direct3d12`, or `metal`; device creation fails if that driver is unavailable. Windows device creation advertises both SPIR-V and DXIL, allowing automatic selection between Vulkan and Direct3D 12. Vulkan-specific device options remain enabled whenever Vulkan can be selected.
+`GpuBackend` supports `Automatic`, `Vulkan`, `Direct3D12`, and `Metal`. An explicit choice is passed to SDL as `vulkan`, `direct3d12`, or `metal` and advertises only that backend's shader format; device creation fails if the requested driver is unavailable. Automatic Windows device creation advertises both SPIR-V and DXIL, allowing SDL to select Vulkan or Direct3D 12. Vulkan-specific device options remain enabled whenever Vulkan can be selected.
 
 The selected SDL driver is available from `GpuDevice.Driver` for diagnostics.
 
