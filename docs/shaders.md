@@ -183,6 +183,14 @@ builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Direct3D12));
 
 `GpuBackend` supports `Automatic`, `Vulkan`, `Direct3D12`, and `Metal`. An explicit choice is passed to SDL as `vulkan`, `direct3d12`, or `metal` and advertises only that backend's shader format; device creation fails if the requested driver is unavailable. Automatic Windows device creation advertises both SPIR-V and DXIL, allowing SDL to select Vulkan or Direct3D 12. Vulkan-specific device options remain enabled whenever Vulkan can be selected.
 
+Set the `GK_GRAPHICS` environment variable to override `GameKitConfig` without changing application code:
+
+```shell
+GK_GRAPHICS=vulkan dotnet run --project tutorials/GameKit.Tutorials.Triangle
+```
+
+Supported values are `automatic`, `vulkan`, `direct3d12`, and `metal`, matched case-insensitively. An unset, empty, or whitespace-only value leaves `GameKitConfig.GpuBackend` in effect. Any other value stops initialization with an error that lists the supported values.
+
 The selected SDL driver is available from `GpuDevice.Driver` for diagnostics.
 
 ### Manual Direct3D 12 validation
