@@ -1,7 +1,10 @@
 using System.Numerics;
 using GameKit.Gpu;
+using GameKit.Logging;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
+using Microsoft.Extensions.Logging;
+using ZLogger;
 
 namespace GameKit.Tutorials.Triangle;
 
@@ -32,7 +35,11 @@ public class TriangleRenderer: IRenderPhase<DefaultRenderContext>
         // renderPass is disposed and rendered
     }
     
-    public static TriangleRenderer Create(ShaderLoader shaderLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem)
+    public static TriangleRenderer Create(
+        ShaderLoader shaderLoader,
+        GraphicsPipelineBuilder graphicsPipelineBuilder,
+        GpuMemorySystem gpuMemorySystem,
+        ILogger<TriangleRenderer> logger)
     {
         GpuVertexBuffer<PositionVertex> quadVertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
 
@@ -42,6 +49,9 @@ public class TriangleRenderer: IRenderPhase<DefaultRenderContext>
             .SetShaders("shaders/vertex", "shaders/fragment")
             .AddColorFormatFromDisplay()
             .Build();
+
+        logger.ZLogInformation($"Triangle graphics resources created");
+        logger.ZLogConditionalDebug($"Triangle pipeline configured for {nameof(PositionVertex)} vertices");
 
         return new TriangleRenderer(graphicsPipeline, quadVertexBuffer);
     }

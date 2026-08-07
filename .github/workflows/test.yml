@@ -20,3 +20,9 @@ jobs:
 
       - name: Run tests
         run: dotnet test GameKit.slnx -p:TreatWarningsAsErrors=true
+
+      - name: Verify conditional logging in Release
+        run: dotnet test tests/GameKit.Logging.Tests/GameKit.Logging.Tests.csproj --configuration Release -p:TreatWarningsAsErrors=true
+
+      - name: Publish logging consumer with NativeAOT
+        run: dotnet publish tutorials/GameKit.Tutorials.Triangle/GameKit.Tutorials.Triangle.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true

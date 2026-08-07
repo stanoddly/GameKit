@@ -33,6 +33,7 @@
     <Project Path="tests/GameKit.Architecture.Tests/GameKit.Architecture.Tests.csproj" />
     <Project Path="tests/GameKit.Architecture.Testing.Tests/GameKit.Architecture.Testing.Tests.csproj" />
     <Project Path="tests/GameKit.Events.Tests/GameKit.Events.Tests.csproj" />
+    <Project Path="tests/GameKit.Logging.Tests/GameKit.Logging.Tests.csproj" />
     <Project Path="tests/GameKit.Tests/GameKit.Tests.csproj" />
   </Folder>
   <Folder Name="/tutorials/">
