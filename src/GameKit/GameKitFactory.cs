@@ -9,6 +9,7 @@ namespace GameKit;
 public class GameKitFactory: IDisposable
 {
     private static readonly Size<uint> DefaultSize = (640, 480);
+    internal const string GpuBackendEnvironmentVariable = "GK_GRAPHICS";
 
     private readonly GameKitConfig _config;
     private bool _initialized;
@@ -137,6 +138,10 @@ public class GameKitFactory: IDisposable
 
     internal GpuDevice CreateGpuDevice()
     {
+        GpuBackend gpuBackend = ResolveGpuBackend(
+            _config.GpuBackend,
+            Environment.GetEnvironmentVariable(GpuBackendEnvironmentVariable));
+
         EnsureSdlInitialized();
 
         unsafe
@@ -144,25 +149,25 @@ public class GameKitFactory: IDisposable
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
             SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, _config.EnableGpuValidation);
 
-            string? driverName = _config.GpuBackend switch
+            string? driverName = gpuBackend switch
             {
                 GpuBackend.Automatic => null,
                 GpuBackend.Vulkan => "vulkan",
                 GpuBackend.Direct3D12 => "direct3d12",
                 GpuBackend.Metal => "metal",
-                _ => throw new ArgumentOutOfRangeException(nameof(_config.GpuBackend), _config.GpuBackend, "Unknown GPU backend")
+                _ => throw new ArgumentOutOfRangeException(nameof(_config.GpuBackend), gpuBackend, "Unknown GPU backend")
             };
             if (driverName != null)
             {
                 SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, driverName);
             }
 
-            bool advertiseSpirV = _config.GpuBackend == GpuBackend.Vulkan ||
-                                  (_config.GpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
-            bool advertiseDxil = _config.GpuBackend == GpuBackend.Direct3D12 ||
-                                 (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsWindows());
-            bool advertiseMsl = _config.GpuBackend == GpuBackend.Metal ||
-                                (_config.GpuBackend == GpuBackend.Automatic && OperatingSystem.IsMacOS());
+            bool advertiseSpirV = gpuBackend == GpuBackend.Vulkan ||
+                                  (gpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
+            bool advertiseDxil = gpuBackend == GpuBackend.Direct3D12 ||
+                                 (gpuBackend == GpuBackend.Automatic && OperatingSystem.IsWindows());
+            bool advertiseMsl = gpuBackend == GpuBackend.Metal ||
+                                (gpuBackend == GpuBackend.Automatic && OperatingSystem.IsMacOS());
 
             if (advertiseSpirV)
             {
@@ -207,6 +212,25 @@ public class GameKitFactory: IDisposable
 
             return new GpuDevice(device);
         }
+    }
+
+    internal static GpuBackend ResolveGpuBackend(GpuBackend configuredBackend, string? environmentBackend)
+    {
+        if (string.IsNullOrWhiteSpace(environmentBackend))
+        {
+            return configuredBackend;
+        }
+
+        return environmentBackend.Trim().ToLowerInvariant() switch
+        {
+            "automatic" => GpuBackend.Automatic,
+            "vulkan" => GpuBackend.Vulkan,
+            "direct3d12" => GpuBackend.Direct3D12,
+            "metal" => GpuBackend.Metal,
+            _ => throw new InvalidOperationException(
+                $"Unsupported {GpuBackendEnvironmentVariable} value '{environmentBackend}'. " +
+                "Expected one of: automatic, vulkan, direct3d12, metal.")
+        };
     }
 
     internal KeyboardService CreateKeyboardService(AppControl appControl)
