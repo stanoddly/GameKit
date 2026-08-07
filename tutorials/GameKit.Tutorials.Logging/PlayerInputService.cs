@@ -12,7 +12,17 @@ sealed class PlayerInputService : IDisposable
     private readonly AppControl _appControl;
     private readonly ILogger<PlayerInputService> _logger;
 
-    public PlayerInputService(
+    public static PlayerInputService Create(
+        IKeyboardService keyboardService,
+        AppControl appControl,
+        ILogger<PlayerInputService> logger)
+    {
+        PlayerInputService service = new PlayerInputService(keyboardService, appControl, logger);
+        logger.ZLogInformation($"Player input service started; press Escape to quit");
+        return service;
+    }
+
+    private PlayerInputService(
         IKeyboardService keyboardService,
         AppControl appControl,
         ILogger<PlayerInputService> logger)
@@ -22,7 +32,6 @@ sealed class PlayerInputService : IDisposable
         _logger = logger;
 
         _keyboardService.KeyDown += OnKeyDown;
-        _logger.ZLogInformation($"Player input service started; press Escape to quit");
     }
 
     private void OnKeyDown(Keyboard _, KeyEventArgs eventArgs)

@@ -36,7 +36,7 @@ static class Program
 #endif
         });
         builder.AddLogger<PlayerInputService>();
-        builder.AddSingleton<PlayerInputService>();
+        builder.AddSingleton<PlayerInputService>(PlayerInputService.Create);
         builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Logging" });
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
