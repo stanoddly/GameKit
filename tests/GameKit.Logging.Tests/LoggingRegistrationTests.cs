@@ -7,17 +7,16 @@ namespace GameKit.Logging.Tests;
 public class LoggingRegistrationTests
 {
     [Test]
-    public void AddZLogger_RegistersOwnedLoggerFactoryAndCategoryLogger()
+    public void AddZLogger_RegistersOwnedLoggerFactoryAndApplicationLogger()
     {
         ServiceCollection services = new();
         services.AddZLogger(static logging => logging.SetMinimumLevel(LogLevel.Trace));
-        services.AddLogger<LoggingRegistrationTests>();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-        ILogger<LoggingRegistrationTests> first = serviceProvider.GetRequiredService<ILogger<LoggingRegistrationTests>>();
-        ILogger<LoggingRegistrationTests> second = serviceProvider.GetRequiredService<ILogger<LoggingRegistrationTests>>();
+        ILogger first = serviceProvider.GetRequiredService<ILogger>();
+        ILogger second = serviceProvider.GetRequiredService<ILogger>();
 
         Assert.Multiple(() =>
         {
@@ -39,44 +38,30 @@ public class LoggingRegistrationTests
     }
 
     [Test]
-    public void AddLogger_BeforeLoggerFactory_ResolvesAfterFactoryRegistration()
+    public void AddZLogger_WhenApplicationLoggerIsAlreadyRegistered_Throws()
     {
         ServiceCollection services = new();
-        services.AddLogger<LoggingRegistrationTests>();
-        services.AddZLogger(static _ => { });
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(static _ => { });
+        services.AddSingleton(loggerFactory.CreateLogger("Existing"));
 
-        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        InvalidOperationException? exception = Assert.Throws<InvalidOperationException>(
+            () => services.AddZLogger(static _ => { }));
 
-        Assert.That(serviceProvider.GetRequiredService<ILogger<LoggingRegistrationTests>>(), Is.Not.Null);
+        Assert.That(exception!.Message, Does.Contain(nameof(ILogger)));
     }
 
     [Test]
-    public void AddLogger_InChildProvider_UsesParentLoggerFactory()
+    public void ApplicationLogger_IsAvailableFromChildProvider()
     {
         ServiceCollection rootServices = new();
         rootServices.AddZLogger(static _ => { });
         using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
 
         ServiceCollection childServices = new();
-        childServices.AddLogger<LoggingRegistrationTests>();
         using ServiceProvider childProvider = childServices.BuildServiceProvider(rootProvider);
 
-        Assert.That(childProvider.GetRequiredService<ILogger<LoggingRegistrationTests>>(), Is.Not.Null);
-    }
-
-    [Test]
-    public void AddLogger_WhenCategoryIsAlreadyRegistered_IsIdempotent()
-    {
-        ServiceCollection services = new();
-        services.AddZLogger(static _ => { });
-
-        services.AddLogger<LoggingRegistrationTests>();
-        services.AddLogger<LoggingRegistrationTests>();
-
-        using ServiceProvider serviceProvider = services.BuildServiceProvider();
-
         Assert.That(
-            serviceProvider.GetServices<ILogger<LoggingRegistrationTests>>().Count(),
-            Is.EqualTo(1));
+            childProvider.GetRequiredService<ILogger>(),
+            Is.SameAs(rootProvider.GetRequiredService<ILogger>()));
     }
 }

@@ -26,11 +26,10 @@ public class GameKitAppLoggingTests
                         options.InternalErrorLogger = static _ => { };
                     });
             });
-            services.AddLogger<GameKitAppLoggingTests>();
 
             ServiceProvider serviceProvider = services.BuildServiceProvider();
             IGameKitApp app = new GameKitApp(serviceProvider);
-            ILogger<GameKitAppLoggingTests> logger = app.GetRequiredService<ILogger<GameKitAppLoggingTests>>();
+            ILogger logger = app.GetRequiredService<ILogger>();
             logger.ZLogInformation($"last message");
 
             app.Dispose();

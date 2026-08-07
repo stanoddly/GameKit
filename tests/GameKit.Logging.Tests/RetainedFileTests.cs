@@ -26,11 +26,9 @@ public class RetainedFileTests
                     options.TimeProvider = timeProvider;
                     options.InternalErrorLogger = static _ => { };
                 }));
-            services.AddLogger<RetainedFileTests>();
-
             using (ServiceProvider serviceProvider = services.BuildServiceProvider())
             {
-                ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+                ILogger logger = serviceProvider.GetRequiredService<ILogger>();
                 logger.ZLogInformation($"default directory");
             }
 
@@ -57,11 +55,9 @@ public class RetainedFileTests
             "game",
             options => options.InternalErrorLogger = errors.Add,
             true));
-        services.AddLogger<RetainedFileTests>();
-
         using (ServiceProvider serviceProvider = services.BuildServiceProvider())
         {
-            ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+            ILogger logger = serviceProvider.GetRequiredService<ILogger>();
             logger.ZLogInformation($"fallback directory");
         }
 
@@ -82,7 +78,7 @@ public class RetainedFileTests
 
         using (ServiceProvider serviceProvider = CreateProvider(temporaryDirectory.Path, errors.Add, timeProvider))
         {
-            ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+            ILogger logger = serviceProvider.GetRequiredService<ILogger>();
             logger.ZLogInformation($"first");
             logger.ZLogInformation($"second");
         }
@@ -127,7 +123,7 @@ public class RetainedFileTests
     {
         using TemporaryDirectory temporaryDirectory = new();
         ServiceProvider serviceProvider = CreateProvider(temporaryDirectory.Path, static _ => { });
-        ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+        ILogger logger = serviceProvider.GetRequiredService<ILogger>();
 
         logger.ZLogInformation($"final queued entry");
         serviceProvider.Dispose();
@@ -189,7 +185,7 @@ public class RetainedFileTests
         using TemporaryDirectory temporaryDirectory = new();
         List<Exception> errors = new();
         using ServiceProvider serviceProvider = CreateProvider(temporaryDirectory.Path, errors.Add);
-        ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+        ILogger logger = serviceProvider.GetRequiredService<ILogger>();
 
         logger.ZLogInformation($"{new ThrowingValue()}");
         serviceProvider.Dispose();
@@ -217,7 +213,7 @@ public class RetainedFileTests
         string message)
     {
         using ServiceProvider serviceProvider = CreateProvider(directoryPath, internalErrorLogger, timeProvider);
-        ILogger<RetainedFileTests> logger = serviceProvider.GetRequiredService<ILogger<RetainedFileTests>>();
+        ILogger logger = serviceProvider.GetRequiredService<ILogger>();
         logger.ZLogInformation($"{message}");
     }
 
@@ -239,7 +235,6 @@ public class RetainedFileTests
                     options.TimeProvider = timeProvider;
                 });
         });
-        services.AddLogger<RetainedFileTests>();
         return services.BuildServiceProvider();
     }
 

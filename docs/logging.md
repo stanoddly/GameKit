@@ -2,11 +2,11 @@
 
 `GameKit.Logging` integrates ZLogger with GameKit's service collection. The logger factory belongs to the root service provider, remains available across stage transitions, and drains queued entries when the application is disposed.
 
-See the [logging tutorial](../tutorials/GameKit.Tutorials.Logging) for a complete runnable example with file and debug-console providers and an injected category logger inside a registered service.
+See the [logging tutorial](../tutorials/GameKit.Tutorials.Logging) for a complete runnable example with file and debug-console providers and an injected application logger inside a registered service.
 
 ## Registration
 
-Register the logger factory and category loggers:
+Register the logger factory and application logger:
 
 ```csharp
 using GameKit.App;
@@ -33,7 +33,6 @@ builder.AddZLogger(logging =>
     });
 #endif
 });
-builder.AddLogger<PlayerSystem>();
 ```
 
 `AddZLoggerFileWithRetention` creates one file for the process using this naming policy:
@@ -60,27 +59,25 @@ The file provider uses an unbounded asynchronous buffer. Logging does not wait f
 
 The internal error callback must write directly to a separate destination such as standard error or a platform diagnostic API. Do not send it through the failing logger.
 
-## Category loggers
+## Application logger
 
-GameKit registers category loggers explicitly because its dependency injection container does not use open-generic registrations:
+`AddZLogger` registers one `ILogger` using the `Application` category. Services and static factory methods can receive the same logger directly:
 
 ```csharp
-builder.AddLogger<PlayerSystem>();
-
 public sealed class PlayerSystem
 {
-    private readonly ILogger<PlayerSystem> _logger;
+    private readonly ILogger _logger;
 
-    public PlayerSystem(ILogger<PlayerSystem> logger)
+    public PlayerSystem(ILogger logger)
     {
         _logger = logger;
     }
 }
 ```
 
-A stage can call `services.AddLogger<StageSystem>()`. The category logger resolves the root factory; unloading the stage does not dispose the factory.
+Child stage providers resolve the application logger from the root provider. Unloading a stage does not dispose it.
 
-Use `ILoggerFactory.CreateLogger<T>()` directly when registering every category is unnecessary.
+`ILoggerFactory` remains available when a subsystem needs a separate category. Adding category loggers later does not require replacing services that use the application logger.
 
 ## Logging calls
 

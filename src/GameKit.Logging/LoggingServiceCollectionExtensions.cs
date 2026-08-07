@@ -5,6 +5,8 @@ namespace GameKit.Logging;
 
 public static class LoggingServiceCollectionExtensions
 {
+    private const string ApplicationLoggerCategoryName = "Application";
+
     public static ServiceCollection AddZLogger(
         this ServiceCollection services,
         Action<ILoggingBuilder> configure)
@@ -17,21 +19,14 @@ public static class LoggingServiceCollectionExtensions
             throw new InvalidOperationException($"{nameof(ILoggerFactory)} is already registered.");
         }
 
-        services.AddSingleton<ILoggerFactory>(_ => LoggerFactory.Create(configure));
-        return services;
-    }
-
-    public static ServiceCollection AddLogger<TCategory>(this ServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        if (services.IsRegistered<ILogger<TCategory>>())
+        if (services.IsRegistered<ILogger>())
         {
-            return services;
+            throw new InvalidOperationException($"{nameof(ILogger)} is already registered.");
         }
 
-        services.AddSingleton<ILogger<TCategory>>(static serviceProvider =>
-            serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<TCategory>());
+        services.AddSingleton<ILoggerFactory>(_ => LoggerFactory.Create(configure));
+        services.AddSingleton<ILogger>(static serviceProvider =>
+            serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(ApplicationLoggerCategoryName));
         return services;
     }
 }
