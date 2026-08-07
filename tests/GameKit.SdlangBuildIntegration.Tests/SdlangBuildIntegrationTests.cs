@@ -6,6 +6,7 @@ using System.Reflection.PortableExecutable;
 namespace GameKit.SdlangBuildIntegration.Tests;
 
 [Category("BuildIntegration")]
+[Explicit("Runs nested dotnet build and publish processes and must execute in isolation.")]
 [NonParallelizable]
 public class SdlangBuildIntegrationTests
 {

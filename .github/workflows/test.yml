@@ -22,7 +22,7 @@ jobs:
         run: dotnet build GameKit.slnx -p:TreatWarningsAsErrors=true
 
       - name: Run tests
-        run: dotnet test GameKit.slnx --no-build --filter 'TestCategory!=BuildIntegration' -p:TreatWarningsAsErrors=true
+        run: dotnet test GameKit.slnx --no-build -p:TreatWarningsAsErrors=true
 
       - name: Stop build servers
         run: dotnet build-server shutdown
