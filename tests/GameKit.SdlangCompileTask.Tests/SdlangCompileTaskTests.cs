@@ -12,9 +12,11 @@ public class SdlangCompileTaskTests
         for (int i = 1; i < 3; i++)
         {
             string generatedShaderPath = Path.Combine(outputDir, $"test{i}.spv");
+            string generatedDxilPath = Path.Combine(outputDir, $"test{i}.dxil");
             string metadataPath = Path.Combine(outputDir, $"test{i}.metadata.json");
 
             Assert.That(File.Exists(generatedShaderPath), Is.True, "Compiled shader output file should exist at: " + generatedShaderPath);
+            Assert.That(File.Exists(generatedDxilPath), Is.True, "Compiled shader output file should exist at: " + generatedDxilPath);
             Assert.That(File.Exists(metadataPath), Is.True, "Compiled shader output file should exist at: " + metadataPath);
         }
     }

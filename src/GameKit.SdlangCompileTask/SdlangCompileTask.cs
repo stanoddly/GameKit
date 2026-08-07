@@ -9,7 +9,7 @@ namespace GameKit.SdlangCompileTask;
 /// </summary>
 public class SdlangCompileTask : Microsoft.Build.Utilities.Task
 {
-    private static readonly string[] GeneratedFileExtensions = ["spv", "metal", "metadata.json"];
+    private static readonly string[] GeneratedFileExtensions = ["spv", "dxil", "metal", "metadata.json"];
 
     /// <summary>
     /// The input shader file to compile. If empty or null, the task succeeds without compiling.

@@ -86,6 +86,7 @@ public sealed class SdlangCompilerPublishTests
             Assert.Multiple(() =>
             {
                 Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.spv")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.dxil")), Is.True);
                 Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.metal")), Is.True);
                 Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.metadata.json")), Is.True);
             });

@@ -27,6 +27,10 @@ static class Program
             Borderless = true,
             ClearColor = FColors.Transparent
         });
+        if (OperatingSystem.IsWindows())
+        {
+            builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Vulkan));
+        }
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(TransparentWindowRenderer.Create);
 
         builder.OnStart((IMouseService mouseService, AppControl appControl) =>

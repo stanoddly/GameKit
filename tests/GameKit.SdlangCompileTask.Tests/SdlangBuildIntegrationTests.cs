@@ -178,6 +178,7 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "copy_output.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "copy_output.dxil")), Is.True);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "copy_output.metal")), Is.True);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "copy_output.metadata.json")), Is.True);
         });
@@ -188,9 +189,11 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.dxil", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metal", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.dxil", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metal", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "embedded_nested.metadata.json", SearchOption.AllDirectories), Is.Empty);
         });
@@ -201,6 +204,7 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.dxil")), Is.True);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metal")), Is.True);
             Assert.That(File.Exists(Path.Combine(generatedDirectory, "external_output.metadata.json")), Is.True);
         });
@@ -211,6 +215,7 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(Directory.GetFiles(outputDirectory, "external_output.spv", SearchOption.AllDirectories), Is.Empty);
+            Assert.That(Directory.GetFiles(outputDirectory, "external_output.dxil", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "external_output.metal", SearchOption.AllDirectories), Is.Empty);
             Assert.That(Directory.GetFiles(outputDirectory, "external_output.metadata.json", SearchOption.AllDirectories), Is.Empty);
         });
@@ -228,9 +233,11 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.spv"));
+            Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.dxil"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metal"));
             Assert.That(resourceNames, Contains.Item("shaders/.generated/embedded_output.metadata.json"));
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.spv"));
+            Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.dxil"));
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metal"));
             Assert.That(resourceNames, Contains.Item("shaders/nested/.generated/embedded_nested.metadata.json"));
         });
@@ -246,6 +253,7 @@ public class SdlangBuildIntegrationTests
         Assert.Multiple(() =>
         {
             Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.spv"));
+            Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.dxil"));
             Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metal"));
             Assert.That(entryNames, Contains.Item("shaders/.generated/zip_output.metadata.json"));
         });

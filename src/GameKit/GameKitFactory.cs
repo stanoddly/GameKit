@@ -143,6 +143,20 @@ public class GameKitFactory: IDisposable
         {
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
             SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, _config.EnableGpuValidation);
+
+            string? driverName = _config.GpuBackend switch
+            {
+                GpuBackend.Automatic => null,
+                GpuBackend.Vulkan => "vulkan",
+                GpuBackend.Direct3D12 => "direct3d12",
+                GpuBackend.Metal => "metal",
+                _ => throw new ArgumentOutOfRangeException(nameof(_config.GpuBackend), _config.GpuBackend, "Unknown GPU backend")
+            };
+            if (driverName != null)
+            {
+                SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, driverName);
+            }
+
             if (OperatingSystem.IsMacOS())
             {
                 SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
@@ -150,9 +164,16 @@ public class GameKitFactory: IDisposable
             else
             {
                 SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+
+                if (OperatingSystem.IsWindows())
+                {
+                    SDL3.SDL_SetBooleanProperty(props, SDL3.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
+                }
             }
 
-            if (!OperatingSystem.IsMacOS())
+            bool canSelectVulkan = _config.GpuBackend == GpuBackend.Vulkan ||
+                                   (_config.GpuBackend == GpuBackend.Automatic && !OperatingSystem.IsMacOS());
+            if (canSelectVulkan)
             {
                 VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParamsFeatures = default;
                 shaderDrawParamsFeatures.sType = VkPhysicalDeviceShaderDrawParametersFeatures.StructureType;
