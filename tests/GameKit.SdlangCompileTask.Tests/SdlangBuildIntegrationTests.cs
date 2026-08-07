@@ -286,6 +286,9 @@ public class SdlangBuildIntegrationTests
             startInfo.ArgumentList.Add(argument);
         }
 
+        // The outer test build has the MSBuild task assembly loaded. Rebuilding project references
+        // would try to overwrite its dependencies, which Windows prevents while they are loaded.
+        startInfo.ArgumentList.Add("-p:BuildProjectReferences=false");
         startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
 
         using Process process = Process.Start(startInfo)!;
