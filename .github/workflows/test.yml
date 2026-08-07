@@ -25,4 +25,4 @@ jobs:
         run: dotnet test tests/GameKit.Logging.Tests/GameKit.Logging.Tests.csproj --configuration Release -p:TreatWarningsAsErrors=true
 
       - name: Publish logging consumer with NativeAOT
-        run: dotnet publish tutorials/GameKit.Tutorials.Triangle/GameKit.Tutorials.Triangle.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true
+        run: dotnet publish tutorials/GameKit.Tutorials.Logging/GameKit.Tutorials.Logging.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true

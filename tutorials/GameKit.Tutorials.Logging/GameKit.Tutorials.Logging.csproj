@@ -13,26 +13,10 @@
       <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
       <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
+      <ProjectReference Include="..\..\src\GameKit.Logging\GameKit.Logging.csproj" />
       <ProjectReference Include="..\..\src\GameKit.DependencyInjection.Generator\GameKit.DependencyInjection.Generator.csproj"
                         OutputItemType="Analyzer"
                         ReferenceOutputAssembly="false" />
     </ItemGroup>
 
-    <!-- Reference the SdlangCompileTask project -->
-    <ItemGroup>
-        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" ReferenceOutputAssembly="false" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Content\shaders\.generated\" />
-    </ItemGroup>
-
-    <!-- Import the task's props and targets files -->
-    <!-- This is not required when referencing a file from nuget -->
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
-
-    <ItemGroup>
-        <SdlangShader Include="Content\shaders\*.slang" />
-    </ItemGroup>
-    
 </Project>

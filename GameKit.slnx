@@ -39,6 +39,7 @@
   <Folder Name="/tutorials/">
     <Project Path="tutorials/GameKit.Tutorials.EmbeddedContent/GameKit.Tutorials.EmbeddedContent.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.DepthOnly/GameKit.Tutorials.DepthOnly.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.Logging/GameKit.Tutorials.Logging.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Triangle/GameKit.Tutorials.Triangle.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.WindowCreation/GameKit.Tutorials.WindowCreation.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StorageBuffer/GameKit.Tutorials.StorageBuffer.csproj" />
