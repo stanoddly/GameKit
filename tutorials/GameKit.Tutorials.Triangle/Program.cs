@@ -3,7 +3,6 @@ using GameKit.Logging;
 using GameKit.RenderOrchestration;
 using Microsoft.Extensions.Logging;
 using ZLogger;
-using ZLogger.Providers;
 
 namespace GameKit.Tutorials.Triangle;
 
@@ -25,14 +24,11 @@ static class Program
         builder.AddZLogger(logging =>
         {
             logging.SetMinimumLevel(LogLevel.Information);
-            logging.AddZLoggerRollingFileWithRetention(
+            logging.AddZLoggerFileWithRetention(
                 logDirectory,
                 "triangle",
-                10,
                 static options =>
                 {
-                    options.RollingInterval = RollingInterval.Day;
-                    options.RollingSizeKB = 10 * 1024;
                     options.InternalErrorLogger = static exception => Console.Error.WriteLine(exception);
                 });
 

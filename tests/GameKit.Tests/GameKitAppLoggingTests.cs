@@ -3,7 +3,6 @@ using GameKit.DependencyInjection;
 using GameKit.Logging;
 using Microsoft.Extensions.Logging;
 using ZLogger;
-using ZLogger.Providers;
 
 namespace GameKit.Tests;
 
@@ -19,14 +18,11 @@ public class GameKitAppLoggingTests
             ServiceCollection services = new();
             services.AddZLogger(logging =>
             {
-                logging.AddZLoggerRollingFileWithRetention(
+                logging.AddZLoggerFileWithRetention(
                     directoryPath,
                     "game",
-                    2,
                     static options =>
                     {
-                        options.RollingInterval = RollingInterval.Infinite;
-                        options.RollingSizeKB = 1024;
                         options.InternalErrorLogger = static _ => { };
                     });
             });
@@ -39,7 +35,7 @@ public class GameKitAppLoggingTests
 
             app.Dispose();
 
-            string logPath = Directory.GetFiles(directoryPath, "game-*.log").Single();
+            string logPath = Directory.GetFiles(directoryPath, "game_*.log").Single();
             Assert.That(File.ReadAllText(logPath), Does.Contain("last message"));
 
             using FileStream exclusiveStream = new(logPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);

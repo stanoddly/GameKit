@@ -11,7 +11,6 @@ using GameKit.App;
 using GameKit.Logging;
 using Microsoft.Extensions.Logging;
 using ZLogger;
-using ZLogger.Providers;
 
 string logDirectory = GetWritableLogDirectory();
 
@@ -19,14 +18,11 @@ GameKitAppBuilder builder = new();
 builder.AddZLogger(logging =>
 {
     logging.SetMinimumLevel(LogLevel.Information);
-    logging.AddZLoggerRollingFileWithRetention(
+    logging.AddZLoggerFileWithRetention(
         logDirectory,
         "game",
-        10,
         static options =>
         {
-            options.RollingInterval = RollingInterval.Day;
-            options.RollingSizeKB = 10 * 1024;
             options.InternalErrorLogger = static exception => Console.Error.WriteLine(exception);
         });
 
@@ -41,11 +37,17 @@ builder.AddZLogger(logging =>
 builder.AddLogger<PlayerSystem>();
 ```
 
-`AddZLoggerRollingFileWithRetention` uses an unbounded asynchronous buffer. Logging does not wait for file I/O, but a sustained output failure can retain queued entries and their captured values until writing recovers or the application shuts down. The integration sets `BackgroundBufferFullMode.Grow` explicitly and does not enable shared-file mode.
+`AddZLoggerFileWithRetention` creates one file for the process using this naming policy:
+
+```text
+{prefix}_20260807_090416Z_pid48545.log
+```
+
+The timestamp is UTC and the process ID is labeled explicitly. The application must provide a dedicated log directory. Before opening the new file, the helper keeps the latest nine existing matching files, leaving at most 10 after the new file is created. Other prefixes and unrelated files are not changed.
+
+The file provider uses an unbounded asynchronous buffer. Logging does not wait for file I/O, but a sustained output failure can retain queued entries and their captured values until writing recovers or the application shuts down. The integration sets `BackgroundBufferFullMode.Grow` explicitly and does not enable shared-file mode.
 
 The internal error callback must write directly to a separate destination such as standard error or a platform diagnostic API. Do not send it through the failing logger.
-
-The retention helper deletes only files matching its configured prefix. Cleanup runs before the file provider opens and after it closes. The retained-file limit can therefore be exceeded during a long-running session and is restored at the next clean shutdown or application start.
 
 ## Category loggers
 
@@ -91,6 +93,6 @@ The background writer formats captured values later. Prefer small immutable valu
 
 ## Shutdown and durability
 
-Dispose `IGameKitApp`, normally with a `using` declaration. Disposal completes the logging channel, drains queued entries, flushes the stream, closes the current file, and applies retention.
+Dispose `IGameKitApp`, normally with a `using` declaration. Disposal completes the logging channel, drains queued entries, flushes the stream, and closes the current file.
 
 Logging is best-effort. Returning from a logging call does not mean the entry is on disk, and a process crash can lose queued or operating-system-buffered entries.
