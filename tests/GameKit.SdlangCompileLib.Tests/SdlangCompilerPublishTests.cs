@@ -56,11 +56,18 @@ public sealed class SdlangCompilerPublishTests
                 : "GameKit.SdlangCompilerCli";
             string slangCompilerName = OperatingSystem.IsWindows() ? "slangc.exe" : "slangc";
             string executablePath = Path.Combine(publishDirectory, executableName);
+            string dxCompilerPath = OperatingSystem.IsWindows()
+                ? Path.Combine(publishDirectory, "bin", "dxcompiler.dll")
+                : Path.Combine(
+                    publishDirectory,
+                    "lib",
+                    OperatingSystem.IsMacOS() ? "libdxcompiler.dylib" : "libdxcompiler.so");
 
             Assert.Multiple(() =>
             {
                 Assert.That(File.Exists(executablePath), Is.True);
                 Assert.That(File.Exists(Path.Combine(publishDirectory, "bin", slangCompilerName)), Is.True);
+                Assert.That(File.Exists(dxCompilerPath), Is.True);
                 Assert.That(Directory.Exists(Path.Combine(publishDirectory, "lib")), Is.True);
                 Assert.That(
                     File.Exists(Path.Combine(publishDirectory, "GameKit.SdlangCompileLib.dll")),
