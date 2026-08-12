@@ -11,6 +11,60 @@ namespace GameKit.SdlangBuildIntegration.Tests;
 public class SdlangBuildIntegrationTests
 {
     [Test]
+    [Platform("Win")]
+    public async Task CleanDeletesBuildTaskAssembliesAfterReusableNodeBuild()
+    {
+        string repositoryDirectory = GetRepositoryDirectory();
+        string projectDirectory = Path.Combine(
+            repositoryDirectory,
+            "tests",
+            "GameKit.SdlangBuildIntegration.Tests",
+            "BuildIntegration");
+        string projectPath = Path.Combine(projectDirectory, "BuildIntegration.csproj");
+        string taskOutputDirectory = Path.Combine(
+            repositoryDirectory,
+            "src",
+            "GameKit.SdlangCompileTask",
+            "bin",
+            "Debug",
+            "net10.0");
+        string[] taskAssemblyPaths =
+        [
+            Path.Combine(taskOutputDirectory, "GameKit.SdlangCompileTask.dll"),
+            Path.Combine(taskOutputDirectory, "GameKit.SdlangCompileLib.dll"),
+            Path.Combine(taskOutputDirectory, "GameKit.ShaderCommon.dll")
+        ];
+
+        await RunDotnetAsync(repositoryDirectory, "build-server", "shutdown");
+        DeleteDirectory(taskOutputDirectory);
+
+        try
+        {
+            await RunDotnetAsync(projectDirectory, false, "build", projectPath, "--nologo", "-nr:true");
+
+            Assert.That(taskAssemblyPaths, Has.All.Matches<string>(File.Exists));
+
+            string cleanOutput = await RunDotnetAsync(
+                projectDirectory,
+                false,
+                "clean",
+                projectPath,
+                "--nologo",
+                "-nr:true");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(cleanOutput, Does.Not.Contain("MSB3061"));
+                Assert.That(taskAssemblyPaths, Has.None.Matches<string>(File.Exists));
+            });
+        }
+        finally
+        {
+            await RunDotnetAsync(repositoryDirectory, "build-server", "shutdown");
+        }
+    }
+
+    [Test]
     public async Task CleanBuildAndPublishRouteGeneratedShaders()
     {
         string repositoryDirectory = GetRepositoryDirectory();
@@ -273,7 +327,15 @@ public class SdlangBuildIntegrationTests
         Assert.That(archive.Entries.Select(entry => entry.FullName), Does.Not.Contain(entryName));
     }
 
-    private static async Task RunDotnetAsync(string workingDirectory, params string[] arguments)
+    private static Task<string> RunDotnetAsync(string workingDirectory, params string[] arguments)
+    {
+        return RunDotnetAsync(workingDirectory, true, arguments);
+    }
+
+    private static async Task<string> RunDotnetAsync(
+        string workingDirectory,
+        bool disableNodeReuse,
+        params string[] arguments)
     {
         ProcessStartInfo startInfo = new ProcessStartInfo("dotnet")
         {
@@ -288,7 +350,14 @@ public class SdlangBuildIntegrationTests
             startInfo.ArgumentList.Add(argument);
         }
 
-        startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        if (disableNodeReuse)
+        {
+            startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        }
+        else
+        {
+            startInfo.Environment.Remove("MSBUILDDISABLENODEREUSE");
+        }
 
         using Process process = Process.Start(startInfo)!;
         Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
@@ -305,6 +374,8 @@ public class SdlangBuildIntegrationTests
             $"dotnet {string.Join(' ', arguments)} failed.{Environment.NewLine}" +
             standardOutput +
             standardError);
+
+        return standardOutput + standardError;
     }
 
     private static string GetRepositoryDirectory()

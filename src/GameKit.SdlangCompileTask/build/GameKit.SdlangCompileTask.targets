@@ -1,6 +1,10 @@
 <Project>
   <!-- Register the SdlangCompileTask -->
-  <UsingTask TaskName="GameKit.SdlangCompileTask.SdlangCompileTask" AssemblyFile="$(SdlangCompileTaskAssembly)" />
+  <UsingTask
+      TaskName="GameKit.SdlangCompileTask.SdlangCompileTask"
+      AssemblyFile="$(SdlangCompileTaskAssembly)"
+      TaskFactory="TaskHostFactory"
+      Runtime="NET" />
 
   <!-- Compiles every shader declared as a SdlangShader item, for example:
        <ItemGroup>
