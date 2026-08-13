@@ -1,10 +1,9 @@
-using GameKit.SdlangCompileLib;
 using GameKit.ShaderCommon;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using System.Text.Json;
 
-namespace GameKit.SdlangCompileTask;
+namespace GameKit.SdlangCompiler;
 
 /// <summary>
 /// MSBuild task for compiling Slang shaders for SDL3.

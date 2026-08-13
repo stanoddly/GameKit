@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace GameKit.SdlangCompileLib.Tests;
+namespace GameKit.SdlangCompiler.Tests;
 
 internal static class SdlangCompilerTestFactory
 {

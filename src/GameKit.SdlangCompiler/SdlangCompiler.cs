@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using GameKit.ShaderCommon;
 
-namespace GameKit.SdlangCompileLib;
+namespace GameKit.SdlangCompiler;
 
 internal enum ResourceType
 {

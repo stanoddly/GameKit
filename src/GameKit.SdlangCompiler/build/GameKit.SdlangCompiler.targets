@@ -1,12 +1,15 @@
 <Project>
+    <UsingTask
+        TaskName="GameKit.SdlangCompiler.SdlangCompileTask"
+        AssemblyFile="$(SdlangCompilerAssembly)"
+        TaskFactory="TaskHostFactory"
+        Runtime="NET" />
 
-    <!-- Validate that SlangPlatform was set (fails on unsupported OS/architecture combinations) -->
     <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang">
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
                Condition="'$(SlangPlatform)' == ''" />
     </Target>
 
-    <!-- Only the project that owns the shared Slang directory may write to it. -->
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild"
             Condition="'$(_OwnsSlangInstallation)' == 'true'">
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
@@ -20,10 +23,8 @@
                Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
-    <!-- Extract Slang zip file and clean up unnecessary files -->
     <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild"
             Condition="'$(_OwnsSlangInstallation)' == 'true'">
-        <!-- Only extract and clean up if bin directory doesn't exist -->
         <PropertyGroup>
             <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
         </PropertyGroup>
@@ -32,14 +33,16 @@
         <Unzip SourceFiles="$(SlangZipPath)"
                DestinationFolder="$(SlangBaseDir)"
                Condition="'$(NeedsExtraction)' == 'true'" />
-
-        <!-- Clean up unnecessary files and directories after extraction -->
         <RemoveDir Directories="$(SlangBaseDir)/include;$(SlangBaseDir)/share;$(SlangBaseDir)/lib/cmake"
                    Condition="'$(NeedsExtraction)' == 'true'" />
         <Delete Files="$(SlangBaseDir)/LICENSE;$(SlangBaseDir)/README.md"
                 Condition="'$(NeedsExtraction)' == 'true'" />
-
         <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
     </Target>
 
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" Condition="'@(SdlangShader)' != ''">
+        <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)">
+            <Output TaskParameter="GeneratedFiles" ItemName="SdlangShaderOutput" />
+        </SdlangCompileTask>
+    </Target>
 </Project>

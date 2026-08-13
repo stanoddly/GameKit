@@ -24,14 +24,13 @@ public class SdlangBuildIntegrationTests
         string taskOutputDirectory = Path.Combine(
             repositoryDirectory,
             "src",
-            "GameKit.SdlangCompileTask",
+            "GameKit.SdlangCompiler",
             "bin",
             "Debug",
             "net10.0");
         string[] taskAssemblyPaths =
         [
-            Path.Combine(taskOutputDirectory, "GameKit.SdlangCompileTask.dll"),
-            Path.Combine(taskOutputDirectory, "GameKit.SdlangCompileLib.dll"),
+            Path.Combine(taskOutputDirectory, "GameKit.SdlangCompiler.dll"),
             Path.Combine(taskOutputDirectory, "GameKit.ShaderCommon.dll")
         ];
 

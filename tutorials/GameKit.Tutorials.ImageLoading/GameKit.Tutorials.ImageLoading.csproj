@@ -18,15 +18,15 @@
                         ReferenceOutputAssembly="false" />
     </ItemGroup>
 
-    <!-- Reference the SdlangCompileTask project -->
+    <!-- Reference the SdlangCompiler project -->
     <ItemGroup>
-        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompiler\GameKit.SdlangCompiler.csproj" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
-    <!-- Import the task's props and targets files -->
+    <!-- Import the compiler's props and targets files -->
     <!-- This is not required when referencing a file from nuget -->
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+    <Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.targets" />
 
     <ItemGroup>
         <SdlangShader Include="Content\shaders\*.slang" />

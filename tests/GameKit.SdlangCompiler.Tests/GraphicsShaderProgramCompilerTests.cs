@@ -1,7 +1,7 @@
 using System.Text.Json;
 using GameKit.ShaderCommon;
 
-namespace GameKit.SdlangCompileLib.Tests;
+namespace GameKit.SdlangCompiler.Tests;
 
 public sealed class GraphicsShaderProgramCompilerTests
 {

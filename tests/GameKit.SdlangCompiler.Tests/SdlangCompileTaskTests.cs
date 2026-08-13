@@ -1,4 +1,4 @@
-namespace GameKit.SdlangCompileTask.Tests;
+namespace GameKit.SdlangCompiler.Tests;
 
 public class SdlangCompileTaskTests
 {
