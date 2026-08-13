@@ -1,6 +1,6 @@
 # Content distribution
 
-GameKit loads runtime content through a `VirtualFileSystem`. Content paths such as `shaders/terrain_vertex` do not identify a physical distribution format. A project can provide the same path from a directory, a ZIP archive, an assembly resource, or a composition of those sources.
+GameKit loads runtime content through a `VirtualFileSystem`. Content paths such as `shaders/terrain` do not identify a physical distribution format. A project can provide the same path from a directory, a ZIP archive, an assembly resource, or a composition of those sources.
 
 ## Runtime sources
 

@@ -1,6 +1,8 @@
 using GameKit.SdlangCompileLib;
+using GameKit.ShaderCommon;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using System.Text.Json;
 
 namespace GameKit.SdlangCompileTask;
 
@@ -9,7 +11,7 @@ namespace GameKit.SdlangCompileTask;
 /// </summary>
 public class SdlangCompileTask : Microsoft.Build.Utilities.Task
 {
-    private static readonly string[] GeneratedFileExtensions = ["spv", "dxil", "metal", "metadata.json"];
+    private static readonly string[] GeneratedShaderExtensions = ["spv", "dxil", "metal"];
 
     /// <summary>
     /// The input shader file to compile. If empty or null, the task succeeds without compiling.
@@ -70,9 +72,24 @@ public class SdlangCompileTask : Microsoft.Build.Utilities.Task
         string generatedDirectory = Path.Combine(inputDirectory, ".generated");
         string generatedFilename = Path.GetFileNameWithoutExtension(inputPath);
 
-        string[] generatedFiles = GeneratedFileExtensions
-            .Select(extension => Path.Combine(generatedDirectory, $"{generatedFilename}.{extension}"))
-            .ToArray();
+        string metadataPath = Path.Combine(generatedDirectory, $"{generatedFilename}.metadata.json");
+        if (!File.Exists(metadataPath))
+        {
+            throw new FileNotFoundException(
+                $"Shader compilation did not produce the expected file {metadataPath}",
+                metadataPath);
+        }
+
+        ShaderMetadataHeaderDto? metadata = JsonSerializer.Deserialize(
+            File.ReadAllText(metadataPath),
+            ShaderMetadataJsonContext.Default.ShaderMetadataHeaderDto);
+        IEnumerable<string> generatedShaderFiles = metadata?.Kind == ShaderKindDto.Graphics
+            ? new[] { "vertex", "fragment" }.SelectMany(stage =>
+                GeneratedShaderExtensions.Select(extension =>
+                    Path.Combine(generatedDirectory, $"{generatedFilename}.{stage}.{extension}")))
+            : GeneratedShaderExtensions.Select(extension =>
+                Path.Combine(generatedDirectory, $"{generatedFilename}.{extension}"));
+        string[] generatedFiles = generatedShaderFiles.Append(metadataPath).ToArray();
 
         string? missingGeneratedFile = generatedFiles.FirstOrDefault(path => !File.Exists(path));
         if (missingGeneratedFile != null)

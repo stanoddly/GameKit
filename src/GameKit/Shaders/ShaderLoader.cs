@@ -9,11 +9,14 @@ public class ShaderLoader : IShaderLoader
 {
     private const string GeneratedShaderDirectory = ".generated";
     private readonly GpuDevice _gpuDevice;
-    private readonly GraphicsShaderMetadataLoader _shaderMetadataLoader;
+    private readonly GraphicsShaderProgramMetadataLoader _shaderMetadataLoader;
     private readonly ShaderFormats _shaderFormats;
-    private VirtualFileSystem _virtualFileSystem;
+    private readonly VirtualFileSystem _virtualFileSystem;
 
-    internal ShaderLoader(GpuDevice gpuDevice, GraphicsShaderMetadataLoader shaderMetadataLoader, VirtualFileSystem virtualFileSystem)
+    internal ShaderLoader(
+        GpuDevice gpuDevice,
+        GraphicsShaderProgramMetadataLoader shaderMetadataLoader,
+        VirtualFileSystem virtualFileSystem)
     {
         _gpuDevice = gpuDevice;
         _shaderMetadataLoader = shaderMetadataLoader;
@@ -21,39 +24,87 @@ public class ShaderLoader : IShaderLoader
         _shaderFormats = _gpuDevice.GetSupportedShaderFormats();
     }
 
-    private GraphicsShader Load(string directory, GraphicsShaderMetadata shaderMetadata)
+    public GraphicsShaderProgram LoadGraphicsShaderProgram(ReadOnlySpan<char> path)
     {
-        foreach (ShaderInstance shaderInstance in shaderMetadata.Shaders)
+        string pathString = path.ToString();
+        string name = VirtualPath.GetFileName(pathString);
+        string? directoryName = VirtualPath.GetDirectoryName(pathString);
+        string generatedDirectoryName = directoryName == null
+            ? GeneratedShaderDirectory
+            : VirtualPath.Combine(directoryName, GeneratedShaderDirectory);
+        string metadataFilename = VirtualPath.Combine(generatedDirectoryName, $"{name}.metadata.json");
+        GraphicsShaderProgramMetadata metadata = _shaderMetadataLoader.Load(metadataFilename);
+
+        GraphicsShader? vertexShader = null;
+        GraphicsShader? fragmentShader = null;
+        try
+        {
+            vertexShader = LoadStage(
+                generatedDirectoryName,
+                metadata.Vertex,
+                SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX);
+            fragmentShader = LoadStage(
+                generatedDirectoryName,
+                metadata.Fragment,
+                SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT);
+
+            GraphicsShaderProgram shaderProgram = new GraphicsShaderProgram(
+                _gpuDevice,
+                vertexShader,
+                fragmentShader);
+            _gpuDevice.RegisterGraphicsShaderProgram(shaderProgram);
+            return shaderProgram;
+        }
+        catch
+        {
+            if (vertexShader != null)
+            {
+                _gpuDevice.ReleaseShader(vertexShader);
+            }
+
+            if (fragmentShader != null)
+            {
+                _gpuDevice.ReleaseShader(fragmentShader);
+            }
+
+            throw;
+        }
+    }
+
+    private GraphicsShader LoadStage(
+        string directory,
+        GraphicsShaderStageMetadata metadata,
+        SDL_GPUShaderStage stage)
+    {
+        foreach (ShaderInstance shaderInstance in metadata.Shaders)
         {
             if (_shaderFormats.Contains(shaderInstance.Format))
             {
                 return CreateShader(
                     directory,
                     shaderInstance,
-                    shaderMetadata.BindingLayout,
-                    shaderMetadata.SystemValueInputs,
-                    shaderMetadata.Stage);
+                    metadata.BindingLayout,
+                    metadata.SystemValueInputs,
+                    stage);
             }
         }
 
-        throw new NotSupportedException("No compatible shader format found for this GPU.");
+        string stageName = stage == SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX ? "vertex" : "fragment";
+        throw new NotSupportedException($"No compatible {stageName} shader format found for this GPU.");
     }
 
     private GraphicsShader CreateShader(
         string directory,
         ShaderInstance shaderInstance,
-        ShaderBindingLayout shaderBindingLayout,
+        ShaderBindingLayout bindingLayout,
         ShaderSystemValueInputs systemValueInputs,
-        ShaderStage shaderStage)
+        SDL_GPUShaderStage stage)
     {
         string path = VirtualPath.Combine(directory, shaderInstance.Filename);
         VirtualFile file = _virtualFileSystem.GetFile(path);
         using Stream stream = file.Open();
-        
         byte[] shaderCode = new byte[stream.Length];
-
         stream.ReadExactly(shaderCode);
-        
         byte[] entryPoint = System.Text.Encoding.UTF8.GetBytes(shaderInstance.EntryPoint + "\0");
 
         unsafe
@@ -61,79 +112,32 @@ public class ShaderLoader : IShaderLoader
             fixed (byte* shaderCodePointer = shaderCode)
             fixed (byte* entryPointPointer = entryPoint)
             {
-                SDL_GPUShaderCreateInfo sdlGpuShaderCreateInfo = new() {
+                SDL_GPUShaderCreateInfo createInfo = new()
+                {
                     code = shaderCodePointer,
                     code_size = (nuint)shaderCode.Length,
                     entrypoint = entryPointPointer,
                     format = (SDL_GPUShaderFormat)shaderInstance.Format,
-                    stage = (SDL_GPUShaderStage)shaderStage,
-                    num_samplers = (uint)shaderBindingLayout.NumSamplers(),
-                    num_uniform_buffers = (uint)shaderBindingLayout.NumUniformBuffers(),
-                    num_storage_buffers = (uint)shaderBindingLayout.NumStorageBuffers(),
-                    num_storage_textures = (uint)shaderBindingLayout.NumStorageTextures()
+                    stage = stage,
+                    num_samplers = (uint)bindingLayout.NumSamplers(),
+                    num_uniform_buffers = (uint)bindingLayout.NumUniformBuffers(),
+                    num_storage_buffers = (uint)bindingLayout.NumStorageBuffers(),
+                    num_storage_textures = (uint)bindingLayout.NumStorageTextures()
                 };
 
-                SDL_GPUShader* sdlGpuShader = SDL3.SDL_CreateGPUShader(_gpuDevice.SdlGpuDevice, &sdlGpuShaderCreateInfo);
-                if (sdlGpuShader == null) throw new GameKitInitializationException($"SDL_CreateGPUShader failed: {SDL3.SDL_GetError()}");
-
-                GraphicsShader shader = shaderStage switch
+                SDL_GPUShader* pointer = SDL3.SDL_CreateGPUShader(_gpuDevice.SdlGpuDevice, &createInfo);
+                if (pointer == null)
                 {
-                    ShaderStage.Vertex => new VertexShader(_gpuDevice, sdlGpuShader, shaderBindingLayout, systemValueInputs),
-                    ShaderStage.Fragment => new FragmentShader(_gpuDevice, sdlGpuShader, shaderBindingLayout),
-                    _ => throw new InvalidOperationException($"Unsupported graphics shader stage: {shaderStage}")
-                };
-                _gpuDevice.RegisterShader(shader);
-                return shader;
+                    string stageName = stage == SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX
+                        ? "vertex"
+                        : "fragment";
+                    throw new GameKitInitializationException(
+                        $"SDL_CreateGPUShader failed for {stageName} stage: " +
+                        SDL3.SDL_GetError());
+                }
+
+                return new GraphicsShader(pointer, bindingLayout, systemValueInputs);
             }
         }
-    }
-
-    public VertexShader LoadVertexShader(ReadOnlySpan<char> path)
-    {
-        GraphicsShader shader = Load(path, ShaderStage.Vertex);
-        if (shader is not VertexShader vertexShader)
-        {
-            throw new ArgumentException($"Expected vertex shader but got {shader.Stage}");
-        }
-
-        return vertexShader;
-    }
-
-    public FragmentShader LoadFragmentShader(ReadOnlySpan<char> path)
-    {
-        GraphicsShader shader = Load(path, ShaderStage.Fragment);
-        if (shader is not FragmentShader fragmentShader)
-        {
-            throw new ArgumentException($"Expected fragment shader but got {shader.Stage}");
-        }
-
-        return fragmentShader;
-    }
-
-    private GraphicsShader Load(ReadOnlySpan<char> path, ShaderStage expectedStage)
-    {
-        string pathString = path.ToString();
-        string name = VirtualPath.GetFileName(pathString);
-        string? directoryName = VirtualPath.GetDirectoryName(pathString);
-
-        string generatedDirectoryName;
-        if (directoryName == null)
-        {
-            generatedDirectoryName = GeneratedShaderDirectory;
-        }
-        else
-        {
-            generatedDirectoryName = VirtualPath.Combine(directoryName, GeneratedShaderDirectory);
-        }
-
-        string metadataFilename = VirtualPath.Combine(generatedDirectoryName, $"{name}.metadata.json");
-
-        GraphicsShaderMetadata shaderMetadata = _shaderMetadataLoader.Load(metadataFilename);
-        if (shaderMetadata.Stage != expectedStage)
-        {
-            throw new ArgumentException($"Expected {expectedStage} shader metadata but got {shaderMetadata.Stage}");
-        }
-
-        return Load(generatedDirectoryName, shaderMetadata);
     }
 }

@@ -5,10 +5,12 @@ namespace GameKit.Tests;
 
 public class EmbeddedShaderTests
 {
-    [TestCase("shaders/.generated/pencuil_vertex.metadata.json")]
-    [TestCase("shaders/.generated/pencuil_vertex.spv")]
-    [TestCase("shaders/.generated/pencuil_color_fragment.metadata.json")]
-    [TestCase("shaders/.generated/pencuil_color_fragment.spv")]
+    [TestCase("shaders/.generated/pencuil_color.metadata.json")]
+    [TestCase("shaders/.generated/pencuil_color.vertex.spv")]
+    [TestCase("shaders/.generated/pencuil_color.fragment.spv")]
+    [TestCase("shaders/.generated/pencuil_texture.metadata.json")]
+    [TestCase("shaders/.generated/pencuil_texture.vertex.spv")]
+    [TestCase("shaders/.generated/pencuil_texture.fragment.spv")]
     public void PencuilGeneratedShader_CanBeOpened(string path)
     {
         using VirtualFileSystem fileSystem = EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly);

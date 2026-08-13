@@ -1,7 +1,5 @@
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
-using GameKit.Shaders;
-using GameKit.VertexShaderOnly;
 
 namespace GameKit.Tutorials.DepthOnly;
 
@@ -46,7 +44,6 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
     }
 
     public static DepthOnlyRenderer Create(
-        ShaderLoader shaderLoader,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         GpuDevice gpuDevice)
@@ -59,14 +56,11 @@ public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
         // Create vertex buffer with a simple quad
         GpuVertexBuffer<PositionVertex> vertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
 
-        // Load vertex shader
-        VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/depth_vertex");
-
-        // Create depth-only pipeline using the extension method
+        // The program's fragment entry point writes no color, keeping this a depth-only pass.
         GraphicsPipeline depthOnlyPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
-            .SetVertexShader(vertexShader)  // Uses internal no-op fragment shader
+            .SetShaderProgram("shaders/depth")
             .EnableDepthTesting(DepthBufferFormat.Depth32)
             .Build();
 

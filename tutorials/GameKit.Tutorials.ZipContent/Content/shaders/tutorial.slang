@@ -1,17 +1,17 @@
-struct Output
+struct VertexToFragment
 {
     float4 Position : SV_Position;
 };
 
 [shader("vertex")]
-Output vertexMain(uint vertexIndex : SV_VertexID)
+VertexToFragment vertexMain(uint vertexIndex : SV_VertexID)
 {
-    Output output;
+    VertexToFragment output;
     output.Position = float4(0.0, 0.0, 0.0, 1.0);
     return output;
 }
 
 [shader("fragment")]
-void fragmentMain(Output input)
+void fragmentMain(VertexToFragment input)
 {
 }

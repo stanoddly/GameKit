@@ -1,6 +1,6 @@
 struct VertexInput
 {
-    float3 Position : POSITION;
+    float4 Position : TEXCOORD0;
 };
 
 struct VertexToFragment
@@ -12,12 +12,11 @@ struct VertexToFragment
 VertexToFragment vertexMain(VertexInput input)
 {
     VertexToFragment output;
-    output.Position = float4(input.Position, 1.0);
+    output.Position = input.Position;
     return output;
 }
 
 [shader("fragment")]
-float4 fragmentMain(VertexToFragment input) : SV_Target0
+void fragmentMain(VertexToFragment input)
 {
-    return float4(1.0, 0.0, 0.0, 1.0);
 }

@@ -4,6 +4,5 @@ namespace GameKit.Shaders;
 
 public interface IShaderLoader
 {
-    VertexShader LoadVertexShader(ReadOnlySpan<char> path);
-    FragmentShader LoadFragmentShader(ReadOnlySpan<char> path);
+    GraphicsShaderProgram LoadGraphicsShaderProgram(ReadOnlySpan<char> path);
 }

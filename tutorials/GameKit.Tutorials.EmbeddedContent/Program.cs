@@ -4,7 +4,7 @@ namespace GameKit.Tutorials.EmbeddedContent;
 
 static class Program
 {
-    private const string ShaderPath = "shaders/nested/.generated/tutorial_vertex.spv";
+    private const string ShaderPath = "shaders/nested/.generated/tutorial.vertex.spv";
 
     static int Main()
     {

@@ -1,6 +1,9 @@
+StructuredBuffer<float4> colors : register(t0, space2);
+ConstantBuffer<int> colorIndex : register(b0, space3);
+
 struct VertexInput
 {
-    float3 Position : POSITION;
+    float4 Position : TEXCOORD0;
 };
 
 struct VertexToFragment
@@ -12,12 +15,12 @@ struct VertexToFragment
 VertexToFragment vertexMain(VertexInput input)
 {
     VertexToFragment output;
-    output.Position = float4(input.Position, 1.0);
+    output.Position = input.Position;
     return output;
 }
 
 [shader("fragment")]
 float4 fragmentMain(VertexToFragment input) : SV_Target0
 {
-    return float4(1.0, 0.0, 0.0, 1.0);
+    return colors[colorIndex];
 }

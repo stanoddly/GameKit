@@ -4,7 +4,7 @@ namespace GameKit.Tutorials.ZipContent;
 
 static class Program
 {
-    private const string ShaderPath = "shaders/.generated/tutorial_vertex.spv";
+    private const string ShaderPath = "shaders/.generated/tutorial.vertex.spv";
 
     static int Main()
     {

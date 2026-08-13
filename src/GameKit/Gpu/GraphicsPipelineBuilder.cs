@@ -90,8 +90,7 @@ internal struct PipelineBuilderInfo
 
     public DepthBufferFormat? DepthBufferFormat { get; set; }
 
-    public VertexShader? VertexShader { get; set; } = null;
-    public FragmentShader? FragmentShader { get; set; } = null;
+    public GraphicsShaderProgram? ShaderProgram { get; set; }
 
     public void Reset()
     {
@@ -99,8 +98,7 @@ internal struct PipelineBuilderInfo
         SdlGpuVertexAttributes.Clear();
         SdlGpuVertexBufferDescriptions.Clear();
         VertexBufferTypeIds.Clear();
-        VertexShader = null;
-        FragmentShader = null;
+        ShaderProgram = null;
         PrimitiveType = PrimitiveType.TriangleList;
         SdlGpuMultisampleState = new();
         SdlGpuDepthStencilState = new();
@@ -222,20 +220,16 @@ public class GraphicsPipelineBuilder
         return this;
     }
     
-    public GraphicsPipelineBuilder SetShaders(VertexShader vertexShader, FragmentShader fragmentShader)
+    public GraphicsPipelineBuilder SetShaderProgram(GraphicsShaderProgram shaderProgram)
     {
-        _info.VertexShader = vertexShader;
-        _info.FragmentShader = fragmentShader;
+        _info.ShaderProgram = shaderProgram;
 
         return this;
     }
 
-    public GraphicsPipelineBuilder SetShaders(string vertexShaderPath, string fragmentShaderPath)
+    public GraphicsPipelineBuilder SetShaderProgram(string path)
     {
-        VertexShader vertexShader = _shaderLoader.LoadVertexShader(vertexShaderPath);
-        FragmentShader fragmentShader = _shaderLoader.LoadFragmentShader(fragmentShaderPath);
-
-        return SetShaders(vertexShader, fragmentShader);
+        return SetShaderProgram(_shaderLoader.LoadGraphicsShaderProgram(path));
     }
 
     public GraphicsPipelineBuilder SetPrimitiveType(PrimitiveType primitiveType)
@@ -404,12 +398,15 @@ public class GraphicsPipelineBuilder
             throw new InvalidOperationException("No vertex attributes configured.");
         }
 
-        if (_info.VertexShader?.Pointer.IsNull ?? false)
+        GraphicsShaderProgram shaderProgram = _info.ShaderProgram ?? throw new InvalidOperationException(
+            $"No graphics shader program configured. Call {nameof(SetShaderProgram)} before {nameof(Build)}.");
+
+        if (shaderProgram.VertexShader.Pointer.IsNull)
         {
             throw new InvalidOperationException("Vertex shader has null pointer.");
         }
 
-        if (_info.FragmentShader?.Pointer.IsNull ?? false)
+        if (shaderProgram.FragmentShader.Pointer.IsNull)
         {
             throw new InvalidOperationException("Fragment shader has null pointer.");
         }
@@ -437,8 +434,8 @@ public class GraphicsPipelineBuilder
                         vertex_attributes = sdlGpuVertexAttributePointer
                     },
                     primitive_type = (SDL_GPUPrimitiveType)_info.PrimitiveType,
-                    vertex_shader = _info.VertexShader!.Pointer,
-                    fragment_shader = _info.FragmentShader!.Pointer,
+                    vertex_shader = shaderProgram.VertexShader.Pointer,
+                    fragment_shader = shaderProgram.FragmentShader.Pointer,
                     multisample_state = _info.SdlGpuMultisampleState,
                     depth_stencil_state = _info.SdlGpuDepthStencilState,
                     rasterizer_state = new SDL_GPURasterizerState
@@ -463,7 +460,12 @@ public class GraphicsPipelineBuilder
                         $"SDL_CreateGPUGraphicsPipeline failed: {SDL3.SDL_GetError()}");
                 }
 
-                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(_gpuDevice, pipeline, [.. _info.VertexBufferTypeIds], _info.VertexShader, _info.FragmentShader, _info.DepthBufferFormat ?? DepthBufferFormat.None);
+                GraphicsPipeline graphicsPipeline = new GraphicsPipeline(
+                    _gpuDevice,
+                    pipeline,
+                    [.. _info.VertexBufferTypeIds],
+                    shaderProgram,
+                    _info.DepthBufferFormat ?? DepthBufferFormat.None);
                 _info.Reset();
                 
                 _gpuDevice.RegisterGraphicsPipeline(graphicsPipeline);

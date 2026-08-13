@@ -21,17 +21,20 @@ public class GraphicsPipeline: IDisposable
     /// </summary>
     public int VertexBufferSlotCount => VertexBufferTypeIds.Length;
 
-    public VertexShader VertexShader { get; }
-    public FragmentShader FragmentShader { get; }
+    public GraphicsShaderProgram ShaderProgram { get; }
     public DepthBufferFormat DepthBufferFormat { get; }
 
-    internal GraphicsPipeline(GpuDevice gpuDevice, Pointer<SDL_GPUGraphicsPipeline> pointer, ImmutableArray<VertexTypeId> vertexBufferTypeIds, VertexShader vertexShader, FragmentShader fragmentShader, DepthBufferFormat depthBufferFormat)
+    internal GraphicsPipeline(
+        GpuDevice gpuDevice,
+        Pointer<SDL_GPUGraphicsPipeline> pointer,
+        ImmutableArray<VertexTypeId> vertexBufferTypeIds,
+        GraphicsShaderProgram shaderProgram,
+        DepthBufferFormat depthBufferFormat)
     {
         _gpuDevice = gpuDevice;
         Pointer = pointer;
         VertexBufferTypeIds = vertexBufferTypeIds;
-        VertexShader = vertexShader;
-        FragmentShader = fragmentShader;
+        ShaderProgram = shaderProgram;
         DepthBufferFormat = depthBufferFormat;
     }
 

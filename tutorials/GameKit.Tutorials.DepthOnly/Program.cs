@@ -1,6 +1,5 @@
 using GameKit.App;
 using GameKit.RenderOrchestration;
-using GameKit.VertexShaderOnly;
 
 namespace GameKit.Tutorials.DepthOnly;
 
@@ -8,8 +7,7 @@ static class Program
 {
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
-            .AddVertexShaderOnlySupport()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRenderManager();
 

@@ -277,21 +277,24 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
             throw new InvalidOperationException("Bound VertexBuffer at slot 0 is empty.");
         }
 
-        ShaderBindingLayoutValidator.ValidateBindingCounts(_graphicsPipeline.FragmentShader.BindingLayout.BindingCounts,
+        ShaderBindingLayoutValidator.ValidateBindingCounts(
+            _graphicsPipeline.ShaderProgram.FragmentShader.BindingLayout.BindingCounts,
             renderPass.FragmentShaderBindingCounts);
 
-        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.FragmentShader.BindingLayout.UniformSlotSizes,
+        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(
+            _graphicsPipeline.ShaderProgram.FragmentShader.BindingLayout.UniformSlotSizes,
             _commandBuffer.FragmentShaderUniformSlotSizes);
 
-        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(_graphicsPipeline.VertexShader.BindingLayout.UniformSlotSizes,
+        ShaderBindingLayoutValidator.ValidateUniformSlotSizes(
+            _graphicsPipeline.ShaderProgram.VertexShader.BindingLayout.UniformSlotSizes,
             _commandBuffer.VertexShaderUniformSlotSizes);
 
         ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Vertex",
-            _graphicsPipeline.VertexShader.BindingLayout.StorageBufferElementSizes,
+            _graphicsPipeline.ShaderProgram.VertexShader.BindingLayout.StorageBufferElementSizes,
             _vertexStorageBufferElementSizes);
 
         ShaderBindingLayoutValidator.ValidateStorageBufferElementSizes("Fragment",
-            _graphicsPipeline.FragmentShader.BindingLayout.StorageBufferElementSizes,
+            _graphicsPipeline.ShaderProgram.FragmentShader.BindingLayout.StorageBufferElementSizes,
             _fragmentStorageBufferElementSizes);
     }
 
@@ -314,7 +317,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
             return;
         }
 
-        if (_graphicsPipeline.VertexShader.SystemValueInputs.UsesInstanceId && firstInstance != 0)
+        if (_graphicsPipeline.ShaderProgram.VertexShader.SystemValueInputs.UsesInstanceId && firstInstance != 0)
         {
             // SDL GPU: "first_vertex and first_instance parameters are NOT compatible
             // with built-in vertex/instance ID variables in shaders".
@@ -332,7 +335,7 @@ public struct RenderPassValidator : IRenderPassValidator<RenderPassValidator>
             return;
         }
 
-        if (_graphicsPipeline.VertexShader.SystemValueInputs.UsesVertexId && vertexOffset != 0)
+        if (_graphicsPipeline.ShaderProgram.VertexShader.SystemValueInputs.UsesVertexId && vertexOffset != 0)
         {
             // SDL GPU: "first_vertex and first_instance parameters are NOT compatible
             // with built-in vertex/instance ID variables in shaders".

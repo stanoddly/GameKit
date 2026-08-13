@@ -49,10 +49,9 @@ public class PencuilRenderer
 
         _vertexBuffer = gpuMemorySystem.CreateVertexBuffer(quad);
 
-        VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/pencuil_vertex");
-        FragmentShader colorFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_color_fragment");
-        FragmentShader tintedTextureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_tinted_texture_fragment");
-        FragmentShader textureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_texture_fragment");
+        GraphicsShaderProgram colorShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_color");
+        GraphicsShaderProgram tintedTextureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_tinted_texture");
+        GraphicsShaderProgram textureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_texture");
 
         TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
         ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
@@ -60,7 +59,7 @@ public class PencuilRenderer
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
-            .SetShaders(vertexShader, colorFragmentShader)
+            .SetShaderProgram(colorShaderProgram)
             .AddColorTarget(colorTargetFormat, BlendingState.Standard)
             .EnableDepthTesting(DepthBufferFormat.Depth32)
             .SetCullMode(CullMode.None)
@@ -69,7 +68,7 @@ public class PencuilRenderer
         _tintedTexturePipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
-            .SetShaders(vertexShader, tintedTextureFragmentShader)
+            .SetShaderProgram(tintedTextureShaderProgram)
             .AddColorTarget(colorTargetFormat, BlendingState.PremultipliedAlpha)
             .EnableDepthTesting(DepthBufferFormat.Depth32)
             .SetCullMode(CullMode.None)
@@ -78,7 +77,7 @@ public class PencuilRenderer
         _presentPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfigBasedOnBuffer(_vertexBuffer)
-            .SetShaders(vertexShader, textureFragmentShader)
+            .SetShaderProgram(textureShaderProgram)
             .AddColorTarget(colorTargetFormat, BlendingState.Standard)
             .Build();
 
