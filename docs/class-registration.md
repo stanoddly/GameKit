@@ -8,7 +8,7 @@ GameKit's DI container (`GameKit.DependencyInjection`) supports singleton and tr
 - Transient services create a new instance for each resolution or injection site.
 - `BuildServiceProvider` resolves singleton services immediately before returning and records transient factories for later resolution.
 - Factory registrations may return `null` to contribute no service. Resolution skips null results.
-- `ServiceProvider` supports a parent chain: resolution falls back to the parent provider when a type is not registered locally.
+- `ServiceProvider.CreateServiceCollection()` creates child collections whose providers inherit from the parent.
 - `ServiceProvider` itself is automatically registered and resolvable.
 - Registration is done through `ServiceCollection`; the built `ServiceProvider` is immutable after `BuildServiceProvider` returns.
 
@@ -229,15 +229,28 @@ Use when:
 
 ---
 
-### `AddRegistry<TService>()`
+### `AddRegistry<TService>(Comparison<TService>? comparison = null)`
 
 Registers a `ServiceRegistry<TService>` singleton that tracks activated services assignable to
 `TService`. The registry does not create services by itself; it observes normal service activation.
 Singletons appear during `BuildServiceProvider`, and transients appear when they are resolved.
 Tracked services are removed from the registry when the owning provider disposes them.
+The optional comparison is applied when pending services are published before an outermost iteration.
+Removing services preserves the existing order, and changing comparison state alone does not reorder the registry.
+
+The registry is enumerable but is not a list. Activated services remain pending until the next
+outermost iteration begins. Services activated during iteration are therefore excluded from that
+iteration and become visible to the next one. Services removed during iteration are skipped
+immediately. Nested iterations use the same published service generation as their outer iteration.
+Enumeration uses a struct enumerator without creating a snapshot.
 
 ```csharp
-services.AddRegistry<IUpdatable>();
+services.AddRegistry<IUpdatable>(static (left, right) =>
+{
+    int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
+    int rightOrder = right is IOrderable rightOrderable ? rightOrderable.Order : 0;
+    return leftOrder.CompareTo(rightOrder);
+});
 services.AddSingleton<PlayerController>();
 
 ServiceRegistry<IUpdatable> registry =
@@ -309,9 +322,9 @@ services.OnActivated(static (instance, type) =>
 
 ---
 
-### `IsRegistered(Type)` / `IsRegistered<T>()`
+### `IsRegistered<T>()`
 
-Returns `true` if the type has been registered at least once.
+Returns `true` if the type has been registered in the collection or its parent provider hierarchy.
 
 ```csharp
 if (!services.IsRegistered<DebugOverlay>())
@@ -322,20 +335,24 @@ if (!services.IsRegistered<DebugOverlay>())
 
 ---
 
-### `BuildServiceProvider()` / `BuildServiceProvider(ServiceProvider? parent)`
+### `BuildServiceProvider()`
 
-Resolves all services, fires `OnStart` callbacks, freezes the provider, and returns it. The optional `parent` parameter sets up a fallback chain for resolution.
+Resolves all services, fires `OnStart` callbacks, freezes the provider, and returns it. A collection
+created by `ServiceProvider.CreateServiceCollection()` builds a child provider of that provider.
 
 ```csharp
 ServiceProvider provider = services.BuildServiceProvider();
 
 // Child provider with fallback to a parent
-ServiceProvider child = childServices.BuildServiceProvider(parent: provider);
+ServiceCollection childServices = provider.CreateServiceCollection();
+ServiceProvider child = childServices.BuildServiceProvider();
 ```
 
 ## Parent/Child Providers
 
-`BuildServiceProvider(parent)` creates a child provider that inherits from a parent. This is the mechanism behind scoped lifetimes such as stage management — a stage creates a child provider, and disposing the child cleanly tears down only the stage's services.
+`ServiceProvider.CreateServiceCollection()` binds a new collection to its parent before registration
+begins. `IsRegistered<T>()` can therefore see inherited registrations while the child is configured.
+Building the collection creates a child provider, and disposing the child tears down only its services.
 
 ### Service resolution
 
@@ -346,9 +363,9 @@ ServiceCollection rootCollection = new();
 rootCollection.AddSingleton(new AppConfig());
 ServiceProvider root = rootCollection.BuildServiceProvider();
 
-ServiceCollection stageCollection = new();
+ServiceCollection stageCollection = root.CreateServiceCollection();
 stageCollection.AddSingleton<IView>(new GameplayView());
-ServiceProvider stage = stageCollection.BuildServiceProvider(parent: root);
+ServiceProvider stage = stageCollection.BuildServiceProvider();
 
 // stage can resolve both its own and parent services
 AppConfig config = stage.GetRequiredService<AppConfig>();
@@ -363,7 +380,7 @@ Multi-registrations compose across the hierarchy: parent entries appear first, f
 
 `OnActivated` and `OnDisposing` callbacks registered on the parent's `ServiceCollection` are **merged into the child provider**. When the child provider constructs a service, the parent's `OnActivated` callbacks fire first, then the child's own. When the child provider disposes, its `OnDisposing` callbacks fire first, then the parent's.
 
-This means child services automatically participate in any lifecycle hooks the parent set up. `AddRegistry<TService>()` is built on these callbacks, so a child provider built with `BuildServiceProvider(parent: root)` contributes matching services to registries created by the parent and removes them on disposal. Some higher-level systems still use callbacks directly when they need richer behavior than a plain role list.
+This means child services automatically participate in any lifecycle hooks the parent set up. `AddRegistry<TService>()` is built on these callbacks, so a child provider contributes matching services to registries created by the parent and removes them on disposal. Some higher-level systems still use callbacks directly when they need richer behavior than a plain role list.
 
 ```csharp
 // Root sets up a registry-backed role list
@@ -374,10 +391,10 @@ ServiceRegistry<IUpdatable> updatables =
     root.GetRequiredService<ServiceRegistry<IUpdatable>>();
 
 // Child inherits the registry callbacks — PhysicsSystem appears in the root registry
-ServiceCollection stageCollection = new();
+ServiceCollection stageCollection = root.CreateServiceCollection();
 stageCollection.AddSingleton<IUpdatable, PhysicsSystem>();
-ServiceProvider stage = stageCollection.BuildServiceProvider(parent: root);
-Assert.That(updatables.Services, Has.Some.InstanceOf<PhysicsSystem>());
+ServiceProvider stage = stageCollection.BuildServiceProvider();
+Assert.That(updatables, Has.Some.InstanceOf<PhysicsSystem>());
 
 // Disposing the child removes PhysicsSystem from the registry
 stage.Dispose();

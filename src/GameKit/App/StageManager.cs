@@ -39,9 +39,9 @@ internal sealed class StageManager : IStageManager, IDisposable
     private void ReplaceStage(Action<ServiceCollection> configure)
     {
         UnloadActiveStage();
-        ServiceCollection collection = new();
+        ServiceCollection collection = _rootProvider.CreateServiceCollection();
         configure(collection);
-        _stageProvider = collection.BuildServiceProvider(_rootProvider);
+        _stageProvider = collection.BuildServiceProvider();
     }
 
     private void UnloadActiveStage()

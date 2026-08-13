@@ -5,11 +5,21 @@ namespace GameKit.DependencyInjection;
 /// <summary>Collects service registrations and builds a <see cref="ServiceProvider"/> with singleton services eagerly resolved and transient services resolved on demand.</summary>
 public class ServiceCollection
 {
+    private readonly ServiceProvider? _parent;
     private readonly HashSet<int> _registeredTypeIds = new();
     private readonly Dictionary<int, List<ServiceDescriptor>> _serviceGroups = new();
     private readonly List<Action<ServiceProvider>> _onStartActions = new();
     private readonly List<ServiceActivatedCallback> _activatedCallbacks = new();
     private readonly List<ServiceDisposingCallback> _disposingCallbacks = new();
+
+    public ServiceCollection()
+    {
+    }
+
+    internal ServiceCollection(ServiceProvider parent)
+    {
+        _parent = parent;
+    }
 
     /// <summary>Registers <typeparamref name="T"/> as a singleton, constructing it via its single public constructor with dependencies resolved from the provider.</summary>
     /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
@@ -222,7 +232,9 @@ public class ServiceCollection
     /// <returns><see langword="true"/> if <typeparamref name="T"/> is registered; otherwise <see langword="false"/>.</returns>
     public bool IsRegistered<T>()
     {
-        return _registeredTypeIds.Contains(ServiceTypeId<T>.Id);
+        int id = ServiceTypeId<T>.Id;
+        return _registeredTypeIds.Contains(id) ||
+            _parent?.IsRegistered(id) == true;
     }
 
     /// <summary>
@@ -231,27 +243,28 @@ public class ServiceCollection
     /// resolution activates them.
     /// </summary>
     /// <typeparam name="TService">The service role to track.</typeparam>
-    public void AddRegistry<TService>() where TService : class
+    /// <param name="comparison">An optional comparison applied before each outermost registry iteration.</param>
+    public void AddRegistry<TService>(Comparison<TService>? comparison = null) where TService : class
     {
         if (IsRegistered<ServiceRegistry<TService>>())
         {
             return;
         }
 
-        ServiceRegistry<TService> registry = new();
+        ServiceRegistry<TService> registry = new(comparison);
         AddSingleton(registry);
         OnActivated((instance, _) =>
         {
             if (instance is TService service)
             {
-                registry.Subscribe(service);
+                registry.Register(service);
             }
         });
         OnDisposing((instance, _) =>
         {
             if (instance is TService service)
             {
-                registry.Unsubscribe(service);
+                registry.Unregister(service);
             }
         });
     }
@@ -260,20 +273,27 @@ public class ServiceCollection
     /// <returns>The fully constructed and frozen <see cref="ServiceProvider"/>.</returns>
     public ServiceProvider BuildServiceProvider()
     {
-        return BuildServiceProvider(null);
+        ServiceProvider provider = new ServiceProvider(_parent);
+
+        try
+        {
+            return BuildServiceProvider(provider);
+        }
+        catch
+        {
+            provider.Dispose();
+            throw;
+        }
     }
 
-    /// <summary>Resolves all services, fires <c>OnStart</c> callbacks, freezes the provider, and returns it; resolution falls back to <paramref name="parent"/> when a type is not registered locally.</summary>
-    /// <param name="parent">An optional parent provider used as a fallback for types not registered in this collection.</param>
-    /// <returns>The fully constructed and frozen <see cref="ServiceProvider"/>.</returns>
-    public ServiceProvider BuildServiceProvider(ServiceProvider? parent)
+    private ServiceProvider BuildServiceProvider(ServiceProvider provider)
     {
-        ServiceProvider provider = new ServiceProvider(parent);
+        provider.SetRegisteredTypeIds(_registeredTypeIds);
 
         List<ServiceActivatedCallback>? activatedCallbacks =
-            MergeCallbacks(parent?.ActivatedCallbacks, _activatedCallbacks, parentFirst: true);
+            MergeCallbacks(_parent?.ActivatedCallbacks, _activatedCallbacks, parentFirst: true);
         List<ServiceDisposingCallback>? disposingCallbacks =
-            MergeCallbacks(parent?.DisposingCallbacks, _disposingCallbacks, parentFirst: false);
+            MergeCallbacks(_parent?.DisposingCallbacks, _disposingCallbacks, parentFirst: false);
         provider.SetCallbacks(activatedCallbacks, disposingCallbacks);
 
         // Register ServiceProvider itself
@@ -285,9 +305,9 @@ public class ServiceCollection
 
         // Set build-time resolvers so generated factories can trigger on-demand resolution
         provider.SetBuildTimeResolver(
-            (id, type) => ResolveServiceById(id, type, provider, parent, singletonInstances, resolving),
-            id => TryResolveServiceById(id, provider, parent, singletonInstances, resolving),
-            id => ResolveServiceCollectionById(id, provider, parent, singletonInstances, resolving));
+            (id, type) => ResolveServiceById(id, type, provider, _parent, singletonInstances, resolving),
+            id => TryResolveServiceById(id, provider, _parent, singletonInstances, resolving),
+            id => ResolveServiceCollectionById(id, provider, _parent, singletonInstances, resolving));
 
         // Singleton descriptors are eager, including descriptors shadowed for single-service
         // resolution. Null results are cached so their factories run exactly once.
@@ -302,7 +322,7 @@ public class ServiceCollection
                     ResolveSingletonDescriptor(
                         descriptor,
                         provider,
-                        parent,
+                        _parent,
                         singletonInstances,
                         resolving);
                 }

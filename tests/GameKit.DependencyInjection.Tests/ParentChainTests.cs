@@ -83,6 +83,50 @@ public class DoubleDisposeAliasTarget : IChainAlias, IDisposable
 
 public class ParentChainTests
 {
+    [Test]
+    public void IsRegistered_ReturnsTrueForParentRegistration()
+    {
+        ServiceCollection parentCollection = new();
+        parentCollection.AddSingleton<SimpleService>();
+        using ServiceProvider parent = parentCollection.BuildServiceProvider();
+
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+
+        Assert.That(childCollection.IsRegistered<SimpleService>(), Is.True);
+    }
+
+    [Test]
+    public void IsRegistered_ReturnsFalseWhenRegistrationIsAbsentFromHierarchy()
+    {
+        using ServiceProvider parent = new ServiceCollection().BuildServiceProvider();
+
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+
+        Assert.That(childCollection.IsRegistered<SimpleService>(), Is.False);
+    }
+
+    [Test]
+    public void IsRegistered_DoesNotIncludeSiblingRegistrations()
+    {
+        using ServiceProvider parent = new ServiceCollection().BuildServiceProvider();
+        ServiceCollection firstCollection = parent.CreateServiceCollection();
+        firstCollection.AddSingleton<SimpleService>();
+        using ServiceProvider first = firstCollection.BuildServiceProvider();
+
+        ServiceCollection secondCollection = parent.CreateServiceCollection();
+
+        Assert.That(secondCollection.IsRegistered<SimpleService>(), Is.False);
+    }
+
+    [Test]
+    public void CreateServiceCollection_AfterProviderDisposal_Throws()
+    {
+        ServiceProvider provider = new ServiceCollection().BuildServiceProvider();
+        provider.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => provider.CreateServiceCollection());
+    }
+
     // -------------------------------------------------------------------------
     // 1. Multi-level chain: grandparent → parent → child
     // -------------------------------------------------------------------------
@@ -94,13 +138,13 @@ public class ParentChainTests
         grandparentCollection.AddSingleton<GrandparentService>();
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
         parentCollection.AddSingleton<ParentOnlyService>();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<ChildOnlyService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         // Child resolves its own service
         Assert.That(child.GetRequiredService<ChildOnlyService>(), Is.Not.Null);
@@ -117,11 +161,11 @@ public class ParentChainTests
         grandparentCollection.AddSingleton<GrandparentService>();
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetService<GrandparentService>(), Is.SameAs(grandparent.GetRequiredService<GrandparentService>()));
     }
@@ -132,11 +176,11 @@ public class ParentChainTests
         ServiceCollection grandparentCollection = new();
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         // SimpleService is absent from every provider in the chain
         Assert.That(child.GetService<SimpleService>(), Is.Null);
@@ -150,13 +194,13 @@ public class ParentChainTests
         grandparentCollection.AddSingleton(grandparentInstance);
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         SimpleService childInstance = new();
         childCollection.AddSingleton(childInstance);
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(childInstance));
         Assert.That(grandparent.GetRequiredService<SimpleService>(), Is.SameAs(grandparentInstance));
@@ -170,13 +214,13 @@ public class ParentChainTests
         grandparentCollection.AddSingleton(grandparentInstance);
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
         SimpleService parentInstance = new();
         parentCollection.AddSingleton(parentInstance);
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         // Child has no SimpleService, so parent's instance takes precedence over grandparent's
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(parentInstance));
@@ -190,10 +234,10 @@ public class ParentChainTests
         parentCollection.AddSingleton(parentInstance);
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>(
             (Func<ServiceProvider, SimpleService?>)(_ => null));
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(parentInstance));
         Assert.That(child.GetServices<SimpleService>(), Is.EqualTo(new[] { parentInstance }));
@@ -207,10 +251,10 @@ public class ParentChainTests
         parentCollection.AddSingleton<IMyService>(parentInstance);
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddTransient<IMyService>(
             (Func<ServiceProvider, IMyService?>)(_ => null));
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<IMyService>(), Is.SameAs(parentInstance));
         Assert.That(child.GetServices<IMyService>(), Is.EqualTo(new[] { parentInstance }));
@@ -228,11 +272,11 @@ public class ParentChainTests
         grandparentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IReadOnlyList<IMyService> services = child.GetServices<IMyService>();
 
@@ -249,9 +293,9 @@ public class ParentChainTests
         parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IMyService, AnotherServiceImpl>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IReadOnlyList<IMyService> services = child.GetServices<IMyService>();
 
@@ -270,9 +314,9 @@ public class ParentChainTests
         parentCollection.AddSingleton<IMyService, MyServiceImpl>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IReadOnlyList<IMyService> first = child.GetServices<IMyService>();
         IReadOnlyList<IMyService> second = child.GetServices<IMyService>();
@@ -293,9 +337,9 @@ public class ParentChainTests
         parentCollection.AddSingleton(parentService);
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
 
@@ -311,10 +355,10 @@ public class ParentChainTests
         parentCollection.AddSingleton(parentService);
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         ChildChainDisposable childService = new();
         childCollection.AddSingleton(childService);
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
 
@@ -330,9 +374,9 @@ public class ParentChainTests
         parentCollection.AddSingleton(parentService);
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         // Dispose parent while child still exists
         parent.Dispose();
@@ -349,13 +393,13 @@ public class ParentChainTests
         parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection firstChildCollection = new();
+        ServiceCollection firstChildCollection = parent.CreateServiceCollection();
         firstChildCollection.AddSingleton(new OrderedDisposable(disposeOrder, "firstChild"));
-        ServiceProvider firstChild = firstChildCollection.BuildServiceProvider(parent);
+        ServiceProvider firstChild = firstChildCollection.BuildServiceProvider();
 
-        ServiceCollection secondChildCollection = new();
+        ServiceCollection secondChildCollection = parent.CreateServiceCollection();
         secondChildCollection.AddSingleton(new OrderedDisposable(disposeOrder, "secondChild"));
-        ServiceProvider secondChild = secondChildCollection.BuildServiceProvider(parent);
+        ServiceProvider secondChild = secondChildCollection.BuildServiceProvider();
 
         parent.Dispose();
 
@@ -373,13 +417,13 @@ public class ParentChainTests
         grandparentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "grandparent"));
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
         parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton(new OrderedDisposable(disposeOrder, "child"));
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         grandparent.Dispose();
 
@@ -397,10 +441,10 @@ public class ParentChainTests
         parentCollection.AddSingleton(new OrderedDisposable(disposeOrder, "parent"));
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         OrderedDisposable childService = new(disposeOrder, "child");
         childCollection.AddSingleton(childService);
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
         parent.Dispose();
@@ -469,10 +513,10 @@ public class ParentChainTests
         ServiceCollection parentCollection = new();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         DoubleDisposeTracker childService = new();
         childCollection.AddSingleton(childService);
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
         child.Dispose();
@@ -488,9 +532,9 @@ public class ParentChainTests
     public void EmptyProvider_UsedAsParent_ChildResolvesOwnServices()
     {
         ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = emptyParent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.Not.Null);
     }
@@ -499,9 +543,9 @@ public class ParentChainTests
     public void EmptyProvider_UsedAsParent_MissingServiceReturnsNull()
     {
         ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = emptyParent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         // AnotherService is neither in child nor in Empty
         Assert.That(child.GetService<AnotherService>(), Is.Null);
@@ -511,8 +555,8 @@ public class ParentChainTests
     public void EmptyProvider_UsedAsParent_MissingServiceThrowsOnGetRequired()
     {
         ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
+        ServiceCollection childCollection = emptyParent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.Throws<InvalidOperationException>(
             () => child.GetRequiredService<SimpleService>());
@@ -522,8 +566,8 @@ public class ParentChainTests
     public void EmptyProvider_UsedAsParent_GetServices_ReturnsEmptyForUnregisteredType()
     {
         ServiceProvider emptyParent = new ServiceCollection().BuildServiceProvider();
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(emptyParent);
+        ServiceCollection childCollection = emptyParent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetServices<IMyService>(), Is.Empty);
     }
@@ -541,11 +585,11 @@ public class ParentChainTests
         ServiceCollection parentCollection = new();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         ChainAliasImpl concreteInstance = new();
         childCollection.AddSingleton(concreteInstance);
         childCollection.AddAlias<IChainAlias, ChainAliasImpl>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IChainAlias alias = child.GetRequiredService<IChainAlias>();
         ChainAliasImpl concrete = child.GetRequiredService<ChainAliasImpl>();
@@ -578,11 +622,11 @@ public class ParentChainTests
         grandparentCollection.AddSingleton<IMyService, MyServiceImpl>();
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IMyService resolved = child.GetRequiredService<IMyService>();
 
@@ -598,9 +642,9 @@ public class ParentChainTests
         parentCollection.OnActivated((_, type) => activations.Add($"parent:{type.Name}"));
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<ParentChainCallbackService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<ParentChainCallbackService>(), Is.Not.Null);
         Assert.That(activations, Is.EqualTo(new[] { $"parent:{nameof(ParentChainCallbackService)}" }));
@@ -615,14 +659,14 @@ public class ParentChainTests
         grandparentCollection.OnActivated((_, _) => activations.Add("grandparent"));
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
         parentCollection.OnActivated((_, _) => activations.Add("parent"));
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.OnActivated((_, _) => activations.Add("child"));
         childCollection.AddSingleton<ParentChainCallbackService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<ParentChainCallbackService>(), Is.Not.Null);
         Assert.That(activations, Is.EqualTo(new[] { "grandparent", "parent", "child" }));
@@ -637,14 +681,14 @@ public class ParentChainTests
         grandparentCollection.OnDisposing((_, _) => callbacks.Add("grandparent"));
         ServiceProvider grandparent = grandparentCollection.BuildServiceProvider();
 
-        ServiceCollection parentCollection = new();
+        ServiceCollection parentCollection = grandparent.CreateServiceCollection();
         parentCollection.OnDisposing((_, _) => callbacks.Add("parent"));
-        ServiceProvider parent = parentCollection.BuildServiceProvider(grandparent);
+        ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.OnDisposing((_, _) => callbacks.Add("child"));
         childCollection.AddSingleton<ParentChainCallbackDisposable>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
 

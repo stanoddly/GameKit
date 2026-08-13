@@ -708,12 +708,14 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
-        Assert.That(registry.Services, Has.Count.EqualTo(1));
-        Assert.That(registry.Services[0], Is.InstanceOf<MyServiceImpl>());
+        IMyService[] services = registry.ToArray();
+
+        Assert.That(services, Has.Length.EqualTo(1));
+        Assert.That(services[0], Is.InstanceOf<MyServiceImpl>());
     }
 
     [Test]
-    public void ServiceRegistry_GetEnumerator_ReturnsListEnumerator()
+    public void ServiceRegistry_GetEnumerator_ReturnsValueTypeEnumerator()
     {
         ServiceCollection collection = new();
         collection.AddRegistry<IMyService>();
@@ -721,10 +723,145 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
         ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
 
-        List<IMyService>.Enumerator enumerator = registry.GetEnumerator();
+        ServiceRegistry<IMyService>.Enumerator enumerator = registry.GetEnumerator();
 
-        Assert.That(enumerator.MoveNext(), Is.True);
-        Assert.That(enumerator.Current, Is.InstanceOf<MyServiceImpl>());
+        try
+        {
+            Assert.That(typeof(ServiceRegistry<IMyService>.Enumerator).IsValueType, Is.True);
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.InstanceOf<MyServiceImpl>());
+        }
+        finally
+        {
+            enumerator.Dispose();
+        }
+    }
+
+    [Test]
+    public void AddRegistry_DefersChildServicesAddedDuringEnumeration()
+    {
+        MyServiceImpl first = new();
+        AnotherServiceImpl second = new();
+        ServiceCollection rootServices = new();
+        rootServices.AddRegistry<IMyService>();
+        rootServices.AddSingleton<IMyService>(first);
+        using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
+        ServiceRegistry<IMyService>.Enumerator enumerator = registry.GetEnumerator();
+
+        try
+        {
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.SameAs(first));
+
+            ServiceCollection childServices = rootProvider.CreateServiceCollection();
+            childServices.AddSingleton<IMyService>(second);
+            _ = childServices.BuildServiceProvider();
+
+            Assert.That(enumerator.MoveNext(), Is.False);
+            Assert.That(registry.ToArray(), Is.EqualTo(new[] { first }));
+        }
+        finally
+        {
+            enumerator.Dispose();
+        }
+
+        Assert.That(registry.ToArray(), Is.EqualTo(new IMyService[] { first, second }));
+    }
+
+    [Test]
+    public void AddRegistry_SkipsChildServiceRemovedDuringEnumeration()
+    {
+        MyServiceImpl first = new();
+        AnotherServiceImpl second = new();
+        ServiceCollection rootServices = new();
+        rootServices.AddRegistry<IMyService>();
+        using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
+        ServiceCollection firstServices = rootProvider.CreateServiceCollection();
+        firstServices.AddSingleton<IMyService>(first);
+        using ServiceProvider firstProvider = firstServices.BuildServiceProvider();
+        ServiceCollection secondServices = rootProvider.CreateServiceCollection();
+        secondServices.AddSingleton<IMyService>(second);
+        ServiceProvider secondProvider = secondServices.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
+        ServiceRegistry<IMyService>.Enumerator enumerator = registry.GetEnumerator();
+
+        try
+        {
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.SameAs(first));
+
+            secondProvider.Dispose();
+
+            Assert.That(enumerator.MoveNext(), Is.False);
+            Assert.That(registry.ToArray(), Is.EqualTo(new[] { first }));
+        }
+        finally
+        {
+            enumerator.Dispose();
+        }
+
+        Assert.That(registry.ToArray(), Is.EqualTo(new[] { first }));
+    }
+
+    [Test]
+    public void AddRegistry_AppliesPendingAdditionsBeforeNextOutermostEnumeration()
+    {
+        MyServiceImpl first = new();
+        AnotherServiceImpl second = new();
+        ServiceCollection rootServices = new();
+        rootServices.AddRegistry<IMyService>();
+        rootServices.AddSingleton<IMyService>(first);
+        using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
+        ServiceRegistry<IMyService>.Enumerator outer = registry.GetEnumerator();
+        ServiceRegistry<IMyService>.Enumerator inner = registry.GetEnumerator();
+
+        try
+        {
+            ServiceCollection childServices = rootProvider.CreateServiceCollection();
+            childServices.AddSingleton<IMyService>(second);
+            _ = childServices.BuildServiceProvider();
+
+            inner.Dispose();
+            Assert.That(registry.ToArray(), Is.EqualTo(new[] { first }));
+        }
+        finally
+        {
+            inner.Dispose();
+            outer.Dispose();
+        }
+
+        Assert.That(registry.ToArray(), Is.EqualTo(new IMyService[] { first, second }));
+    }
+
+    [Test]
+    public void AddRegistry_DoesNotReapplyComparisonWithoutPendingAdditions()
+    {
+        MyServiceImpl first = new();
+        AnotherServiceImpl second = new();
+        bool reverse = false;
+        ServiceCollection collection = new();
+        collection.AddRegistry<IMyService>((left, right) =>
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            bool leftIsFirst = ReferenceEquals(left, first);
+            return leftIsFirst == reverse ? 1 : -1;
+        });
+        collection.AddSingleton<IMyService>(first);
+        collection.AddSingleton<IMyService>(second);
+        using ServiceProvider provider = collection.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
+
+        Assert.That(registry.ToArray(), Is.EqualTo(new IMyService[] { first, second }));
+
+        reverse = true;
+
+        Assert.That(registry.ToArray(), Is.EqualTo(new IMyService[] { first, second }));
     }
 
     [Test]
@@ -737,11 +874,11 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
 
         ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
-        Assert.That(registry.Services, Is.Empty);
+        Assert.That(registry.ToArray(), Is.Empty);
 
         IMyService service = provider.GetRequiredService<IMyService>();
 
-        Assert.That(registry.Services, Is.EqualTo(new[] { service }));
+        Assert.That(registry.ToArray(), Is.EqualTo(new[] { service }));
     }
 
     [Test]
@@ -753,11 +890,11 @@ public class ServiceCollectionTests
         ServiceProvider provider = collection.BuildServiceProvider();
         ServiceRegistry<IDisposableFoo> registry = provider.GetRequiredService<ServiceRegistry<IDisposableFoo>>();
 
-        Assert.That(registry.Services, Has.Count.EqualTo(1));
+        Assert.That(registry.ToArray(), Has.Length.EqualTo(1));
 
         provider.Dispose();
 
-        Assert.That(registry.Services, Is.Empty);
+        Assert.That(registry.ToArray(), Is.Empty);
     }
 
     // --- OnStart ---
@@ -876,9 +1013,9 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<AnotherService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<AnotherService>(), Is.Not.Null);
     }
@@ -890,9 +1027,9 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<AnotherService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(root.GetRequiredService<SimpleService>()));
     }
@@ -904,9 +1041,9 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<ServiceWithDependency>();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         ServiceWithDependency service = child.GetRequiredService<ServiceWithDependency>();
 
@@ -919,8 +1056,8 @@ public class ServiceCollectionTests
         ServiceCollection rootCollection = new();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceCollection childCollection = root.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<ServiceProvider>(), Is.SameAs(child));
     }
@@ -933,10 +1070,10 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton(rootInstance);
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         SimpleService childInstance = new();
         childCollection.AddSingleton(childInstance);
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<SimpleService>(), Is.SameAs(childInstance));
         Assert.That(root.GetRequiredService<SimpleService>(), Is.SameAs(rootInstance));
@@ -949,8 +1086,8 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton<SimpleService>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceCollection childCollection = root.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetService<SimpleService>(), Is.SameAs(root.GetRequiredService<SimpleService>()));
     }
@@ -961,8 +1098,8 @@ public class ServiceCollectionTests
         ServiceCollection rootCollection = new();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceCollection childCollection = root.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetService<SimpleService>(), Is.Null);
     }
@@ -1008,9 +1145,9 @@ public class ServiceCollectionTests
         rootCollection.AddSingleton<MyServiceImpl>();
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<IMyService, MyServiceImpl>();
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(child.GetRequiredService<IMyService>(), Is.InstanceOf<MyServiceImpl>());
     }
@@ -1202,9 +1339,9 @@ public class ServiceCollectionTests
         parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<SimpleService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IReadOnlyList<IMyService> services = child.GetServices<IMyService>();
 
@@ -1447,8 +1584,8 @@ public class ServiceCollectionTests
         parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IEnumerable<IMyService> services = child.GetRequiredService<IEnumerable<IMyService>>();
 
@@ -1479,10 +1616,10 @@ public class ServiceCollectionTests
         parentCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IMyService, AnotherServiceImpl>();
         childCollection.AddSingleton<ServiceWithEnumerableDependency>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         ServiceWithEnumerableDependency service = child.GetRequiredService<ServiceWithEnumerableDependency>();
         IMyService[] services = service.Services.ToArray();
