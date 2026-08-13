@@ -91,7 +91,7 @@ public class StencilBufferRenderer : IRenderPhase<DefaultRenderContext>
         GraphicsPipeline maskPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
-            .SetShaders("shaders/vertex", "shaders/fragment")
+            .SetShaderProgram("shaders/shader")
             .AddColorFormatFromDisplay()
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(maskStencilState, CompareOperation.Always)
@@ -106,7 +106,7 @@ public class StencilBufferRenderer : IRenderPhase<DefaultRenderContext>
         GraphicsPipeline drawPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
-            .SetShaders("shaders/vertex", "shaders/fragment")
+            .SetShaderProgram("shaders/shader")
             .AddColorFormatFromDisplay()
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(drawStencilState, CompareOperation.Equal)

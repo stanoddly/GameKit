@@ -19,7 +19,6 @@
     <Project Path="src/GameKit.Utils/GameKit.Utils.csproj" />
     <Project Path="src/GameKit/GameKit.csproj" />
     <Project Path="src/GameKit.Logging/GameKit.Logging.csproj" />
-    <Project Path="src/GameKit.VertexShaderOnly/GameKit.VertexShaderOnly.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GameKit.AStar.Tests/GameKit.AStar.Tests.csproj" />

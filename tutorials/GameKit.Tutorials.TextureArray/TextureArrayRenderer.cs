@@ -76,7 +76,7 @@ public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
-            .SetShaders("shaders/vertex", "shaders/fragment")
+            .SetShaderProgram("shaders/shader")
             .AddColorFormatFromDisplay()
             .Build();
 

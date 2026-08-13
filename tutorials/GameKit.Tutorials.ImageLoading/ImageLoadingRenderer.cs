@@ -58,7 +58,7 @@ public class ImageLoadingRenderer : IRenderPhase<DefaultRenderContext>
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
-            .SetShaders("shaders/vertex", "shaders/fragment")
+            .SetShaderProgram("shaders/shader")
             .AddColorFormatFromDisplay(BlendingState.PremultipliedAlpha)
             .Build();
 

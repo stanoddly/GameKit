@@ -32,13 +32,12 @@ Add for each vertex buffer type you'll bind. Order matters - matches the binding
 ## Shader Loading
 
 ```csharp
-// Option 1: Direct path (most common)
-.SetShaders("shaders/vertex", "shaders/fragment")
+// Option 1: Direct path
+.SetShaderProgram("shaders/shader")
 
-// Option 2: Load separately (if you need to reuse shader objects)
-VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/terrain_vertex");
-FragmentShader fragmentShader = shaderLoader.LoadFragmentShader("shaders/terrain_fragment");
-.SetShaders(vertexShader, fragmentShader)
+// Option 2: Load once and reuse across pipeline configurations
+GraphicsShaderProgram shaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/terrain");
+.SetShaderProgram(shaderProgram)
 ```
 
 ## Color Targets
@@ -76,7 +75,7 @@ Add color targets in the order they appear in fragment shader outputs. Each `Add
 GraphicsPipeline pipeline = graphicsPipelineBuilder
     .SetPrimitiveType(PrimitiveType.TriangleList)
     .AddVertexBufferConfig<PositionNormalColorVertex>()
-    .SetShaders("shaders/terrain_vertex", "shaders/terrain_fragment")
+    .SetShaderProgram("shaders/terrain")
     .AddColorTarget(renderContextBuffers.AlbedoBuffer.Format)
     .AddColorTarget(renderContextBuffers.NormalBuffer.Format)
     .AddColorTarget(renderContextBuffers.PositionBuffer.Format)

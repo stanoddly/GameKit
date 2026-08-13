@@ -6,17 +6,15 @@ Guide to writing and using shaders with GameKit. Shaders are written in Slang an
 
 ```
 Content/shaders/
-├── vertex.slang          # Source shader files
-├── fragment.slang
+├── shader.slang          # Vertex and fragment entry points
 └── .generated/           # Generated at build time
-    ├── vertex.spv
-    ├── vertex.dxil
-    ├── vertex.metal
-    ├── vertex.metadata.json
-    ├── fragment.spv
-    ├── fragment.dxil
-    ├── fragment.metal
-    └── fragment.metadata.json
+    ├── shader.vertex.spv
+    ├── shader.vertex.dxil
+    ├── shader.vertex.metal
+    ├── shader.fragment.spv
+    ├── shader.fragment.dxil
+    ├── shader.fragment.metal
+    └── shader.metadata.json
 ```
 
 Shaders are automatically compiled during build. The build system generates SPIR-V binaries for Vulkan, DXIL binaries for Direct3D 12, MSL source for Metal, and metadata files in the `.generated/` directory.
@@ -68,47 +66,43 @@ Earlier versions required each project to define its own target calling the task
 
 Remove `OutputItemType` and `OutputLogicalNamePrefix` metadata from `SdlangShader`. Projects that copy or package content should enumerate their content tree after compilation. Projects that embed generated shaders should consume `@(SdlangShaderOutput)` before `AssignTargetPaths`, as described in [Content distribution](content-distribution.md).
 
-Only entry-point shaders belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
+Only graphics-program and compute-shader sources belong in `SdlangShader`. Shared files consumed through `#include` or `import`, such as `common.slang`, remain excluded because they do not produce standalone runtime shaders.
 
 Generated metadata records the normalized source dependencies and an aggregate source hash for each entry shader. Changing an included or imported source therefore recompiles every entry shader that consumes it. Slang's raw dependency file is a temporary compiler intermediate and is deleted after compilation.
 
-## Basic Vertex Shader
+## Basic Graphics Shader Program
 
 ```csharp
-struct Input
+struct VertexInput
 {
     float4 Position : TEXCOORD0;
 };
 
-struct Output
+struct VertexToFragment
 {
     float4 Position : SV_Position;
 };
 
 [shader("vertex")]
-Output main(Input input)
+VertexToFragment vertexMain(VertexInput input)
 {
-    Output output;
+    VertexToFragment output;
     output.Position = input.Position;
     return output;
 }
-```
 
-**Input semantics:** Use `TEXCOORD0`, `TEXCOORD1`, etc. for vertex attributes. These map to the vertex buffer configuration in `GraphicsPipelineBuilder`.
-
-**Output semantics:** Always use `SV_Position` for the output position.
-
-## Basic Fragment Shader
-
-```csharp
 [shader("fragment")]
-float4 main() : SV_Target0
+float4 fragmentMain(VertexToFragment input) : SV_Target0
 {
     return float4(1.0, 0.0, 1.0, 1.0);  // Magenta
 }
 ```
 
-**Output semantics:** Use `SV_Target0`, `SV_Target1`, etc. for multiple render targets (MRT). Order matches the `AddColorTarget()` calls in pipeline builder.
+Every graphics-program source declares exactly one `vertexMain` and one `fragmentMain`. The vertex entry point returns a structure, and the fragment entry point receives the complete structure. `SV_Position` must be the first field. A fragment entry point cannot omit unused fields.
+
+**Input semantics:** Use `TEXCOORD0`, `TEXCOORD1`, etc. for vertex attributes. These map to the vertex buffer configuration in `GraphicsPipelineBuilder`.
+
+**Output semantics:** Always use `SV_Position` for the first vertex-output field. Use `SV_Target0`, `SV_Target1`, etc. for multiple render targets (MRT). Order matches the `AddColorTarget()` calls in pipeline builder.
 
 ## Constant Buffers (Uniforms)
 
@@ -118,7 +112,7 @@ Fragment shader with constant buffer:
 ConstantBuffer<float4> color : register(b0, space3);
 
 [shader("fragment")]
-float4 main() : SV_Target0
+float4 fragmentMain(VertexToFragment input) : SV_Target0
 {
     return color;
 }
@@ -141,11 +135,14 @@ renderPass.PushFragmentUniformData(0, FColors.Magenta);  // Slot 0
 
 ## Shader Stage Attribute
 
-Always mark entry points with the shader stage attribute:
+Always mark the two fixed entry points with the shader stage attribute:
 
 ```csharp
-[shader("vertex")]    // For vertex shaders
-[shader("fragment")]  // For fragment shaders
+[shader("vertex")]
+VertexToFragment vertexMain(VertexInput input);
+
+[shader("fragment")]
+float4 fragmentMain(VertexToFragment input) : SV_Target0;
 ```
 
 ## Loading Shaders
@@ -154,24 +151,36 @@ Always mark entry points with the shader stage attribute:
 
 ```csharp
 GraphicsPipeline pipeline = graphicsPipelineBuilder
-    .SetShaders("shaders/vertex", "shaders/fragment")
+    .SetShaderProgram("shaders/shader")
     .Build();
 ```
 
-Paths are relative to the `Content/` directory and exclude the `.slang` extension. The loader reads the metadata and selects the first compiled format supported by the active GPU backend.
+The path is relative to the `Content/` directory and excludes the `.slang` extension. The loader reads the combined metadata and selects the first compiled format supported by the active GPU backend for each native stage.
 
-**Option 2: Load separately**
+**Option 2: Load once and reuse**
 
 ```csharp
-VertexShader vertexShader = shaderLoader.LoadVertexShader("shaders/terrain_vertex");
-FragmentShader fragmentShader = shaderLoader.LoadFragmentShader("shaders/terrain_fragment");
+GraphicsShaderProgram shaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/terrain");
 
 GraphicsPipeline pipeline = graphicsPipelineBuilder
-    .SetShaders(vertexShader, fragmentShader)
+    .SetShaderProgram(shaderProgram)
     .Build();
 ```
 
-Use this when you need to reuse shader objects across multiple pipelines.
+Vertex and fragment stages cannot be loaded or composed independently.
+
+### Depth-only programs
+
+SDL still requires a fragment stage for a depth-only pipeline. Keep the workaround local to the graphics program by declaring a no-op fragment entry point with the same interface:
+
+```csharp
+[shader("fragment")]
+void fragmentMain(VertexToFragment input)
+{
+}
+```
+
+See `GameKit.Tutorials.DepthOnly` for a complete example.
 
 ## GPU Backend Selection
 
@@ -255,7 +264,7 @@ struct Output
 };
 
 [shader("fragment")]
-Output main()
+Output fragmentMain(VertexToFragment input)
 {
     Output output;
     output.Albedo = float4(1.0, 0.0, 0.0, 1.0);
@@ -275,52 +284,47 @@ Output main()
 
 ## Metadata Files
 
-For each shader, the build generates a `.metadata.json` file:
+For each graphics shader program, the build generates one `.metadata.json` file:
 
 ```json
 {
-  "stage": "Vertex",
-  "bindingLayout": {
-    "bindingCounts": {
-      "numSamplers": 0,
-      "numStorageTextures": 0,
-      "numStorageBuffers": 0
-    },
-    "uniformSlotSizes": {
-      "slot0": 16,
-      "slot1": 0,
-      "slot2": 0,
-      "slot3": 0
-    }
+  "kind": "Graphics",
+  "vertex": {
+    "entryPoint": "vertexMain",
+    "bindingLayout": {},
+    "systemValueInputs": {},
+    "shaders": [
+      {
+        "format": "SpirV",
+        "filename": "shader.vertex.spv",
+        "entryPoint": "vertexMain"
+      }
+    ]
   },
-  "shaders": [
-    {
-      "format": "SpirV",
-      "filename": "vertex.spv",
-      "entryPoint": "main"
-    },
-    {
-      "format": "Dxil",
-      "filename": "vertex.dxil",
-      "entryPoint": "main"
-    },
-    {
-      "format": "Msl",
-      "filename": "vertex.metal",
-      "entryPoint": "main_0"
-    }
-  ]
+  "fragment": {
+    "entryPoint": "fragmentMain",
+    "bindingLayout": {},
+    "shaders": [
+      {
+        "format": "SpirV",
+        "filename": "shader.fragment.spv",
+        "entryPoint": "fragmentMain"
+      }
+    ]
+  },
+  "sourceHash": "...",
+  "sourceDependencies": [],
+  "slangVersion": "..."
 }
 ```
 
-This metadata is used by the loader to validate bindings and create GPU shader objects. You don't need to edit these files manually.
+Each stage has its own binding layout because resources are reflected for the entry point that uses them. This metadata is used by the loader to validate bindings and create both native GPU shader objects transactionally. You don't need to edit it manually.
 
 ## Notes
 
-- Shaders are compiled at build time using Slangc compiler
-- The source entry point is always `main`; generated MSL exposes it as `main_0`
+- Graphics programs use the fixed source entry points `vertexMain` and `fragmentMain`
 - Shader compilation is cached based on the source hash, Slang version, and expected target formats
 - SPIR-V is used by Vulkan, DXIL by Direct3D 12, and MSL by Metal
 - Always use explicit register bindings for constant buffers
-- Space3 is used for constant buffers by convention
+- Space3 is used for fragment constant buffers by convention
 - Uniform data is pushed per-draw call before rendering
