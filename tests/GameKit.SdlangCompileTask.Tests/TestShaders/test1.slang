@@ -1,18 +1,23 @@
-// Test shader for SdlangCompileTask
-// This is a sample Slang shader file used for testing compilation
-
-struct PSOutput
+struct VertexInput
 {
-    float4 color : SV_Target;
+    float3 Position : POSITION;
 };
 
-[shader("fragment")]
-PSOutput main() : SV_Target
+struct VertexToFragment
 {
-    return PSOutput(float4(1.0, 0.0, 0.0, 1.0));
+    float4 Position : SV_Position;
+};
+
+[shader("vertex")]
+VertexToFragment vertexMain(VertexInput input)
+{
+    VertexToFragment output;
+    output.Position = float4(input.Position, 1.0);
+    return output;
 }
 
-PSOutput main_0() : SV_Target
+[shader("fragment")]
+float4 fragmentMain(VertexToFragment input) : SV_Target0
 {
-    return PSOutput(float4(1.0, 0.0, 0.0, 1.0));
+    return float4(1.0, 0.0, 0.0, 1.0);
 }

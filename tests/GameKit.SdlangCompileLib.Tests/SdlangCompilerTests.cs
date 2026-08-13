@@ -7,10 +7,28 @@ namespace GameKit.SdlangCompileLib.Tests;
 public class SdlangCompilerTests
 {
     private const string ShaderContent = """
-                                         [shader("vertex")]
-                                         float4 main(float3 position : POSITION) : SV_POSITION
+                                         struct VertexInput
                                          {
-                                             return float4(position, 1.0);
+                                             float3 Position : POSITION;
+                                         };
+
+                                         struct VertexToFragment
+                                         {
+                                             float4 Position : SV_Position;
+                                         };
+
+                                         [shader("vertex")]
+                                         VertexToFragment vertexMain(VertexInput input)
+                                         {
+                                             VertexToFragment output;
+                                             output.Position = float4(input.Position, 1.0);
+                                             return output;
+                                         }
+
+                                         [shader("fragment")]
+                                         float4 fragmentMain(VertexToFragment input) : SV_Target0
+                                         {
+                                             return float4(1.0);
                                          }
                                          """;
 
@@ -18,8 +36,26 @@ public class SdlangCompilerTests
                                                         #include "shared $ sources/included # [value].slang"
                                                         import imported;
 
+                                                        struct VertexInput
+                                                        {
+                                                            float3 Position : POSITION;
+                                                        };
+
+                                                        struct VertexToFragment
+                                                        {
+                                                            float4 Position : SV_Position;
+                                                        };
+
+                                                        [shader("vertex")]
+                                                        VertexToFragment vertexMain(VertexInput input)
+                                                        {
+                                                            VertexToFragment output;
+                                                            output.Position = float4(input.Position, 1.0);
+                                                            return output;
+                                                        }
+
                                                         [shader("fragment")]
-                                                        float4 main() : SV_Target
+                                                        float4 fragmentMain(VertexToFragment input) : SV_Target0
                                                         {
                                                             return includedColor() + importedColor();
                                                         }
@@ -72,11 +108,16 @@ public class SdlangCompilerTests
                                                          SamplerState mySampler : register(s0, space0);
 
                                                          [shader("vertex")]
-                                                         VertexOutput main(VertexInput input) {
+                                                         VertexOutput vertexMain(VertexInput input) {
                                                              VertexOutput output;
                                                              output.position = mul(transform, float4(input.position, 1.0));
                                                              output.texCoord = input.texCoord;
                                                              return output;
+                                                         }
+
+                                                         [shader("fragment")]
+                                                         float4 fragmentMain(VertexOutput input) : SV_Target0 {
+                                                             return input.position;
                                                          }
                                                          """;
 
@@ -87,16 +128,33 @@ public class SdlangCompilerTests
                                                                 uint instanceId : SV_InstanceID;
                                                             };
 
+                                                            struct VertexToFragment {
+                                                                float4 position : SV_Position;
+                                                            };
+
                                                             [shader("vertex")]
-                                                            float4 main(VertexInput input) : SV_POSITION
+                                                            VertexToFragment vertexMain(VertexInput input)
                                                             {
-                                                                return float4(input.position.xy, float(input.vertexId + input.instanceId), 1.0);
+                                                                VertexToFragment output;
+                                                                output.position = float4(input.position.xy, float(input.vertexId + input.instanceId), 1.0);
+                                                                return output;
+                                                            }
+
+                                                            [shader("fragment")]
+                                                            float4 fragmentMain(VertexToFragment input) : SV_Target0
+                                                            {
+                                                                return input.position;
                                                             }
                                                             """;
 
     private const string ValidFragmentShaderWithBindings = """
                                                            struct FragmentInput {
                                                                float4 position : SV_Position;
+                                                               float2 texCoord : TEXCOORD0;
+                                                           };
+
+                                                           struct VertexInput {
+                                                               float3 position : POSITION;
                                                                float2 texCoord : TEXCOORD0;
                                                            };
 
@@ -107,8 +165,16 @@ public class SdlangCompilerTests
                                                            Texture2D<float4> albedo : register(t0, space2);
                                                            SamplerState albedoSampler : register(s0, space2);
 
+                                                           [shader("vertex")]
+                                                           FragmentInput vertexMain(VertexInput input) {
+                                                               FragmentInput output;
+                                                               output.position = float4(input.position, 1.0);
+                                                               output.texCoord = input.texCoord;
+                                                               return output;
+                                                           }
+
                                                            [shader("fragment")]
-                                                           float4 main(FragmentInput input) : SV_Target {
+                                                           float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                return albedo.Sample(albedoSampler, input.texCoord) * tintColor;
                                                            }
                                                            """;
@@ -131,12 +197,23 @@ public class SdlangCompilerTests
                                                                float4 position : SV_Position;
                                                            };
 
+                                                           struct VertexInput {
+                                                               float3 position : POSITION;
+                                                           };
+
                                                            cbuffer FragmentUniforms : register(b0, space0) {
                                                                float4 tintColor;
                                                            };
 
+                                                           [shader("vertex")]
+                                                           FragmentInput vertexMain(VertexInput input) {
+                                                               FragmentInput output;
+                                                               output.position = float4(input.position, 1.0);
+                                                               return output;
+                                                           }
+
                                                            [shader("fragment")]
-                                                           float4 main(FragmentInput input) : SV_Target {
+                                                           float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                return tintColor;
                                                            }
                                                            """;
@@ -146,9 +223,24 @@ public class SdlangCompilerTests
                                                              float4x4 transform;
                                                          };
 
+                                                         struct VertexInput {
+                                                             float3 position : POSITION;
+                                                         };
+
+                                                         struct VertexOutput {
+                                                             float4 position : SV_Position;
+                                                         };
+
                                                          [shader("vertex")]
-                                                         float4 main(float3 position : POSITION) : SV_POSITION {
-                                                             return mul(transform, float4(position, 1.0));
+                                                         VertexOutput vertexMain(VertexInput input) {
+                                                             VertexOutput output;
+                                                             output.position = mul(transform, float4(input.position, 1.0));
+                                                             return output;
+                                                         }
+
+                                                         [shader("fragment")]
+                                                         float4 fragmentMain(VertexOutput input) : SV_Target0 {
+                                                             return input.position;
                                                          }
                                                          """;
 
@@ -158,11 +250,24 @@ public class SdlangCompilerTests
                                                                float2 texCoord : TEXCOORD0;
                                                            };
 
+                                                           struct VertexInput {
+                                                               float3 position : POSITION;
+                                                               float2 texCoord : TEXCOORD0;
+                                                           };
+
                                                            Texture2D<float4> albedo : register(t0, space0);
                                                            SamplerState albedoSampler : register(s0, space0);
 
+                                                           [shader("vertex")]
+                                                           FragmentInput vertexMain(VertexInput input) {
+                                                               FragmentInput output;
+                                                               output.position = float4(input.position, 1.0);
+                                                               output.texCoord = input.texCoord;
+                                                               return output;
+                                                           }
+
                                                            [shader("fragment")]
-                                                           float4 main(FragmentInput input) : SV_Target {
+                                                           float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                return albedo.Sample(albedoSampler, input.texCoord);
                                                            }
                                                            """;
@@ -173,12 +278,25 @@ public class SdlangCompilerTests
                                                              float2 texCoord : TEXCOORD0;
                                                          };
 
+                                                         struct VertexInput {
+                                                             float3 position : POSITION;
+                                                             float2 texCoord : TEXCOORD0;
+                                                         };
+
                                                          StructuredBuffer<float4> myData : register(t0, space2);
                                                          Texture2D<float4> albedo : register(t1, space2);
                                                          SamplerState albedoSampler : register(s0, space2);
 
+                                                         [shader("vertex")]
+                                                         FragmentInput vertexMain(VertexInput input) {
+                                                             FragmentInput output;
+                                                             output.position = float4(input.position, 1.0);
+                                                             output.texCoord = input.texCoord;
+                                                             return output;
+                                                         }
+
                                                          [shader("fragment")]
-                                                         float4 main(FragmentInput input) : SV_Target {
+                                                         float4 fragmentMain(FragmentInput input) : SV_Target {
                                                              return albedo.Sample(albedoSampler, input.texCoord) + myData[0];
                                                          }
                                                          """;
@@ -198,11 +316,16 @@ public class SdlangCompilerTests
                                                               SamplerState albedoSampler : register(s1, space0);
 
                                                               [shader("vertex")]
-                                                              VertexOutput main(VertexInput input) {
+                                                              VertexOutput vertexMain(VertexInput input) {
                                                                   VertexOutput output;
                                                                   output.position = float4(input.position, 1.0);
                                                                   output.color = albedo.SampleLevel(albedoSampler, input.texCoord, 0.0);
                                                                   return output;
+                                                              }
+
+                                                              [shader("fragment")]
+                                                              float4 fragmentMain(VertexOutput input) : SV_Target0 {
+                                                                  return input.color;
                                                               }
                                                               """;
 
@@ -212,11 +335,24 @@ public class SdlangCompilerTests
                                                                     float2 texCoord : TEXCOORD0;
                                                                 };
 
+                                                                struct VertexInput {
+                                                                    float3 position : POSITION;
+                                                                    float2 texCoord : TEXCOORD0;
+                                                                };
+
                                                                 Texture2D<float4> albedo : register(t0, space2);
                                                                 SamplerState albedoSampler : register(s1, space2);
 
+                                                                [shader("vertex")]
+                                                                FragmentInput vertexMain(VertexInput input) {
+                                                                    FragmentInput output;
+                                                                    output.position = float4(input.position, 1.0);
+                                                                    output.texCoord = input.texCoord;
+                                                                    return output;
+                                                                }
+
                                                                 [shader("fragment")]
-                                                                float4 main(FragmentInput input) : SV_Target {
+                                                                float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                     return albedo.Sample(albedoSampler, input.texCoord);
                                                                 }
                                                                 """;
@@ -271,15 +407,17 @@ public class SdlangCompilerTests
 
         string json = File.ReadAllText(metadataPath);
 
-        VertexShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
+        GraphicsShaderProgramMetadataDto? metadata = JsonSerializer.Deserialize(
+            json,
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
-        Assert.That(metadata.Stage, Is.EqualTo(ShaderStageDto.Vertex));
-        AssertGeneratedTargets(metadata.Shaders, "test_shader");
+        Assert.That(metadata.Kind, Is.EqualTo(ShaderKindDto.Graphics));
+        AssertGraphicsGeneratedTargets(metadata, "test_shader");
         Assert.That(metadata.SourceHash, Is.Not.Empty);
         Assert.That(metadata.SourceDependencies, Is.EqualTo(new[] { "test_shader.slang" }));
-        Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.False);
-        Assert.That(metadata.SystemValueInputs.UsesInstanceId, Is.False);
+        Assert.That(metadata.Vertex.SystemValueInputs.UsesVertexId, Is.False);
+        Assert.That(metadata.Vertex.SystemValueInputs.UsesInstanceId, Is.False);
 
         using JsonDocument document = JsonDocument.Parse(json);
         Assert.That(document.RootElement.TryGetProperty("threadCountX", out JsonElement _), Is.False);
@@ -294,7 +432,7 @@ public class SdlangCompilerTests
         SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
         compiler.Compile([shaderPath], force: true);
 
-        string generatedShaderPath = Path.Combine(_testDir, ".generated", "missing_output.spv");
+        string generatedShaderPath = Path.Combine(_testDir, ".generated", "missing_output.vertex.spv");
         File.Delete(generatedShaderPath);
 
         compiler.Compile([shaderPath], force: false);
@@ -312,10 +450,33 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string generatedDirectory = Path.Combine(_testDir, ".generated");
-        string generatedShaderPath = Path.Combine(generatedDirectory, "legacy_metadata.spv");
+        string generatedShaderPath = Path.Combine(generatedDirectory, "legacy_metadata.vertex.spv");
         string metadataPath = Path.Combine(generatedDirectory, "legacy_metadata.metadata.json");
         JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
         metadata.Remove("sourceDependencies");
+        File.WriteAllText(metadataPath, metadata.ToJsonString());
+        File.WriteAllBytes(generatedShaderPath, [0]);
+
+        compiler.Compile([shaderPath], force: false);
+
+        Assert.That(new FileInfo(generatedShaderPath).Length, Is.GreaterThan(1));
+    }
+
+    [Test]
+    public void CompileShader_LegacyMetadataFormat_Recompiles()
+    {
+        string shaderPath = Path.Combine(_testDir, "legacy_format.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string generatedShaderPath = Path.Combine(generatedDirectory, "legacy_format.vertex.spv");
+        string metadataPath = Path.Combine(generatedDirectory, "legacy_format.metadata.json");
+        JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        metadata.Remove("kind");
+        metadata["stage"] = "Vertex";
         File.WriteAllText(metadataPath, metadata.ToJsonString());
         File.WriteAllBytes(generatedShaderPath, [0]);
 
@@ -334,10 +495,10 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string generatedDirectory = Path.Combine(_testDir, ".generated");
-        string dxilPath = Path.Combine(generatedDirectory, "legacy_targets.dxil");
+        string dxilPath = Path.Combine(generatedDirectory, "legacy_targets.vertex.dxil");
         string metadataPath = Path.Combine(generatedDirectory, "legacy_targets.metadata.json");
         JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
-        JsonArray shaders = metadata["shaders"]!.AsArray();
+        JsonArray shaders = metadata["vertex"]!["shaders"]!.AsArray();
         JsonNode dxilShader = shaders.Single(shader => shader!["format"]!.GetValue<string>() == "Dxil")!;
         shaders.Remove(dxilShader);
         File.WriteAllText(metadataPath, metadata.ToJsonString());
@@ -345,11 +506,11 @@ public class SdlangCompilerTests
 
         compiler.Compile([shaderPath], force: false);
 
-        VertexShaderMetadataDto updatedMetadata = JsonSerializer.Deserialize(
+        GraphicsShaderProgramMetadataDto updatedMetadata = JsonSerializer.Deserialize(
             File.ReadAllText(metadataPath),
-            ShaderMetadataJsonContext.Default.VertexShaderMetadataDto)!;
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto)!;
         Assert.That(new FileInfo(dxilPath).Length, Is.GreaterThan(1));
-        AssertGeneratedTargets(updatedMetadata.Shaders, "legacy_targets");
+        AssertGraphicsGeneratedTargets(updatedMetadata, "legacy_targets");
     }
 
     [Test]
@@ -368,12 +529,12 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string generatedDirectory = Path.Combine(_testDir, ".generated");
-        string spirvPath = Path.Combine(generatedDirectory, "dependency_shader.spv");
-        string metalPath = Path.Combine(generatedDirectory, "dependency_shader.metal");
+        string spirvPath = Path.Combine(generatedDirectory, "dependency_shader.fragment.spv");
+        string metalPath = Path.Combine(generatedDirectory, "dependency_shader.fragment.metal");
         string metadataPath = Path.Combine(generatedDirectory, "dependency_shader.metadata.json");
         byte[] originalSpirv = File.ReadAllBytes(spirvPath);
         string originalMetal = File.ReadAllText(metalPath);
-        FragmentShaderMetadataDto originalMetadata = ReadFragmentMetadata(metadataPath);
+        GraphicsShaderProgramMetadataDto originalMetadata = ReadGraphicsMetadata(metadataPath);
 
         Assert.That(originalMetadata.SourceDependencies, Is.EqualTo(new[]
         {
@@ -387,7 +548,7 @@ public class SdlangCompilerTests
 
         byte[] includedUpdateSpirv = File.ReadAllBytes(spirvPath);
         string includedUpdateMetal = File.ReadAllText(metalPath);
-        FragmentShaderMetadataDto includedUpdateMetadata = ReadFragmentMetadata(metadataPath);
+        GraphicsShaderProgramMetadataDto includedUpdateMetadata = ReadGraphicsMetadata(metadataPath);
         Assert.That(includedUpdateMetadata.SourceHash, Is.Not.EqualTo(originalMetadata.SourceHash));
         Assert.That(includedUpdateSpirv, Is.Not.EqualTo(originalSpirv));
         Assert.That(includedUpdateMetal, Is.Not.EqualTo(originalMetal));
@@ -395,7 +556,7 @@ public class SdlangCompilerTests
         File.WriteAllText(importedShaderPath, UpdatedImportedShaderSource);
         compiler.Compile([shaderPath], force: false);
 
-        FragmentShaderMetadataDto importedUpdateMetadata = ReadFragmentMetadata(metadataPath);
+        GraphicsShaderProgramMetadataDto importedUpdateMetadata = ReadGraphicsMetadata(metadataPath);
         Assert.That(importedUpdateMetadata.SourceHash, Is.Not.EqualTo(includedUpdateMetadata.SourceHash));
         Assert.That(File.ReadAllBytes(spirvPath), Is.Not.EqualTo(includedUpdateSpirv));
         Assert.That(File.ReadAllText(metalPath), Is.Not.EqualTo(includedUpdateMetal));
@@ -415,11 +576,13 @@ public class SdlangCompilerTests
         string metadataPath = Path.Combine(_testDir, ".generated", "system_values.metadata.json");
         string json = File.ReadAllText(metadataPath);
 
-        VertexShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
+        GraphicsShaderProgramMetadataDto? metadata = JsonSerializer.Deserialize(
+            json,
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
-        Assert.That(metadata.SystemValueInputs.UsesVertexId, Is.True);
-        Assert.That(metadata.SystemValueInputs.UsesInstanceId, Is.True);
+        Assert.That(metadata.Vertex.SystemValueInputs.UsesVertexId, Is.True);
+        Assert.That(metadata.Vertex.SystemValueInputs.UsesInstanceId, Is.True);
     }
 
     [Test]
@@ -432,10 +595,10 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_vertex.metadata.json");
-        VertexShaderMetadataDto metadata = JsonSerializer.Deserialize(
+        GraphicsShaderProgramMetadataDto metadata = JsonSerializer.Deserialize(
             File.ReadAllText(metadataPath),
-            ShaderMetadataJsonContext.Default.VertexShaderMetadataDto)!;
-        AssertGeneratedTargets(metadata.Shaders, "valid_vertex");
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto)!;
+        AssertGraphicsGeneratedTargets(metadata, "valid_vertex");
     }
 
     [Test]
@@ -448,10 +611,10 @@ public class SdlangCompilerTests
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDir, ".generated", "valid_fragment.metadata.json");
-        FragmentShaderMetadataDto metadata = JsonSerializer.Deserialize(
+        GraphicsShaderProgramMetadataDto metadata = JsonSerializer.Deserialize(
             File.ReadAllText(metadataPath),
-            ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto)!;
-        AssertGeneratedTargets(metadata.Shaders, "valid_fragment");
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto)!;
+        AssertGraphicsGeneratedTargets(metadata, "valid_fragment");
     }
 
     [Test]
@@ -558,6 +721,10 @@ public class SdlangCompilerTests
                                                                      float4 position : SV_Position;
                                                                  };
 
+                                                                 struct VertexInput {
+                                                                     float3 position : POSITION;
+                                                                 };
+
                                                                  struct MyData {
                                                                      float4 position;
                                                                      float2 texCoord;
@@ -566,8 +733,15 @@ public class SdlangCompilerTests
 
                                                                  StructuredBuffer<MyData> dataBuffer : register(t0, space2);
 
+                                                                 [shader("vertex")]
+                                                                 FragmentInput vertexMain(VertexInput input) {
+                                                                     FragmentInput output;
+                                                                     output.position = float4(input.position, 1.0);
+                                                                     return output;
+                                                                 }
+
                                                                  [shader("fragment")]
-                                                                 float4 main(FragmentInput input) : SV_Target {
+                                                                 float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                      MyData d = dataBuffer[0];
                                                                      return d.position * d.intensity;
                                                                  }
@@ -578,10 +752,21 @@ public class SdlangCompilerTests
                                                                          float4 position : SV_Position;
                                                                      };
 
+                                                                     struct VertexInput {
+                                                                         float3 position : POSITION;
+                                                                     };
+
                                                                      StructuredBuffer<float4> colorBuffer : register(t0, space2);
 
+                                                                     [shader("vertex")]
+                                                                     FragmentInput vertexMain(VertexInput input) {
+                                                                         FragmentInput output;
+                                                                         output.position = float4(input.position, 1.0);
+                                                                         return output;
+                                                                     }
+
                                                                      [shader("fragment")]
-                                                                     float4 main(FragmentInput input) : SV_Target {
+                                                                     float4 fragmentMain(FragmentInput input) : SV_Target {
                                                                          return colorBuffer[0];
                                                                      }
                                                                      """;
@@ -598,12 +783,14 @@ public class SdlangCompilerTests
             ".metadata.json");
         string json = File.ReadAllText(metadataPath);
 
-        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+        GraphicsShaderProgramMetadataDto? metadata = JsonSerializer.Deserialize(
+            json,
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
         // MyData: float4 (16) + float2 (8) + float (4) = 28 bytes at slot 0
-        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(28u));
-        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot1, Is.EqualTo(0u));
+        Assert.That(metadata.Fragment.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(28u));
+        Assert.That(metadata.Fragment.BindingLayout.StorageBufferElementSizes.Slot1, Is.EqualTo(0u));
     }
 
     [Test]
@@ -618,11 +805,13 @@ public class SdlangCompilerTests
             ".metadata.json");
         string json = File.ReadAllText(metadataPath);
 
-        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(json, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+        GraphicsShaderProgramMetadataDto? metadata = JsonSerializer.Deserialize(
+            json,
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
 
         Assert.That(metadata, Is.Not.Null);
         // float4: 4 floats * 4 bytes = 16 bytes at slot 0
-        Assert.That(metadata.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(16u));
+        Assert.That(metadata.Fragment.BindingLayout.StorageBufferElementSizes.Slot0, Is.EqualTo(16u));
     }
 
     private const string VertexShaderWithStorageAndUniformBuffers = """
@@ -643,12 +832,23 @@ public class SdlangCompilerTests
                                                                         uint InstanceID : SV_InstanceID;
                                                                     };
 
+                                                                    struct VertexToFragment {
+                                                                        float4 position : SV_Position;
+                                                                    };
+
                                                                     [shader("vertex")]
-                                                                    float4 main(Input input) : SV_Position {
+                                                                    VertexToFragment vertexMain(Input input) {
                                                                         uint idx = visibleIndices[input.InstanceID];
                                                                         VoxelData v = voxelData[idx];
                                                                         float3 worldPos = input.Position + float3(v.positionX, v.positionY, v.positionZ) + offset;
-                                                                        return mul(viewProjection, float4(worldPos, 1.0));
+                                                                        VertexToFragment output;
+                                                                        output.position = mul(viewProjection, float4(worldPos, 1.0));
+                                                                        return output;
+                                                                    }
+
+                                                                    [shader("fragment")]
+                                                                    float4 fragmentMain(VertexToFragment input) : SV_Target0 {
+                                                                        return input.position;
                                                                     }
                                                                     """;
 
@@ -662,7 +862,7 @@ public class SdlangCompilerTests
 
         string metalPath = Path.Combine(
             _testDir, ".generated",
-            Path.ChangeExtension(Path.GetFileName(shaderPath), ".metal"));
+            Path.GetFileNameWithoutExtension(shaderPath) + ".vertex.metal");
 
         Assert.That(File.Exists(metalPath), Is.True, "Metal file should be created");
 
@@ -697,13 +897,19 @@ public class SdlangCompilerTests
         return shaderPath;
     }
 
-    private static FragmentShaderMetadataDto ReadFragmentMetadata(string metadataPath)
+    private static GraphicsShaderProgramMetadataDto ReadGraphicsMetadata(string metadataPath)
     {
         string json = File.ReadAllText(metadataPath);
-        FragmentShaderMetadataDto? metadata = JsonSerializer.Deserialize(
+        GraphicsShaderProgramMetadataDto? metadata = JsonSerializer.Deserialize(
             json,
-            ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
+            ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
         return metadata ?? throw new InvalidOperationException($"Unable to read shader metadata from {metadataPath}");
+    }
+
+    private void AssertGraphicsGeneratedTargets(GraphicsShaderProgramMetadataDto metadata, string filename)
+    {
+        AssertGeneratedTargets(metadata.Vertex.Shaders, $"{filename}.vertex");
+        AssertGeneratedTargets(metadata.Fragment.Shaders, $"{filename}.fragment");
     }
 
     private void AssertGeneratedTargets(IReadOnlyCollection<ShaderInstanceDto> shaders, string filename)

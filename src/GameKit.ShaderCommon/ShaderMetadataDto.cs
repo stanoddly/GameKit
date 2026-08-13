@@ -14,6 +14,11 @@ public enum ShaderStageDto
     Compute = 2
 }
 
+public enum ShaderKindDto
+{
+    Graphics = 0
+}
+
 public enum ShaderFormatDto
 {
     [EnumMember(Value = "private")]
@@ -39,7 +44,30 @@ public record ShaderInstanceDto(ShaderFormatDto Format, string Filename, string 
 
 public record ShaderMetadataHeaderDto
 {
-    public required ShaderStageDto Stage { get; init; }
+    public ShaderStageDto? Stage { get; init; }
+    public ShaderKindDto? Kind { get; init; }
+    public required string SourceHash { get; init; }
+    public List<string>? SourceDependencies { get; init; }
+    public string? SlangVersion { get; init; }
+}
+
+public record GraphicsShaderStageMetadataDto
+{
+    public required string EntryPoint { get; init; }
+    public required ShaderBindingLayout BindingLayout { get; init; }
+    public required List<ShaderInstanceDto> Shaders { get; init; }
+}
+
+public record GraphicsVertexShaderStageMetadataDto : GraphicsShaderStageMetadataDto
+{
+    public ShaderSystemValueInputs SystemValueInputs { get; init; }
+}
+
+public record GraphicsShaderProgramMetadataDto
+{
+    public ShaderKindDto Kind { get; init; } = ShaderKindDto.Graphics;
+    public required GraphicsVertexShaderStageMetadataDto Vertex { get; init; }
+    public required GraphicsShaderStageMetadataDto Fragment { get; init; }
     public required string SourceHash { get; init; }
     public List<string>? SourceDependencies { get; init; }
     public string? SlangVersion { get; init; }

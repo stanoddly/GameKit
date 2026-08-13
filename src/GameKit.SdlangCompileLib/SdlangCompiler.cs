@@ -23,6 +23,12 @@ internal enum ResourceType
 
 internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
 
+internal abstract record ShaderDiscovery;
+
+internal sealed record ComputeShaderDiscovery : ShaderDiscovery;
+
+internal sealed record GraphicsShaderDiscovery(string VertexOutputType) : ShaderDiscovery;
+
 public class ShaderCompilationException(string message) : Exception(message);
 
 public class ShaderBindingValidationException(string message) : Exception(message);
@@ -186,19 +192,15 @@ public class SdlangCompiler
     };
 
     private (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) CompileTargets(
-        FileInfo filePath, DirectoryInfo tempDir, DirectoryInfo outputDir, IReadOnlyList<ShaderFormatDto> targets)
+        FileInfo filePath,
+        DirectoryInfo tempDir,
+        DirectoryInfo outputDir,
+        IReadOnlyList<ShaderFormatDto> targets,
+        string entryPoint,
+        string outputName)
     {
-        string filenameWithoutExt = Path.GetFileNameWithoutExtension(filePath.Name);
-        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "reflection.json"));
-        FileInfo dependencyFile = new FileInfo(Path.Combine(tempDir.FullName, "dependencies.d"));
-
-        List<string> args = new List<string>
-        {
-            filePath.FullName,
-            "-warnings-disable", "39001,39013,39029",
-            "-reflection-json", reflectionFile.FullName,
-            "-depfile", dependencyFile.FullName
-        };
+        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, $"{outputName}.reflection.json"));
+        FileInfo dependencyFile = new FileInfo(Path.Combine(tempDir.FullName, $"{outputName}.dependencies.d"));
 
         List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
 
@@ -206,20 +208,97 @@ public class SdlangCompiler
         {
             string target = GetTargetString(format);
             string extension = TargetsWithExtensions[format];
-            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
-
-            args.AddRange(["-target", target]);
+            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{outputName}.{extension}"));
+            List<string> args =
+            [
+                filePath.FullName,
+                "-warnings-disable", "39001,39013,39029",
+                "-target", target
+            ];
             args.AddRange(CommandLineOptions[format]);
-            args.AddRange(["-entry", "main"]);
+            args.AddRange(["-entry", entryPoint]);
             args.AddRange(["-o", outputFile.FullName]);
+            if (format == ShaderFormatDto.SpirV)
+            {
+                args.AddRange(["-reflection-json", reflectionFile.FullName]);
+                args.AddRange(["-depfile", dependencyFile.FullName]);
+            }
 
-            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, "main"));
+            ExecuteSlang(args, $"{format} shader compilation");
+            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, entryPoint));
+            if (format == ShaderFormatDto.Msl)
+            {
+                NormalizeMetalBufferBindings(outputFile);
+            }
         }
 
-        Console.WriteLine($"Executing shader compilation: {_slangCompilerPath} {string.Join(" ", args)}");
+        return (reflectionFile, dependencyFile, shaderInstances);
+    }
 
-        // slangc reads from stdin even when given a file argument. Without redirecting and closing
-        // stdin, it inherits the parent's stdin and blocks indefinitely when stdin is a pipe.
+    private ShaderDiscovery DiscoverShader(
+        FileInfo filePath,
+        DirectoryInfo tempDir)
+    {
+        FileInfo reflectionFile = new FileInfo(Path.Combine(tempDir.FullName, "discovery.reflection.json"));
+        List<string> args =
+        [
+            filePath.FullName,
+            "-warnings-disable", "39001,39013,39029",
+            "-target", "spirv",
+            "-no-codegen",
+            "-reflection-json", reflectionFile.FullName
+        ];
+
+        ExecuteSlang(args, "Shader discovery");
+        ShaderDiscovery discovery = ParseDiscoveryReflection(reflectionFile);
+
+        if (discovery is GraphicsShaderDiscovery graphicsDiscovery)
+        {
+            ValidateGraphicsInterface(filePath, tempDir, graphicsDiscovery.VertexOutputType);
+        }
+
+        return discovery;
+    }
+
+    private void ValidateGraphicsInterface(
+        FileInfo filePath,
+        DirectoryInfo tempDir,
+        string vertexOutputType)
+    {
+        FileInfo validationFile = new FileInfo(Path.Combine(tempDir.FullName, "validate-interface.slang"));
+        string includePath = filePath.FullName.Replace("\\", "/").Replace("\"", "\\\"");
+        File.WriteAllText(
+            validationFile.FullName,
+            $"#include \"{includePath}\"{Environment.NewLine}" +
+            $"void validateGraphicsProgramInterface({vertexOutputType} output)" + Environment.NewLine +
+            "{" + Environment.NewLine +
+            "    fragmentMain(output);" + Environment.NewLine +
+            "}" + Environment.NewLine);
+
+        List<string> args =
+        [
+            validationFile.FullName,
+            "-warnings-disable", "39001,39013,39029",
+            "-target", "spirv",
+            "-no-codegen"
+        ];
+
+        try
+        {
+            ExecuteSlang(args, "Graphics shader interface validation");
+        }
+        catch (ShaderCompilationException exception)
+        {
+            throw new ShaderCompilationException(
+                "Fragment entry point 'fragmentMain' must consume the complete structure returned by " +
+                $"'vertexMain'.{Environment.NewLine}{exception.Message}");
+        }
+    }
+
+    private void ExecuteSlang(List<string> args, string operation)
+    {
+        Console.WriteLine($"Executing {operation.ToLowerInvariant()}: {_slangCompilerPath} {string.Join(" ", args)}");
+
         Process process = new Process
         {
             StartInfo = new ProcessStartInfo
@@ -244,27 +323,179 @@ public class SdlangCompiler
                 ? "Slang did not provide an error message."
                 : standardError.Trim();
             throw new ShaderCompilationException(
-                $"Shader compilation failed with exit code {process.ExitCode}:{Environment.NewLine}{diagnostic}");
+                $"{operation} failed with exit code {process.ExitCode}:{Environment.NewLine}{diagnostic}");
         }
 
         if (!string.IsNullOrEmpty(standardError))
         {
             Console.Error.Write(standardError);
         }
+    }
 
-        foreach (ShaderFormatDto format in targets)
+    private static ShaderDiscovery ParseDiscoveryReflection(FileInfo reflectionFile)
+    {
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(reflectionFile.FullName));
+        JsonElement root = document.RootElement;
+        if (!root.TryGetProperty("entryPoints", out JsonElement entryPointsElement))
         {
-            if (format != ShaderFormatDto.Msl)
-            {
-                continue;
-            }
-
-            string extension = TargetsWithExtensions[format];
-            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.{extension}"));
-            NormalizeMetalBufferBindings(outputFile);
+            throw new ShaderCompilationException("Shader source does not declare an entry point.");
         }
 
-        return (reflectionFile, dependencyFile, shaderInstances);
+        List<JsonElement> entryPoints = entryPointsElement.EnumerateArray().ToList();
+        List<JsonElement> computeEntryPoints = entryPoints.Where(entry => GetEntryPointStage(entry) == ShaderStageDto.Compute).ToList();
+        List<JsonElement> vertexEntryPoints = entryPoints.Where(entry => GetEntryPointStage(entry) == ShaderStageDto.Vertex).ToList();
+        List<JsonElement> fragmentEntryPoints = entryPoints.Where(entry => GetEntryPointStage(entry) == ShaderStageDto.Fragment).ToList();
+
+        if (computeEntryPoints.Count > 0)
+        {
+            if (entryPoints.Count != 1 || computeEntryPoints.Count != 1)
+            {
+                throw new ShaderCompilationException("A compute shader source must declare exactly one compute entry point.");
+            }
+
+            ValidateEntryPointName(computeEntryPoints[0], "main");
+            return new ComputeShaderDiscovery();
+        }
+
+        if (vertexEntryPoints.Count != 1)
+        {
+            throw new ShaderCompilationException(
+                $"Graphics shader program must declare exactly one vertex entry point; found {vertexEntryPoints.Count}.");
+        }
+
+        if (fragmentEntryPoints.Count != 1)
+        {
+            throw new ShaderCompilationException(
+                $"Graphics shader program must declare exactly one fragment entry point; found {fragmentEntryPoints.Count}.");
+        }
+
+        if (entryPoints.Count != 2)
+        {
+            throw new ShaderCompilationException("Graphics shader program contains unsupported additional entry points.");
+        }
+
+        JsonElement vertexEntryPoint = vertexEntryPoints[0];
+        JsonElement fragmentEntryPoint = fragmentEntryPoints[0];
+        ValidateEntryPointName(vertexEntryPoint, "vertexMain");
+        ValidateEntryPointName(fragmentEntryPoint, "fragmentMain");
+
+        JsonElement vertexOutputType = GetVertexOutputType(vertexEntryPoint);
+        ValidatePositionField(vertexOutputType);
+        JsonElement fragmentInputType = GetFragmentInputType(fragmentEntryPoint);
+
+        string vertexOutputName = GetStructureName(vertexOutputType, "Vertex entry point 'vertexMain' output");
+        GetStructureName(fragmentInputType, "Fragment entry point 'fragmentMain' input");
+        return new GraphicsShaderDiscovery(vertexOutputName);
+    }
+
+    private static ShaderStageDto GetEntryPointStage(JsonElement entryPoint)
+    {
+        string? stage = entryPoint.TryGetProperty("stage", out JsonElement stageElement)
+            ? stageElement.GetString()?.ToLowerInvariant()
+            : null;
+        return stage switch
+        {
+            "vertex" => ShaderStageDto.Vertex,
+            "fragment" or "pixel" => ShaderStageDto.Fragment,
+            "compute" => ShaderStageDto.Compute,
+            _ => throw new ShaderCompilationException($"Unknown shader stage '{stage}'.")
+        };
+    }
+
+    private static void ValidateEntryPointName(JsonElement entryPoint, string expectedName)
+    {
+        string? actualName = entryPoint.TryGetProperty("name", out JsonElement nameElement)
+            ? nameElement.GetString()
+            : null;
+        if (actualName != expectedName)
+        {
+            throw new ShaderCompilationException(
+                $"{GetEntryPointStage(entryPoint)} entry point must be named '{expectedName}', but found '{actualName}'.");
+        }
+    }
+
+    private static JsonElement GetVertexOutputType(JsonElement vertexEntryPoint)
+    {
+        if (!vertexEntryPoint.TryGetProperty("result", out JsonElement result) ||
+            !result.TryGetProperty("type", out JsonElement resultType) ||
+            !IsStructureType(resultType))
+        {
+            throw new ShaderCompilationException("Vertex entry point 'vertexMain' must return a named structure.");
+        }
+
+        return resultType;
+    }
+
+    private static JsonElement GetFragmentInputType(JsonElement fragmentEntryPoint)
+    {
+        if (!fragmentEntryPoint.TryGetProperty("parameters", out JsonElement parameters))
+        {
+            throw new ShaderCompilationException(
+                "Fragment entry point 'fragmentMain' must have exactly one varying-input parameter.");
+        }
+
+        if (parameters.GetArrayLength() != 1 ||
+            !parameters[0].TryGetProperty("type", out JsonElement inputType) ||
+            !IsStructureType(inputType))
+        {
+            throw new ShaderCompilationException(
+                "Fragment entry point 'fragmentMain' must have exactly one varying-input structure parameter.");
+        }
+
+        return inputType;
+    }
+
+    private static bool IsStructureType(JsonElement type)
+    {
+        return type.TryGetProperty("kind", out JsonElement kind) && kind.GetString() == "struct" &&
+            type.TryGetProperty("name", out JsonElement name) && !string.IsNullOrEmpty(name.GetString());
+    }
+
+    private static string GetStructureName(JsonElement type, string description)
+    {
+        if (!IsStructureType(type))
+        {
+            throw new ShaderCompilationException($"{description} must be a named structure.");
+        }
+
+        return type.GetProperty("name").GetString()!;
+    }
+
+    private static void ValidatePositionField(JsonElement vertexOutputType)
+    {
+        if (!vertexOutputType.TryGetProperty("fields", out JsonElement fields))
+        {
+            throw new ShaderCompilationException(
+                "Vertex output structure must contain 'float4 Position : SV_Position' as its first field.");
+        }
+
+        List<JsonElement> positionFields = fields.EnumerateArray()
+            .Where(field =>
+                field.TryGetProperty("semanticName", out JsonElement semanticName) &&
+                string.Equals(semanticName.GetString(), "SV_POSITION", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        bool positionIsFirst = fields.GetArrayLength() > 0 &&
+            fields[0].TryGetProperty("semanticName", out JsonElement firstSemanticName) &&
+            string.Equals(firstSemanticName.GetString(), "SV_POSITION", StringComparison.OrdinalIgnoreCase);
+        bool hasValidPosition = positionFields.Count == 1 &&
+            positionFields[0].TryGetProperty("type", out JsonElement positionType) &&
+            IsFloat4(positionType) &&
+            (!positionFields[0].TryGetProperty("semanticIndex", out JsonElement semanticIndex) ||
+                semanticIndex.GetInt32() == 0);
+        if (!positionIsFirst || !hasValidPosition)
+        {
+            throw new ShaderCompilationException(
+                "Vertex output structure must contain 'float4 Position : SV_Position' exactly once and as its first field.");
+        }
+    }
+
+    private static bool IsFloat4(JsonElement type)
+    {
+        return type.TryGetProperty("kind", out JsonElement kind) && kind.GetString() == "vector" &&
+            type.TryGetProperty("elementCount", out JsonElement elementCount) && elementCount.GetInt32() == 4 &&
+            type.TryGetProperty("elementType", out JsonElement elementType) &&
+            elementType.TryGetProperty("kind", out JsonElement elementKind) && elementKind.GetString() == "scalar" &&
+            elementType.TryGetProperty("scalarType", out JsonElement scalarType) && scalarType.GetString() == "float32";
     }
 
     private static List<string> ReadSourceDependencies(FileInfo filePath, FileInfo dependencyFile)
@@ -629,7 +860,8 @@ public class SdlangCompiler
     };
 
     private static (string entryPoint, ShaderStageDto stage, ShaderBindingLayout resources, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) ParseReflectionData(
-        FileInfo reflectionFile)
+        FileInfo reflectionFile,
+        string expectedEntryPoint)
     {
         string json = File.ReadAllText(reflectionFile.FullName);
         using JsonDocument document = JsonDocument.Parse(json);
@@ -641,45 +873,63 @@ public class SdlangCompiler
         uint threadCountY = 1;
         uint threadCountZ = 1;
 
-        if (root.TryGetProperty("entryPoints", out JsonElement entryPoints) && entryPoints.GetArrayLength() > 0)
+        JsonElement selectedEntryPoint = default;
+        bool hasSelectedEntryPoint = false;
+        if (root.TryGetProperty("entryPoints", out JsonElement entryPoints))
         {
-            JsonElement firstEntry = entryPoints[0];
-            if (firstEntry.TryGetProperty("name", out JsonElement nameElement))
+            foreach (JsonElement candidate in entryPoints.EnumerateArray())
             {
-                entryPoint = nameElement.GetString() ?? "main";
-            }
-
-            if (firstEntry.TryGetProperty("stage", out JsonElement stageElement))
-            {
-                string? stageStr = stageElement.GetString()?.ToLower();
-                stage = stageStr switch
+                if (candidate.TryGetProperty("name", out JsonElement candidateName) &&
+                    candidateName.GetString() == expectedEntryPoint)
                 {
-                    "vertex" => ShaderStageDto.Vertex,
-                    "fragment" or "pixel" => ShaderStageDto.Fragment,
-                    "compute" => ShaderStageDto.Compute,
-                    _ => throw new InvalidOperationException($"Unknown shader stage '{stageStr}'")
-                };
-            }
-
-            if (firstEntry.TryGetProperty("threadGroupSize", out JsonElement threadGroupSize))
-            {
-                JsonElement.ArrayEnumerator enumerator = threadGroupSize.EnumerateArray();
-                if (enumerator.MoveNext())
-                {
-                    threadCountX = enumerator.Current.GetUInt32();
-                }
-                if (enumerator.MoveNext())
-                {
-                    threadCountY = enumerator.Current.GetUInt32();
-                }
-                if (enumerator.MoveNext())
-                {
-                    threadCountZ = enumerator.Current.GetUInt32();
+                    selectedEntryPoint = candidate;
+                    hasSelectedEntryPoint = true;
+                    break;
                 }
             }
         }
 
-        ShaderSystemValueInputs systemValueInputs = AnalyzeSystemValueInputs(root);
+        if (!hasSelectedEntryPoint)
+        {
+            throw new ShaderCompilationException(
+                $"Reflection output does not contain entry point '{expectedEntryPoint}'.");
+        }
+
+        if (selectedEntryPoint.TryGetProperty("name", out JsonElement nameElement))
+        {
+            entryPoint = nameElement.GetString() ?? expectedEntryPoint;
+        }
+
+        if (selectedEntryPoint.TryGetProperty("stage", out JsonElement stageElement))
+        {
+            string? stageStr = stageElement.GetString()?.ToLower();
+            stage = stageStr switch
+            {
+                "vertex" => ShaderStageDto.Vertex,
+                "fragment" or "pixel" => ShaderStageDto.Fragment,
+                "compute" => ShaderStageDto.Compute,
+                _ => throw new InvalidOperationException($"Unknown shader stage '{stageStr}'")
+            };
+        }
+
+        if (selectedEntryPoint.TryGetProperty("threadGroupSize", out JsonElement threadGroupSize))
+        {
+            JsonElement.ArrayEnumerator enumerator = threadGroupSize.EnumerateArray();
+            if (enumerator.MoveNext())
+            {
+                threadCountX = enumerator.Current.GetUInt32();
+            }
+            if (enumerator.MoveNext())
+            {
+                threadCountY = enumerator.Current.GetUInt32();
+            }
+            if (enumerator.MoveNext())
+            {
+                threadCountZ = enumerator.Current.GetUInt32();
+            }
+        }
+
+        ShaderSystemValueInputs systemValueInputs = AnalyzeSystemValueInputs(selectedEntryPoint);
         ShaderUniformSlotSizes shaderUniformSlots = new();
 
         byte samplers = 0;
@@ -693,10 +943,19 @@ public class SdlangCompiler
 
         List<ResourceBinding> resourceBindings = new();
 
+        HashSet<string> usedParameterNames = GetUsedParameterNames(selectedEntryPoint);
         if (root.TryGetProperty("parameters", out JsonElement parameters))
         {
             foreach (JsonElement param in parameters.EnumerateArray())
             {
+                string? reflectedParameterName = param.TryGetProperty("name", out JsonElement reflectedName)
+                    ? reflectedName.GetString()
+                    : null;
+                if (reflectedParameterName == null || !usedParameterNames.Contains(reflectedParameterName))
+                {
+                    continue;
+                }
+
                 if (param.TryGetProperty("type", out JsonElement paramType) &&
                     paramType.TryGetProperty("kind", out JsonElement kindElement))
                 {
@@ -770,18 +1029,40 @@ public class SdlangCompiler
         return (entryPoint, stage, shaderBindingLayout, systemValueInputs, threadCountX, threadCountY, threadCountZ);
     }
 
-    private static ShaderSystemValueInputs AnalyzeSystemValueInputs(JsonElement root)
+    private static HashSet<string> GetUsedParameterNames(JsonElement entryPoint)
+    {
+        HashSet<string> usedParameterNames = new(StringComparer.Ordinal);
+        if (!entryPoint.TryGetProperty("bindings", out JsonElement bindings))
+        {
+            return usedParameterNames;
+        }
+
+        foreach (JsonElement binding in bindings.EnumerateArray())
+        {
+            if (!binding.TryGetProperty("name", out JsonElement name) ||
+                !binding.TryGetProperty("binding", out JsonElement bindingInfo) ||
+                !bindingInfo.TryGetProperty("used", out JsonElement used) ||
+                used.GetInt32() == 0)
+            {
+                continue;
+            }
+
+            string? parameterName = name.GetString();
+            if (parameterName != null)
+            {
+                usedParameterNames.Add(parameterName);
+            }
+        }
+
+        return usedParameterNames;
+    }
+
+    private static ShaderSystemValueInputs AnalyzeSystemValueInputs(JsonElement entryPoint)
     {
         bool usesVertexId = false;
         bool usesInstanceId = false;
 
-        if (root.TryGetProperty("entryPoints", out JsonElement entryPoints))
-        {
-            foreach (JsonElement entryPoint in entryPoints.EnumerateArray())
-            {
-                AnalyzeSystemValueInputs(entryPoint, ref usesVertexId, ref usesInstanceId, 0);
-            }
-        }
+        AnalyzeSystemValueInputs(entryPoint, ref usesVertexId, ref usesInstanceId, 0);
 
         return new ShaderSystemValueInputs(usesVertexId, usesInstanceId);
     }
@@ -961,6 +1242,42 @@ public class SdlangCompiler
         }
     }
 
+    private static void WriteGraphicsMetadata(
+        DirectoryInfo outputDir,
+        string filenameWithoutExt,
+        ShaderBindingLayout vertexBindingLayout,
+        ShaderSystemValueInputs vertexSystemValueInputs,
+        List<ShaderInstanceDto> vertexShaders,
+        ShaderBindingLayout fragmentBindingLayout,
+        List<ShaderInstanceDto> fragmentShaders,
+        string sourceHash,
+        List<string> sourceDependencies)
+    {
+        FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
+        GraphicsShaderProgramMetadataDto metadata = new GraphicsShaderProgramMetadataDto
+        {
+            Vertex = new GraphicsVertexShaderStageMetadataDto
+            {
+                EntryPoint = "vertexMain",
+                BindingLayout = vertexBindingLayout,
+                SystemValueInputs = vertexSystemValueInputs,
+                Shaders = vertexShaders
+            },
+            Fragment = new GraphicsShaderStageMetadataDto
+            {
+                EntryPoint = "fragmentMain",
+                BindingLayout = fragmentBindingLayout,
+                Shaders = fragmentShaders
+            },
+            SourceHash = sourceHash,
+            SourceDependencies = sourceDependencies,
+            SlangVersion = SlangVersion
+        };
+
+        using FileStream stream = metadataFile.Create();
+        JsonSerializer.Serialize(stream, metadata, ShaderMetadataJsonContext.Default.GraphicsShaderProgramMetadataDto);
+    }
+
     private static bool ShouldSkipCompilation(FileInfo filePath, DirectoryInfo outputDir, bool force)
     {
         if (force)
@@ -992,6 +1309,11 @@ public class SdlangCompiler
                 return false;
             }
 
+            if (metadata.Kind != ShaderKindDto.Graphics && metadata.Stage != ShaderStageDto.Compute)
+            {
+                return false;
+            }
+
             using JsonDocument document = JsonDocument.Parse(json);
             JsonElement root = document.RootElement;
             if (metadata.Stage == ShaderStageDto.Vertex && !root.TryGetProperty("systemValueInputs", out _))
@@ -999,37 +1321,61 @@ public class SdlangCompiler
                 return false;
             }
 
-            if (!root.TryGetProperty("shaders", out JsonElement shaders) || shaders.ValueKind != JsonValueKind.Array)
+            List<JsonElement> shaderCollections = new List<JsonElement>();
+            if (metadata.Kind == ShaderKindDto.Graphics)
             {
-                return false;
+                if (!root.TryGetProperty("vertex", out JsonElement vertex) ||
+                    !vertex.TryGetProperty("shaders", out JsonElement vertexShaders) ||
+                    vertexShaders.ValueKind != JsonValueKind.Array ||
+                    !root.TryGetProperty("fragment", out JsonElement fragment) ||
+                    !fragment.TryGetProperty("shaders", out JsonElement fragmentShaders) ||
+                    fragmentShaders.ValueKind != JsonValueKind.Array)
+                {
+                    return false;
+                }
+
+                shaderCollections.Add(vertexShaders);
+                shaderCollections.Add(fragmentShaders);
+            }
+            else
+            {
+                if (!root.TryGetProperty("shaders", out JsonElement shaders) || shaders.ValueKind != JsonValueKind.Array)
+                {
+                    return false;
+                }
+
+                shaderCollections.Add(shaders);
             }
 
-            HashSet<ShaderFormatDto> cachedFormats = [];
-            foreach (JsonElement shader in shaders.EnumerateArray())
+            foreach (JsonElement shaders in shaderCollections)
             {
-                if (!shader.TryGetProperty("format", out JsonElement formatElement) ||
-                    formatElement.ValueKind != JsonValueKind.String ||
-                    !Enum.TryParse(formatElement.GetString(), ignoreCase: true, out ShaderFormatDto format) ||
-                    !cachedFormats.Add(format))
+                HashSet<ShaderFormatDto> cachedFormats = [];
+                foreach (JsonElement shader in shaders.EnumerateArray())
+                {
+                    if (!shader.TryGetProperty("format", out JsonElement formatElement) ||
+                        formatElement.ValueKind != JsonValueKind.String ||
+                        !Enum.TryParse(formatElement.GetString(), ignoreCase: true, out ShaderFormatDto format) ||
+                        !cachedFormats.Add(format))
+                    {
+                        return false;
+                    }
+
+                    if (!shader.TryGetProperty("filename", out JsonElement filenameElement))
+                    {
+                        return false;
+                    }
+
+                    string? filename = filenameElement.GetString();
+                    if (string.IsNullOrEmpty(filename) || !File.Exists(Path.Combine(outputDir.FullName, filename)))
+                    {
+                        return false;
+                    }
+                }
+
+                if (!cachedFormats.SetEquals(TargetFormats))
                 {
                     return false;
                 }
-
-                if (!shader.TryGetProperty("filename", out JsonElement filenameElement))
-                {
-                    return false;
-                }
-
-                string? filename = filenameElement.GetString();
-                if (string.IsNullOrEmpty(filename) || !File.Exists(Path.Combine(outputDir.FullName, filename)))
-                {
-                    return false;
-                }
-            }
-
-            if (!cachedFormats.SetEquals(TargetFormats))
-            {
-                return false;
             }
 
             string currentHash = CalculateSourceHash(filePath, metadata.SourceDependencies);
@@ -1155,39 +1501,94 @@ public class SdlangCompiler
         {
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
-            // Step 1: Compile all targets in a single slangc invocation
-            (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) =
-                CompileTargets(filePath, tempDir, outputDir, TargetFormats);
-            List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
-            string sourceHash = CalculateSourceHash(filePath, sourceDependencies);
+            ShaderDiscovery discovery = DiscoverShader(filePath, tempDir);
 
-            // Step 2: Parse reflection data
-            (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) = ParseReflectionData(reflectionFile);
+            if (discovery is ComputeShaderDiscovery)
+            {
+                (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(
+                    filePath,
+                    tempDir,
+                    outputDir,
+                    TargetFormats,
+                    "main",
+                    filenameWithoutExt);
+                List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
+                string sourceHash = CalculateSourceHash(filePath, sourceDependencies);
+                (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) =
+                    ParseReflectionData(reflectionFile, "main");
+                shaderInstances = NormalizeEntryPointNames(shaderInstances, entryPoint);
+                WriteMetadata(
+                    outputDir,
+                    filenameWithoutExt,
+                    stage,
+                    bindingLayout,
+                    shaderInstances,
+                    sourceHash,
+                    sourceDependencies,
+                    systemValueInputs,
+                    threadCountX,
+                    threadCountY,
+                    threadCountZ);
+                return;
+            }
 
-            // Step 3: Update shader instances with correct entry point
-            // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++
-            shaderInstances = shaderInstances.Select(instance =>
-                new ShaderInstanceDto(instance.Format, instance.Filename,
-                    instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
+            (FileInfo vertexReflectionFile, FileInfo graphicsDependencyFile, List<ShaderInstanceDto> vertexShaders) = CompileTargets(
+                filePath,
+                tempDir,
+                outputDir,
+                TargetFormats,
+                "vertexMain",
+                $"{filenameWithoutExt}.vertex");
+            List<string> graphicsSourceDependencies = ReadSourceDependencies(filePath, graphicsDependencyFile);
+            string graphicsSourceHash = CalculateSourceHash(filePath, graphicsSourceDependencies);
+            (string vertexEntryPoint, ShaderStageDto vertexStage, ShaderBindingLayout vertexBindingLayout, ShaderSystemValueInputs vertexSystemValueInputs, uint _, uint _, uint _) =
+                ParseReflectionData(vertexReflectionFile, "vertexMain");
+            if (vertexStage != ShaderStageDto.Vertex)
+            {
+                throw new ShaderCompilationException("Entry point 'vertexMain' is not a vertex shader.");
+            }
 
-            // Step 4: Write metadata
-            WriteMetadata(
+            (FileInfo fragmentReflectionFile, FileInfo _, List<ShaderInstanceDto> fragmentShaders) = CompileTargets(
+                filePath,
+                tempDir,
+                outputDir,
+                TargetFormats,
+                "fragmentMain",
+                $"{filenameWithoutExt}.fragment");
+            (string fragmentEntryPoint, ShaderStageDto fragmentStage, ShaderBindingLayout fragmentBindingLayout, ShaderSystemValueInputs _, uint _, uint _, uint _) =
+                ParseReflectionData(fragmentReflectionFile, "fragmentMain");
+            if (fragmentStage != ShaderStageDto.Fragment)
+            {
+                throw new ShaderCompilationException("Entry point 'fragmentMain' is not a fragment shader.");
+            }
+
+            WriteGraphicsMetadata(
                 outputDir,
                 filenameWithoutExt,
-                stage,
-                bindingLayout,
-                shaderInstances,
-                sourceHash,
-                sourceDependencies,
-                systemValueInputs,
-                threadCountX,
-                threadCountY,
-                threadCountZ);
+                vertexBindingLayout,
+                vertexSystemValueInputs,
+                NormalizeEntryPointNames(vertexShaders, vertexEntryPoint),
+                fragmentBindingLayout,
+                NormalizeEntryPointNames(fragmentShaders, fragmentEntryPoint),
+                graphicsSourceHash,
+                graphicsSourceDependencies);
         }
         finally
         {
             tempDir.Delete(true);
         }
+    }
+
+    private static List<ShaderInstanceDto> NormalizeEntryPointNames(
+        IEnumerable<ShaderInstanceDto> shaderInstances,
+        string entryPoint)
+    {
+        // Slang appends "_0" to entry-point names in MSL output.
+        return shaderInstances.Select(instance =>
+            new ShaderInstanceDto(
+                instance.Format,
+                instance.Filename,
+                instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
     }
 
 

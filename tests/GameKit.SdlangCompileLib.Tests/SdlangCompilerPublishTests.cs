@@ -6,10 +6,28 @@ namespace GameKit.SdlangCompileLib.Tests;
 public sealed class SdlangCompilerPublishTests
 {
     private const string ShaderContent = """
-                                         [shader("vertex")]
-                                         float4 main(float3 position : POSITION) : SV_POSITION
+                                         struct VertexInput
                                          {
-                                             return float4(position, 1.0);
+                                             float3 Position : POSITION;
+                                         };
+
+                                         struct VertexToFragment
+                                         {
+                                             float4 Position : SV_Position;
+                                         };
+
+                                         [shader("vertex")]
+                                         VertexToFragment vertexMain(VertexInput input)
+                                         {
+                                             VertexToFragment output;
+                                             output.Position = float4(input.Position, 1.0);
+                                             return output;
+                                         }
+
+                                         [shader("fragment")]
+                                         float4 fragmentMain(VertexToFragment input) : SV_Target0
+                                         {
+                                             return float4(1.0);
                                          }
                                          """;
 
@@ -85,9 +103,12 @@ public sealed class SdlangCompilerPublishTests
             string generatedDirectory = Path.Combine(temporaryDirectory, ".generated");
             Assert.Multiple(() =>
             {
-                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.spv")), Is.True);
-                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.dxil")), Is.True);
-                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.metal")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.vertex.spv")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.vertex.dxil")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.vertex.metal")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.fragment.spv")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.fragment.dxil")), Is.True);
+                Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.fragment.metal")), Is.True);
                 Assert.That(File.Exists(Path.Combine(generatedDirectory, "test.metadata.json")), Is.True);
             });
         }
