@@ -1,4 +1,5 @@
 using GameKit.App;
+using GameKit.DependencyInjection;
 using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
@@ -12,16 +13,16 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
-    private readonly RenderPhaseRegistry<TRenderContext> _renderPhaseRegistry;
+    private readonly ServiceRegistry<IRenderPhase<TRenderContext>> _renderPhases;
 
     internal DefaultRenderManager(
         GpuMemorySystem gpuMemorySystem,
         IRenderContextProvider<TRenderContext> renderContextProvider,
-        RenderPhaseRegistry<TRenderContext> renderPhaseRegistry)
+        ServiceRegistry<IRenderPhase<TRenderContext>> renderPhases)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
-        _renderPhaseRegistry = renderPhaseRegistry;
+        _renderPhases = renderPhases;
     }
 
     /// <summary>
@@ -36,7 +37,10 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
 
         using (renderContext)
         {
-            _renderPhaseRegistry.Render(renderContext);
+            foreach (IRenderPhase<TRenderContext> renderPhase in _renderPhases)
+            {
+                renderPhase.Render(renderContext);
+            }
             
             // submit all pending changes before renderContext is disposed
             _gpuMemorySystem.Submit();
