@@ -9,9 +9,9 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Indexed Render Pass" });
+        builder.AddWindow(new WindowOptions(Size: (1280, 720), Title: "Indexed Render Pass"));
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(IndexedRenderPassRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();

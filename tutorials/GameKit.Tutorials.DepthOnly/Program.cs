@@ -11,9 +11,9 @@ static class Program
         var builder = new GameKitAppBuilder()
             .AddVertexShaderOnlySupport()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
+        builder.AddWindow(new WindowOptions(Size: (800, 600), Title: "Depth-Only Pipeline Test"));
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
         builder.AddAlias<IRenderPhase<DefaultRenderContext>, DepthOnlyRenderer>();
 

@@ -12,21 +12,17 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (400, 400),
-            Title = "Window Dragging",
-            Borderless = true
-        });
+        builder.AddWindow(new WindowOptions(
+            Size: (400, 400),
+            Title: "Window Dragging",
+            Borderless: true));
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(static () => new ClearRenderPhase(FColors.SkyBlue));
 
-        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
+        builder.OnStart((Window window, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            Window window = windowManager.PrimaryWindow;
-
             if (window.SupportsSetWindowPosition)
             {
                 Console.WriteLine("Active window dragging path: programmatic positioning");

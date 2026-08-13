@@ -9,9 +9,9 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Stencil Buffer" });
+        builder.AddWindow(new WindowOptions(Size: (1280, 720), Title: "Stencil Buffer"));
         builder.AddSingleton<StencilBufferRenderer>(StencilBufferRenderer.Create);
         builder.AddAlias<IRenderPhase<DefaultRenderContext>, StencilBufferRenderer>();
 

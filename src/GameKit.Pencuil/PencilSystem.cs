@@ -74,7 +74,7 @@ public class PencilSystem : IUpdatable
 
     public void Update()
     {
-        ShortSize renderSize = _window.RenderSizeInPixels;
+        ShortSize renderSize = _window.RequireActivation().RenderSizeInPixels;
         _pencil.UpdateViewport(renderSize.Width, renderSize.Height);
 
         bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();

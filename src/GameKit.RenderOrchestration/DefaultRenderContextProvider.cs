@@ -9,12 +9,12 @@ namespace GameKit.RenderOrchestration;
 /// </summary>
 public class DefaultRenderContextProvider : IRenderContextProvider<DefaultRenderContext>
 {
-    private readonly WindowManager _windowManager;
+    private readonly Window _window;
     private readonly GpuDevice _gpuDevice;
 
-    public DefaultRenderContextProvider(WindowManager windowManager, GpuDevice gpuDevice)
+    public DefaultRenderContextProvider(Window window, GpuDevice gpuDevice)
     {
-        _windowManager = windowManager;
+        _window = window;
         _gpuDevice = gpuDevice;
     }
     
@@ -27,7 +27,9 @@ public class DefaultRenderContextProvider : IRenderContextProvider<DefaultRender
     {
         CommandBuffer renderCommandBuffer = _gpuDevice.AcquireCommandBuffer();
         
-        if (!_windowManager.PrimaryWindow.TryWaitAndAcquireSwapchainTexture(renderCommandBuffer, out SwapchainTexture swapchainTexture))
+        ActivationWindow? activation = _window.Activation;
+        if (activation == null ||
+            !activation.TryWaitAndAcquireSwapchainTexture(renderCommandBuffer, out SwapchainTexture swapchainTexture))
         {
             renderContext = null;
             renderCommandBuffer.Dispose();

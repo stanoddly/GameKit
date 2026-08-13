@@ -19,6 +19,7 @@ public class GameKitAppBuilder : ServiceCollection
             int rightOrder = right is IOrderable rightOrderable ? rightOrderable.Order : 0;
             return leftOrder.CompareTo(rightOrder);
         });
+        AddRegistry<RenderCoordinator>();
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)
@@ -63,33 +64,19 @@ public class GameKitAppBuilder : ServiceCollection
         {
             AddSingleton(new GameKitConfig());
         }
-        if (!IsRegistered<AppConfig>())
-        {
-            AddSingleton(new AppConfig());
-        }
 
         AddSingleton<GameKitFactory>();
 
         AddSingleton<PlatformInfo, GameKitFactory>();
 
-        AddSingleton<WindowManager>();
-        AddSingleton<Window>(static sp => sp.GetRequiredService<WindowManager>().PrimaryWindow);
-
         AddSingleton<GpuDevice, GameKitFactory>();
 
         AddSingleton<GpuMemorySystem>();
 
-        AddSingleton<KeyboardService, GameKitFactory>();
-        AddAlias<IKeyboardService, KeyboardService>();
+        AddSingleton<WindowManager>();
 
         AddSingleton<GamepadService, GameKitFactory>();
         AddAlias<IGamepadService, GamepadService>();
-
-        AddSingleton<MouseService, GameKitFactory>();
-        AddAlias<IMouseService, MouseService>();
-
-        AddSingleton<TextInputService, GameKitFactory>();
-        AddAlias<ITextInputService, TextInputService>();
 
         AddSingleton<ClipboardService>();
         AddAlias<IClipboardService, ClipboardService>();
@@ -103,7 +90,11 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<ITextureLoader, TextureLoader>();
 
-        AddSingleton<GraphicsPipelineBuilder>();
+        // An inherited transient is constructed by the requesting window provider, so Window resolves locally.
+        AddTransient<GraphicsPipelineBuilder>(static provider => new GraphicsPipelineBuilder(
+            provider.GetRequiredService<GpuDevice>(),
+            provider.GetService<Window>(),
+            provider.GetRequiredService<IShaderLoader>()));
 
         AddSingleton<ComputeShaderMetadataLoader>();
 

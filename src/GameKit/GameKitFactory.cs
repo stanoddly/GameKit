@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using GameKit.Gpu;
 using GameKit.Input;
@@ -6,7 +7,7 @@ using SDL;
 
 namespace GameKit;
 
-public class GameKitFactory: IDisposable
+public class GameKitFactory : IDisposable
 {
     private static readonly Size<uint> DefaultSize = (640, 480);
     internal const string GpuBackendEnvironmentVariable = "GK_GRAPHICS";
@@ -56,19 +57,37 @@ public class GameKitFactory: IDisposable
         return new PlatformInfo(GetCurrentVideoDriver());
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    internal ActivationWindow CreateActivationWindow(
+        GpuDevice gpuDevice,
+        WindowOptions options)
     {
-        return CreateWindow(gpuDevice, frameContext, platformInfo, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
+        return CreateActivationWindow(
+            gpuDevice,
+            options.Size,
+            options.Title,
+            options.Fullscreen,
+            options.Resizable,
+            options.Transparent,
+            options.Borderless,
+            options.AlwaysOnTop);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
+    private ActivationWindow CreateActivationWindow(
+        GpuDevice gpuDevice,
+        Size<uint>? size = null,
+        string? title = null,
+        bool fullscreen = false,
+        bool resizable = false,
+        bool transparent = false,
+        bool borderless = false,
+        bool alwaysOnTop = false)
     {
         EnsureSdlInitialized();
 
         string windowTitle;
         if (title == null)
         {
-            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            using Process process = Process.GetCurrentProcess();
             windowTitle = process.ProcessName;
         }
         else
@@ -133,7 +152,7 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, platformInfo);
+        return new ActivationWindow(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId);
     }
 
     internal GpuDevice CreateGpuDevice()
@@ -250,11 +269,11 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(WindowManager windowManager)
+    internal MouseService CreateMouseService(Window window)
     {
         EnsureSdlInitialized();
 
-        return new MouseService(IsMouseInWindow(windowManager.PrimaryWindow));
+        return new MouseService(IsMouseInWindow(window));
     }
 
     private static bool IsMouseInWindow(Window window)
@@ -268,22 +287,24 @@ public class GameKitFactory: IDisposable
                 return false;
             }
 
-            return (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.Id;
+            return (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.RequireActivation().Id;
         }
     }
 
-    internal TextInputService CreateTextInputService(WindowManager windowManager)
+    internal TextInputService CreateTextInputService(Window window)
     {
         EnsureSdlInitialized();
 
-        return new TextInputService(windowManager);
+        return new TextInputService(window);
     }
 
-    internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
+    internal EventService CreateEventService(
+        GamepadService gamepadService,
+        AppControl appControl)
     {
         EnsureSdlInitialized();
 
-        return new EventService(keyboardService, gamepadService, mouseService, textInputService, windowManager, appControl);
+        return new EventService(gamepadService, appControl);
     }
 
     public GameKitFrameContext CreateFrameContext()

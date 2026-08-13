@@ -32,12 +32,13 @@ public class PencuilRenderer
 
     private int _maxDepthValue;
 
+    // TODO: This constructor performs substantial GPU resource creation and may become a static factory method.
     public PencuilRenderer(
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
-        WindowManager windowManager)
+        Window window)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [
@@ -54,8 +55,9 @@ public class PencuilRenderer
         FragmentShader tintedTextureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_tinted_texture_fragment");
         FragmentShader textureFragmentShader = shaderLoader.LoadFragmentShader("shaders/pencuil_texture_fragment");
 
-        TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
-        ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
+        ActivationWindow activation = window.RequireActivation();
+        TextureFormat colorTargetFormat = activation.ColorTargetFormat;
+        ShortSize renderSize = activation.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)

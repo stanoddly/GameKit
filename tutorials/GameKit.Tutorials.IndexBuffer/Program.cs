@@ -9,9 +9,9 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Index Buffer" });
+        builder.AddWindow(new WindowOptions(Size: (1280, 720), Title: "Index Buffer"));
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(IndexBufferRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();

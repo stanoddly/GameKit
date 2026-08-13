@@ -4,20 +4,22 @@ using GameKit.Gpu;
 namespace GameKit.RenderOrchestration;
 
 /// <summary>
-/// Manages the overall rendering process by coordinating multiple render phases.
+/// Coordinates rendering across multiple render phases.
 /// </summary>
 /// <typeparam name="TRenderContext">The type of the render context used by the render phases.</typeparam>
-public class DefaultRenderManager<TRenderContext> : IRenderManager
+public class DefaultRenderCoordinator<TRenderContext> : RenderCoordinator
     where TRenderContext: IRenderContext
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly IRenderContextProvider<TRenderContext> _renderContextProvider;
     private readonly RenderPhaseRegistry<TRenderContext> _renderPhaseRegistry;
 
-    internal DefaultRenderManager(
+    internal DefaultRenderCoordinator(
+        Window window,
         GpuMemorySystem gpuMemorySystem,
         IRenderContextProvider<TRenderContext> renderContextProvider,
         RenderPhaseRegistry<TRenderContext> renderPhaseRegistry)
+        : base(window)
     {
         _gpuMemorySystem = gpuMemorySystem;
         _renderContextProvider = renderContextProvider;
@@ -27,7 +29,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
     /// <summary>
     /// Executes the rendering pipeline for a single frame.
     /// </summary>
-    public void Execute()
+    public override void Execute()
     {
         if (!_renderContextProvider.TryProvide(out TRenderContext? renderContext))
         {
@@ -37,7 +39,7 @@ public class DefaultRenderManager<TRenderContext> : IRenderManager
         using (renderContext)
         {
             _renderPhaseRegistry.Render(renderContext);
-            
+
             // submit all pending changes before renderContext is disposed
             _gpuMemorySystem.Submit();
         }

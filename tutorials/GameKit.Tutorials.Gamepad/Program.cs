@@ -10,9 +10,9 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
+        builder.AddWindow(new WindowOptions(Size: (640, 480), Title: "Gamepad Tutorial"));
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         builder.OnStart((IGamepadService gamepadService) =>

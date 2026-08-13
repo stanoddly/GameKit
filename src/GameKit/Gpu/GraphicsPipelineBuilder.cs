@@ -114,7 +114,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly WindowManager _windowManager;
+    private readonly Window? _window;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -123,23 +123,29 @@ public class GraphicsPipelineBuilder
     /// </summary>
     public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, WindowManager windowManager, IShaderLoader shaderLoader)
+    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, Window? window, IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
-        _windowManager = windowManager;
+        _window = window;
         _shaderLoader = shaderLoader;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
-        AddColorTarget(_windowManager.PrimaryWindow.ColorTargetFormat, blendingState, colorWriteMask);
+        if (_window == null)
+        {
+            throw new InvalidOperationException(
+                "AddColorFormatFromDisplay requires a reachable active Window. Supply a texture format explicitly from a windowless service container.");
+        }
+
+        AddColorTarget(_window.RequireActivation().ColorTargetFormat, blendingState, colorWriteMask);
 
         return this;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(Window window, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
-        AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
+        AddColorTarget(window.RequireActivation().ColorTargetFormat, blendingState, colorWriteMask);
         return this;
     }
 

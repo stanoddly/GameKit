@@ -9,9 +9,9 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Mouse Window Presence" });
+        builder.AddWindow(new WindowOptions(Size: (640, 480), Title: "Mouse Window Presence"));
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
         builder.OnStart((IMouseService mouseService) =>

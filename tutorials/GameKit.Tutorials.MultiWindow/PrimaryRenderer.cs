@@ -1,6 +1,5 @@
 using GameKit.Gpu;
 using GameKit.RenderOrchestration;
-using GameKit.Shaders;
 
 namespace GameKit.Tutorials.MultiWindow;
 
@@ -28,10 +27,10 @@ public class PrimaryRenderer : IRenderPhase<DefaultRenderContext>
         renderPass.DrawPrimitive();
     }
 
-    public static PrimaryRenderer Create(ShaderLoader shaderLoader, GraphicsPipelineBuilder graphicsPipelineBuilder, GpuMemorySystem gpuMemorySystem)
+    public static PrimaryRenderer Create(
+        GraphicsPipelineBuilder graphicsPipelineBuilder,
+        GpuVertexBuffer<PositionVertex> vertexBuffer)
     {
-        GpuVertexBuffer<PositionVertex> vertexBuffer = gpuMemorySystem.CreateVertexBuffer(PositionShapes.VerticalQuad);
-
         GraphicsPipeline graphicsPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()

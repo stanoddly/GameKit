@@ -9,9 +9,9 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Texture Array Demo" });
+        builder.AddWindow(new WindowOptions(Size: (800, 600), Title: "Texture Array Demo"));
         builder.AddSingleton<TextureArrayRenderer>(TextureArrayRenderer.Create);
         builder.AddAlias<IRenderPhase<DefaultRenderContext>, TextureArrayRenderer>();
 

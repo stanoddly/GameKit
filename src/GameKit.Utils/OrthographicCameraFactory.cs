@@ -6,7 +6,7 @@ public static class OrthographicCameraFactory
 {
     public static Camera Create(Window window, IViewConfiguration viewConfiguration)
     {
-        ShortSize windowSize = window.RenderSizeInPixels;
+        ShortSize windowSize = window.RequireActivation().RenderSizeInPixels;
 
         float width = windowSize.Width / viewConfiguration.PixelsPerUnit;
         float height = windowSize.Height / viewConfiguration.PixelsPerUnit;

@@ -71,7 +71,7 @@ Use when:
 Registers an already-constructed instance. No source generator required.
 
 ```csharp
-services.AddSingleton(new AppConfig { Width = 1280, Height = 720 });
+services.AddSingleton(new WindowOptions(Size: (1280, 720), Title: "Game"));
 services.AddSingleton<ILogger>(new ConsoleLogger());
 ```
 
@@ -360,7 +360,7 @@ A child provider flattens the parent's singleton service array and registration 
 
 ```csharp
 ServiceCollection rootCollection = new();
-rootCollection.AddSingleton(new AppConfig());
+rootCollection.AddSingleton(new GameKitConfig());
 ServiceProvider root = rootCollection.BuildServiceProvider();
 
 ServiceCollection stageCollection = root.CreateServiceCollection();
@@ -368,7 +368,7 @@ stageCollection.AddSingleton<IView>(new GameplayView());
 ServiceProvider stage = stageCollection.BuildServiceProvider();
 
 // stage can resolve both its own and parent services
-AppConfig config = stage.GetRequiredService<AppConfig>();
+GameKitConfig config = stage.GetRequiredService<GameKitConfig>();
 IView view = stage.GetRequiredService<IView>();
 ```
 

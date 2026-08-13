@@ -162,23 +162,24 @@ public class StageManagerTests
     public void Load_StageServicesCanResolveRootServices()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.AddSingleton(new AppConfig { Title = "test" });
+        RootService rootService = new("test");
+        rootCollection.AddSingleton(rootService);
         ServiceProvider root = rootCollection.BuildServiceProvider();
         StageManager stageManager = new(root);
 
-        AppConfig? resolved = null;
+        RootService? resolved = null;
         stageManager.Load(services =>
         {
             services.AddSingleton<IView>(sp =>
             {
-                resolved = sp.GetRequiredService<AppConfig>();
+                resolved = sp.GetRequiredService<RootService>();
                 return new TestView("stage");
             });
         });
         stageManager.ApplyPendingTransition();
 
         Assert.That(resolved, Is.Not.Null);
-        Assert.That(resolved!.Title, Is.EqualTo("test"));
+        Assert.That(resolved!.Value, Is.EqualTo("test"));
     }
 
     [Test]
@@ -258,4 +259,6 @@ public class StageManagerTests
             IsDisposed = true;
         }
     }
+
+    private sealed record RootService(string Value);
 }

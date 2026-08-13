@@ -12,20 +12,17 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRenderCoordinator();
 
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (800, 600),
-            Title = "Window Configuration Demo",
-            AlwaysOnTop = true
-        });
+        builder.AddWindow(new WindowOptions(
+            Size: (800, 600),
+            Title: "Window Configuration Demo",
+            AlwaysOnTop: true));
 
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
 
-        builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
+        builder.OnStart((Window window, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {
-            Window window = windowManager.PrimaryWindow;
             using RawImage icon = CreateIcon(32, 32);
             window.SetIcon(icon);
 

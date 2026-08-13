@@ -6,33 +6,63 @@ namespace GameKit.RenderOrchestration;
 
 public static class GameKitAppBuilderExtensions
 {
-    public static GameKitAppBuilder UseDefaultRenderManager<TRenderContext>(this GameKitAppBuilder builder) where TRenderContext: IRenderContext
+    public static GameKitAppBuilder UseDefaultRenderCoordinator<TRenderContext>(
+        this GameKitAppBuilder builder)
+        where TRenderContext : IRenderContext
+    {
+        ConfigureDefaultRenderCoordinator<TRenderContext>(builder);
+        return builder;
+    }
+
+    public static ServiceCollection UseDefaultRenderCoordinator<TRenderContext>(
+        this ServiceCollection services)
+        where TRenderContext : IRenderContext
+    {
+        ConfigureDefaultRenderCoordinator<TRenderContext>(services);
+        return services;
+    }
+
+    public static GameKitAppBuilder UseDefaultRenderCoordinator(this GameKitAppBuilder builder)
+    {
+        ConfigureDefaultRenderContext(builder);
+        return builder;
+    }
+
+    public static ServiceCollection UseDefaultRenderCoordinator(this ServiceCollection services)
+    {
+        ConfigureDefaultRenderContext(services);
+        return services;
+    }
+
+    private static void ConfigureDefaultRenderContext(ServiceCollection services)
+    {
+        services.AddSingleton<IRenderContextProvider<DefaultRenderContext>, DefaultRenderContextProvider>();
+        ConfigureDefaultRenderCoordinator<DefaultRenderContext>(services);
+    }
+
+    private static void ConfigureDefaultRenderCoordinator<TRenderContext>(ServiceCollection services)
+        where TRenderContext : IRenderContext
     {
         RenderPhaseRegistry<TRenderContext> renderPhaseRegistry = new();
-        builder.OnActivated((instance, _) =>
+        services.OnActivated((instance, _) =>
         {
             if (instance is IRenderPhase<TRenderContext> renderPhase)
             {
                 renderPhaseRegistry.Register(renderPhase);
             }
         });
-        builder.OnDisposing((instance, _) =>
+        services.OnDisposing((instance, _) =>
         {
             if (instance is IRenderPhase<TRenderContext> renderPhase)
             {
                 renderPhaseRegistry.Unregister(renderPhase);
             }
         });
-        builder.AddSingleton<IRenderManager>(sp => new DefaultRenderManager<TRenderContext>(
-            sp.GetRequiredService<GpuMemorySystem>(),
-            sp.GetRequiredService<IRenderContextProvider<TRenderContext>>(),
-            renderPhaseRegistry));
-        return builder;
-    }
-
-    public static GameKitAppBuilder UseDefaultRenderManager(this GameKitAppBuilder builder)
-    {
-        builder.AddSingleton<IRenderContextProvider<DefaultRenderContext>, DefaultRenderContextProvider>();
-        return builder.UseDefaultRenderManager<DefaultRenderContext>();
+        services.AddSingleton<RenderCoordinator>(provider =>
+            new DefaultRenderCoordinator<TRenderContext>(
+                provider.GetRequiredService<Window>(),
+                provider.GetRequiredService<GpuMemorySystem>(),
+                provider.GetRequiredService<IRenderContextProvider<TRenderContext>>(),
+                renderPhaseRegistry));
     }
 }

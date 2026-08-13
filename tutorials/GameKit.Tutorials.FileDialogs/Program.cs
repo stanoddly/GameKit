@@ -9,11 +9,11 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager()
+            .UseDefaultRenderCoordinator()
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new AppConfig { Size = (960, 540), Title = "File Dialogs" });
+        builder.AddWindow(new WindowOptions(Size: (960, 540), Title: "File Dialogs"));
         builder.AddSingleton(new FileDialogsViewModel());
         builder.AddSingleton<IView, FileDialogsView>();
 

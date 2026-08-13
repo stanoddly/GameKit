@@ -7,4 +7,5 @@ public sealed record WindowOptions(
     bool Resizable = false,
     bool Transparent = false,
     bool Borderless = false,
-    bool AlwaysOnTop = false);
+    bool AlwaysOnTop = false,
+    bool StopGameOnClose = true);

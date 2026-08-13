@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using GameKit.App;
 using GameKit.Content;
-using GameKit.Gpu;
+using GameKit.DependencyInjection;
 using GameKit.Utilities;
 using SDL;
 
@@ -11,52 +12,63 @@ public readonly record struct ResolutionChangedEventArgs(ShortSize OldSize, Shor
 
 public delegate void ResolutionChangedHandler(ResolutionChangedEventArgs eventArgs);
 
-public class Window : IDisposable
+public sealed class Window : IDisposable
 {
-    internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
-    internal Pointer<SDL_Window> SdlWindow { get; private set; }
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
-    
-    public uint Id { get; }
+    private readonly WindowManager _windowManager;
 
     private ShortSize _lastSize;
 
     public event ResolutionChangedHandler? ResolutionChanged;
+    public ActivationWindow? Activation { get; internal set; }
+    public bool StopGameOnClose { get; set; }
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    internal Window(
+        ActivationWindow activation,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        WindowManager windowManager,
+        bool stopGameOnClose)
     {
-        SdlGpuDevice = sdlSdlGpuDevice;
-        SdlWindow = sdlWindow;
-        Id = id;
+        Activation = activation;
         _frameContext = frameContext;
         _platformInfo = platformInfo;
-        _lastSize = RenderSizeInPixels;
+        _windowManager = windowManager;
+        _lastSize = activation.RenderSizeInPixels;
+        StopGameOnClose = stopGameOnClose;
+    }
+
+    internal static Window Create(
+        ServiceProvider serviceProvider,
+        ActivationWindow activation,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        WindowManager windowManager,
+        WindowOptions options)
+    {
+        Window window = new(
+            activation,
+            frameContext,
+            platformInfo,
+            windowManager,
+            options.StopGameOnClose);
+        windowManager.Attach(window, serviceProvider);
+        return window;
     }
 
     internal void OnPixelSizeChanged(ulong timestamp)
     {
-        ShortSize newSize = RenderSizeInPixels;
+        ShortSize newSize = RequireActivation().RenderSizeInPixels;
         ShortSize oldSize = _lastSize;
 
-        if (newSize == oldSize) return;
+        if (newSize == oldSize)
+        {
+            return;
+        }
 
         _lastSize = newSize;
         ResolutionChanged?.Invoke(new ResolutionChangedEventArgs(oldSize, newSize, timestamp));
-    }
-
-    public ShortSize RenderSizeInPixels
-    {
-        get
-        {
-            int width, height;
-            unsafe
-            {
-                SDL3.SDL_GetWindowSizeInPixels(SdlWindow, &width, &height);
-            }
-
-            return new ShortSize((ushort)width, (ushort)height);
-        }
     }
 
     public Size<uint> Size
@@ -66,7 +78,7 @@ public class Window : IDisposable
             int width, height;
             unsafe
             {
-                SDL3.SDL_GetWindowSize(SdlWindow, &width, &height);
+                SDL3.SDL_GetWindowSize(RequireActivation().SdlWindow, &width, &height);
             }
             return new Size<uint>((uint)width, (uint)height);
         }
@@ -74,18 +86,7 @@ public class Window : IDisposable
         {
             unsafe
             {
-                SDL3.SDL_SetWindowSize(SdlWindow, (int)value.Width, (int)value.Height);
-            }
-        }
-    }
-
-    public TextureFormat ColorTargetFormat
-    {
-        get
-        {
-            unsafe
-            {
-                return (TextureFormat)SDL3.SDL_GetGPUSwapchainTextureFormat(SdlGpuDevice, SdlWindow);
+                SDL3.SDL_SetWindowSize(RequireActivation().SdlWindow, (int)value.Width, (int)value.Height);
             }
         }
     }
@@ -96,14 +97,14 @@ public class Window : IDisposable
         {
             unsafe
             {
-                return SDL3.SDL_GetWindowMouseGrab(SdlWindow);
+                return SDL3.SDL_GetWindowMouseGrab(RequireActivation().SdlWindow);
             }
         }
         set
         {
             unsafe
             {
-                SDL3.SDL_SetWindowMouseGrab(SdlWindow, value);
+                SDL3.SDL_SetWindowMouseGrab(RequireActivation().SdlWindow, value);
             }
         }
     }
@@ -114,14 +115,14 @@ public class Window : IDisposable
         {
             unsafe
             {
-                return SDL3.SDL_GetWindowRelativeMouseMode(SdlWindow);
+                return SDL3.SDL_GetWindowRelativeMouseMode(RequireActivation().SdlWindow);
             }
         }
         set
         {
             unsafe
             {
-                SDL3.SDL_SetWindowRelativeMouseMode(SdlWindow, value);
+                SDL3.SDL_SetWindowRelativeMouseMode(RequireActivation().SdlWindow, value);
             }
         }
     }
@@ -156,14 +157,14 @@ public class Window : IDisposable
         {
             unsafe
             {
-                return (SDL3.SDL_GetWindowFlags(SdlWindow) & SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP) != 0;
+                return (SDL3.SDL_GetWindowFlags(RequireActivation().SdlWindow) & SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP) != 0;
             }
         }
         set
         {
             unsafe
             {
-                if (SDL3.SDL_SetWindowAlwaysOnTop(SdlWindow, value) == false)
+                if (SDL3.SDL_SetWindowAlwaysOnTop(RequireActivation().SdlWindow, value) == false)
                 {
                     throw new GameKitException($"SDL_SetWindowAlwaysOnTop failed: {SDL3.SDL_GetError()}");
                 }
@@ -185,11 +186,11 @@ public class Window : IDisposable
                 if (value)
                 {
                     ClearHitTestCallback();
-                    SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestDraggable, IntPtr.Zero);
+                    SDL3.SDL_SetWindowHitTest(RequireActivation().SdlWindow, &HitTestDraggable, IntPtr.Zero);
                 }
                 else
                 {
-                    SDL3.SDL_SetWindowHitTest(SdlWindow, null, IntPtr.Zero);
+                    SDL3.SDL_SetWindowHitTest(RequireActivation().SdlWindow, null, IntPtr.Zero);
                 }
             }
             _draggable = value;
@@ -205,8 +206,8 @@ public class Window : IDisposable
         {
             unsafe
             {
-                SDL3.SDL_SetWindowHitTest(SdlWindow, null, IntPtr.Zero);
-                SDL3.SDL_SetWindowShape(SdlWindow, null);
+                SDL3.SDL_SetWindowHitTest(RequireActivation().SdlWindow, null, IntPtr.Zero);
+                SDL3.SDL_SetWindowShape(RequireActivation().SdlWindow, null);
             }
             return;
         }
@@ -216,7 +217,7 @@ public class Window : IDisposable
         _hitTestHandle = GCHandle.Alloc(this);
         unsafe
         {
-            SDL3.SDL_SetWindowHitTest(SdlWindow, &HitTestCallback, GCHandle.ToIntPtr(_hitTestHandle));
+            SDL3.SDL_SetWindowHitTest(RequireActivation().SdlWindow, &HitTestCallback, GCHandle.ToIntPtr(_hitTestHandle));
         }
     }
 
@@ -239,7 +240,7 @@ public class Window : IDisposable
             }
         }
 
-        SDL3.SDL_SetWindowShape(SdlWindow, surface);
+        SDL3.SDL_SetWindowShape(RequireActivation().SdlWindow, surface);
         SDL3.SDL_DestroySurface(surface);
     }
 
@@ -275,7 +276,7 @@ public class Window : IDisposable
             int x, y;
             unsafe
             {
-                SDL3.SDL_GetWindowPosition(SdlWindow, &x, &y);
+                SDL3.SDL_GetWindowPosition(RequireActivation().SdlWindow, &x, &y);
             }
             return new Vector2Int(x, y);
         }
@@ -283,42 +284,16 @@ public class Window : IDisposable
         {
             unsafe
             {
-                SDL3.SDL_SetWindowPosition(SdlWindow, value.X, value.Y);
+                SDL3.SDL_SetWindowPosition(RequireActivation().SdlWindow, value.X, value.Y);
             }
         }
-    }
-
-    public bool TryWaitAndAcquireSwapchainTexture(CommandBuffer commandBuffer, out SwapchainTexture swapchainTexture)
-    {
-        swapchainTexture = default!;
-        uint width, height;
-
-        unsafe
-        {
-            SDL_GPUTexture* swapchainTexturePointer;
-            if (SDL3.SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer.SdlGpuCommandBuffer, SdlWindow, &swapchainTexturePointer, &width, &height) == false)
-            {
-                throw new GameKitInitializationException($"SDL_WaitAndAcquireGPUSwapchainTexture failed: {SDL3.SDL_GetError()}");
-            }
-
-            if (swapchainTexturePointer == null)
-            {
-                return false;
-            }
-
-            TextureFormat textureFormat = (TextureFormat)SDL3.SDL_GetGPUSwapchainTextureFormat(SdlGpuDevice, SdlWindow);
-
-            swapchainTexture = new SwapchainTexture(swapchainTexturePointer, new ShortSize((ushort)width, (ushort)height), textureFormat);
-        }
-
-        return true;
     }
 
     public void SetFullscreenBorderless(bool fullscreen)
     {
         unsafe
         {
-            SDL3.SDL_SetWindowFullscreen(SdlWindow, fullscreen);
+            SDL3.SDL_SetWindowFullscreen(RequireActivation().SdlWindow, fullscreen);
         }
     }
 
@@ -347,7 +322,7 @@ public class Window : IDisposable
 
                 try
                 {
-                    if (!SDL3.SDL_SetWindowIcon(SdlWindow, surface))
+                    if (!SDL3.SDL_SetWindowIcon(RequireActivation().SdlWindow, surface))
                     {
                         throw new GameKitException($"SDL_SetWindowIcon failed: {SDL3.SDL_GetError()}");
                     }
@@ -418,7 +393,7 @@ public class Window : IDisposable
                     SDL3.SDL_ShowOpenFileDialog(
                         &OnFileDialogCompleted,
                         userdata,
-                        SdlWindow,
+                        RequireActivation().SdlWindow,
                         actualFiltersPointer,
                         nativeFilters.Filters.Length,
                         (byte*)defaultLocationPointer,
@@ -429,7 +404,7 @@ public class Window : IDisposable
                     SDL3.SDL_ShowSaveFileDialog(
                         &OnFileDialogCompleted,
                         userdata,
-                        SdlWindow,
+                        RequireActivation().SdlWindow,
                         actualFiltersPointer,
                         nativeFilters.Filters.Length,
                         (byte*)defaultLocationPointer);
@@ -490,20 +465,17 @@ public class Window : IDisposable
         return FileDialogResult.Accepted(paths);
     }
 
-    public override int GetHashCode()
-    {
-        return Id.GetHashCode();
-    }
-
     public void Dispose()
     {
+        _windowManager?.Detach(this);
         ClearHitTestCallback();
-        unsafe
-        {
-            SDL3.SDL_ReleaseWindowFromGPUDevice(SdlGpuDevice, SdlWindow);
-            SDL3.SDL_DestroyWindow(SdlWindow);
-            SdlWindow = null;
-        }
+        Activation = null;
+    }
+
+    // TODO: Replace active-only callers with skip, retained-state, or explicit-failure semantics when window deactivation is implemented.
+    public ActivationWindow RequireActivation()
+    {
+        return Activation ?? throw new InvalidOperationException("The window is not active.");
     }
 
     private sealed class ModalFileDialogState
