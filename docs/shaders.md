@@ -171,7 +171,7 @@ Vertex and fragment stages cannot be loaded or composed independently.
 
 ### Depth-only programs
 
-SDL still requires a fragment stage for a depth-only pipeline. Keep the workaround local to the graphics program by declaring a no-op fragment entry point with the same interface:
+SDL3's GPU API currently requires a fragment stage for a depth-only pipeline, although its supported backends allow the stage to be omitted. This limitation is tracked by [SDL issue #12311](https://github.com/libsdl-org/SDL/issues/12311). Keep the workaround local to the graphics program by declaring a no-op fragment entry point with the same interface:
 
 ```csharp
 [shader("fragment")]
