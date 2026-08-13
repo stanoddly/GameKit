@@ -175,6 +175,8 @@ public class SdlangBuildIntegrationTests
 
         try
         {
+            Directory.CreateDirectory(generatedDirectory);
+            File.WriteAllBytes(Path.Combine(generatedDirectory, "obsolete.spv"), [0]);
             File.WriteAllText(transientContentPath, "transient");
 
             string publishDirectory = Path.Combine(outputDirectory, "publish");
@@ -188,6 +190,7 @@ public class SdlangBuildIntegrationTests
 
             string archivePath = Path.Combine(publishDirectory, "Content.pk3");
             AssertPackagedShadersExist(archivePath);
+            AssertArchiveDoesNotContain(archivePath, "shaders/.generated/obsolete.spv");
             AssertArchiveContains(archivePath, "transient.txt");
             Assert.That(Directory.Exists(Path.Combine(publishDirectory, "Content")), Is.False);
 

@@ -290,7 +290,6 @@ For each graphics shader program, the build generates one `.metadata.json` file:
 {
   "kind": "Graphics",
   "vertex": {
-    "entryPoint": "vertexMain",
     "bindingLayout": {},
     "systemValueInputs": {},
     "shaders": [
@@ -302,7 +301,6 @@ For each graphics shader program, the build generates one `.metadata.json` file:
     ]
   },
   "fragment": {
-    "entryPoint": "fragmentMain",
     "bindingLayout": {},
     "shaders": [
       {

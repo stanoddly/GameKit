@@ -53,7 +53,6 @@ public record ShaderMetadataHeaderDto
 
 public record GraphicsShaderStageMetadataDto
 {
-    public required string EntryPoint { get; init; }
     public required ShaderBindingLayout BindingLayout { get; init; }
     public required List<ShaderInstanceDto> Shaders { get; init; }
 }

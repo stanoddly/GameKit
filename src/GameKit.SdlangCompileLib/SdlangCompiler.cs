@@ -38,8 +38,10 @@ public class SdlangCompiler
     private const string GeneratedShaderDirectory = ".generated";
     private const int MaxReflectionTraversalDepth = 64;
     private static readonly string SlangVersion = GetSlangVersion();
+    private static readonly ShaderFormatDto[] AdditionalTargetFormats =
+        [ShaderFormatDto.Dxil, ShaderFormatDto.Msl];
     private static readonly ShaderFormatDto[] TargetFormats =
-        [ShaderFormatDto.SpirV, ShaderFormatDto.Dxil, ShaderFormatDto.Msl];
+        [ShaderFormatDto.SpirV, .. AdditionalTargetFormats];
 
     private readonly string _slangCompilerPath;
 
@@ -195,7 +197,6 @@ public class SdlangCompiler
         FileInfo filePath,
         DirectoryInfo tempDir,
         DirectoryInfo outputDir,
-        IReadOnlyList<ShaderFormatDto> targets,
         string entryPoint,
         string outputName)
     {
@@ -203,36 +204,57 @@ public class SdlangCompiler
         FileInfo dependencyFile = new FileInfo(Path.Combine(tempDir.FullName, $"{outputName}.dependencies.d"));
 
         List<ShaderInstanceDto> shaderInstances = new List<ShaderInstanceDto>();
+        shaderInstances.Add(CompileTarget(
+            filePath,
+            outputDir,
+            ShaderFormatDto.SpirV,
+            entryPoint,
+            outputName,
+            reflectionFile,
+            dependencyFile));
 
-        foreach (ShaderFormatDto format in targets)
+        foreach (ShaderFormatDto format in AdditionalTargetFormats)
         {
-            string target = GetTargetString(format);
-            string extension = TargetsWithExtensions[format];
-            FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{outputName}.{extension}"));
-            List<string> args =
-            [
-                filePath.FullName,
-                "-warnings-disable", "39001,39013,39029",
-                "-target", target
-            ];
-            args.AddRange(CommandLineOptions[format]);
-            args.AddRange(["-entry", entryPoint]);
-            args.AddRange(["-o", outputFile.FullName]);
-            if (format == ShaderFormatDto.SpirV)
-            {
-                args.AddRange(["-reflection-json", reflectionFile.FullName]);
-                args.AddRange(["-depfile", dependencyFile.FullName]);
-            }
-
-            ExecuteSlang(args, $"{format} shader compilation");
-            shaderInstances.Add(new ShaderInstanceDto(format, outputFile.Name, entryPoint));
-            if (format == ShaderFormatDto.Msl)
-            {
-                NormalizeMetalBufferBindings(outputFile);
-            }
+            shaderInstances.Add(CompileTarget(filePath, outputDir, format, entryPoint, outputName));
         }
 
         return (reflectionFile, dependencyFile, shaderInstances);
+    }
+
+    private ShaderInstanceDto CompileTarget(
+        FileInfo filePath,
+        DirectoryInfo outputDir,
+        ShaderFormatDto format,
+        string entryPoint,
+        string outputName,
+        FileInfo? reflectionFile = null,
+        FileInfo? dependencyFile = null)
+    {
+        string target = GetTargetString(format);
+        string extension = TargetsWithExtensions[format];
+        FileInfo outputFile = new FileInfo(Path.Combine(outputDir.FullName, $"{outputName}.{extension}"));
+        List<string> args =
+        [
+            filePath.FullName,
+            "-warnings-disable", "39001,39013,39029",
+            "-target", target
+        ];
+        args.AddRange(CommandLineOptions[format]);
+        args.AddRange(["-entry", entryPoint]);
+        args.AddRange(["-o", outputFile.FullName]);
+        if (reflectionFile != null && dependencyFile != null)
+        {
+            args.AddRange(["-reflection-json", reflectionFile.FullName]);
+            args.AddRange(["-depfile", dependencyFile.FullName]);
+        }
+
+        ExecuteSlang(args, $"{format} shader compilation");
+        if (format == ShaderFormatDto.Msl)
+        {
+            NormalizeMetalBufferBindings(outputFile);
+        }
+
+        return new ShaderInstanceDto(format, outputFile.Name, entryPoint);
     }
 
     private ShaderSourceKind DiscoverShader(
@@ -1133,29 +1155,48 @@ public class SdlangCompiler
         return (entryPoint, stage, shaderBindingLayout, systemValueInputs, threadCountX, threadCountY, threadCountZ);
     }
 
-    private static HashSet<string> GetUsedParameterNames(JsonElement entryPoint)
+    internal static HashSet<string> GetUsedParameterNames(JsonElement entryPoint)
     {
         HashSet<string> usedParameterNames = new(StringComparer.Ordinal);
-        if (!entryPoint.TryGetProperty("bindings", out JsonElement bindings))
+        string entryPointName = entryPoint.TryGetProperty("name", out JsonElement reflectedName) &&
+            reflectedName.ValueKind == JsonValueKind.String
+                ? reflectedName.GetString() ?? "unknown"
+                : "unknown";
+        if (!entryPoint.TryGetProperty("bindings", out JsonElement bindings) ||
+            bindings.ValueKind != JsonValueKind.Array)
         {
-            return usedParameterNames;
+            throw new ShaderCompilationException(
+                $"Reflection entry point '{entryPointName}' does not contain a bindings array.");
         }
 
         foreach (JsonElement binding in bindings.EnumerateArray())
         {
-            if (!binding.TryGetProperty("name", out JsonElement name) ||
+            if (binding.ValueKind != JsonValueKind.Object ||
+                !binding.TryGetProperty("name", out JsonElement name) ||
+                name.ValueKind != JsonValueKind.String ||
                 !binding.TryGetProperty("binding", out JsonElement bindingInfo) ||
+                bindingInfo.ValueKind != JsonValueKind.Object ||
                 !bindingInfo.TryGetProperty("used", out JsonElement used) ||
-                used.GetInt32() == 0)
+                used.ValueKind != JsonValueKind.Number ||
+                !used.TryGetInt32(out int usedValue))
+            {
+                throw new ShaderCompilationException(
+                    $"Reflection entry point '{entryPointName}' contains a malformed binding.");
+            }
+
+            if (usedValue == 0)
             {
                 continue;
             }
 
             string? parameterName = name.GetString();
-            if (parameterName != null)
+            if (string.IsNullOrEmpty(parameterName))
             {
-                usedParameterNames.Add(parameterName);
+                throw new ShaderCompilationException(
+                    $"Reflection entry point '{entryPointName}' contains a binding without a name.");
             }
+
+            usedParameterNames.Add(parameterName);
         }
 
         return usedParameterNames;
@@ -1336,14 +1377,12 @@ public class SdlangCompiler
         {
             Vertex = new GraphicsVertexShaderStageMetadataDto
             {
-                EntryPoint = "vertexMain",
                 BindingLayout = vertexBindingLayout,
                 SystemValueInputs = vertexSystemValueInputs,
                 Shaders = vertexShaders
             },
             Fragment = new GraphicsShaderStageMetadataDto
             {
-                EntryPoint = "fragmentMain",
                 BindingLayout = fragmentBindingLayout,
                 Shaders = fragmentShaders
             },
@@ -1398,9 +1437,11 @@ public class SdlangCompiler
             if (metadata.Kind == ShaderKindDto.Graphics)
             {
                 if (!root.TryGetProperty("vertex", out JsonElement vertex) ||
+                    vertex.TryGetProperty("entryPoint", out JsonElement _) ||
                     !vertex.TryGetProperty("shaders", out JsonElement vertexShaders) ||
                     vertexShaders.ValueKind != JsonValueKind.Array ||
                     !root.TryGetProperty("fragment", out JsonElement fragment) ||
+                    fragment.TryGetProperty("entryPoint", out JsonElement _) ||
                     !fragment.TryGetProperty("shaders", out JsonElement fragmentShaders) ||
                     fragmentShaders.ValueKind != JsonValueKind.Array)
                 {
@@ -1562,6 +1603,7 @@ public class SdlangCompiler
 
         if (ShouldSkipCompilation(filePath, outputDir, force))
         {
+            CleanupGeneratedFiles(parentDir, outputDir);
             Console.WriteLine($"Skipping {filePath.FullName} (unchanged)");
             return;
         }
@@ -1586,7 +1628,6 @@ public class SdlangCompiler
                     filePath,
                     tempDir,
                     outputDir,
-                    TargetFormats,
                     "main",
                     filenameWithoutExt);
                 List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
@@ -1609,6 +1650,7 @@ public class SdlangCompiler
                     threadCountX,
                     threadCountY,
                     threadCountZ);
+                CleanupGeneratedFiles(parentDir, outputDir);
                 return;
             }
 
@@ -1616,7 +1658,6 @@ public class SdlangCompiler
                 filePath,
                 tempDir,
                 outputDir,
-                TargetFormats,
                 "vertexMain",
                 $"{filenameWithoutExt}.vertex");
             List<string> graphicsSourceDependencies = ReadSourceDependencies(filePath, graphicsDependencyFile);
@@ -1632,7 +1673,6 @@ public class SdlangCompiler
                 filePath,
                 tempDir,
                 outputDir,
-                TargetFormats,
                 "fragmentMain",
                 $"{filenameWithoutExt}.fragment");
             (string fragmentEntryPoint, ShaderStageDto fragmentStage, ShaderBindingLayout fragmentBindingLayout, ShaderSystemValueInputs _, uint _, uint _, uint _) =
@@ -1652,10 +1692,73 @@ public class SdlangCompiler
                 NormalizeEntryPointNames(fragmentShaders, fragmentEntryPoint),
                 graphicsSourceHash,
                 graphicsSourceDependencies);
+            CleanupGeneratedFiles(parentDir, outputDir);
         }
         finally
         {
             tempDir.Delete(true);
+        }
+    }
+
+    private static void CleanupGeneratedFiles(DirectoryInfo sourceDirectory, DirectoryInfo outputDirectory)
+    {
+        if (!outputDirectory.Exists)
+        {
+            return;
+        }
+
+        StringComparer filenameComparer = OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+        HashSet<string> expectedFilenames = new HashSet<string>(filenameComparer);
+        foreach (FileInfo metadataFile in outputDirectory.GetFiles("*.metadata.json"))
+        {
+            string shaderName = metadataFile.Name[..^".metadata.json".Length];
+            if (!File.Exists(Path.Combine(sourceDirectory.FullName, $"{shaderName}.slang")))
+            {
+                continue;
+            }
+
+            ShaderMetadataHeaderDto? metadata;
+            try
+            {
+                metadata = JsonSerializer.Deserialize(
+                    File.ReadAllText(metadataFile.FullName),
+                    ShaderMetadataJsonContext.Default.ShaderMetadataHeaderDto);
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            IEnumerable<string>? outputNames = metadata?.Kind == ShaderKindDto.Graphics
+                ? new[] { "vertex", "fragment" }.SelectMany(stage =>
+                    TargetFormats.Select(format =>
+                        $"{shaderName}.{stage}.{TargetsWithExtensions[format]}"))
+                : metadata?.Stage == ShaderStageDto.Compute
+                    ? TargetFormats.Select(format => $"{shaderName}.{TargetsWithExtensions[format]}")
+                    : null;
+            if (outputNames == null)
+            {
+                continue;
+            }
+
+            expectedFilenames.Add(metadataFile.Name);
+            expectedFilenames.UnionWith(outputNames);
+        }
+
+        HashSet<string> generatedExtensions = new HashSet<string>(
+            TargetsWithExtensions.Values.Select(extension => $".{extension}"),
+            filenameComparer);
+        foreach (FileInfo generatedFile in outputDirectory.GetFiles())
+        {
+            bool isGeneratedFile = generatedFile.Name.EndsWith(".metadata.json", StringComparison.OrdinalIgnoreCase) ||
+                generatedExtensions.Contains(generatedFile.Extension);
+            if (isGeneratedFile && !expectedFilenames.Contains(generatedFile.Name))
+            {
+                Console.WriteLine($"Removing obsolete shader output: {generatedFile.FullName}");
+                generatedFile.Delete();
+            }
         }
     }
 

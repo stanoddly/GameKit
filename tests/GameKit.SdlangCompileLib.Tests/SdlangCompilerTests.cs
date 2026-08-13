@@ -420,7 +420,62 @@ public class SdlangCompilerTests
         Assert.That(metadata.Vertex.SystemValueInputs.UsesInstanceId, Is.False);
 
         using JsonDocument document = JsonDocument.Parse(json);
+        Assert.That(document.RootElement.GetProperty("vertex").TryGetProperty("entryPoint", out JsonElement _), Is.False);
+        Assert.That(document.RootElement.GetProperty("fragment").TryGetProperty("entryPoint", out JsonElement _), Is.False);
         Assert.That(document.RootElement.TryGetProperty("threadCountX", out JsonElement _), Is.False);
+    }
+
+    [Test]
+    public void CompileShader_ObsoleteGeneratedFiles_RemovesThem()
+    {
+        string shaderPath = Path.Combine(_testDir, "current.slang");
+        string otherShaderPath = Path.Combine(_testDir, "other.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+        File.WriteAllText(otherShaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath, otherShaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string obsoleteCurrentOutput = Path.Combine(generatedDirectory, "current.spv");
+        string removedMetadata = Path.Combine(generatedDirectory, "removed.metadata.json");
+        string removedOutput = Path.Combine(generatedDirectory, "removed.vertex.spv");
+        string retainedFile = Path.Combine(generatedDirectory, "retained.txt");
+        File.WriteAllBytes(obsoleteCurrentOutput, [0]);
+        File.Copy(Path.Combine(generatedDirectory, "current.metadata.json"), removedMetadata);
+        File.WriteAllBytes(removedOutput, [0]);
+        File.WriteAllText(retainedFile, "not a generated shader output");
+
+        compiler.Compile([shaderPath], force: false);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(File.Exists(obsoleteCurrentOutput), Is.False);
+            Assert.That(File.Exists(removedMetadata), Is.False);
+            Assert.That(File.Exists(removedOutput), Is.False);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "other.vertex.spv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(generatedDirectory, "other.metadata.json")), Is.True);
+            Assert.That(File.Exists(retainedFile), Is.True);
+        });
+    }
+
+    [TestCase("{\"name\":\"vertexMain\"}", "bindings array")]
+    [TestCase("{\"name\":\"vertexMain\",\"bindings\":{}}", "bindings array")]
+    [TestCase("{\"name\":\"vertexMain\",\"bindings\":[0]}", "malformed binding")]
+    [TestCase(
+        "{\"name\":\"vertexMain\",\"bindings\":[{\"name\":\"color\",\"binding\":{}}]}",
+        "malformed binding")]
+    [TestCase(
+        "{\"name\":\"vertexMain\",\"bindings\":[{\"name\":\"color\",\"binding\":{\"used\":true}}]}",
+        "malformed binding")]
+    public void GetUsedParameterNames_MalformedReflection_Throws(string json, string expectedMessage)
+    {
+        using JsonDocument document = JsonDocument.Parse(json);
+
+        ShaderCompilationException? exception = Assert.Throws<ShaderCompilationException>(() =>
+            SdlangCompiler.GetUsedParameterNames(document.RootElement));
+
+        Assert.That(exception.Message, Does.Contain(expectedMessage));
     }
 
     [Test]
@@ -537,6 +592,35 @@ public class SdlangCompilerTests
         GraphicsShaderProgramMetadataDto updatedMetadata = ReadGraphicsMetadata(metadataPath);
         Assert.That(new FileInfo(spirvPath).Length, Is.GreaterThan(1));
         AssertGraphicsGeneratedTargets(updatedMetadata, "legacy_entry_points");
+    }
+
+    [Test]
+    public void CompileShader_StageEntryPointsInMetadata_Recompiles()
+    {
+        string shaderPath = Path.Combine(_testDir, "stage_entry_points.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string spirvPath = Path.Combine(generatedDirectory, "stage_entry_points.vertex.spv");
+        string metadataPath = Path.Combine(generatedDirectory, "stage_entry_points.metadata.json");
+        JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        metadata["vertex"]!["entryPoint"] = "vertexMain";
+        metadata["fragment"]!["entryPoint"] = "fragmentMain";
+        File.WriteAllText(metadataPath, metadata.ToJsonString());
+        File.WriteAllBytes(spirvPath, [0]);
+
+        compiler.Compile([shaderPath], force: false);
+
+        JsonObject updatedMetadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        Assert.Multiple(() =>
+        {
+            Assert.That(new FileInfo(spirvPath).Length, Is.GreaterThan(1));
+            Assert.That(updatedMetadata["vertex"]!["entryPoint"], Is.Null);
+            Assert.That(updatedMetadata["fragment"]!["entryPoint"], Is.Null);
+        });
     }
 
     [Test]
