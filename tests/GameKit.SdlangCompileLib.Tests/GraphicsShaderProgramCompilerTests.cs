@@ -231,7 +231,7 @@ public sealed class GraphicsShaderProgramCompilerTests
     {
         string shaderPath = Path.Combine(_testDirectory, "program.slang");
         File.WriteAllText(shaderPath, source);
-        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        SdlangCompiler compiler = SdlangCompilerTestFactory.Create();
         compiler.Compile([shaderPath], force: true);
 
         string metadataPath = Path.Combine(_testDirectory, ".generated", "program.metadata.json");
