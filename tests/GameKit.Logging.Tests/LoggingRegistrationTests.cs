@@ -57,8 +57,8 @@ public class LoggingRegistrationTests
         rootServices.AddZLogger(static _ => { });
         using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
 
-        ServiceCollection childServices = new();
-        using ServiceProvider childProvider = childServices.BuildServiceProvider(rootProvider);
+        ServiceCollection childServices = rootProvider.CreateServiceCollection();
+        using ServiceProvider childProvider = childServices.BuildServiceProvider();
 
         Assert.That(
             childProvider.GetRequiredService<ILogger>(),

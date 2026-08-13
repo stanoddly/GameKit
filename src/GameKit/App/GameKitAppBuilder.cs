@@ -13,12 +13,12 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        WireUpdatableLifecycle();
-    }
-
-    private void WireUpdatableLifecycle()
-    {
-        AddRegistry<IUpdatable>();
+        AddRegistry<IUpdatable>(static (left, right) =>
+        {
+            int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
+            int rightOrder = right is IOrderable rightOrderable ? rightOrderable.Order : 0;
+            return leftOrder.CompareTo(rightOrder);
+        });
     }
 
     public GameKitAppBuilder AddContentFromDirectory(string directory)

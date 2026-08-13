@@ -23,6 +23,7 @@ public class ServiceProvider : IDisposable
     private bool _disposed;
     private Dictionary<int, ServiceCollectionCache>? _serviceCollections;
     private Dictionary<int, ServiceCollectionRegistration[]>? _serviceCollectionRegistrations;
+    private HashSet<int>? _registeredTypeIds;
     private readonly List<TransientDisposalRecord> _transientDisposalRecords = new();
     // Tracks singleton instances in creation order for reverse-order disposal.
     private readonly List<ServiceCreationRecord> _creationRecords = new();
@@ -60,6 +61,33 @@ public class ServiceProvider : IDisposable
 
         _parent = parent;
         _pending = new Dictionary<int, object>();
+    }
+
+    /// <summary>Creates a service collection whose providers inherit services from this provider.</summary>
+    public ServiceCollection CreateServiceCollection()
+    {
+        ThrowIfDisposed();
+        return new ServiceCollection(this);
+    }
+
+    internal bool IsRegistered(int id)
+    {
+        ThrowIfDisposed();
+        return _registeredTypeIds?.Contains(id) == true;
+    }
+
+    internal void SetRegisteredTypeIds(IEnumerable<int> localRegisteredTypeIds)
+    {
+        if (_parent?._registeredTypeIds is HashSet<int> parentRegisteredTypeIds)
+        {
+            _registeredTypeIds = new HashSet<int>(parentRegisteredTypeIds);
+        }
+        else
+        {
+            _registeredTypeIds = new HashSet<int>();
+        }
+
+        _registeredTypeIds.UnionWith(localRegisteredTypeIds);
     }
 
     private void AddChild(ServiceProvider child)
@@ -623,6 +651,7 @@ public class ServiceProvider : IDisposable
         _pending = null;
         _serviceCollections = null;
         _serviceCollectionRegistrations = null;
+        _registeredTypeIds = null;
         _activatedCallbacks = null;
         _disposingCallbacks = null;
         _buildTimeResolver = null;

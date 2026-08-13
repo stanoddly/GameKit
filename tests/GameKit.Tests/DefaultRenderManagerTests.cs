@@ -26,9 +26,9 @@ public class DefaultRenderManagerTests
         ServiceProvider parent = builder.BuildServiceProvider();
         IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
-        using ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        using ServiceProvider child = childCollection.BuildServiceProvider();
 
         renderManager.Execute();
 
@@ -43,9 +43,9 @@ public class DefaultRenderManagerTests
         ServiceProvider parent = builder.BuildServiceProvider();
         IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
         renderManager.Execute();
@@ -62,9 +62,9 @@ public class DefaultRenderManagerTests
         ServiceProvider parent = builder.BuildServiceProvider();
         IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls, 5));
-        using ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        using ServiceProvider child = childCollection.BuildServiceProvider();
 
         renderManager.Execute();
 
@@ -81,9 +81,9 @@ public class DefaultRenderManagerTests
         IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
 
         ServiceProvider? child = null;
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new DisposingRenderPhase("child", calls, () => child!, 0));
-        child = childCollection.BuildServiceProvider(parent);
+        child = childCollection.BuildServiceProvider();
 
         renderManager.Execute();
 
@@ -207,9 +207,10 @@ public class DefaultRenderManagerTests
                 return;
             }
 
-            ServiceCollection childCollection = new();
+            ServiceProvider parent = _parentProvider();
+            ServiceCollection childCollection = parent.CreateServiceCollection();
             childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", Calls, -10));
-            _child = childCollection.BuildServiceProvider(_parentProvider());
+            _child = childCollection.BuildServiceProvider();
         }
     }
 }

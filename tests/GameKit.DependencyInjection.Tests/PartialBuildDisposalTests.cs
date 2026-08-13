@@ -5,12 +5,13 @@ namespace GameKit.DependencyInjection.Tests;
 public class PartialBuildDisposalTests
 {
     [Test]
-    public void Dispose_AfterBuildThrows_DisposesPartiallyCreatedServices()
+    public void BuildServiceProvider_WhenBuildThrows_DisposesPartiallyCreatedServices()
     {
         ServiceProvider? capturedProvider = null;
         ServiceA? capturedServiceA = null;
+        using ServiceProvider parent = new ServiceCollection().BuildServiceProvider();
 
-        ServiceCollection collection = new();
+        ServiceCollection collection = parent.CreateServiceCollection();
         collection.AddSingleton<ServiceA>((ServiceProvider sp) =>
         {
             capturedProvider = sp;
@@ -28,20 +29,23 @@ public class PartialBuildDisposalTests
 
         Assert.That(capturedProvider, Is.Not.Null);
         Assert.That(capturedServiceA, Is.Not.Null);
-        Assert.That(capturedServiceA!.Disposed, Is.False);
+        Assert.That(capturedServiceA!.Disposed, Is.True);
+        Assert.Throws<ObjectDisposedException>(() => capturedProvider!.GetRequiredService<ServiceA>());
 
-        capturedProvider!.Dispose();
+        parent.Dispose();
 
-        Assert.That(capturedServiceA.Disposed, Is.True);
+        Assert.That(capturedServiceA.DisposeCount, Is.EqualTo(1));
     }
 
     private class ServiceA : IDisposable
     {
         public bool Disposed { get; private set; }
+        public int DisposeCount { get; private set; }
 
         public void Dispose()
         {
             Disposed = true;
+            DisposeCount++;
         }
     }
 

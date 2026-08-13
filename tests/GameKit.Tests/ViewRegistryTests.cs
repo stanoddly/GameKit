@@ -27,9 +27,9 @@ public class ViewRegistryTests
         });
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<IView>(new TestView("child"));
-        using ServiceProvider child = childCollection.BuildServiceProvider(root);
+        using ServiceProvider child = childCollection.BuildServiceProvider();
 
         Assert.That(ViewNames(viewRegistry), Is.EqualTo(new[] { "child" }));
     }
@@ -56,9 +56,9 @@ public class ViewRegistryTests
         });
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = root.CreateServiceCollection();
         childCollection.AddSingleton<IView>(new TestView("child"));
-        ServiceProvider child = childCollection.BuildServiceProvider(root);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
 
@@ -113,13 +113,13 @@ public class ViewRegistryTests
         });
         ServiceProvider root = rootCollection.BuildServiceProvider();
 
-        ServiceCollection child1Collection = new();
+        ServiceCollection child1Collection = root.CreateServiceCollection();
         child1Collection.AddSingleton<IView>(new TestView("child1"));
-        ServiceProvider child1 = child1Collection.BuildServiceProvider(root);
+        ServiceProvider child1 = child1Collection.BuildServiceProvider();
 
-        ServiceCollection child2Collection = new();
+        ServiceCollection child2Collection = root.CreateServiceCollection();
         child2Collection.AddSingleton<IView>(new TestView("child2"));
-        using ServiceProvider child2 = child2Collection.BuildServiceProvider(root);
+        using ServiceProvider child2 = child2Collection.BuildServiceProvider();
 
         child1.Dispose();
 

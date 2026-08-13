@@ -287,8 +287,8 @@ public sealed class TransientServiceTests
         parentCollection.AddTransient<TransientDisposable>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         TransientDisposable disposable = child.GetRequiredService<TransientDisposable>();
 
@@ -308,9 +308,9 @@ public sealed class TransientServiceTests
         parentCollection.AddTransient<ITransientContract, TransientService>();
         ServiceProvider parent = parentCollection.BuildServiceProvider();
 
-        ServiceCollection childCollection = new();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddTransient<ITransientContract, AnotherTransientService>();
-        ServiceProvider child = childCollection.BuildServiceProvider(parent);
+        ServiceProvider child = childCollection.BuildServiceProvider();
 
         IReadOnlyList<ITransientContract> first = child.GetServices<ITransientContract>();
         IReadOnlyList<ITransientContract> second = child.GetServices<ITransientContract>();
