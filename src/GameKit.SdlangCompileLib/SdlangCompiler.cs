@@ -1673,6 +1673,8 @@ public class SdlangCompiler
     private static string GetGeneratedEntryPointName(ShaderFormatDto format, string sourceEntryPoint) => format switch
     {
         ShaderFormatDto.SpirV => "main",
+        // Slang renames "main" to "main_0" in MSL output because "main" is reserved in C/C++.
+        // Other source entry point names remain unchanged.
         ShaderFormatDto.Msl when sourceEntryPoint == "main" => "main_0",
         _ => sourceEntryPoint
     };
