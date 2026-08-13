@@ -175,7 +175,7 @@ public sealed class GraphicsShaderProgramCompilerTests
     }
 
     [Test]
-    public void Compile_FragmentConsumesDifferentStructure_Throws()
+    public void Compile_FragmentConsumesStructurallyEquivalentStructure_Succeeds()
     {
         string source = ValidProgram.Replace(
             "[shader(\"fragment\")]",
@@ -183,6 +183,23 @@ public sealed class GraphicsShaderProgramCompilerTests
             StringComparison.Ordinal).Replace(
             "fragmentMain(VertexToFragment input)",
             "fragmentMain(FragmentInput input)",
+            StringComparison.Ordinal);
+
+        Assert.That(Compile(source), Is.Not.Null);
+    }
+
+    [Test]
+    public void Compile_FragmentOmitsVertexOutputField_Throws()
+    {
+        string source = ValidProgram.Replace(
+            "[shader(\"fragment\")]",
+            "struct FragmentInput\n{\n    float4 Position : SV_Position;\n};\n\n[shader(\"fragment\")]",
+            StringComparison.Ordinal).Replace(
+            "fragmentMain(VertexToFragment input)",
+            "fragmentMain(FragmentInput input)",
+            StringComparison.Ordinal).Replace(
+            "return float4(input.TexCoord, 0.0, 1.0);",
+            "return input.Position;",
             StringComparison.Ordinal);
 
         ShaderCompilationException? exception = Assert.Throws<ShaderCompilationException>(() => Compile(source));

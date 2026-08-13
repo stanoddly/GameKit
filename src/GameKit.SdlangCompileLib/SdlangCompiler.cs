@@ -27,7 +27,7 @@ internal abstract record ShaderDiscovery;
 
 internal sealed record ComputeShaderDiscovery : ShaderDiscovery;
 
-internal sealed record GraphicsShaderDiscovery(string VertexOutputType) : ShaderDiscovery;
+internal sealed record GraphicsShaderDiscovery : ShaderDiscovery;
 
 public class ShaderCompilationException(string message) : Exception(message);
 
@@ -250,49 +250,7 @@ public class SdlangCompiler
         ];
 
         ExecuteSlang(args, "Shader discovery");
-        ShaderDiscovery discovery = ParseDiscoveryReflection(reflectionFile);
-
-        if (discovery is GraphicsShaderDiscovery graphicsDiscovery)
-        {
-            ValidateGraphicsInterface(filePath, tempDir, graphicsDiscovery.VertexOutputType);
-        }
-
-        return discovery;
-    }
-
-    private void ValidateGraphicsInterface(
-        FileInfo filePath,
-        DirectoryInfo tempDir,
-        string vertexOutputType)
-    {
-        FileInfo validationFile = new FileInfo(Path.Combine(tempDir.FullName, "validate-interface.slang"));
-        string includePath = filePath.FullName.Replace("\\", "/").Replace("\"", "\\\"");
-        File.WriteAllText(
-            validationFile.FullName,
-            $"#include \"{includePath}\"{Environment.NewLine}" +
-            $"void validateGraphicsProgramInterface({vertexOutputType} output)" + Environment.NewLine +
-            "{" + Environment.NewLine +
-            "    fragmentMain(output);" + Environment.NewLine +
-            "}" + Environment.NewLine);
-
-        List<string> args =
-        [
-            validationFile.FullName,
-            "-warnings-disable", "39001,39013,39029",
-            "-target", "spirv",
-            "-no-codegen"
-        ];
-
-        try
-        {
-            ExecuteSlang(args, "Graphics shader interface validation");
-        }
-        catch (ShaderCompilationException exception)
-        {
-            throw new ShaderCompilationException(
-                "Fragment entry point 'fragmentMain' must consume the complete structure returned by " +
-                $"'vertexMain'.{Environment.NewLine}{exception.Message}");
-        }
+        return ParseDiscoveryReflection(reflectionFile);
     }
 
     private void ExecuteSlang(List<string> args, string operation)
@@ -382,10 +340,8 @@ public class SdlangCompiler
         JsonElement vertexOutputType = GetVertexOutputType(vertexEntryPoint);
         ValidatePositionField(vertexOutputType);
         JsonElement fragmentInputType = GetFragmentInputType(fragmentEntryPoint);
-
-        string vertexOutputName = GetStructureName(vertexOutputType, "Vertex entry point 'vertexMain' output");
-        GetStructureName(fragmentInputType, "Fragment entry point 'fragmentMain' input");
-        return new GraphicsShaderDiscovery(vertexOutputName);
+        ValidateGraphicsInterface(vertexOutputType, fragmentInputType);
+        return new GraphicsShaderDiscovery();
     }
 
     private static ShaderStageDto GetEntryPointStage(JsonElement entryPoint)
@@ -451,14 +407,162 @@ public class SdlangCompiler
             type.TryGetProperty("name", out JsonElement name) && !string.IsNullOrEmpty(name.GetString());
     }
 
-    private static string GetStructureName(JsonElement type, string description)
+    private static void ValidateGraphicsInterface(JsonElement vertexOutputType, JsonElement fragmentInputType)
     {
-        if (!IsStructureType(type))
+        if (AreInterfaceTypesEquivalent(vertexOutputType, fragmentInputType))
         {
-            throw new ShaderCompilationException($"{description} must be a named structure.");
+            return;
         }
 
-        return type.GetProperty("name").GetString()!;
+        throw new ShaderCompilationException(
+            "Fragment entry point 'fragmentMain' must consume the complete structure returned by " +
+            $"'vertexMain'.{Environment.NewLine}" +
+            $"Expected:{Environment.NewLine}{DescribeInterface(vertexOutputType)}{Environment.NewLine}" +
+            $"Actual:{Environment.NewLine}{DescribeInterface(fragmentInputType)}");
+    }
+
+    private static bool AreInterfaceTypesEquivalent(JsonElement expected, JsonElement actual)
+    {
+        string? expectedKind = expected.TryGetProperty("kind", out JsonElement expectedKindElement)
+            ? expectedKindElement.GetString()
+            : null;
+        string? actualKind = actual.TryGetProperty("kind", out JsonElement actualKindElement)
+            ? actualKindElement.GetString()
+            : null;
+        if (expectedKind != actualKind)
+        {
+            return false;
+        }
+
+        switch (expectedKind)
+        {
+            case "scalar":
+                return GetOptionalString(expected, "scalarType") == GetOptionalString(actual, "scalarType");
+            case "vector":
+            case "array":
+                return GetOptionalInt32(expected, "elementCount") == GetOptionalInt32(actual, "elementCount") &&
+                    expected.TryGetProperty("elementType", out JsonElement expectedElementType) &&
+                    actual.TryGetProperty("elementType", out JsonElement actualElementType) &&
+                    AreInterfaceTypesEquivalent(expectedElementType, actualElementType);
+            case "matrix":
+                return GetOptionalInt32(expected, "rowCount") == GetOptionalInt32(actual, "rowCount") &&
+                    GetOptionalInt32(expected, "columnCount") == GetOptionalInt32(actual, "columnCount") &&
+                    expected.TryGetProperty("elementType", out JsonElement expectedMatrixElementType) &&
+                    actual.TryGetProperty("elementType", out JsonElement actualMatrixElementType) &&
+                    AreInterfaceTypesEquivalent(expectedMatrixElementType, actualMatrixElementType);
+            case "struct":
+                return AreInterfaceFieldsEquivalent(expected, actual);
+            default:
+                return false;
+        }
+    }
+
+    private static bool AreInterfaceFieldsEquivalent(JsonElement expected, JsonElement actual)
+    {
+        if (!expected.TryGetProperty("fields", out JsonElement expectedFields) ||
+            !actual.TryGetProperty("fields", out JsonElement actualFields) ||
+            expectedFields.GetArrayLength() != actualFields.GetArrayLength())
+        {
+            return false;
+        }
+
+        for (int index = 0; index < expectedFields.GetArrayLength(); index++)
+        {
+            JsonElement expectedField = expectedFields[index];
+            JsonElement actualField = actualFields[index];
+            if (GetOptionalString(expectedField, "name") != GetOptionalString(actualField, "name") ||
+                !string.Equals(
+                    GetOptionalString(expectedField, "semanticName"),
+                    GetOptionalString(actualField, "semanticName"),
+                    StringComparison.OrdinalIgnoreCase) ||
+                GetOptionalInt32(expectedField, "semanticIndex", 0) !=
+                    GetOptionalInt32(actualField, "semanticIndex", 0) ||
+                !expectedField.TryGetProperty("type", out JsonElement expectedFieldType) ||
+                !actualField.TryGetProperty("type", out JsonElement actualFieldType) ||
+                !AreInterfaceTypesEquivalent(expectedFieldType, actualFieldType))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string? GetOptionalString(JsonElement element, string propertyName)
+    {
+        return element.TryGetProperty(propertyName, out JsonElement property) ? property.GetString() : null;
+    }
+
+    private static int GetOptionalInt32(JsonElement element, string propertyName, int defaultValue = -1)
+    {
+        return element.TryGetProperty(propertyName, out JsonElement property)
+            ? property.GetInt32()
+            : defaultValue;
+    }
+
+    private static string DescribeInterface(JsonElement type)
+    {
+        if (!type.TryGetProperty("fields", out JsonElement fields))
+        {
+            return "  <not a structure>";
+        }
+
+        return string.Join(
+            Environment.NewLine,
+            fields.EnumerateArray().Select(field =>
+            {
+                string fieldType = field.TryGetProperty("type", out JsonElement reflectedType)
+                    ? DescribeInterfaceType(reflectedType)
+                    : "unknown";
+                string fieldName = GetOptionalString(field, "name") ?? "<unnamed>";
+                string? semanticName = GetOptionalString(field, "semanticName");
+                int semanticIndex = GetOptionalInt32(field, "semanticIndex", 0);
+                string semantic = semanticName == null
+                    ? string.Empty
+                    : $" : {semanticName}{(semanticIndex == 0 ? string.Empty : semanticIndex)}";
+                return $"  {fieldType} {fieldName}{semantic}";
+            }));
+    }
+
+    private static string DescribeInterfaceType(JsonElement type)
+    {
+        string? kind = GetOptionalString(type, "kind");
+        switch (kind)
+        {
+            case "scalar":
+                return DescribeScalarType(GetOptionalString(type, "scalarType"));
+            case "vector":
+                return type.TryGetProperty("elementType", out JsonElement vectorElementType)
+                    ? $"{DescribeInterfaceType(vectorElementType)}{GetOptionalInt32(type, "elementCount")}"
+                    : "vector";
+            case "matrix":
+                return type.TryGetProperty("elementType", out JsonElement matrixElementType)
+                    ? $"{DescribeInterfaceType(matrixElementType)}{GetOptionalInt32(type, "rowCount")}x" +
+                        GetOptionalInt32(type, "columnCount")
+                    : "matrix";
+            case "array":
+                return type.TryGetProperty("elementType", out JsonElement arrayElementType)
+                    ? $"{DescribeInterfaceType(arrayElementType)}[{GetOptionalInt32(type, "elementCount")}]"
+                    : "array";
+            case "struct":
+                return GetOptionalString(type, "name") ?? "struct";
+            default:
+                return kind ?? "unknown";
+        }
+    }
+
+    private static string DescribeScalarType(string? scalarType)
+    {
+        return scalarType switch
+        {
+            "float16" => "half",
+            "float32" => "float",
+            "float64" => "double",
+            "int32" => "int",
+            "uint32" => "uint",
+            "bool" => "bool",
+            _ => scalarType ?? "unknown"
+        };
     }
 
     private static void ValidatePositionField(JsonElement vertexOutputType)
