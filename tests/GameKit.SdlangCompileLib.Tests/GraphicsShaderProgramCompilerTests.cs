@@ -164,7 +164,7 @@ public sealed class GraphicsShaderProgramCompilerTests
     [Test]
     public void Compile_PositionIsNotFirst_Throws()
     {
-        string source = ValidProgram.Replace(
+        string source = ValidProgram.ReplaceLineEndings("\n").Replace(
             "float4 Position : SV_Position;\n    float2 TexCoord : TEXCOORD0;",
             "float2 TexCoord : TEXCOORD0;\n    float4 Position : SV_Position;",
             StringComparison.Ordinal);
