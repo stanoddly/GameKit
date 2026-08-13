@@ -514,6 +514,32 @@ public class SdlangCompilerTests
     }
 
     [Test]
+    public void CompileShader_LegacyGraphicsEntryPointNames_Recompiles()
+    {
+        string shaderPath = Path.Combine(_testDir, "legacy_entry_points.slang");
+        File.WriteAllText(shaderPath, ShaderContent);
+
+        SdlangCompiler compiler = SdlangCompiler.CreateFromAssemblyDirectory();
+        compiler.Compile([shaderPath], force: true);
+
+        string generatedDirectory = Path.Combine(_testDir, ".generated");
+        string spirvPath = Path.Combine(generatedDirectory, "legacy_entry_points.vertex.spv");
+        string metadataPath = Path.Combine(generatedDirectory, "legacy_entry_points.metadata.json");
+        JsonObject metadata = JsonNode.Parse(File.ReadAllText(metadataPath))!.AsObject();
+        JsonArray vertexShaders = metadata["vertex"]!["shaders"]!.AsArray();
+        JsonNode vertexSpirv = vertexShaders.Single(shader => shader!["format"]!.GetValue<string>() == "SpirV")!;
+        vertexSpirv["entryPoint"] = "vertexMain";
+        File.WriteAllText(metadataPath, metadata.ToJsonString());
+        File.WriteAllBytes(spirvPath, [0]);
+
+        compiler.Compile([shaderPath], force: false);
+
+        GraphicsShaderProgramMetadataDto updatedMetadata = ReadGraphicsMetadata(metadataPath);
+        Assert.That(new FileInfo(spirvPath).Length, Is.GreaterThan(1));
+        AssertGraphicsGeneratedTargets(updatedMetadata, "legacy_entry_points");
+    }
+
+    [Test]
     public void CompileShader_SourceDependencyChanges_RecompilesGeneratedShaders()
     {
         string shaderPath = Path.Combine(_testDir, "dependency_shader.slang");
@@ -908,17 +934,28 @@ public class SdlangCompilerTests
 
     private void AssertGraphicsGeneratedTargets(GraphicsShaderProgramMetadataDto metadata, string filename)
     {
-        AssertGeneratedTargets(metadata.Vertex.Shaders, $"{filename}.vertex");
-        AssertGeneratedTargets(metadata.Fragment.Shaders, $"{filename}.fragment");
+        AssertGeneratedTargets(metadata.Vertex.Shaders, $"{filename}.vertex", "vertexMain");
+        AssertGeneratedTargets(metadata.Fragment.Shaders, $"{filename}.fragment", "fragmentMain");
     }
 
-    private void AssertGeneratedTargets(IReadOnlyCollection<ShaderInstanceDto> shaders, string filename)
+    private void AssertGeneratedTargets(
+        IReadOnlyCollection<ShaderInstanceDto> shaders,
+        string filename,
+        string sourceEntryPoint = "main")
     {
         Assert.Multiple(() =>
         {
             Assert.That(
                 shaders.Select(shader => shader.Format),
                 Is.EqualTo(new[] { ShaderFormatDto.SpirV, ShaderFormatDto.Dxil, ShaderFormatDto.Msl }));
+            Assert.That(
+                shaders.Select(shader => shader.EntryPoint),
+                Is.EqualTo(new[]
+                {
+                    "main",
+                    sourceEntryPoint,
+                    sourceEntryPoint == "main" ? "main_0" : sourceEntryPoint
+                }));
             Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.spv")), Is.True);
             Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.dxil")), Is.True);
             Assert.That(File.Exists(Path.Combine(_testDir, ".generated", $"{filename}.metal")), Is.True);

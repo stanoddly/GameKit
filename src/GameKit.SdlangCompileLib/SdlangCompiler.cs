@@ -1394,7 +1394,7 @@ public class SdlangCompiler
 
             using JsonDocument document = JsonDocument.Parse(json);
             JsonElement root = document.RootElement;
-            List<JsonElement> shaderCollections = new List<JsonElement>();
+            List<(JsonElement Shaders, string SourceEntryPoint)> shaderCollections = new();
             if (metadata.Kind == ShaderKindDto.Graphics)
             {
                 if (!root.TryGetProperty("vertex", out JsonElement vertex) ||
@@ -1407,8 +1407,8 @@ public class SdlangCompiler
                     return false;
                 }
 
-                shaderCollections.Add(vertexShaders);
-                shaderCollections.Add(fragmentShaders);
+                shaderCollections.Add((vertexShaders, "vertexMain"));
+                shaderCollections.Add((fragmentShaders, "fragmentMain"));
             }
             else
             {
@@ -1417,10 +1417,10 @@ public class SdlangCompiler
                     return false;
                 }
 
-                shaderCollections.Add(shaders);
+                shaderCollections.Add((shaders, "main"));
             }
 
-            foreach (JsonElement shaders in shaderCollections)
+            foreach ((JsonElement shaders, string sourceEntryPoint) in shaderCollections)
             {
                 HashSet<ShaderFormatDto> cachedFormats = [];
                 foreach (JsonElement shader in shaders.EnumerateArray())
@@ -1433,7 +1433,11 @@ public class SdlangCompiler
                         return false;
                     }
 
-                    if (!shader.TryGetProperty("filename", out JsonElement filenameElement))
+                    if (!shader.TryGetProperty("filename", out JsonElement filenameElement) ||
+                        filenameElement.ValueKind != JsonValueKind.String ||
+                        !shader.TryGetProperty("entryPoint", out JsonElement entryPointElement) ||
+                        entryPointElement.ValueKind != JsonValueKind.String ||
+                        entryPointElement.GetString() != GetGeneratedEntryPointName(format, sourceEntryPoint))
                     {
                         return false;
                     }
@@ -1659,13 +1663,18 @@ public class SdlangCompiler
         IEnumerable<ShaderInstanceDto> shaderInstances,
         string entryPoint)
     {
-        // Slang appends "_0" to entry-point names in MSL output.
         return shaderInstances.Select(instance =>
             new ShaderInstanceDto(
                 instance.Format,
                 instance.Filename,
-                instance.Format == ShaderFormatDto.Msl ? $"{entryPoint}_0" : entryPoint)).ToList();
+                GetGeneratedEntryPointName(instance.Format, entryPoint))).ToList();
     }
 
+    private static string GetGeneratedEntryPointName(ShaderFormatDto format, string sourceEntryPoint) => format switch
+    {
+        ShaderFormatDto.SpirV => "main",
+        ShaderFormatDto.Msl when sourceEntryPoint == "main" => "main_0",
+        _ => sourceEntryPoint
+    };
 
 }

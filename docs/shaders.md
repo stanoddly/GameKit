@@ -297,7 +297,7 @@ For each graphics shader program, the build generates one `.metadata.json` file:
       {
         "format": "SpirV",
         "filename": "shader.vertex.spv",
-        "entryPoint": "vertexMain"
+        "entryPoint": "main"
       }
     ]
   },
@@ -308,7 +308,7 @@ For each graphics shader program, the build generates one `.metadata.json` file:
       {
         "format": "SpirV",
         "filename": "shader.fragment.spv",
-        "entryPoint": "fragmentMain"
+        "entryPoint": "main"
       }
     ]
   },
@@ -319,6 +319,8 @@ For each graphics shader program, the build generates one `.metadata.json` file:
 ```
 
 Each stage has its own binding layout because resources are reflected for the entry point that uses them. This metadata is used by the loader to validate bindings and create both native GPU shader objects transactionally. You don't need to edit it manually.
+
+The source entry points remain `vertexMain` and `fragmentMain`. Per-target shader records contain the names exported by generated code; Slang exports SPIR-V entry points as `main`.
 
 ## Notes
 
