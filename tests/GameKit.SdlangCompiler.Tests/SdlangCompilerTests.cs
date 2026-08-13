@@ -2,7 +2,7 @@
 using System.Text.Json.Nodes;
 using GameKit.ShaderCommon;
 
-namespace GameKit.SdlangCompileLib.Tests;
+namespace GameKit.SdlangCompiler.Tests;
 
 public class SdlangCompilerTests
 {

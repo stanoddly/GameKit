@@ -9,27 +9,35 @@
         <IsPublishable>false</IsPublishable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
+        <_OwnsSlangInstallation>true</_OwnsSlangInstallation>
     </PropertyGroup>
+
+    <Import Project="build\GameKit.SdlangCompiler.props" />
+    <Import Project="build\GameKit.SdlangCompiler.targets" />
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Framework" Version="18.9.6" />
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.9.6" />
     </ItemGroup>
 
-    <!-- Include build files in the NuGet package -->
     <ItemGroup>
         <None Include="build\**" Pack="true" PackagePath="build\" />
     </ItemGroup>
 
-    <!-- For project references, import the props and targets files directly -->
     <ItemGroup>
-        <None Include="build\GameKit.SdlangCompileTask.props" Link="GameKit.SdlangCompileTask.props" />
-        <None Include="build\GameKit.SdlangCompileTask.targets" Link="GameKit.SdlangCompileTask.targets" />
+        <ProjectReference Include="..\GameKit.ShaderCommon\GameKit.ShaderCommon.csproj"
+                          GlobalPropertiesToRemove="PublishSingleFile" />
     </ItemGroup>
+
     <ItemGroup>
-      <!-- The compiler library runs in MSBuild and is not part of a consuming application's publish. -->
-      <ProjectReference Include="..\GameKit.SdlangCompileLib\GameKit.SdlangCompileLib.csproj"
-                        GlobalPropertiesToRemove="PublishSingleFile" />
+        <InternalsVisibleTo Include="GameKit.SdlangCompiler.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>SlangVersion</_Parameter1>
+            <_Parameter2>$(SlangVersion)</_Parameter2>
+        </AssemblyAttribute>
     </ItemGroup>
 
 </Project>

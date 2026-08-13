@@ -21,16 +21,16 @@ Shaders are automatically compiled during build. The build system generates SPIR
 
 ## Build Integration
 
-Reference `GameKit.SdlangCompileTask`, import its props and targets, and declare the shaders to compile:
+Reference `GameKit.SdlangCompiler`, import its props and targets, and declare the shaders to compile:
 
 ```xml
 <ItemGroup>
-    <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj"
+    <ProjectReference Include="..\..\src\GameKit.SdlangCompiler\GameKit.SdlangCompiler.csproj"
                       ReferenceOutputAssembly="false" />
 </ItemGroup>
 
-<Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
-<Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+<Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.props" />
+<Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.targets" />
 
 <ItemGroup>
     <SdlangShader Include="Content\shaders\*.slang" />
@@ -41,7 +41,7 @@ The targets file compiles every `SdlangShader` item before `CoreCompile` and exp
 
 Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
-The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `GameKit.SdlangCompileLib`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `GameKit.SdlangCompileLib` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into application build or publish output. Build integrations pass `$(SlangCompilerPath)` to `SdlangCompiler`.
+The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `GameKit.SdlangCompiler`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `GameKit.SdlangCompiler` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into application build or publish output. Build integrations pass `$(SlangCompilerPath)` to `SdlangCompiler`.
 
 ### Custom compilation targets
 

@@ -1,10 +1,4 @@
 <Project>
-    <!-- Slang configuration -->
-    <!-- Slang is a shader compilation dependency downloaded during the build.
-         It stays in obj/ (intermediate build artifacts) rather than the project root
-         because it's not source code and will be extracted/regenerated on each build.
-         It is build-time tooling, so it is never copied into the output of consuming
-         projects; the compiler is located through $(SlangCompilerPath) instead. -->
     <PropertyGroup>
         <SlangVersion>2026.14.1</SlangVersion>
         <DxcVersion>1.9.2602</DxcVersion>
@@ -17,15 +11,14 @@
         <SlangDirName>$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
         <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
         <SlangDownloadUrl>https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
-        <!-- Use absolute paths so the location is identical no matter which project imports this file,
-             and to avoid issues with Environment.CurrentDirectory during parallel builds -->
         <SlangObjDir>$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
         <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
         <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
         <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
-        <SlangLibDir>$(SlangBaseDir)/lib</SlangLibDir>
         <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
         <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
         <SlangCompilerPath>$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
+        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\GameKit.SdlangCompiler.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\GameKit.SdlangCompiler.dll</SdlangCompilerAssembly>
+        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\GameKit.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
 </Project>

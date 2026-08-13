@@ -19,14 +19,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\GameKit.SdlangCompileTask\GameKit.SdlangCompileTask.csproj" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\..\src\GameKit.SdlangCompiler\GameKit.SdlangCompiler.csproj" ReferenceOutputAssembly="false" />
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Content\shaders\.generated\" />
     </ItemGroup>
 
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.props" />
-    <Import Project="..\..\src\GameKit.SdlangCompileTask\build\GameKit.SdlangCompileTask.targets" />
+    <Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.props" />
+    <Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.targets" />
 
     <ItemGroup>
         <SdlangShader Include="Content\shaders\*.slang" />
