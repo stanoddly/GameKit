@@ -23,11 +23,11 @@ internal enum ResourceType
 
 internal record struct ResourceBinding(string Name, ResourceType Type, int Space, int Index);
 
-internal abstract record ShaderDiscovery;
-
-internal sealed record ComputeShaderDiscovery : ShaderDiscovery;
-
-internal sealed record GraphicsShaderDiscovery : ShaderDiscovery;
+internal enum ShaderSourceKind
+{
+    Graphics,
+    Compute
+}
 
 public class ShaderCompilationException(string message) : Exception(message);
 
@@ -235,7 +235,7 @@ public class SdlangCompiler
         return (reflectionFile, dependencyFile, shaderInstances);
     }
 
-    private ShaderDiscovery DiscoverShader(
+    private ShaderSourceKind DiscoverShader(
         FileInfo filePath,
         DirectoryInfo tempDir)
     {
@@ -290,7 +290,7 @@ public class SdlangCompiler
         }
     }
 
-    private static ShaderDiscovery ParseDiscoveryReflection(FileInfo reflectionFile)
+    private static ShaderSourceKind ParseDiscoveryReflection(FileInfo reflectionFile)
     {
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(reflectionFile.FullName));
         JsonElement root = document.RootElement;
@@ -312,7 +312,7 @@ public class SdlangCompiler
             }
 
             ValidateEntryPointName(computeEntryPoints[0], "main");
-            return new ComputeShaderDiscovery();
+            return ShaderSourceKind.Compute;
         }
 
         if (vertexEntryPoints.Count != 1)
@@ -341,7 +341,7 @@ public class SdlangCompiler
         ValidatePositionField(vertexOutputType);
         JsonElement fragmentInputType = GetFragmentInputType(fragmentEntryPoint);
         ValidateGraphicsInterface(vertexOutputType, fragmentInputType);
-        return new GraphicsShaderDiscovery();
+        return ShaderSourceKind.Graphics;
     }
 
     private static ShaderStageDto GetEntryPointStage(JsonElement entryPoint)
@@ -1605,9 +1605,9 @@ public class SdlangCompiler
         {
             Console.WriteLine($"Intermediate results written to: {tempDir.FullName}");
 
-            ShaderDiscovery discovery = DiscoverShader(filePath, tempDir);
+            ShaderSourceKind shaderSourceKind = DiscoverShader(filePath, tempDir);
 
-            if (discovery is ComputeShaderDiscovery)
+            if (shaderSourceKind == ShaderSourceKind.Compute)
             {
                 (FileInfo reflectionFile, FileInfo dependencyFile, List<ShaderInstanceDto> shaderInstances) = CompileTargets(
                     filePath,
