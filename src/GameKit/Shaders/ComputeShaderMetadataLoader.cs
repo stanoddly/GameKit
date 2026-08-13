@@ -30,7 +30,7 @@ public class ComputeShaderMetadataLoader
         return new ComputeShaderMetadata
         {
             BindingLayout = dto.BindingLayout,
-            Shaders = GraphicsShaderMetadataLoader.ConvertShaderInstances(dto.Shaders),
+            Shaders = GraphicsShaderProgramMetadataLoader.ConvertShaderInstances(dto.Shaders),
             ThreadCountX = dto.ThreadCountX,
             ThreadCountY = dto.ThreadCountY,
             ThreadCountZ = dto.ThreadCountZ

@@ -15,7 +15,7 @@ public class GpuDevice : IDisposable
     private LockedSet<Sampler> _samplers = new();
     private LockedSet<GraphicsPipeline> _graphicsPipelines = new();
     private LockedSet<ComputePipeline> _computePipelines = new();
-    private LockedSet<GraphicsShader> _shaders = new();
+    private LockedSet<GraphicsShaderProgram> _graphicsShaderPrograms = new();
 
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
 
@@ -229,7 +229,8 @@ public class GpuDevice : IDisposable
 
     public void RegisterComputePipeline(ComputePipeline computePipeline) => _computePipelines.Add(computePipeline);
 
-    public void RegisterShader(GraphicsShader shader) => _shaders.Add(shader);
+    internal void RegisterGraphicsShaderProgram(GraphicsShaderProgram shaderProgram) =>
+        _graphicsShaderPrograms.Add(shaderProgram);
 
     public void ReleaseTexture(Texture texture)
     {
@@ -282,16 +283,27 @@ public class GpuDevice : IDisposable
         computePipeline.Pointer = default;
     }
 
-    public void ReleaseShader(GraphicsShader shader)
+    internal void ReleaseGraphicsShaderProgram(GraphicsShaderProgram shaderProgram)
     {
-        _shaders.Remove(shader);
+        _graphicsShaderPrograms.Remove(shaderProgram);
+        ReleaseShader(shaderProgram.VertexShader);
+        ReleaseShader(shaderProgram.FragmentShader);
+    }
+
+    internal void ReleaseShader(GraphicsShader shader)
+    {
+        Pointer<SDL_GPUShader> pointer = shader.Pointer;
+        if (pointer.IsNull)
+        {
+            return;
+        }
 
         unsafe
         {
-            SDL3.SDL_ReleaseGPUShader(SdlGpuDevice, shader.Pointer);
+            SDL3.SDL_ReleaseGPUShader(SdlGpuDevice, pointer);
         }
 
-        shader.Pointer = default;
+        shader.Pointer = Pointer<SDL_GPUShader>.Null;
     }
 
     public void ReleaseVertexBuffer(GpuVertexBuffer vertexBuffer)
@@ -405,9 +417,9 @@ public class GpuDevice : IDisposable
             ReleaseComputePipeline(computePipeline);
         }
 
-        foreach (GraphicsShader shader in _shaders.ClearAndCopy())
+        foreach (GraphicsShaderProgram shaderProgram in _graphicsShaderPrograms.ClearAndCopy())
         {
-            ReleaseShader(shader);
+            ReleaseGraphicsShaderProgram(shaderProgram);
         }
 
         foreach (GpuVertexBuffer vertexBuffer in _vertexBuffers.ClearAndCopy())

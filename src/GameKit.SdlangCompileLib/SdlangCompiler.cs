@@ -1293,57 +1293,31 @@ public class SdlangCompiler
         };
     }
 
-    private static void WriteMetadata(DirectoryInfo outputDir, string filenameWithoutExt,
-        ShaderStageDto stage, ShaderBindingLayout resources, List<ShaderInstanceDto> shaderInstances, string sourceHash,
+    private static void WriteComputeMetadata(
+        DirectoryInfo outputDir,
+        string filenameWithoutExt,
+        ShaderBindingLayout resources,
+        List<ShaderInstanceDto> shaderInstances,
+        string sourceHash,
         List<string> sourceDependencies,
-        ShaderSystemValueInputs systemValueInputs,
-        uint threadCountX = 0, uint threadCountY = 0, uint threadCountZ = 0)
+        uint threadCountX,
+        uint threadCountY,
+        uint threadCountZ)
     {
         FileInfo metadataFile = new FileInfo(Path.Combine(outputDir.FullName, $"{filenameWithoutExt}.metadata.json"));
-
-        using FileStream stream = metadataFile.Create();
-        switch (stage)
+        ComputeShaderMetadataDto metadata = new ComputeShaderMetadataDto
         {
-            case ShaderStageDto.Vertex:
-                VertexShaderMetadataDto vertexMetadata = new VertexShaderMetadataDto
-                {
-                    BindingLayout = resources,
-                    SystemValueInputs = systemValueInputs,
-                    Shaders = shaderInstances,
-                    SourceHash = sourceHash,
-                    SourceDependencies = sourceDependencies,
-                    SlangVersion = SlangVersion
-                };
-                JsonSerializer.Serialize(stream, vertexMetadata, ShaderMetadataJsonContext.Default.VertexShaderMetadataDto);
-                break;
-            case ShaderStageDto.Fragment:
-                FragmentShaderMetadataDto fragmentMetadata = new FragmentShaderMetadataDto
-                {
-                    BindingLayout = resources,
-                    Shaders = shaderInstances,
-                    SourceHash = sourceHash,
-                    SourceDependencies = sourceDependencies,
-                    SlangVersion = SlangVersion
-                };
-                JsonSerializer.Serialize(stream, fragmentMetadata, ShaderMetadataJsonContext.Default.FragmentShaderMetadataDto);
-                break;
-            case ShaderStageDto.Compute:
-                ComputeShaderMetadataDto computeMetadata = new ComputeShaderMetadataDto
-                {
-                    BindingLayout = resources,
-                    Shaders = shaderInstances,
-                    SourceHash = sourceHash,
-                    SourceDependencies = sourceDependencies,
-                    SlangVersion = SlangVersion,
-                    ThreadCountX = threadCountX,
-                    ThreadCountY = threadCountY,
-                    ThreadCountZ = threadCountZ
-                };
-                JsonSerializer.Serialize(stream, computeMetadata, ShaderMetadataJsonContext.Default.ComputeShaderMetadataDto);
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown shader stage: {stage}");
-        }
+            BindingLayout = resources,
+            Shaders = shaderInstances,
+            SourceHash = sourceHash,
+            SourceDependencies = sourceDependencies,
+            SlangVersion = SlangVersion,
+            ThreadCountX = threadCountX,
+            ThreadCountY = threadCountY,
+            ThreadCountZ = threadCountZ
+        };
+        using FileStream stream = metadataFile.Create();
+        JsonSerializer.Serialize(stream, metadata, ShaderMetadataJsonContext.Default.ComputeShaderMetadataDto);
     }
 
     private static void WriteGraphicsMetadata(
@@ -1420,11 +1394,6 @@ public class SdlangCompiler
 
             using JsonDocument document = JsonDocument.Parse(json);
             JsonElement root = document.RootElement;
-            if (metadata.Stage == ShaderStageDto.Vertex && !root.TryGetProperty("systemValueInputs", out _))
-            {
-                return false;
-            }
-
             List<JsonElement> shaderCollections = new List<JsonElement>();
             if (metadata.Kind == ShaderKindDto.Graphics)
             {
@@ -1618,18 +1587,21 @@ public class SdlangCompiler
                     filenameWithoutExt);
                 List<string> sourceDependencies = ReadSourceDependencies(filePath, dependencyFile);
                 string sourceHash = CalculateSourceHash(filePath, sourceDependencies);
-                (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs systemValueInputs, uint threadCountX, uint threadCountY, uint threadCountZ) =
+                (string entryPoint, ShaderStageDto stage, ShaderBindingLayout bindingLayout, ShaderSystemValueInputs _, uint threadCountX, uint threadCountY, uint threadCountZ) =
                     ParseReflectionData(reflectionFile, "main");
+                if (stage != ShaderStageDto.Compute)
+                {
+                    throw new ShaderCompilationException("Entry point 'main' is not a compute shader.");
+                }
+
                 shaderInstances = NormalizeEntryPointNames(shaderInstances, entryPoint);
-                WriteMetadata(
+                WriteComputeMetadata(
                     outputDir,
                     filenameWithoutExt,
-                    stage,
                     bindingLayout,
                     shaderInstances,
                     sourceHash,
                     sourceDependencies,
-                    systemValueInputs,
                     threadCountX,
                     threadCountY,
                     threadCountZ);

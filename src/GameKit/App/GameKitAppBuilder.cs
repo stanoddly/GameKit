@@ -96,7 +96,7 @@ public class GameKitAppBuilder : ServiceCollection
 
         AddSingleton<EventService, GameKitFactory>();
 
-        AddSingleton<GraphicsShaderMetadataLoader>();
+        AddSingleton<GraphicsShaderProgramMetadataLoader>();
 
         AddSingleton<ShaderLoader>();
         AddAlias<IShaderLoader, ShaderLoader>();

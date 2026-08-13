@@ -4,16 +4,6 @@ using SDL;
 
 namespace GameKit.Shaders;
 
-public enum ShaderStage
-{
-    [EnumMember(Value = "vertex")]
-    Vertex = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_VERTEX,
-
-    [EnumMember(Value = "fragment")]
-    Fragment = SDL_GPUShaderStage.SDL_GPU_SHADERSTAGE_FRAGMENT,
-}
-
-
 public enum ShaderFormat: uint
 {
     [EnumMember(Value = "private")]
@@ -79,10 +69,15 @@ public class ShaderInstance
     public required string EntryPoint { get; init; }
 }
 
-public class GraphicsShaderMetadata
+internal sealed class GraphicsShaderStageMetadata
 {
-    public required ShaderStage Stage { get; init; }
     public required ShaderBindingLayout BindingLayout { get; init; }
     public ShaderSystemValueInputs SystemValueInputs { get; init; }
     public required List<ShaderInstance> Shaders { get; init; }
+}
+
+internal sealed class GraphicsShaderProgramMetadata
+{
+    public required GraphicsShaderStageMetadata Vertex { get; init; }
+    public required GraphicsShaderStageMetadata Fragment { get; init; }
 }

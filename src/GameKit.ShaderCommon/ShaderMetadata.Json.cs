@@ -13,8 +13,6 @@ namespace GameKit.ShaderCommon;
 [JsonSerializable(typeof(GraphicsShaderProgramMetadataDto))]
 [JsonSerializable(typeof(GraphicsVertexShaderStageMetadataDto))]
 [JsonSerializable(typeof(GraphicsShaderStageMetadataDto))]
-[JsonSerializable(typeof(VertexShaderMetadataDto))]
-[JsonSerializable(typeof(FragmentShaderMetadataDto))]
 [JsonSerializable(typeof(ComputeShaderMetadataDto))]
 [JsonSerializable(typeof(ShaderStageDto))]
 [JsonSerializable(typeof(ShaderKindDto))]

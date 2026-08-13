@@ -75,27 +75,6 @@ public record GraphicsShaderProgramMetadataDto
 
 public readonly record struct ShaderSystemValueInputs(bool UsesVertexId, bool UsesInstanceId);
 
-public record VertexShaderMetadataDto
-{
-    public ShaderStageDto Stage { get; init; } = ShaderStageDto.Vertex;
-    public required ShaderBindingLayout BindingLayout { get; init; }
-    public ShaderSystemValueInputs SystemValueInputs { get; init; }
-    public required List<ShaderInstanceDto> Shaders { get; init; }
-    public required string SourceHash { get; init; }
-    public List<string>? SourceDependencies { get; init; }
-    public string? SlangVersion { get; init; }
-}
-
-public record FragmentShaderMetadataDto
-{
-    public ShaderStageDto Stage { get; init; } = ShaderStageDto.Fragment;
-    public required ShaderBindingLayout BindingLayout { get; init; }
-    public required List<ShaderInstanceDto> Shaders { get; init; }
-    public required string SourceHash { get; init; }
-    public List<string>? SourceDependencies { get; init; }
-    public string? SlangVersion { get; init; }
-}
-
 public record ComputeShaderMetadataDto
 {
     public ShaderStageDto Stage { get; init; } = ShaderStageDto.Compute;
