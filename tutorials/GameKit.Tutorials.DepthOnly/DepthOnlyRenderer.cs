@@ -3,7 +3,7 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.DepthOnly;
 
-public class DepthOnlyRenderer : IRenderPhase<DefaultRenderContext>
+public class DepthOnlyRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _depthOnlyPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;

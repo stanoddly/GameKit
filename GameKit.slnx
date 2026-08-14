@@ -8,7 +8,6 @@
     <Project Path="src/GameKit.Core/GameKit.Core.csproj" />
     <Project Path="src/GameKit.Componentize/GameKit.Componentize.csproj" />
     <Project Path="src/GameKit.Events/GameKit.Events.csproj" />
-    <Project Path="src/GameKit.RenderOrchestration/GameKit.RenderOrchestration.csproj" />
     <Project Path="src/GameKit.SdlangCompiler/GameKit.SdlangCompiler.csproj" />
     <Project Path="src/GameKit.ShaderCommon/GameKit.ShaderCommon.csproj" />
     <Project Path="src/GameKit.DependencyInjection/GameKit.DependencyInjection.csproj" />

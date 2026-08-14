@@ -1,14 +1,14 @@
 # Subrenderers
 
-Subrenderers are renderers that receive an existing RenderPass instead of creating their own. They're used for internal composition within an `IRenderPhase<T>`.
+Subrenderers are renderers that receive an existing RenderPass instead of creating their own. They're used for internal composition within an `IRenderer<T>`.
 
 ```
-DefaultRenderManager<T>
-└─ IRenderPhase<T>[] (geometry, lighting, post-process phases)
+RenderCoordinator<T>
+└─ IRenderer<T>[] (geometry, lighting, post-process renderers)
     └─ Subrenderers (multiple renderers sharing the same RenderPass)
 ```
 
-The parent phase creates the RenderPass and multiple subrenderers contribute to the same render targets.
+The parent renderer creates the RenderPass and multiple subrenderers contribute to the same render targets.
 
 ## Basic Pattern
 
@@ -56,7 +56,7 @@ public class MeshSubrenderer
 
 ### Defining a Subrenderer Interface
 
-Create an interface for your specific rendering phase:
+Create an interface for the subrenderers composed by a specific renderer:
 
 ```csharp
 public interface IGeometrySubrenderer : IOrderable
@@ -92,12 +92,12 @@ public class MeshSubrenderer : IGeometrySubrenderer
 }
 ```
 
-### Parent Phase Orchestration
+### Parent Renderer Orchestration
 
-The parent phase (implementing `IRenderPhase<T>`) injects all subrenderers and orders them:
+The parent renderer injects all subrenderers and orders them:
 
 ```csharp
-public class GeometryPhase : IRenderPhase<GameRenderContext>
+public class GeometryPhase : IRenderer<GameRenderContext>
 {
     private readonly IReadOnlyList<IGeometrySubrenderer> _subrenderers;
     private readonly GameRenderContextBuffers _buffers;
@@ -129,7 +129,7 @@ public class GeometryPhase : IRenderPhase<GameRenderContext>
 }
 ```
 
-**Note:** `IRenderPhase<T>` is managed by `DefaultRenderManager<T>`, which orchestrates multiple phases (geometry, lighting, post-process) in order.
+**Note:** `IRenderer<T>` is managed by `RenderCoordinator<T>`, which invokes multiple renderers in order. A renderer can represent an application-specific phase such as geometry, lighting, or post-processing.
 
 ## Key Points
 
@@ -141,8 +141,8 @@ public class GeometryPhase : IRenderPhase<GameRenderContext>
 
 ## When to Use
 
-- **Within a render phase**: When a single `IRenderPhase<T>` needs to compose multiple rendering operations
+- **Within a renderer**: When a single `IRenderer<T>` needs to compose multiple rendering operations
 - **Shared render targets**: Multiple rendering operations need to write to the same G-buffer or output textures
-- **Extensible phase implementation**: Allow easy addition of new rendering contributions without modifying the phase
+- **Extensible renderer implementation**: Allow easy addition of new rendering contributions without modifying the parent renderer
 
-Note: If you need separate RenderPasses, implement multiple `IRenderPhase<T>` classes instead.
+Note: If you need separate RenderPasses, implement multiple `IRenderer<T>` classes instead.

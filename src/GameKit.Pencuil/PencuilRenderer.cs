@@ -1,10 +1,12 @@
 using System.Numerics;
 using GameKit.Gpu;
+using GameKit.RenderOrchestration;
 using GameKit.Shaders;
 
 namespace GameKit.Pencuil;
 
-public class PencuilRenderer
+internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext>
+    where TRenderContext : IRenderContext
 {
     private static readonly ColorTargetSettings _guiColorTargetSettings = new()
     {
@@ -21,18 +23,22 @@ public class PencuilRenderer
     private readonly GraphicsPipeline _tintedTexturePipeline;
     private readonly GraphicsPipeline _presentPipeline;
     private readonly Sampler _sampler;
-    public Texture RetainedTexture => _retainedTexture;
-
     private readonly GpuDevice _gpuDevice;
     private readonly TextureFormat _colorTargetFormat;
+    private readonly Pencil _pencil;
+    private readonly bool _clearTarget;
 
     private Texture _retainedTexture;
     private Texture _depthBuffer;
     private Matrix4x4 _viewProjection;
-
     private int _maxDepthValue;
+    private bool _retainedTextureDirty;
+
+    public int Order { get; }
 
     public PencuilRenderer(
+        Pencil pencil,
+        PencuilOptions options,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
@@ -83,6 +89,9 @@ public class PencuilRenderer
 
         _gpuDevice = gpuDevice;
         _colorTargetFormat = colorTargetFormat;
+        _pencil = pencil;
+        _clearTarget = options.ClearTarget;
+        Order = options.Order;
 
         _sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
         _retainedTexture = gpuDevice.CreateColorTargetTexture(renderSize, colorTargetFormat);
@@ -91,20 +100,56 @@ public class PencuilRenderer
         _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
     }
 
-    public void Resize(ShortSize newSize)
+    public void Render(TRenderContext renderContext)
     {
+        ShortSize targetSize = renderContext.ColorTarget.Size;
+        ResizeRetainedTextureIfNeeded(targetSize);
+
+        if (_pencil.ViewportSize != targetSize)
+        {
+            _pencil.UpdateViewport(targetSize.Width, targetSize.Height);
+        }
+
+        if (_pencil.CompletedInstructionViewportSize != _pencil.ViewportSize)
+        {
+            Clear(renderContext.CommandBuffer);
+            _retainedTextureDirty = true;
+            Present(renderContext.CommandBuffer, renderContext.ColorTarget);
+            return;
+        }
+
+        // Retained texture dirtiness forces a redraw even when instruction content is
+        // unchanged, since the retained texture itself was just resized.
+        if (_pencil.InstructionsChanged || _retainedTextureDirty)
+        {
+            RenderPencil(renderContext.CommandBuffer);
+            _pencil.InstructionsChanged = false;
+            _retainedTextureDirty = false;
+        }
+
+        Present(renderContext.CommandBuffer, renderContext.ColorTarget);
+    }
+
+    private void ResizeRetainedTextureIfNeeded(ShortSize newSize)
+    {
+        if (_retainedTexture.Size == newSize)
+        {
+            return;
+        }
+
         _retainedTexture.Dispose();
         _depthBuffer.Dispose();
 
         _retainedTexture = _gpuDevice.CreateColorTargetTexture(newSize, _colorTargetFormat);
         _depthBuffer = _gpuDevice.CreateDepthBufferTexture(newSize, DepthBufferFormat.Depth32);
         _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, newSize.Width, newSize.Height, 0, 0, 1);
+        _retainedTextureDirty = true;
     }
 
-    public void Render(CommandBuffer commandBuffer, Pencil pencil)
+    private void RenderPencil(CommandBuffer commandBuffer)
     {
-        List<ColoredRectangleInstruction> coloredRectangleInstructions = pencil.CompletedColoredRectangleInstructions;
-        List<TextureRegionInstruction> textureRegionInstructions = pencil.CompletedTextureRegionInstructions;
+        List<ColoredRectangleInstruction> coloredRectangleInstructions = _pencil.CompletedColoredRectangleInstructions;
+        List<TextureRegionInstruction> textureRegionInstructions = _pencil.CompletedTextureRegionInstructions;
 
         if (coloredRectangleInstructions.Count == 0 && textureRegionInstructions.Count == 0)
         {
@@ -171,19 +216,18 @@ public class PencuilRenderer
                 renderPass.DrawPrimitive();
             }
         }
-
     }
 
-    public void Clear(CommandBuffer commandBuffer)
+    private void Clear(CommandBuffer commandBuffer)
     {
         using IRenderPass clearPass = new RenderPassBuilder(commandBuffer)
             .AddColorTarget(_retainedTexture, _guiColorTargetSettings)
             .Build();
     }
 
-    public void Present(CommandBuffer commandBuffer, Texture target, bool clearTarget)
+    private void Present(CommandBuffer commandBuffer, Texture target)
     {
-        var settings = clearTarget
+        ColorTargetSettings settings = _clearTarget
             ? ColorTargetSettings.Clear
             : new ColorTargetSettings { LoadOperation = LoadOperation.Load };
 

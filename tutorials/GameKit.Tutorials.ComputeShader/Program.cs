@@ -9,11 +9,11 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Compute Shader Demo" });
         builder.AddSingleton<ComputeRenderer>(ComputeRenderer.Create);
-        builder.AddAlias<IRenderPhase<DefaultRenderContext>, ComputeRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, ComputeRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

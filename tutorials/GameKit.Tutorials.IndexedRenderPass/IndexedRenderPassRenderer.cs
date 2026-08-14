@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.IndexedRenderPass;
 
-public class IndexedRenderPassRenderer : IRenderPhase<DefaultRenderContext>
+public class IndexedRenderPassRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _indexedPipeline;
     private readonly GraphicsPipeline _instancedPipeline;

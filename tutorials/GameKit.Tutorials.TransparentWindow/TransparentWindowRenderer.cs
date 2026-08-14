@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.TransparentWindow;
 
-public class TransparentWindowRenderer : IRenderPhase<DefaultRenderContext>
+public class TransparentWindowRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _topLeftQuad;

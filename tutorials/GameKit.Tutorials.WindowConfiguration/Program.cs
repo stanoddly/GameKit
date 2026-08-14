@@ -12,7 +12,7 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig
         {
@@ -21,7 +21,7 @@ static class Program
             AlwaysOnTop = true
         });
 
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {

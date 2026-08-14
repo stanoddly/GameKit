@@ -12,7 +12,7 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig
         {
@@ -21,7 +21,7 @@ static class Program
             Borderless = true
         });
 
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(static () => new ClearRenderPhase(FColors.SkyBlue));
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 
         builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
@@ -107,11 +107,11 @@ static class Program
     }
 }
 
-internal sealed class ClearRenderPhase : IRenderPhase<DefaultRenderContext>
+internal sealed class ClearRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly FColor _color;
 
-    public ClearRenderPhase(FColor color)
+    public ClearRenderer(FColor color)
     {
         _color = color;
     }

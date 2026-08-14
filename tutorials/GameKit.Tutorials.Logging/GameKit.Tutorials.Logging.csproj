@@ -10,7 +10,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
       <ProjectReference Include="..\..\src\GameKit.DependencyInjection\GameKit.DependencyInjection.csproj" />
       <ProjectReference Include="..\..\src\GameKit.Logging\GameKit.Logging.csproj" />

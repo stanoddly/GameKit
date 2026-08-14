@@ -9,7 +9,7 @@ static class Program
     static int Main(string[] args)
     {
         var builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager()
+            .UseDefaultRendering()
             .UsePencuil()
             .AddContentFromProjectDirectory("Content");
 

@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StencilBuffer;
 
-public class StencilBufferRenderer : IRenderPhase<DefaultRenderContext>
+public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _maskPipeline;
     private readonly GraphicsPipeline _drawPipeline;

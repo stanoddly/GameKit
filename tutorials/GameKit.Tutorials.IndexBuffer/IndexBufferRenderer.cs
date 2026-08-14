@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.IndexBuffer;
 
-public class IndexBufferRenderer : IRenderPhase<DefaultRenderContext>
+public class IndexBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionColorVertex> _vertexBuffer;

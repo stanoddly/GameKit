@@ -10,10 +10,10 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             //.AddContentFromZipPattern("data*.pak")
             //.AddContentFromProjectDirectory("_Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Game" });
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

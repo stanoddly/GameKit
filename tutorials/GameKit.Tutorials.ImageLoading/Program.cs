@@ -9,11 +9,11 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (443, 410), Title = "Image Loading Demo" });
         builder.AddSingleton<ImageLoadingRenderer>(ImageLoadingRenderer.Create);
-        builder.AddAlias<IRenderPhase<DefaultRenderContext>, ImageLoadingRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, ImageLoadingRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

@@ -23,7 +23,6 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\GameKit\GameKit.csproj" />
       <ProjectReference Include="..\..\src\GameKit.Logging\GameKit.Logging.csproj" />
-      <ProjectReference Include="..\..\src\GameKit.RenderOrchestration\GameKit.RenderOrchestration.csproj" />
       <ProjectReference Include="..\..\src\GameKit.Pencuil\GameKit.Pencuil.csproj" />
     </ItemGroup>
 
