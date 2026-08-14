@@ -4,18 +4,18 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-public abstract class RenderManager
+public interface IRenderCoordinator
 {
-    public abstract void Execute();
+    void Execute();
 }
 
-public abstract class RenderManager<TRenderContext> : RenderManager
+public abstract class RenderCoordinator<TRenderContext> : IRenderCoordinator
     where TRenderContext : IRenderContext
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly ServiceRegistry<IRenderPhase<TRenderContext>> _renderPhases;
 
-    protected RenderManager(
+    protected RenderCoordinator(
         GpuMemorySystem gpuMemorySystem,
         ServiceRegistry<IRenderPhase<TRenderContext>> renderPhases)
     {
@@ -23,7 +23,7 @@ public abstract class RenderManager<TRenderContext> : RenderManager
         _renderPhases = renderPhases;
     }
 
-    public sealed override void Execute()
+    public void Execute()
     {
         if (!TryCreateRenderContext(out TRenderContext? renderContext))
         {

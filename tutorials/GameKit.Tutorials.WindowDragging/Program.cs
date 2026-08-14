@@ -12,7 +12,7 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig
         {

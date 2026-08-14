@@ -6,12 +6,12 @@ namespace GameKit.RenderOrchestration;
 
 public static class GameKitAppBuilderExtensions
 {
-    public static GameKitAppBuilder UseRenderManager<TRenderContext>(
+    public static GameKitAppBuilder UseRenderCoordinator<TRenderContext>(
         this GameKitAppBuilder builder,
         Func<
             ServiceProvider,
             ServiceRegistry<IRenderPhase<TRenderContext>>,
-            RenderManager<TRenderContext>> factory)
+            RenderCoordinator<TRenderContext>> factory)
         where TRenderContext : IRenderContext
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -19,16 +19,16 @@ public static class GameKitAppBuilderExtensions
 
         builder.AddRegistry<IRenderPhase<TRenderContext>>(
             static (left, right) => left.Order.CompareTo(right.Order));
-        builder.AddSingleton<RenderManager>(provider => factory(
+        builder.AddSingleton<IRenderCoordinator>(provider => factory(
             provider,
             provider.GetRequiredService<ServiceRegistry<IRenderPhase<TRenderContext>>>()));
         return builder;
     }
 
-    public static GameKitAppBuilder UseDefaultRenderManager(this GameKitAppBuilder builder)
+    public static GameKitAppBuilder UseDefaultRendering(this GameKitAppBuilder builder)
     {
-        return builder.UseRenderManager<DefaultRenderContext>(
-            static (provider, renderPhases) => new DefaultRenderManager(
+        return builder.UseRenderCoordinator<DefaultRenderContext>(
+            static (provider, renderPhases) => new DefaultRenderCoordinator(
                 provider.GetRequiredService<WindowManager>(),
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),

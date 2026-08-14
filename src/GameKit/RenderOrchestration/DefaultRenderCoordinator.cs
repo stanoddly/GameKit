@@ -4,12 +4,12 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-internal sealed class DefaultRenderManager : RenderManager<DefaultRenderContext>
+internal sealed class DefaultRenderCoordinator : RenderCoordinator<DefaultRenderContext>
 {
     private readonly WindowManager _windowManager;
     private readonly GpuDevice _gpuDevice;
 
-    internal DefaultRenderManager(
+    internal DefaultRenderCoordinator(
         WindowManager windowManager,
         GpuDevice gpuDevice,
         GpuMemorySystem gpuMemorySystem,

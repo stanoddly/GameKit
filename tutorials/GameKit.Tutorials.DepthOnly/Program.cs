@@ -9,7 +9,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);

@@ -9,7 +9,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Primary Window" });
         builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(PrimaryRenderer.Create);

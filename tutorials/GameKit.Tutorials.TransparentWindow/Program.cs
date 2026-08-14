@@ -17,7 +17,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager();
+            .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig
         {

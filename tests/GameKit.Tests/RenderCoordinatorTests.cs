@@ -6,16 +6,16 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tests;
 
-public class DefaultRenderManagerTests
+public class RenderCoordinatorTests
 {
     [Test]
     public void Execute_WithNoRenderPhases_DoesNotThrow()
     {
         GameKitAppBuilder builder = CreateBuilder(new List<string>());
         ServiceProvider provider = builder.BuildServiceProvider();
-        RenderManager renderManager = provider.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = provider.GetRequiredService<IRenderCoordinator>();
 
-        Assert.DoesNotThrow(renderManager.Execute);
+        Assert.DoesNotThrow(renderCoordinator.Execute);
     }
 
     [Test]
@@ -24,13 +24,13 @@ public class DefaultRenderManagerTests
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
         ServiceProvider parent = builder.BuildServiceProvider();
-        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
         using ServiceProvider child = childCollection.BuildServiceProvider();
 
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.EqualTo(new[] { "child" }));
     }
@@ -41,14 +41,14 @@ public class DefaultRenderManagerTests
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
         ServiceProvider parent = builder.BuildServiceProvider();
-        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
         ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.Empty);
     }
@@ -60,13 +60,13 @@ public class DefaultRenderManagerTests
         GameKitAppBuilder builder = CreateBuilder(calls);
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
-        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls, 5));
         using ServiceProvider child = childCollection.BuildServiceProvider();
 
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
@@ -78,14 +78,14 @@ public class DefaultRenderManagerTests
         GameKitAppBuilder builder = CreateBuilder(calls);
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
-        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceProvider? child = null;
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new DisposingRenderPhase("child", calls, () => child!, 0));
         child = childCollection.BuildServiceProvider();
 
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
@@ -98,14 +98,14 @@ public class DefaultRenderManagerTests
         ServiceProvider? parent = null;
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new ChildProviderBuildingRenderPhase("root", calls, () => parent!, 0));
         parent = builder.BuildServiceProvider();
-        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
+        IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.EqualTo(new[] { "root" }));
 
         calls.Clear();
-        renderManager.Execute();
+        renderCoordinator.Execute();
 
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
@@ -113,8 +113,8 @@ public class DefaultRenderManagerTests
     private static GameKitAppBuilder CreateBuilder(List<string> calls)
     {
         GameKitAppBuilder builder = new();
-        builder.UseRenderManager<TestRenderContext>(
-            static (provider, renderPhases) => new TestRenderManager(
+        builder.UseRenderCoordinator<TestRenderContext>(
+            static (provider, renderPhases) => new TestRenderCoordinator(
                 provider.GetRequiredService<GpuMemorySystem>(),
                 renderPhases));
         builder.AddSingleton(new GpuMemorySystem(null!));
@@ -122,9 +122,9 @@ public class DefaultRenderManagerTests
         return builder;
     }
 
-    private sealed class TestRenderManager : RenderManager<TestRenderContext>
+    private sealed class TestRenderCoordinator : RenderCoordinator<TestRenderContext>
     {
-        public TestRenderManager(
+        public TestRenderCoordinator(
             GpuMemorySystem gpuMemorySystem,
             ServiceRegistry<IRenderPhase<TestRenderContext>> renderPhases)
             : base(gpuMemorySystem, renderPhases)

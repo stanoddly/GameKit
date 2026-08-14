@@ -17,7 +17,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRenderManager()
+            .UseDefaultRendering()
             .RegisterAudio();
 
         builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Audio Tutorial" });
