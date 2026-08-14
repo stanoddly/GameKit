@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using GameKit.DependencyInjection;
 using GameKit.Input;
 using SDL;
@@ -16,11 +15,11 @@ public class WindowEventSinkTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(services.IsRegistered<Window<FirstWindow>>(), Is.True);
+            Assert.That(services.IsRegistered<FirstWindow>(), Is.True);
             Assert.That(services.IsRegistered<IKeyboardService<FirstWindow>>(), Is.True);
             Assert.That(services.IsRegistered<IMouseService<FirstWindow>>(), Is.True);
             Assert.That(services.IsRegistered<ITextInputService<FirstWindow>>(), Is.True);
-            Assert.That(services.IsRegistered<Window<SecondWindow>>(), Is.False);
+            Assert.That(services.IsRegistered<SecondWindow>(), Is.False);
         });
     }
 
@@ -37,8 +36,8 @@ public class WindowEventSinkTests
     [Test]
     public void Process_KeyEvent_NotifiesOnlyMatchingTypedInputService()
     {
-        Window<FirstWindow> firstWindow = CreateWindow<FirstWindow>();
-        Window<SecondWindow> secondWindow = CreateWindow<SecondWindow>();
+        FirstWindow firstWindow = new();
+        SecondWindow secondWindow = new();
         AppControl appControl = new();
 
         KeyboardService<FirstWindow> firstKeyboard = new(appControl);
@@ -76,17 +75,17 @@ public class WindowEventSinkTests
         Assert.That(secondCalls, Is.EqualTo(0));
     }
 
-    private static Window<TWindow> CreateWindow<TWindow>()
-        where TWindow : class
+    private sealed class FirstWindow : Window
     {
-        return (Window<TWindow>)RuntimeHelpers.GetUninitializedObject(typeof(Window<TWindow>));
+        public FirstWindow()
+        {
+        }
     }
 
-    private sealed class FirstWindow
+    private sealed class SecondWindow : Window
     {
-    }
-
-    private sealed class SecondWindow
-    {
+        public SecondWindow()
+        {
+        }
     }
 }

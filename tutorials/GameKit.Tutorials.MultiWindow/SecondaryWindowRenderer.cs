@@ -31,7 +31,7 @@ public sealed class SecondaryWindowRenderer : IRenderPhase<SecondaryRenderContex
     }
 
     public static SecondaryWindowRenderer Create(
-        Window<SecondaryWindow> window,
+        SecondaryWindow window,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem)
     {

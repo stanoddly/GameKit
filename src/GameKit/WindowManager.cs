@@ -11,7 +11,7 @@ public class WindowManager : IDisposable
     private readonly Dictionary<uint, Window> _windowsById = new();
     private readonly List<Window> _windows = new();
 
-    public Window<DefaultWindow> PrimaryWindow { get; }
+    public DefaultWindow PrimaryWindow { get; }
     public IReadOnlyList<Window> Windows => _windows;
 
     public WindowManager(GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
@@ -27,16 +27,16 @@ public class WindowManager : IDisposable
 
     public Window CreateWindow(WindowOptions options)
     {
-        Window<DynamicWindow> window = CreateWindow<DynamicWindow>(options);
+        DynamicWindow window = CreateWindow<DynamicWindow>(options);
         return window;
     }
 
-    public Window<TWindow> CreateWindow<TWindow>(WindowOptions options)
-        where TWindow : class
+    internal TWindow CreateWindow<TWindow>(WindowOptions options)
+        where TWindow : Window, new()
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        Window<TWindow> window = _factory.CreateWindow<TWindow>(
+        TWindow window = _factory.CreateWindow<TWindow>(
             _gpuDevice,
             _frameContext,
             _platformInfo,
@@ -82,7 +82,10 @@ public class WindowManager : IDisposable
         _windowsById.Add(window.Id, window);
     }
 
-    private sealed class DynamicWindow
+    private sealed class DynamicWindow : Window
     {
+        public DynamicWindow()
+        {
+        }
     }
 }

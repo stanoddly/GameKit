@@ -56,7 +56,7 @@ public class GameKitFactory: IDisposable
         return new PlatformInfo(GetCurrentVideoDriver());
     }
 
-    internal Window<DefaultWindow> CreateWindow(
+    internal DefaultWindow CreateWindow(
         GpuDevice gpuDevice,
         GameKitFrameContext frameContext,
         AppConfig config,
@@ -76,12 +76,12 @@ public class GameKitFactory: IDisposable
             true);
     }
 
-    internal Window<TWindow> CreateWindow<TWindow>(
+    internal TWindow CreateWindow<TWindow>(
         GpuDevice gpuDevice,
         GameKitFrameContext frameContext,
         PlatformInfo platformInfo,
         WindowOptions options)
-        where TWindow : class
+        where TWindow : Window, new()
     {
         return CreateWindow<TWindow>(
             gpuDevice,
@@ -97,7 +97,7 @@ public class GameKitFactory: IDisposable
             options.StopGameOnClose);
     }
 
-    private Window<TWindow> CreateWindow<TWindow>(
+    private TWindow CreateWindow<TWindow>(
         GpuDevice gpuDevice,
         GameKitFrameContext frameContext,
         PlatformInfo platformInfo,
@@ -109,9 +109,10 @@ public class GameKitFactory: IDisposable
         bool borderless,
         bool alwaysOnTop,
         bool stopGameOnClose)
-        where TWindow : class
+        where TWindow : Window, new()
     {
         EnsureSdlInitialized();
+        TWindow window = new();
 
         string windowTitle;
         if (title == null)
@@ -181,13 +182,14 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window<TWindow>(
+        window.Initialize(
             sdlWindow,
             gpuDevice.SdlGpuDevice,
             sdlWindowId,
             frameContext,
             platformInfo,
             stopGameOnClose);
+        return window;
     }
 
     internal GpuDevice CreateGpuDevice()
@@ -288,7 +290,7 @@ public class GameKitFactory: IDisposable
     }
 
     internal KeyboardService<TWindow> CreateKeyboardService<TWindow>(AppControl appControl)
-        where TWindow : class
+        where TWindow : Window
     {
         EnsureSdlInitialized();
         return new KeyboardService<TWindow>(appControl);
@@ -304,8 +306,8 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService<TWindow> CreateMouseService<TWindow>(Window<TWindow> window)
-        where TWindow : class
+    internal MouseService<TWindow> CreateMouseService<TWindow>(TWindow window)
+        where TWindow : Window
     {
         EnsureSdlInitialized();
         return new MouseService<TWindow>(IsMouseInWindow(window));
@@ -326,8 +328,8 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal TextInputService<TWindow> CreateTextInputService<TWindow>(Window<TWindow> window)
-        where TWindow : class
+    internal TextInputService<TWindow> CreateTextInputService<TWindow>(TWindow window)
+        where TWindow : Window
     {
         EnsureSdlInitialized();
         return new TextInputService<TWindow>(window);

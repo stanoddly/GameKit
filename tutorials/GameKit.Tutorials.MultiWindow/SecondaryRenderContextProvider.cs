@@ -7,14 +7,14 @@ public sealed class SecondaryRenderContextProvider
     : WindowRenderContextProvider<SecondaryWindow, SecondaryRenderContext>
 {
     public SecondaryRenderContextProvider(
-        Window<SecondaryWindow> window,
+        SecondaryWindow window,
         GpuDevice gpuDevice)
         : base(window, gpuDevice)
     {
     }
 
     protected override SecondaryRenderContext CreateRenderContext(
-        Window<SecondaryWindow> window,
+        SecondaryWindow window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {

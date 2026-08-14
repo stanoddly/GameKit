@@ -6,14 +6,14 @@ public class DefaultRenderContextProvider
     : WindowRenderContextProvider<DefaultWindow, DefaultRenderContext>
 {
     public DefaultRenderContextProvider(
-        Window<DefaultWindow> window,
+        DefaultWindow window,
         GpuDevice gpuDevice)
         : base(window, gpuDevice)
     {
     }
 
     protected override DefaultRenderContext CreateRenderContext(
-        Window<DefaultWindow> window,
+        DefaultWindow window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {

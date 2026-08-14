@@ -5,14 +5,14 @@ namespace GameKit.RenderOrchestration;
 
 public abstract class WindowRenderContextProvider<TWindow, TRenderContext>
     : IRenderContextProvider<TRenderContext>
-    where TWindow : class
+    where TWindow : Window
     where TRenderContext : IRenderContext
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly Window<TWindow> _window;
+    private readonly TWindow _window;
 
     protected WindowRenderContextProvider(
-        Window<TWindow> window,
+        TWindow window,
         GpuDevice gpuDevice)
     {
         _window = window;
@@ -50,7 +50,7 @@ public abstract class WindowRenderContextProvider<TWindow, TRenderContext>
     }
 
     protected abstract TRenderContext CreateRenderContext(
-        Window<TWindow> window,
+        TWindow window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer);
 }

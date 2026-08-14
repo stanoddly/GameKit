@@ -9,15 +9,15 @@ internal interface IWindowEventSink
 }
 
 internal sealed class WindowEventSink<TWindow> : IWindowEventSink, IDisposable
-    where TWindow : class
+    where TWindow : Window
 {
     private readonly KeyboardService<TWindow> _keyboardService;
     private readonly MouseService<TWindow> _mouseService;
     private readonly TextInputService<TWindow> _textInputService;
-    private readonly Window<TWindow> _window;
+    private readonly TWindow _window;
 
     public WindowEventSink(
-        Window<TWindow> window,
+        TWindow window,
         KeyboardService<TWindow> keyboardService,
         MouseService<TWindow> mouseService,
         TextInputService<TWindow> textInputService)

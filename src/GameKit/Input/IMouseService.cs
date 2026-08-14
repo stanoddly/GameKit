@@ -22,6 +22,6 @@ public interface IMouseService
 }
 
 public interface IMouseService<TWindow> : IMouseService
-    where TWindow : class
+    where TWindow : Window
 {
 }

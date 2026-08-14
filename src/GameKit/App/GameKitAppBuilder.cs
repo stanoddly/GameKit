@@ -74,9 +74,9 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<PlatformInfo, GameKitFactory>();
 
         AddSingleton<WindowManager>();
-        AddSingleton<Window<DefaultWindow>>(static provider =>
+        AddSingleton<DefaultWindow>(static provider =>
             provider.GetRequiredService<WindowManager>().PrimaryWindow);
-        AddAlias<Window, Window<DefaultWindow>>();
+        AddAlias<Window, DefaultWindow>();
 
         AddSingleton<GpuDevice, GameKitFactory>();
 

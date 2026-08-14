@@ -15,36 +15,47 @@ public class Window : IDisposable
 {
     private WindowManager? _windowManager;
     private IWindowEventSink? _eventSink;
+    private bool _initialized;
     private bool _disposed;
 
-    internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
+    internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; private set; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
-    private readonly GameKitFrameContext _frameContext;
-    private readonly PlatformInfo _platformInfo;
+    private GameKitFrameContext _frameContext = null!;
+    private PlatformInfo _platformInfo = null!;
     
-    public uint Id { get; }
+    public uint Id { get; private set; }
 
     private ShortSize _lastSize;
 
     public event ResolutionChangedHandler? ResolutionChanged;
     public bool IsDisposed => _disposed;
-    public bool StopGameOnClose { get; }
+    public bool StopGameOnClose { get; private set; }
 
-    internal Window(
+    protected Window()
+    {
+    }
+
+    internal void Initialize(
         Pointer<SDL_Window> sdlWindow,
-        Pointer<SDL_GPUDevice> sdlSdlGpuDevice,
+        Pointer<SDL_GPUDevice> sdlGpuDevice,
         uint id,
         GameKitFrameContext frameContext,
         PlatformInfo platformInfo,
         bool stopGameOnClose)
     {
-        SdlGpuDevice = sdlSdlGpuDevice;
+        if (_initialized || _disposed)
+        {
+            throw new InvalidOperationException("The window is already initialized.");
+        }
+
+        SdlGpuDevice = sdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
         _frameContext = frameContext;
         _platformInfo = platformInfo;
         _lastSize = RenderSizeInPixels;
         StopGameOnClose = stopGameOnClose;
+        _initialized = true;
     }
 
     internal void Attach(WindowManager windowManager)
@@ -544,6 +555,12 @@ public class Window : IDisposable
         }
 
         _disposed = true;
+
+        if (!_initialized)
+        {
+            return;
+        }
+
         WindowManager? windowManager = _windowManager;
         _windowManager = null;
         windowManager?.Detach(this);
@@ -640,20 +657,5 @@ public class Window : IDisposable
                 Marshal.FreeCoTaskMem(allocatedString);
             }
         }
-    }
-}
-
-public sealed class Window<TWindow> : Window
-    where TWindow : class
-{
-    internal Window(
-        Pointer<SDL_Window> sdlWindow,
-        Pointer<SDL_GPUDevice> sdlGpuDevice,
-        uint id,
-        GameKitFrameContext frameContext,
-        PlatformInfo platformInfo,
-        bool stopGameOnClose)
-        : base(sdlWindow, sdlGpuDevice, id, frameContext, platformInfo, stopGameOnClose)
-    {
     }
 }

@@ -10,6 +10,6 @@ public interface IKeyboardService
 }
 
 public interface IKeyboardService<TWindow> : IKeyboardService
-    where TWindow : class
+    where TWindow : Window
 {
 }

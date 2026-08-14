@@ -19,6 +19,6 @@ public interface ITextInputService
 }
 
 public interface ITextInputService<TWindow> : ITextInputService
-    where TWindow : class
+    where TWindow : Window
 {
 }

@@ -146,9 +146,9 @@ public class TextInputService : ITextInputService
 }
 
 public sealed class TextInputService<TWindow> : TextInputService, ITextInputService<TWindow>
-    where TWindow : class
+    where TWindow : Window
 {
-    internal TextInputService(Window<TWindow> window)
+    internal TextInputService(TWindow window)
         : base(window)
     {
     }
