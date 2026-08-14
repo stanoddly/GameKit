@@ -1,8 +1,10 @@
 using GameKit.App;
 using GameKit.Content;
 using GameKit.DependencyInjection;
+using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
+using GameKit.Shaders;
 
 namespace GameKit.Pencuil;
 
@@ -15,7 +17,6 @@ public static class PencuilExtensions
         builder.AddSingleton(GuiStyles.Style);
         builder.AddSingleton(new PencuilOptions { Order = order, InputOrder = inputOrder, ClearTarget = clearTarget });
         builder.AddSingleton<Pencil>();
-        builder.AddSingleton<PencuilRenderer>();
 
         ViewRegistry viewRegistry = new();
         builder.AddSingleton(viewRegistry);
@@ -36,11 +37,15 @@ public static class PencuilExtensions
             }
         });
 
-        // Factory overload required: TRenderContext is a type parameter, so the source generator cannot intercept it.
-        builder.AddSingleton<IRenderer<TRenderContext>>(sp => new PencuilRenderPhase<TRenderContext>(
+        // Factory overload required: generated constructor registration cannot bind TRenderContext yet.
+        builder.AddSingleton<IRenderer<TRenderContext>, PencuilRenderer<TRenderContext>>(sp => new PencuilRenderer<TRenderContext>(
             sp.GetRequiredService<Pencil>(),
-            sp.GetRequiredService<PencuilRenderer>(),
-            sp.GetRequiredService<PencuilOptions>()));
+            sp.GetRequiredService<PencuilOptions>(),
+            sp.GetRequiredService<GraphicsPipelineBuilder>(),
+            sp.GetRequiredService<GpuMemorySystem>(),
+            sp.GetRequiredService<ShaderLoader>(),
+            sp.GetRequiredService<GpuDevice>(),
+            sp.GetRequiredService<WindowManager>()));
         builder.AddSingleton<PencilSystem>();
         return builder;
     }
