@@ -39,7 +39,7 @@ internal sealed class GameController : IDisposable
             return;
         }
 
-        _windows.CreateWindow(GameStage.SecondaryWindowName, new WindowOptions(
+        _windows.CreateWindow(GameStage.SecondaryWindowName, new WindowConfig(
             Size: new Size<uint>(480, 360),
             Title: "Secondary window - right-click to return"));
     }

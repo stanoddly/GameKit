@@ -23,7 +23,7 @@ public class WindowManager : IWindowRegistry, IDisposable
         GameKitFactory factory,
         GpuDevice gpuDevice,
         GameKitFrameContext frameContext,
-        AppConfig config,
+        WindowConfig config,
         PlatformInfo platformInfo)
     {
         _factory = factory;
@@ -36,11 +36,11 @@ public class WindowManager : IWindowRegistry, IDisposable
     }
 
     /// <summary>Creates the secondary window claimed by a render coordinator.</summary>
-    public Window CreateWindow(string name, WindowOptions options)
+    public Window CreateWindow(string name, WindowConfig config)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(config);
 
         if (!_claimedWindowNames.Contains(name))
         {
@@ -53,15 +53,6 @@ public class WindowManager : IWindowRegistry, IDisposable
             throw new InvalidOperationException($"Window '{name}' is already open.");
         }
 
-        AppConfig config = new(
-            options.Size,
-            options.Title,
-            null,
-            options.Fullscreen,
-            options.Resizable,
-            options.Transparent,
-            options.Borderless,
-            options.AlwaysOnTop);
         Window window = _factory.CreateWindow(_gpuDevice, _frameContext, config, _platformInfo);
         RegisterWindow(name, window);
         return window;

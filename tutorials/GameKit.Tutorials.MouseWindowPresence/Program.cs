@@ -11,7 +11,7 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Mouse Window Presence" });
+        builder.AddSingleton(new WindowConfig { Size = (640, 480), Title = "Mouse Window Presence" });
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((IMouseService mouseService) =>

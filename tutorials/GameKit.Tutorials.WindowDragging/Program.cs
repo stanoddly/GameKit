@@ -14,7 +14,7 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig
+        builder.AddSingleton(new WindowConfig
         {
             Size = (400, 400),
             Title = "Window Dragging",

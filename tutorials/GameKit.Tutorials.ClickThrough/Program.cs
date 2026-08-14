@@ -1,6 +1,5 @@
 using GameKit;
 using GameKit.App;
-using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
 using GameKit.Tutorials.ClickThrough;
@@ -17,12 +16,11 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig
+        builder.AddSingleton(new WindowConfig
         {
             Size = (400, 400),
             Title = "Click Through",
-            Borderless = true,
-            ClearColor = FColors.Black
+            Borderless = true
         });
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(ClickThroughRenderer.Create);
 

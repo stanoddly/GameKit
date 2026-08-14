@@ -11,7 +11,7 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Stencil Buffer" });
+        builder.AddSingleton(new WindowConfig { Size = (1280, 720), Title = "Stencil Buffer" });
         builder.AddSingleton<StencilBufferRenderer>(StencilBufferRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, StencilBufferRenderer>();
 

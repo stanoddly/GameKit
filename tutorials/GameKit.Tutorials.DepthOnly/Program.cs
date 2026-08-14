@@ -11,7 +11,7 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
+        builder.AddSingleton(new WindowConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, DepthOnlyRenderer>();
 

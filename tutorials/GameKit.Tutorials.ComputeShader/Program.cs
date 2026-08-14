@@ -11,7 +11,7 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Compute Shader Demo" });
+        builder.AddSingleton(new WindowConfig { Size = (800, 600), Title = "Compute Shader Demo" });
         builder.AddSingleton<ComputeRenderer>(ComputeRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, ComputeRenderer>();
 

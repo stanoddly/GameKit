@@ -1,6 +1,6 @@
 namespace GameKit;
 
-public sealed record WindowOptions(
+public sealed record WindowConfig(
     Size<uint>? Size = null,
     string? Title = null,
     bool Fullscreen = false,

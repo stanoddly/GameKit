@@ -11,7 +11,7 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig
+        builder.AddSingleton(new WindowConfig
         {
             Size = (640, 480),
             Title = "Main menu - click to start"

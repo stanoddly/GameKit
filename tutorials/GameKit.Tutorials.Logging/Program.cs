@@ -36,7 +36,7 @@ static class Program
 #endif
         });
         builder.AddSingleton<PlayerInputService>(PlayerInputService.Create);
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Logging" });
+        builder.AddSingleton(new WindowConfig { Size = (1280, 720), Title = "Logging" });
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();

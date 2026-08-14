@@ -12,7 +12,7 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
+        builder.AddSingleton(new WindowConfig { Size = (640, 480), Title = "Gamepad Tutorial" });
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((IGamepadService gamepadService) =>

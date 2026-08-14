@@ -120,16 +120,11 @@ public class Pencil
     internal bool FocusClaimedThisFrame;
     internal TextFieldEditingState? EditingState;
 
-    public Pencil(IFontSystem fontSystem, IClipboardService clipboardService, GuiStyle guiStyle, AppConfig appConfig)
+    public Pencil(IFontSystem fontSystem, IClipboardService clipboardService, GuiStyle guiStyle)
     {
         _fontSystem = fontSystem;
         _clipboardService = clipboardService;
         Style = guiStyle;
-        if (appConfig.Size is { } size)
-        {
-            _viewportWidth = (int)size.Width;
-            _viewportHeight = (int)size.Height;
-        }
     }
 
     public void AddHoverTest(Rectangle test)

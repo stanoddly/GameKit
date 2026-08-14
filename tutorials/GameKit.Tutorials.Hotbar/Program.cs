@@ -13,7 +13,7 @@ static class Program
             .UsePencuil()
             .AddContentFromProjectDirectory("Content");
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
+        builder.AddSingleton(new WindowConfig { Size = (1280, 720), Title = "Hotbar" });
         builder.AddSingleton(new HotbarViewModel());
         builder.AddSingleton<IView, Hotbar>();
 

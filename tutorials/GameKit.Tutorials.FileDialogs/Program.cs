@@ -13,7 +13,7 @@ static class Program
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new AppConfig { Size = (960, 540), Title = "File Dialogs" });
+        builder.AddSingleton(new WindowConfig { Size = (960, 540), Title = "File Dialogs" });
         builder.AddSingleton(new FileDialogsViewModel());
         builder.AddSingleton<IView, FileDialogsView>();
 

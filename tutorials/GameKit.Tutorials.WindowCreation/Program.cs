@@ -12,7 +12,7 @@ static class Program
             //.AddContentFromProjectDirectory("_Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Game" });
+        builder.AddSingleton(new WindowConfig { Size = (1280, 720), Title = "Game" });
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         using IGameKitApp gameKitApp = builder.Build();

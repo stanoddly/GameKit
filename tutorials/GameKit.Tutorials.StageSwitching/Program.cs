@@ -13,7 +13,7 @@ static class Program
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new AppConfig { Size = (960, 540), Title = "Stage Switching" });
+        builder.AddSingleton(new WindowConfig { Size = (960, 540), Title = "Stage Switching" });
         builder.AddSingleton<IView, MenuView>();
 
         using IGameKitApp gameKitApp = builder.Build();

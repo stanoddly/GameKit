@@ -51,7 +51,7 @@ The coordinator does no work while its claimed window is closed. Runtime code op
 ```csharp
 windows.CreateWindow(
     "inventory",
-    new WindowOptions(Title: "Inventory"));
+    new WindowConfig(Title: "Inventory"));
 ```
 
 Creating an undeclared name, opening the same name twice, or registering another coordinator for a claimed name throws. A user-closed secondary window can be reopened under the same name while the stage remains active.

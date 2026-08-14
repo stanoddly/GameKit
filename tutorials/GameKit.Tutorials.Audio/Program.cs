@@ -20,7 +20,7 @@ static class Program
             .UseDefaultRendering()
             .RegisterAudio();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Audio Tutorial" });
+        builder.AddSingleton(new WindowConfig { Size = (640, 480), Title = "Audio Tutorial" });
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((IAudioSystem audioSystem, IKeyboardService keyboardService, AppControl appControl) =>

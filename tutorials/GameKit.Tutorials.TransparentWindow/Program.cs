@@ -5,7 +5,6 @@
 // See: https://github.com/libsdl-org/SDL/issues/12410
 
 using GameKit.App;
-using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
 
@@ -19,13 +18,12 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig
+        builder.AddSingleton(new WindowConfig
         {
             Size = (800, 600),
             Title = "Transparent Window",
             Transparent = true,
-            Borderless = true,
-            ClearColor = FColors.Transparent
+            Borderless = true
         });
         if (OperatingSystem.IsWindows())
         {

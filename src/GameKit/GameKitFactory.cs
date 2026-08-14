@@ -56,7 +56,7 @@ public class GameKitFactory: IDisposable
         return new PlatformInfo(GetCurrentVideoDriver());
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, WindowConfig config, PlatformInfo platformInfo)
     {
         return CreateWindow(gpuDevice, frameContext, platformInfo, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
     }

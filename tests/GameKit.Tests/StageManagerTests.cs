@@ -162,16 +162,16 @@ public class StageManagerTests
     public void Load_StageServicesCanResolveRootServices()
     {
         ServiceCollection rootCollection = new();
-        rootCollection.AddSingleton(new AppConfig { Title = "test" });
+        rootCollection.AddSingleton(new WindowConfig { Title = "test" });
         ServiceProvider root = rootCollection.BuildServiceProvider();
         StageManager stageManager = new(root);
 
-        AppConfig? resolved = null;
+        WindowConfig? resolved = null;
         stageManager.Load(services =>
         {
             services.AddSingleton<IView>(sp =>
             {
-                resolved = sp.GetRequiredService<AppConfig>();
+                resolved = sp.GetRequiredService<WindowConfig>();
                 return new TestView("stage");
             });
         });

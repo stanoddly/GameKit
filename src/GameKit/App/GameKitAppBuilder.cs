@@ -65,9 +65,9 @@ public class GameKitAppBuilder : ServiceCollection
         {
             AddSingleton(new GameKitConfig());
         }
-        if (!IsRegistered<AppConfig>())
+        if (!IsRegistered<WindowConfig>())
         {
-            AddSingleton(new AppConfig());
+            AddSingleton(new WindowConfig());
         }
 
         AddSingleton<GameKitFactory>();
