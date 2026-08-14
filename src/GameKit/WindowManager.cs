@@ -4,29 +4,27 @@ namespace GameKit;
 
 public class WindowManager : IWindowRegistry, IDisposable
 {
+    public const string PrimaryWindowName = "main";
+
     private readonly GameKitFactory _factory;
     private readonly GpuDevice _gpuDevice;
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
-    private readonly Dictionary<WindowId, Window> _windowsById = new();
-    private readonly Dictionary<uint, WindowId> _windowIdsBySdlId = new();
+    private readonly Dictionary<string, Window> _windowsByName = new(StringComparer.Ordinal);
+    private readonly Dictionary<uint, string> _windowNamesBySdlId = new();
+    private readonly HashSet<string> _claimedWindowNames = new(StringComparer.Ordinal);
     private readonly List<Window> _windows = new();
-    private ulong _lastWindowId;
     private bool _disposed;
 
     public Window PrimaryWindow { get; }
-    public WindowId PrimaryWindowId { get; }
     public IReadOnlyList<Window> Windows => _windows;
 
-    event Action<WindowId>? IWindowRegistry.WindowDestroyed
-    {
-        add => WindowDestroyed += value;
-        remove => WindowDestroyed -= value;
-    }
-
-    private event Action<WindowId>? WindowDestroyed;
-
-    public WindowManager(GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    public WindowManager(
+        GameKitFactory factory,
+        GpuDevice gpuDevice,
+        GameKitFrameContext frameContext,
+        AppConfig config,
+        PlatformInfo platformInfo)
     {
         _factory = factory;
         _gpuDevice = gpuDevice;
@@ -34,76 +32,126 @@ public class WindowManager : IWindowRegistry, IDisposable
         _platformInfo = platformInfo;
 
         PrimaryWindow = factory.CreateWindow(gpuDevice, frameContext, config, platformInfo);
-        PrimaryWindowId = RegisterWindow(PrimaryWindow);
+        RegisterWindow(PrimaryWindowName, PrimaryWindow);
     }
 
-    /// <summary>Creates a secondary window and returns its opaque application identifier.</summary>
-    public WindowId CreateWindow(WindowOptions options)
+    /// <summary>Creates the secondary window claimed by a render coordinator.</summary>
+    public Window CreateWindow(string name, WindowOptions options)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(options);
 
-        AppConfig config = new(options.Size, options.Title, null, options.Fullscreen, options.Resizable, options.Transparent, options.Borderless, options.AlwaysOnTop);
+        if (!_claimedWindowNames.Contains(name))
+        {
+            throw new InvalidOperationException(
+                $"Window '{name}' has not been claimed by a render coordinator.");
+        }
+
+        if (_windowsByName.ContainsKey(name))
+        {
+            throw new InvalidOperationException($"Window '{name}' is already open.");
+        }
+
+        AppConfig config = new(
+            options.Size,
+            options.Title,
+            null,
+            options.Fullscreen,
+            options.Resizable,
+            options.Transparent,
+            options.Borderless,
+            options.AlwaysOnTop);
         Window window = _factory.CreateWindow(_gpuDevice, _frameContext, config, _platformInfo);
-        return RegisterWindow(window);
+        RegisterWindow(name, window);
+        return window;
+    }
+
+    public bool IsWindowOpen(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return _windowsByName.ContainsKey(name);
     }
 
     public void DestroyWindow(Window window)
     {
+        ArgumentNullException.ThrowIfNull(window);
+
         if (window == PrimaryWindow)
         {
             throw new InvalidOperationException("Cannot destroy the primary window.");
         }
 
-        if (!_windowIdsBySdlId.TryGetValue(window.Id, out WindowId windowId) ||
-            !_windowsById.TryGetValue(windowId, out Window? registeredWindow) ||
+        if (!_windowNamesBySdlId.TryGetValue(window.Id, out string? name) ||
+            !_windowsByName.TryGetValue(name, out Window? registeredWindow) ||
             !ReferenceEquals(window, registeredWindow))
         {
             return;
         }
 
-        DestroyWindow(windowId);
+        DestroyWindow(name);
     }
 
-    /// <summary>Destroys a secondary window if its identifier is still active.</summary>
-    public bool DestroyWindow(WindowId windowId)
+    /// <summary>Destroys a secondary window if it is open.</summary>
+    public bool DestroyWindow(string name)
     {
-        if (!_windowsById.TryGetValue(windowId, out Window? window))
-        {
-            return false;
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        if (window == PrimaryWindow)
+        if (name == PrimaryWindowName)
         {
             throw new InvalidOperationException("Cannot destroy the primary window.");
         }
 
-        _windowsById.Remove(windowId);
-        _windowIdsBySdlId.Remove(window.Id);
+        if (!_windowsByName.Remove(name, out Window? window))
+        {
+            return false;
+        }
+
+        _windowNamesBySdlId.Remove(window.Id);
         _windows.Remove(window);
-        WindowDestroyed?.Invoke(windowId);
         window.Dispose();
         return true;
     }
 
     internal bool TryGetWindow(uint windowId, out Window window)
     {
-        if (_windowIdsBySdlId.TryGetValue(windowId, out WindowId id))
+        if (_windowNamesBySdlId.TryGetValue(windowId, out string? name))
         {
-            return _windowsById.TryGetValue(id, out window!);
+            return _windowsByName.TryGetValue(name, out window!);
         }
 
         window = null!;
         return false;
     }
 
-    bool IWindowRegistry.TryGetWindow(WindowId windowId, out Window window)
+    void IWindowRegistry.ClaimWindow(string name)
     {
-        return _windowsById.TryGetValue(windowId, out window!);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        if (!_claimedWindowNames.Add(name))
+        {
+            throw new InvalidOperationException(
+                $"Window '{name}' is already claimed by another render coordinator.");
+        }
     }
 
-    void IWindowRegistry.DestroyWindow(WindowId windowId)
+    void IWindowRegistry.ReleaseWindow(string name)
     {
-        DestroyWindow(windowId);
+        if (!_claimedWindowNames.Remove(name))
+        {
+            return;
+        }
+
+        if (name != PrimaryWindowName)
+        {
+            DestroyWindow(name);
+        }
+    }
+
+    bool IWindowRegistry.TryGetWindow(string name, out Window window)
+    {
+        return _windowsByName.TryGetValue(name, out window!);
     }
 
     public void Dispose()
@@ -117,22 +165,20 @@ public class WindowManager : IWindowRegistry, IDisposable
         for (int i = _windows.Count - 1; i >= 1; i--)
         {
             Window window = _windows[i];
-            DestroyWindow(_windowIdsBySdlId[window.Id]);
+            DestroyWindow(_windowNamesBySdlId[window.Id]);
         }
 
-        _windowsById.Remove(PrimaryWindowId);
-        _windowIdsBySdlId.Remove(PrimaryWindow.Id);
+        _windowsByName.Remove(PrimaryWindowName);
+        _windowNamesBySdlId.Remove(PrimaryWindow.Id);
         _windows.Remove(PrimaryWindow);
-        WindowDestroyed?.Invoke(PrimaryWindowId);
+        _claimedWindowNames.Clear();
         PrimaryWindow.Dispose();
     }
 
-    private WindowId RegisterWindow(Window window)
+    private void RegisterWindow(string name, Window window)
     {
-        WindowId windowId = new(++_lastWindowId);
         _windows.Add(window);
-        _windowsById.Add(windowId, window);
-        _windowIdsBySdlId.Add(window.Id, windowId);
-        return windowId;
+        _windowsByName.Add(name, window);
+        _windowNamesBySdlId.Add(window.Id, name);
     }
 }

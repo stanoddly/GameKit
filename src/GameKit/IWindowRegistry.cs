@@ -2,8 +2,7 @@ namespace GameKit;
 
 internal interface IWindowRegistry
 {
-    WindowId PrimaryWindowId { get; }
-    event Action<WindowId>? WindowDestroyed;
-    bool TryGetWindow(WindowId windowId, out Window window);
-    void DestroyWindow(WindowId windowId);
+    void ClaimWindow(string name);
+    void ReleaseWindow(string name);
+    bool TryGetWindow(string name, out Window window);
 }

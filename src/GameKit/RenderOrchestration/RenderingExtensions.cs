@@ -38,25 +38,29 @@ public static class RenderingExtensions
 
     public static ServiceCollection UseWindowRendering<TRenderContext>(
         this ServiceCollection services,
+        string windowName,
         Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
         where TRenderContext : IRenderContext
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(windowName);
         ArgumentNullException.ThrowIfNull(contextFactory);
 
-        ConfigureWindowRendering(services, contextFactory, false);
+        ConfigureWindowRendering(services, windowName, contextFactory);
         return services;
     }
 
     public static GameKitAppBuilder UseWindowRendering<TRenderContext>(
         this GameKitAppBuilder builder,
+        string windowName,
         Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
         where TRenderContext : IRenderContext
     {
         ArgumentNullException.ThrowIfNull(builder);
+        ArgumentException.ThrowIfNullOrWhiteSpace(windowName);
         ArgumentNullException.ThrowIfNull(contextFactory);
 
-        ConfigureWindowRendering(builder, contextFactory, false);
+        ConfigureWindowRendering(builder, windowName, contextFactory);
         return builder;
     }
 
@@ -66,9 +70,9 @@ public static class RenderingExtensions
 
         ConfigureWindowRendering(
             builder,
+            WindowManager.PrimaryWindowName,
             static (window, swapchainTexture, commandBuffer) =>
-                new DefaultRenderContext(window, swapchainTexture, commandBuffer),
-            true);
+                new DefaultRenderContext(window, swapchainTexture, commandBuffer));
         return builder;
     }
 
@@ -78,9 +82,9 @@ public static class RenderingExtensions
 
         ConfigureWindowRendering(
             services,
+            WindowManager.PrimaryWindowName,
             static (window, swapchainTexture, commandBuffer) =>
-                new DefaultRenderContext(window, swapchainTexture, commandBuffer),
-            true);
+                new DefaultRenderContext(window, swapchainTexture, commandBuffer));
         return services;
     }
 
@@ -104,8 +108,8 @@ public static class RenderingExtensions
 
     private static void ConfigureWindowRendering<TRenderContext>(
         ServiceCollection services,
-        Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory,
-        bool attachPrimaryWindow)
+        string windowName,
+        Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
         where TRenderContext : IRenderContext
     {
         ThrowIfGraphRegistered<TRenderContext>(services);
@@ -114,16 +118,14 @@ public static class RenderingExtensions
         services.AddSingleton<WindowRenderCoordinator<TRenderContext>>(provider =>
             new WindowRenderCoordinator<TRenderContext>(
                 provider.GetRequiredService<WindowManager>(),
+                windowName,
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
                 provider.GetRequiredService<ServiceRegistry<IRenderer<TRenderContext>>>(),
-                contextFactory,
-                attachPrimaryWindow));
+                contextFactory));
         services.AddSingleton<RenderCoordinator<TRenderContext>>(static provider =>
             provider.GetRequiredService<WindowRenderCoordinator<TRenderContext>>());
         services.AddSingleton<IRenderCoordinator>(static provider =>
-            provider.GetRequiredService<WindowRenderCoordinator<TRenderContext>>());
-        services.AddSingleton<IWindowRendering<TRenderContext>>(static provider =>
             provider.GetRequiredService<WindowRenderCoordinator<TRenderContext>>());
     }
 
