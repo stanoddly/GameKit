@@ -109,3 +109,12 @@ public class KeyboardService : IKeyboardService
         }
     }
 }
+
+public sealed class KeyboardService<TWindow> : KeyboardService, IKeyboardService<TWindow>
+    where TWindow : class
+{
+    internal KeyboardService(AppControl appControl)
+        : base(appControl)
+    {
+    }
+}

@@ -347,3 +347,12 @@ public class MouseService : IMouseService
         }
     }
 }
+
+public sealed class MouseService<TWindow> : MouseService, IMouseService<TWindow>
+    where TWindow : class
+{
+    internal MouseService(bool isInWindow)
+        : base(isInWindow)
+    {
+    }
+}

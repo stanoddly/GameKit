@@ -110,6 +110,31 @@ public class DefaultRenderManagerTests
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
 
+    [Test]
+    public void DifferentRenderContextTypes_CreateIndependentRenderManagers()
+    {
+        List<string> calls = new();
+        GameKitAppBuilder builder = CreateBuilder(calls);
+        builder.UseDefaultRenderManager<OtherRenderContext>();
+        builder.AddSingleton<IRenderContextProvider<OtherRenderContext>>(
+            new OtherRenderContextProvider());
+        builder.AddSingleton<IRenderPhase<TestRenderContext>>(
+            new TestRenderPhase("test", calls));
+        builder.AddSingleton<IRenderPhase<OtherRenderContext>>(
+            new OtherRenderPhase(calls));
+
+        using ServiceProvider provider = builder.BuildServiceProvider();
+        ServiceRegistry<IRenderManager> renderManagers =
+            provider.GetRequiredService<ServiceRegistry<IRenderManager>>();
+
+        foreach (IRenderManager renderManager in renderManagers)
+        {
+            renderManager.Execute();
+        }
+
+        Assert.That(calls, Is.EqualTo(new[] { "test", "other" }));
+    }
+
     private static GameKitAppBuilder CreateBuilder(List<string> calls)
     {
         GameKitAppBuilder builder = new();
@@ -137,6 +162,41 @@ public class DefaultRenderManagerTests
 
         public void Dispose()
         {
+        }
+    }
+
+    private sealed class OtherRenderContextProvider : IRenderContextProvider<OtherRenderContext>
+    {
+        public bool TryProvide([NotNullWhen(true)] out OtherRenderContext? renderContext)
+        {
+            renderContext = new OtherRenderContext();
+            return true;
+        }
+    }
+
+    private sealed class OtherRenderContext : IRenderContext
+    {
+        public CommandBuffer CommandBuffer => null!;
+
+        public Texture ColorTarget => null!;
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class OtherRenderPhase : IRenderPhase<OtherRenderContext>
+    {
+        private readonly List<string> _calls;
+
+        public OtherRenderPhase(List<string> calls)
+        {
+            _calls = calls;
+        }
+
+        public void Render(OtherRenderContext renderContext)
+        {
+            _calls.Add("other");
         }
     }
 

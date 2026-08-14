@@ -17,3 +17,8 @@ public interface ITextInputService
     void SubscribeTextInput(int priority, TextInputHandler handler);
     void SubscribeTextEditing(int priority, TextEditingHandler handler);
 }
+
+public interface ITextInputService<TWindow> : ITextInputService
+    where TWindow : class
+{
+}

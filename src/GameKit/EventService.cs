@@ -5,19 +5,16 @@ namespace GameKit;
 
 public class EventService
 {
-    private readonly KeyboardService _keyboardService;
-    private readonly GamepadService _gamepadService;
-    private readonly MouseService _mouseService;
-    private readonly TextInputService _textInputService;
-    private readonly WindowManager _windowManager;
     private readonly AppControl _appControl;
+    private readonly GamepadService _gamepadService;
+    private readonly WindowManager _windowManager;
 
-    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
+    internal EventService(
+        GamepadService gamepadService,
+        WindowManager windowManager,
+        AppControl appControl)
     {
-        _keyboardService = keyboardService;
         _gamepadService = gamepadService;
-        _mouseService = mouseService;
-        _textInputService = textInputService;
         _windowManager = windowManager;
         _appControl = appControl;
     }
@@ -27,100 +24,82 @@ public class EventService
         unsafe
         {
             SDL_Event evt;
-            while (SDL3.SDL_PollEvent(&evt) == true)
+            while (SDL3.SDL_PollEvent(&evt))
             {
-                if (evt.Type == SDL_EventType.SDL_EVENT_KEY_DOWN)
+                Process(in evt);
+            }
+        }
+    }
+
+    internal void Process(in SDL_Event evt)
+    {
+        if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_ADDED)
+        {
+            _gamepadService.OnGamepadAdded(evt.gdevice.which);
+        }
+        else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED)
+        {
+            _gamepadService.OnGamepadRemoved(evt.gdevice.which);
+        }
+        else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION)
+        {
+            _gamepadService.OnGamepadStickMotion(in evt.gaxis);
+        }
+        else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN)
+        {
+            _gamepadService.OnGamepadButtonPressed(evt.gbutton);
+        }
+        else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP)
+        {
+            _gamepadService.OnGamepadButtonReleased(evt.gbutton);
+        }
+        else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
+        {
+            _appControl.Quit();
+        }
+        else
+        {
+            uint windowId = GetWindowId(in evt);
+            if (windowId != 0 && _windowManager.TryGetWindow(windowId, out Window window))
+            {
+                if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
-                    _keyboardService.OnKeyEvent(evt.key);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_KEY_UP)
-                {
-                    _keyboardService.OnKeyEvent(evt.key);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_ADDED)
-                {
-                    _gamepadService.OnGamepadAdded(evt.gdevice.which);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_REMOVED)
-                {
-                    _gamepadService.OnGamepadRemoved(evt.gdevice.which);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_AXIS_MOTION)
-                {
-                    _gamepadService.OnGamepadStickMotion(in evt.gaxis);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_DOWN)
-                {
-                    _gamepadService.OnGamepadButtonPressed(evt.gbutton);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_GAMEPAD_BUTTON_UP)
-                {
-                    _gamepadService.OnGamepadButtonReleased(evt.gbutton);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN)
-                {
-                    _mouseService.OnMouseButtonEvent(evt.button);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP)
-                {
-                    _mouseService.OnMouseButtonEvent(evt.button);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_MOTION)
-                {
-                    _mouseService.OnMouseMotionEvent(evt.motion);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_MOUSE_WHEEL)
-                {
-                    _mouseService.OnMouseWheelEvent(evt.wheel);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER)
-                {
-                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
-                    {
-                        _mouseService.OnMouseWindowPresenceEvent(evt.window, true);
-                    }
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE)
-                {
-                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
-                    {
-                        _mouseService.OnMouseWindowPresenceEvent(evt.window, false);
-                    }
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_TEXT_INPUT)
-                {
-                    _textInputService.OnTextInputEvent(evt.text);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_TEXT_EDITING)
-                {
-                    _textInputService.OnTextEditingEvent(evt.edit);
-                }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
-                {
-                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window pixelSizeWindow))
-                    {
-                        pixelSizeWindow.OnPixelSizeChanged(evt.window.timestamp);
-                    }
+                    window.OnPixelSizeChanged(evt.window.timestamp);
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED)
                 {
-                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window closedWindow))
+                    if (window.StopGameOnClose)
                     {
-                        if (closedWindow == _windowManager.PrimaryWindow)
-                        {
-                            _appControl.Quit();
-                        }
-                        else
-                        {
-                            _windowManager.DestroyWindow(closedWindow);
-                        }
+                        _appControl.Quit();
+                    }
+                    else
+                    {
+                        _windowManager.DestroyWindow(window);
                     }
                 }
-                else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)
+                else
                 {
-                    _appControl.Quit();
+                    window.ProcessEvent(in evt);
                 }
             }
         }
+    }
+
+    private static uint GetWindowId(in SDL_Event evt)
+    {
+        return evt.Type switch
+        {
+            SDL_EventType.SDL_EVENT_KEY_DOWN or SDL_EventType.SDL_EVENT_KEY_UP =>
+                (uint)evt.key.windowID,
+            SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN or SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP =>
+                (uint)evt.button.windowID,
+            SDL_EventType.SDL_EVENT_MOUSE_MOTION => (uint)evt.motion.windowID,
+            SDL_EventType.SDL_EVENT_MOUSE_WHEEL => (uint)evt.wheel.windowID,
+            SDL_EventType.SDL_EVENT_TEXT_INPUT => (uint)evt.text.windowID,
+            SDL_EventType.SDL_EVENT_TEXT_EDITING => (uint)evt.edit.windowID,
+            >= SDL_EventType.SDL_EVENT_WINDOW_FIRST and <= SDL_EventType.SDL_EVENT_WINDOW_LAST =>
+                (uint)evt.window.windowID,
+            _ => 0
+        };
     }
 }

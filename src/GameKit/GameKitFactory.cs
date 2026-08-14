@@ -56,12 +56,60 @@ public class GameKitFactory: IDisposable
         return new PlatformInfo(GetCurrentVideoDriver());
     }
 
-    internal Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
+    internal Window<DefaultWindow> CreateWindow(
+        GpuDevice gpuDevice,
+        GameKitFrameContext frameContext,
+        AppConfig config,
+        PlatformInfo platformInfo)
     {
-        return CreateWindow(gpuDevice, frameContext, platformInfo, config.Size, config.Title, config.Fullscreen, config.Resizable, config.Transparent, config.Borderless, config.AlwaysOnTop);
+        return CreateWindow<DefaultWindow>(
+            gpuDevice,
+            frameContext,
+            platformInfo,
+            config.Size,
+            config.Title,
+            config.Fullscreen,
+            config.Resizable,
+            config.Transparent,
+            config.Borderless,
+            config.AlwaysOnTop,
+            true);
     }
 
-    private Window CreateWindow(GpuDevice gpuDevice, GameKitFrameContext frameContext, PlatformInfo platformInfo, Size<uint>? size = null, string? title = null, bool fullscreen = false, bool resizable = false, bool transparent = false, bool borderless = false, bool alwaysOnTop = false)
+    internal Window<TWindow> CreateWindow<TWindow>(
+        GpuDevice gpuDevice,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        WindowOptions options)
+        where TWindow : class
+    {
+        return CreateWindow<TWindow>(
+            gpuDevice,
+            frameContext,
+            platformInfo,
+            options.Size,
+            options.Title,
+            options.Fullscreen,
+            options.Resizable,
+            options.Transparent,
+            options.Borderless,
+            options.AlwaysOnTop,
+            options.StopGameOnClose);
+    }
+
+    private Window<TWindow> CreateWindow<TWindow>(
+        GpuDevice gpuDevice,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        Size<uint>? size,
+        string? title,
+        bool fullscreen,
+        bool resizable,
+        bool transparent,
+        bool borderless,
+        bool alwaysOnTop,
+        bool stopGameOnClose)
+        where TWindow : class
     {
         EnsureSdlInitialized();
 
@@ -133,7 +181,13 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, platformInfo);
+        return new Window<TWindow>(
+            sdlWindow,
+            gpuDevice.SdlGpuDevice,
+            sdlWindowId,
+            frameContext,
+            platformInfo,
+            stopGameOnClose);
     }
 
     internal GpuDevice CreateGpuDevice()
@@ -233,11 +287,11 @@ public class GameKitFactory: IDisposable
         };
     }
 
-    internal KeyboardService CreateKeyboardService(AppControl appControl)
+    internal KeyboardService<TWindow> CreateKeyboardService<TWindow>(AppControl appControl)
+        where TWindow : class
     {
         EnsureSdlInitialized();
-
-        return new KeyboardService(appControl);
+        return new KeyboardService<TWindow>(appControl);
     }
     
     internal GamepadService CreateGamepadService()
@@ -250,11 +304,11 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(WindowManager windowManager)
+    internal MouseService<TWindow> CreateMouseService<TWindow>(Window<TWindow> window)
+        where TWindow : class
     {
         EnsureSdlInitialized();
-
-        return new MouseService(IsMouseInWindow(windowManager.PrimaryWindow));
+        return new MouseService<TWindow>(IsMouseInWindow(window));
     }
 
     private static bool IsMouseInWindow(Window window)
@@ -272,18 +326,21 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal TextInputService CreateTextInputService(WindowManager windowManager)
+    internal TextInputService<TWindow> CreateTextInputService<TWindow>(Window<TWindow> window)
+        where TWindow : class
     {
         EnsureSdlInitialized();
-
-        return new TextInputService(windowManager);
+        return new TextInputService<TWindow>(window);
     }
 
-    internal EventService CreateEventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
+    internal EventService CreateEventService(
+        GamepadService gamepadService,
+        WindowManager windowManager,
+        AppControl appControl)
     {
         EnsureSdlInitialized();
 
-        return new EventService(keyboardService, gamepadService, mouseService, textInputService, windowManager, appControl);
+        return new EventService(gamepadService, windowManager, appControl);
     }
 
     public GameKitFrameContext CreateFrameContext()

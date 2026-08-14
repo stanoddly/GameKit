@@ -13,6 +13,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
+        AddRegistry<IRenderManager>();
         AddRegistry<IUpdatable>(static (left, right) =>
         {
             int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
@@ -73,23 +74,26 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<PlatformInfo, GameKitFactory>();
 
         AddSingleton<WindowManager>();
-        AddSingleton<Window>(static sp => sp.GetRequiredService<WindowManager>().PrimaryWindow);
+        AddSingleton<Window<DefaultWindow>>(static provider =>
+            provider.GetRequiredService<WindowManager>().PrimaryWindow);
+        AddAlias<Window, Window<DefaultWindow>>();
 
         AddSingleton<GpuDevice, GameKitFactory>();
 
         AddSingleton<GpuMemorySystem>();
 
-        AddSingleton<KeyboardService, GameKitFactory>();
-        AddAlias<IKeyboardService, KeyboardService>();
+        WindowServiceCollectionExtensions.AddInputServices<DefaultWindow>(this);
+        AddAlias<KeyboardService, KeyboardService<DefaultWindow>>();
+        AddAlias<IKeyboardService, KeyboardService<DefaultWindow>>();
 
         AddSingleton<GamepadService, GameKitFactory>();
         AddAlias<IGamepadService, GamepadService>();
 
-        AddSingleton<MouseService, GameKitFactory>();
-        AddAlias<IMouseService, MouseService>();
+        AddAlias<MouseService, MouseService<DefaultWindow>>();
+        AddAlias<IMouseService, MouseService<DefaultWindow>>();
 
-        AddSingleton<TextInputService, GameKitFactory>();
-        AddAlias<ITextInputService, TextInputService>();
+        AddAlias<TextInputService, TextInputService<DefaultWindow>>();
+        AddAlias<ITextInputService, TextInputService<DefaultWindow>>();
 
         AddSingleton<ClipboardService>();
         AddAlias<IClipboardService, ClipboardService>();

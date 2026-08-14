@@ -11,7 +11,7 @@ public class WindowManager : IDisposable
     private readonly Dictionary<uint, Window> _windowsById = new();
     private readonly List<Window> _windows = new();
 
-    public Window PrimaryWindow { get; }
+    public Window<DefaultWindow> PrimaryWindow { get; }
     public IReadOnlyList<Window> Windows => _windows;
 
     public WindowManager(GameKitFactory factory, GpuDevice gpuDevice, GameKitFrameContext frameContext, AppConfig config, PlatformInfo platformInfo)
@@ -22,16 +22,26 @@ public class WindowManager : IDisposable
         _platformInfo = platformInfo;
 
         PrimaryWindow = factory.CreateWindow(gpuDevice, frameContext, config, platformInfo);
-        _windows.Add(PrimaryWindow);
-        _windowsById.Add(PrimaryWindow.Id, PrimaryWindow);
+        Attach(PrimaryWindow);
     }
 
     public Window CreateWindow(WindowOptions options)
     {
-        AppConfig config = new(options.Size, options.Title, null, options.Fullscreen, options.Resizable, options.Transparent, options.Borderless, options.AlwaysOnTop);
-        Window window = _factory.CreateWindow(_gpuDevice, _frameContext, config, _platformInfo);
-        _windows.Add(window);
-        _windowsById.Add(window.Id, window);
+        Window<DynamicWindow> window = CreateWindow<DynamicWindow>(options);
+        return window;
+    }
+
+    public Window<TWindow> CreateWindow<TWindow>(WindowOptions options)
+        where TWindow : class
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        Window<TWindow> window = _factory.CreateWindow<TWindow>(
+            _gpuDevice,
+            _frameContext,
+            _platformInfo,
+            options);
+        Attach(window);
         return window;
     }
 
@@ -42,9 +52,13 @@ public class WindowManager : IDisposable
             throw new InvalidOperationException("Cannot destroy the primary window.");
         }
 
+        window.Dispose();
+    }
+
+    internal void Detach(Window window)
+    {
         _windowsById.Remove(window.Id);
         _windows.Remove(window);
-        window.Dispose();
     }
 
     internal bool TryGetWindow(uint windowId, out Window window)
@@ -54,6 +68,21 @@ public class WindowManager : IDisposable
 
     public void Dispose()
     {
-        PrimaryWindow.Dispose();
+        Window[] windows = _windows.ToArray();
+        for (int i = windows.Length - 1; i >= 0; i--)
+        {
+            windows[i].Dispose();
+        }
+    }
+
+    private void Attach(Window window)
+    {
+        window.Attach(this);
+        _windows.Add(window);
+        _windowsById.Add(window.Id, window);
+    }
+
+    private sealed class DynamicWindow
+    {
     }
 }

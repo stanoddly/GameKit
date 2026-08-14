@@ -13,6 +13,10 @@ public delegate void ResolutionChangedHandler(ResolutionChangedEventArgs eventAr
 
 public class Window : IDisposable
 {
+    private WindowManager? _windowManager;
+    private IWindowEventSink? _eventSink;
+    private bool _disposed;
+
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
     private readonly GameKitFrameContext _frameContext;
@@ -23,8 +27,16 @@ public class Window : IDisposable
     private ShortSize _lastSize;
 
     public event ResolutionChangedHandler? ResolutionChanged;
+    public bool IsDisposed => _disposed;
+    public bool StopGameOnClose { get; }
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    internal Window(
+        Pointer<SDL_Window> sdlWindow,
+        Pointer<SDL_GPUDevice> sdlSdlGpuDevice,
+        uint id,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        bool stopGameOnClose)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
@@ -32,6 +44,35 @@ public class Window : IDisposable
         _frameContext = frameContext;
         _platformInfo = platformInfo;
         _lastSize = RenderSizeInPixels;
+        StopGameOnClose = stopGameOnClose;
+    }
+
+    internal void Attach(WindowManager windowManager)
+    {
+        _windowManager = windowManager;
+    }
+
+    internal void AttachEventSink(IWindowEventSink eventSink)
+    {
+        if (_eventSink != null)
+        {
+            throw new InvalidOperationException("The window already has an event sink.");
+        }
+
+        _eventSink = eventSink;
+    }
+
+    internal void DetachEventSink(IWindowEventSink eventSink)
+    {
+        if (ReferenceEquals(_eventSink, eventSink))
+        {
+            _eventSink = null;
+        }
+    }
+
+    internal void ProcessEvent(in SDL_Event evt)
+    {
+        _eventSink?.Process(in evt);
     }
 
     internal void OnPixelSizeChanged(ulong timestamp)
@@ -497,6 +538,16 @@ public class Window : IDisposable
 
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        WindowManager? windowManager = _windowManager;
+        _windowManager = null;
+        windowManager?.Detach(this);
+
         ClearHitTestCallback();
         unsafe
         {
@@ -589,5 +640,20 @@ public class Window : IDisposable
                 Marshal.FreeCoTaskMem(allocatedString);
             }
         }
+    }
+}
+
+public sealed class Window<TWindow> : Window
+    where TWindow : class
+{
+    internal Window(
+        Pointer<SDL_Window> sdlWindow,
+        Pointer<SDL_GPUDevice> sdlGpuDevice,
+        uint id,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        bool stopGameOnClose)
+        : base(sdlWindow, sdlGpuDevice, id, frameContext, platformInfo, stopGameOnClose)
+    {
     }
 }

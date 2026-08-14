@@ -20,3 +20,8 @@ public interface IMouseService
     void SubscribeWindowEnter(int priority, MouseWindowPresenceHandler handler);
     void SubscribeWindowLeave(int priority, MouseWindowPresenceHandler handler);
 }
+
+public interface IMouseService<TWindow> : IMouseService
+    where TWindow : class
+{
+}
