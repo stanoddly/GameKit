@@ -12,7 +12,7 @@ static class Program
             .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Primary Window" });
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(PrimaryRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
         builder.AddSingleton<SecondaryWindowRenderer>(SecondaryWindowRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();

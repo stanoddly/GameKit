@@ -2,7 +2,7 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Pencuil;
 
-public class PencuilRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
+public class PencuilRenderPhase<TRenderContext> : IRenderer<TRenderContext>
     where TRenderContext : IRenderContext
 {
     private readonly Pencil _pencil;

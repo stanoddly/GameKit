@@ -4,7 +4,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.ComputeShader;
 
-public class ComputeRenderer : IRenderPhase<DefaultRenderContext>
+public class ComputeRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly ComputePipeline _computePipeline;
     private readonly Texture _outputTexture;

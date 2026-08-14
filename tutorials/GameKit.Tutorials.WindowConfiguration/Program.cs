@@ -21,7 +21,7 @@ static class Program
             AlwaysOnTop = true
         });
 
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>, NullRenderPhase<DefaultRenderContext>>();
+        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {

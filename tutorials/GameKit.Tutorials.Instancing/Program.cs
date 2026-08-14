@@ -13,7 +13,7 @@ static class Program
 
         builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Instancing Demo" });
         builder.AddSingleton<InstancingRenderer>(InstancingRenderer.Create);
-        builder.AddAlias<IRenderPhase<DefaultRenderContext>, InstancingRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, InstancingRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

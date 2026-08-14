@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StorageBuffer;
 
-public class StorageBufferRenderer : IRenderPhase<DefaultRenderContext>
+public class StorageBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;

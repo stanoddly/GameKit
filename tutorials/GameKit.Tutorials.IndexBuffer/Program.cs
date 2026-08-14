@@ -12,7 +12,7 @@ static class Program
             .UseDefaultRendering();
 
         builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Index Buffer" });
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(IndexBufferRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(IndexBufferRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

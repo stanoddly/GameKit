@@ -13,14 +13,14 @@ public abstract class RenderCoordinator<TRenderContext> : IRenderCoordinator
     where TRenderContext : IRenderContext
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
-    private readonly ServiceRegistry<IRenderPhase<TRenderContext>> _renderPhases;
+    private readonly ServiceRegistry<IRenderer<TRenderContext>> _renderers;
 
     protected RenderCoordinator(
         GpuMemorySystem gpuMemorySystem,
-        ServiceRegistry<IRenderPhase<TRenderContext>> renderPhases)
+        ServiceRegistry<IRenderer<TRenderContext>> renderers)
     {
         _gpuMemorySystem = gpuMemorySystem;
-        _renderPhases = renderPhases;
+        _renderers = renderers;
     }
 
     public void Execute()
@@ -32,9 +32,9 @@ public abstract class RenderCoordinator<TRenderContext> : IRenderCoordinator
 
         using (renderContext)
         {
-            foreach (IRenderPhase<TRenderContext> renderPhase in _renderPhases)
+            foreach (IRenderer<TRenderContext> renderer in _renderers)
             {
-                renderPhase.Render(renderContext);
+                renderer.Render(renderContext);
             }
 
             _gpuMemorySystem.Submit();

@@ -13,8 +13,8 @@ internal sealed class DefaultRenderCoordinator : RenderCoordinator<DefaultRender
         WindowManager windowManager,
         GpuDevice gpuDevice,
         GpuMemorySystem gpuMemorySystem,
-        ServiceRegistry<IRenderPhase<DefaultRenderContext>> renderPhases)
-        : base(gpuMemorySystem, renderPhases)
+        ServiceRegistry<IRenderer<DefaultRenderContext>> renderers)
+        : base(gpuMemorySystem, renderers)
     {
         _windowManager = windowManager;
         _gpuDevice = gpuDevice;

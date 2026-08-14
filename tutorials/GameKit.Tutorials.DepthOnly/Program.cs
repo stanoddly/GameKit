@@ -13,7 +13,7 @@ static class Program
 
         builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
-        builder.AddAlias<IRenderPhase<DefaultRenderContext>, DepthOnlyRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, DepthOnlyRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

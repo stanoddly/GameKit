@@ -1,11 +1,11 @@
 namespace GameKit.RenderOrchestration;
 
-public interface IRenderPhase<in TRenderContext> : IOrderable
+public interface IRenderer<in TRenderContext> : IOrderable
 {
     void Render(TRenderContext renderContext);
 }
 
-public class NullRenderPhase<TRenderContext> : IRenderPhase<TRenderContext>
+public class NullRenderer<TRenderContext> : IRenderer<TRenderContext>
 {
     public void Render(TRenderContext renderContext)
     {

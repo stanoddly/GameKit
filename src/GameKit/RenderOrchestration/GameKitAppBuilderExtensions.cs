@@ -10,28 +10,28 @@ public static class GameKitAppBuilderExtensions
         this GameKitAppBuilder builder,
         Func<
             ServiceProvider,
-            ServiceRegistry<IRenderPhase<TRenderContext>>,
+            ServiceRegistry<IRenderer<TRenderContext>>,
             RenderCoordinator<TRenderContext>> factory)
         where TRenderContext : IRenderContext
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(factory);
 
-        builder.AddRegistry<IRenderPhase<TRenderContext>>(
+        builder.AddRegistry<IRenderer<TRenderContext>>(
             static (left, right) => left.Order.CompareTo(right.Order));
         builder.AddSingleton<IRenderCoordinator>(provider => factory(
             provider,
-            provider.GetRequiredService<ServiceRegistry<IRenderPhase<TRenderContext>>>()));
+            provider.GetRequiredService<ServiceRegistry<IRenderer<TRenderContext>>>()));
         return builder;
     }
 
     public static GameKitAppBuilder UseDefaultRendering(this GameKitAppBuilder builder)
     {
         return builder.UseRenderCoordinator<DefaultRenderContext>(
-            static (provider, renderPhases) => new DefaultRenderCoordinator(
+            static (provider, renderers) => new DefaultRenderCoordinator(
                 provider.GetRequiredService<WindowManager>(),
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
-                renderPhases));
+                renderers));
     }
 }

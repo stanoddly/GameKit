@@ -24,7 +24,7 @@ static class Program
             Borderless = true,
             ClearColor = FColors.Black
         });
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(ClickThroughRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(ClickThroughRenderer.Create);
 
         builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, AppControl appControl) =>
         {

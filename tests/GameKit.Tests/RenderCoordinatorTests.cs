@@ -9,7 +9,7 @@ namespace GameKit.Tests;
 public class RenderCoordinatorTests
 {
     [Test]
-    public void Execute_WithNoRenderPhases_DoesNotThrow()
+    public void Execute_WithNoRenderers_DoesNotThrow()
     {
         GameKitAppBuilder builder = CreateBuilder(new List<string>());
         ServiceProvider provider = builder.BuildServiceProvider();
@@ -19,12 +19,12 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void Execute_WhenRenderContextCannotBeCreated_DoesNotRenderPhases()
+    public void Execute_WhenRenderContextCannotBeCreated_DoesNotRender()
     {
         List<string> calls = new();
         TestRenderContextSource renderContextSource = new() { CanCreate = false };
         GameKitAppBuilder builder = CreateBuilder(calls, renderContextSource);
-        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls));
+        builder.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("root", calls));
         ServiceProvider provider = builder.BuildServiceProvider();
         IRenderCoordinator renderCoordinator = provider.GetRequiredService<IRenderCoordinator>();
 
@@ -51,7 +51,7 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void ChildProviderRenderPhase_IsRenderedAfterChildBuild()
+    public void ChildProviderRenderer_IsRenderedAfterChildBuild()
     {
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
@@ -59,7 +59,7 @@ public class RenderCoordinatorTests
         IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
-        childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
+        childCollection.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("child", calls));
         using ServiceProvider child = childCollection.BuildServiceProvider();
 
         renderCoordinator.Execute();
@@ -68,7 +68,7 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void ChildProviderRenderPhase_IsRemovedWhenChildProviderIsDisposed()
+    public void ChildProviderRenderer_IsRemovedWhenChildProviderIsDisposed()
     {
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
@@ -76,7 +76,7 @@ public class RenderCoordinatorTests
         IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
-        childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
+        childCollection.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("child", calls));
         ServiceProvider child = childCollection.BuildServiceProvider();
 
         child.Dispose();
@@ -86,16 +86,16 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void DynamicRenderPhases_AreRenderedInOrder()
+    public void DynamicRenderers_AreRenderedInOrder()
     {
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
-        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
+        builder.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
         IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
-        childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls, 5));
+        childCollection.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("child", calls, 5));
         using ServiceProvider child = childCollection.BuildServiceProvider();
 
         renderCoordinator.Execute();
@@ -104,17 +104,17 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void ChildProviderDisposeDuringRender_DoesNotSkipRemainingRootRenderPhases()
+    public void ChildProviderDisposeDuringRender_DoesNotSkipRemainingRootRenderers()
     {
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
-        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
+        builder.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
         IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
         ServiceProvider? child = null;
         ServiceCollection childCollection = parent.CreateServiceCollection();
-        childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new DisposingRenderPhase("child", calls, () => child!, 0));
+        childCollection.AddSingleton<IRenderer<TestRenderContext>>(new DisposingRenderer("child", calls, () => child!, 0));
         child = childCollection.BuildServiceProvider();
 
         renderCoordinator.Execute();
@@ -123,12 +123,12 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void ChildProviderBuildDuringRender_AddsRenderPhaseForNextFrame()
+    public void ChildProviderBuildDuringRender_AddsRendererForNextFrame()
     {
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
         ServiceProvider? parent = null;
-        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new ChildProviderBuildingRenderPhase("root", calls, () => parent!, 0));
+        builder.AddSingleton<IRenderer<TestRenderContext>>(new ChildProviderBuildingRenderer("root", calls, () => parent!, 0));
         parent = builder.BuildServiceProvider();
         IRenderCoordinator renderCoordinator = parent.GetRequiredService<IRenderCoordinator>();
 
@@ -149,9 +149,9 @@ public class RenderCoordinatorTests
         GameKitAppBuilder builder = new();
         builder.AddSingleton(renderContextSource ?? new TestRenderContextSource());
         builder.UseRenderCoordinator<TestRenderContext>(
-            static (provider, renderPhases) => new TestRenderCoordinator(
+            static (provider, renderers) => new TestRenderCoordinator(
                 provider.GetRequiredService<GpuMemorySystem>(),
-                renderPhases,
+                renderers,
                 provider.GetRequiredService<TestRenderContextSource>()));
         builder.AddSingleton(new GpuMemorySystem(null!));
         builder.AddSingleton(calls);
@@ -164,9 +164,9 @@ public class RenderCoordinatorTests
 
         public TestRenderCoordinator(
             GpuMemorySystem gpuMemorySystem,
-            ServiceRegistry<IRenderPhase<TestRenderContext>> renderPhases,
+            ServiceRegistry<IRenderer<TestRenderContext>> renderers,
             TestRenderContextSource renderContextSource)
-            : base(gpuMemorySystem, renderPhases)
+            : base(gpuMemorySystem, renderers)
         {
             _renderContextSource = renderContextSource;
         }
@@ -206,12 +206,12 @@ public class RenderCoordinatorTests
         }
     }
 
-    private class TestRenderPhase : IRenderPhase<TestRenderContext>
+    private class TestRenderer : IRenderer<TestRenderContext>
     {
         private readonly string _name;
         private readonly List<string> _calls;
 
-        public TestRenderPhase(string name, List<string> calls, int order = 0)
+        public TestRenderer(string name, List<string> calls, int order = 0)
         {
             _name = name;
             _calls = calls;
@@ -228,11 +228,11 @@ public class RenderCoordinatorTests
         }
     }
 
-    private sealed class DisposingRenderPhase : TestRenderPhase
+    private sealed class DisposingRenderer : TestRenderer
     {
         private readonly Func<ServiceProvider> _provider;
 
-        public DisposingRenderPhase(
+        public DisposingRenderer(
             string name,
             List<string> calls,
             Func<ServiceProvider> provider,
@@ -249,12 +249,12 @@ public class RenderCoordinatorTests
         }
     }
 
-    private sealed class ChildProviderBuildingRenderPhase : TestRenderPhase
+    private sealed class ChildProviderBuildingRenderer : TestRenderer
     {
         private readonly Func<ServiceProvider> _parentProvider;
         private ServiceProvider? _child;
 
-        public ChildProviderBuildingRenderPhase(
+        public ChildProviderBuildingRenderer(
             string name,
             List<string> calls,
             Func<ServiceProvider> parentProvider,
@@ -275,7 +275,7 @@ public class RenderCoordinatorTests
 
             ServiceProvider parent = _parentProvider();
             ServiceCollection childCollection = parent.CreateServiceCollection();
-            childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", Calls, -10));
+            childCollection.AddSingleton<IRenderer<TestRenderContext>>(new TestRenderer("child", Calls, -10));
             _child = childCollection.BuildServiceProvider();
         }
     }

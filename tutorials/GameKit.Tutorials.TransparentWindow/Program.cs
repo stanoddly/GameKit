@@ -31,7 +31,7 @@ static class Program
         {
             builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Vulkan));
         }
-        builder.AddSingleton<IRenderPhase<DefaultRenderContext>>(TransparentWindowRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(TransparentWindowRenderer.Create);
 
         builder.OnStart((IMouseService mouseService, AppControl appControl) =>
         {

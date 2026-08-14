@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.Instancing;
 
-public class InstancingRenderer : IRenderPhase<DefaultRenderContext>
+public class InstancingRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;

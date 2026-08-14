@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.TextureArray;
 
-public class TextureArrayRenderer : IRenderPhase<DefaultRenderContext>
+public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionTextureVertex> _quadVertexBuffer;
