@@ -142,6 +142,42 @@ public class RenderCoordinatorTests
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
 
+    [Test]
+    public void ChildProviderCoordinator_IsDiscoveredAndRemovedWithChild()
+    {
+        GameKitAppBuilder builder = CreateBuilder(new List<string>());
+        ServiceProvider parent = builder.BuildServiceProvider();
+        ServiceRegistry<IRenderCoordinator> coordinators =
+            parent.GetRequiredService<ServiceRegistry<IRenderCoordinator>>();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+        childCollection.UseRenderCoordinator<SecondaryTestRenderContext>(
+            static (provider, renderers) => new SecondaryTestRenderCoordinator(
+                provider.GetRequiredService<GpuMemorySystem>(),
+                renderers));
+        ServiceProvider child = childCollection.BuildServiceProvider();
+
+        Assert.That(coordinators.Count(), Is.EqualTo(2));
+
+        child.Dispose();
+
+        Assert.That(coordinators.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ChildProviderCannotRegisterSecondGraphForSameContextType()
+    {
+        GameKitAppBuilder builder = CreateBuilder(new List<string>());
+        ServiceProvider parent = builder.BuildServiceProvider();
+        ServiceCollection childCollection = parent.CreateServiceCollection();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            childCollection.UseRenderCoordinator<TestRenderContext>(
+                static (provider, renderers) => new TestRenderCoordinator(
+                    provider.GetRequiredService<GpuMemorySystem>(),
+                    renderers,
+                    provider.GetRequiredService<TestRenderContextSource>())));
+    }
+
     private static GameKitAppBuilder CreateBuilder(
         List<string> calls,
         TestRenderContextSource? renderContextSource = null)
@@ -190,6 +226,33 @@ public class RenderCoordinatorTests
     {
         public bool CanCreate { get; init; } = true;
         public TestRenderContext? LastRenderContext { get; set; }
+    }
+
+    private sealed class SecondaryTestRenderCoordinator : RenderCoordinator<SecondaryTestRenderContext>
+    {
+        public SecondaryTestRenderCoordinator(
+            GpuMemorySystem gpuMemorySystem,
+            ServiceRegistry<IRenderer<SecondaryTestRenderContext>> renderers)
+            : base(gpuMemorySystem, renderers)
+        {
+        }
+
+        protected override bool TryCreateRenderContext(
+            [NotNullWhen(true)] out SecondaryTestRenderContext? renderContext)
+        {
+            renderContext = new SecondaryTestRenderContext();
+            return true;
+        }
+    }
+
+    private sealed class SecondaryTestRenderContext : IRenderContext
+    {
+        public CommandBuffer CommandBuffer => null!;
+        public Texture ColorTarget => null!;
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class TestRenderContext : IRenderContext

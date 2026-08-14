@@ -2,6 +2,7 @@ using GameKit.Content;
 using GameKit.DependencyInjection;
 using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.RenderOrchestration;
 using GameKit.Shaders;
 using GameKit.Text;
 
@@ -13,6 +14,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
+        AddRegistry<IRenderCoordinator>();
         AddRegistry<IUpdatable>(static (left, right) =>
         {
             int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;

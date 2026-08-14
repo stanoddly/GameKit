@@ -23,7 +23,8 @@ public class GameKitApp : IGameKitApp
         GameKitFrameContext frameContext = ServiceProvider.GetRequiredService<GameKitFrameContext>();
         EventService eventService = ServiceProvider.GetRequiredService<EventService>();
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
-        IRenderCoordinator renderCoordinator = ServiceProvider.GetRequiredService<IRenderCoordinator>();
+        ServiceRegistry<IRenderCoordinator> renderCoordinators =
+            ServiceProvider.GetRequiredService<ServiceRegistry<IRenderCoordinator>>();
         ServiceRegistry<IUpdatable> updatables = ServiceProvider.GetRequiredService<ServiceRegistry<IUpdatable>>();
         StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
@@ -43,7 +44,7 @@ public class GameKitApp : IGameKitApp
             }
 
             // finally render
-            renderCoordinator.Execute();
+            Render(renderCoordinators);
         }
     }
 
@@ -57,6 +58,14 @@ public class GameKitApp : IGameKitApp
         foreach (IUpdatable updatable in updatables)
         {
             updatable.Update();
+        }
+    }
+
+    private static void Render(ServiceRegistry<IRenderCoordinator> renderCoordinators)
+    {
+        foreach (IRenderCoordinator renderCoordinator in renderCoordinators)
+        {
+            renderCoordinator.Execute();
         }
     }
 }

@@ -12,6 +12,7 @@
 - `docs/content-distribution.md` - Virtual content sources, source precedence, and build/publish distribution policies
 - `docs/render-pass-flow.md` - Rendering architecture overview, CommandBuffer vs RenderPass, push constants, binding order
 - `docs/subrenderers.md` - Composing multiple renderers within IRenderer<T> (IOrderable, IEnumerable injection)
+- `docs/window-rendering.md` - Primary and stage-owned secondary window rendering, typed graphs, runtime attachment, and lifecycles
 - `docs/architecture-concept.md` - MVP + CQS + Events: layer responsibilities, boundary contract vs. internal representation, per-genre decision framework
 - `docs/architecture-library.md` - GameKit.Architecture API: command/query handlers, dispatcher, domain event stream/cursor, pump, post-dispatch hooks, registration extensions
 - `docs/architecture-testing.md` - GameKit.Architecture.Testing: CqsConventions and ModelBoundary checks that enforce the architecture-concept.md boundary claims as unit tests

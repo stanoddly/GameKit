@@ -11,9 +11,12 @@ static class Program
             .AddContentFromProjectDirectory("Content")
             .UseDefaultRendering();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Primary Window" });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
-        builder.AddSingleton<SecondaryWindowRenderer>(SecondaryWindowRenderer.Create);
+        builder.AddSingleton(new AppConfig
+        {
+            Size = (640, 480),
+            Title = "Main menu - click to start"
+        });
+        builder.OnStart(static (IStageManager stages) => stages.Load(MenuStage.Configure));
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
