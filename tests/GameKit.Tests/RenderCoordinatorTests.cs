@@ -19,6 +19,38 @@ public class RenderCoordinatorTests
     }
 
     [Test]
+    public void Execute_WhenRenderContextCannotBeCreated_DoesNotRenderPhases()
+    {
+        List<string> calls = new();
+        TestRenderContextSource renderContextSource = new() { CanCreate = false };
+        GameKitAppBuilder builder = CreateBuilder(calls, renderContextSource);
+        builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls));
+        ServiceProvider provider = builder.BuildServiceProvider();
+        IRenderCoordinator renderCoordinator = provider.GetRequiredService<IRenderCoordinator>();
+
+        renderCoordinator.Execute();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(calls, Is.Empty);
+            Assert.That(renderContextSource.LastRenderContext, Is.Null);
+        });
+    }
+
+    [Test]
+    public void Execute_WithRenderContext_DisposesRenderContext()
+    {
+        TestRenderContextSource renderContextSource = new();
+        GameKitAppBuilder builder = CreateBuilder(new List<string>(), renderContextSource);
+        ServiceProvider provider = builder.BuildServiceProvider();
+        IRenderCoordinator renderCoordinator = provider.GetRequiredService<IRenderCoordinator>();
+
+        renderCoordinator.Execute();
+
+        Assert.That(renderContextSource.LastRenderContext?.IsDisposed, Is.True);
+    }
+
+    [Test]
     public void ChildProviderRenderPhase_IsRenderedAfterChildBuild()
     {
         List<string> calls = new();
@@ -110,13 +142,17 @@ public class RenderCoordinatorTests
         Assert.That(calls, Is.EqualTo(new[] { "child", "root" }));
     }
 
-    private static GameKitAppBuilder CreateBuilder(List<string> calls)
+    private static GameKitAppBuilder CreateBuilder(
+        List<string> calls,
+        TestRenderContextSource? renderContextSource = null)
     {
         GameKitAppBuilder builder = new();
+        builder.AddSingleton(renderContextSource ?? new TestRenderContextSource());
         builder.UseRenderCoordinator<TestRenderContext>(
             static (provider, renderPhases) => new TestRenderCoordinator(
                 provider.GetRequiredService<GpuMemorySystem>(),
-                renderPhases));
+                renderPhases,
+                provider.GetRequiredService<TestRenderContextSource>()));
         builder.AddSingleton(new GpuMemorySystem(null!));
         builder.AddSingleton(calls);
         return builder;
@@ -124,19 +160,36 @@ public class RenderCoordinatorTests
 
     private sealed class TestRenderCoordinator : RenderCoordinator<TestRenderContext>
     {
+        private readonly TestRenderContextSource _renderContextSource;
+
         public TestRenderCoordinator(
             GpuMemorySystem gpuMemorySystem,
-            ServiceRegistry<IRenderPhase<TestRenderContext>> renderPhases)
+            ServiceRegistry<IRenderPhase<TestRenderContext>> renderPhases,
+            TestRenderContextSource renderContextSource)
             : base(gpuMemorySystem, renderPhases)
         {
+            _renderContextSource = renderContextSource;
         }
 
         protected override bool TryCreateRenderContext(
             [NotNullWhen(true)] out TestRenderContext? renderContext)
         {
+            if (!_renderContextSource.CanCreate)
+            {
+                renderContext = null;
+                return false;
+            }
+
             renderContext = new TestRenderContext();
+            _renderContextSource.LastRenderContext = renderContext;
             return true;
         }
+    }
+
+    private sealed class TestRenderContextSource
+    {
+        public bool CanCreate { get; init; } = true;
+        public TestRenderContext? LastRenderContext { get; set; }
     }
 
     private sealed class TestRenderContext : IRenderContext
@@ -145,8 +198,11 @@ public class RenderCoordinatorTests
 
         public Texture ColorTarget => null!;
 
+        public bool IsDisposed { get; private set; }
+
         public void Dispose()
         {
+            IsDisposed = true;
         }
     }
 
