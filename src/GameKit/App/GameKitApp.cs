@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using GameKit.DependencyInjection;
+using GameKit.RenderOrchestration;
 
 namespace GameKit.App;
 
@@ -22,7 +23,7 @@ public class GameKitApp : IGameKitApp
         GameKitFrameContext frameContext = ServiceProvider.GetRequiredService<GameKitFrameContext>();
         EventService eventService = ServiceProvider.GetRequiredService<EventService>();
         AppControl appControl = ServiceProvider.GetRequiredService<AppControl>();
-        IRenderManager rootRenderer = ServiceProvider.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = ServiceProvider.GetRequiredService<RenderManager>();
         ServiceRegistry<IUpdatable> updatables = ServiceProvider.GetRequiredService<ServiceRegistry<IUpdatable>>();
         StageManager stageManager = ServiceProvider.GetRequiredService<StageManager>();
 
@@ -42,7 +43,7 @@ public class GameKitApp : IGameKitApp
             }
 
             // finally render
-            rootRenderer.Execute();
+            renderManager.Execute();
         }
     }
 

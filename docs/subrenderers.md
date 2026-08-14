@@ -3,7 +3,7 @@
 Subrenderers are renderers that receive an existing RenderPass instead of creating their own. They're used for internal composition within an `IRenderPhase<T>`.
 
 ```
-DefaultRenderManager<T>
+RenderManager<T>
 └─ IRenderPhase<T>[] (geometry, lighting, post-process phases)
     └─ Subrenderers (multiple renderers sharing the same RenderPass)
 ```
@@ -129,7 +129,7 @@ public class GeometryPhase : IRenderPhase<GameRenderContext>
 }
 ```
 
-**Note:** `IRenderPhase<T>` is managed by `DefaultRenderManager<T>`, which orchestrates multiple phases (geometry, lighting, post-process) in order.
+**Note:** `IRenderPhase<T>` is managed by `RenderManager<T>`, which orchestrates multiple phases (geometry, lighting, post-process) in order.
 
 ## Key Points
 

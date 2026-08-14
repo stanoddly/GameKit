@@ -13,7 +13,7 @@ public class DefaultRenderManagerTests
     {
         GameKitAppBuilder builder = CreateBuilder(new List<string>());
         ServiceProvider provider = builder.BuildServiceProvider();
-        IRenderManager renderManager = provider.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = provider.GetRequiredService<RenderManager>();
 
         Assert.DoesNotThrow(renderManager.Execute);
     }
@@ -24,7 +24,7 @@ public class DefaultRenderManagerTests
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
         ServiceProvider parent = builder.BuildServiceProvider();
-        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
@@ -41,7 +41,7 @@ public class DefaultRenderManagerTests
         List<string> calls = new();
         GameKitAppBuilder builder = CreateBuilder(calls);
         ServiceProvider parent = builder.BuildServiceProvider();
-        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls));
@@ -60,7 +60,7 @@ public class DefaultRenderManagerTests
         GameKitAppBuilder builder = CreateBuilder(calls);
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
-        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
 
         ServiceCollection childCollection = parent.CreateServiceCollection();
         childCollection.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("child", calls, 5));
@@ -78,7 +78,7 @@ public class DefaultRenderManagerTests
         GameKitAppBuilder builder = CreateBuilder(calls);
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new TestRenderPhase("root", calls, 10));
         ServiceProvider parent = builder.BuildServiceProvider();
-        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
 
         ServiceProvider? child = null;
         ServiceCollection childCollection = parent.CreateServiceCollection();
@@ -98,7 +98,7 @@ public class DefaultRenderManagerTests
         ServiceProvider? parent = null;
         builder.AddSingleton<IRenderPhase<TestRenderContext>>(new ChildProviderBuildingRenderPhase("root", calls, () => parent!, 0));
         parent = builder.BuildServiceProvider();
-        IRenderManager renderManager = parent.GetRequiredService<IRenderManager>();
+        RenderManager renderManager = parent.GetRequiredService<RenderManager>();
 
         renderManager.Execute();
 
@@ -113,16 +113,26 @@ public class DefaultRenderManagerTests
     private static GameKitAppBuilder CreateBuilder(List<string> calls)
     {
         GameKitAppBuilder builder = new();
-        builder.UseDefaultRenderManager<TestRenderContext>();
-        builder.AddSingleton<IRenderContextProvider<TestRenderContext>>(new TestRenderContextProvider());
+        builder.UseRenderManager<TestRenderContext>(
+            static (provider, renderPhases) => new TestRenderManager(
+                provider.GetRequiredService<GpuMemorySystem>(),
+                renderPhases));
         builder.AddSingleton(new GpuMemorySystem(null!));
         builder.AddSingleton(calls);
         return builder;
     }
 
-    private sealed class TestRenderContextProvider : IRenderContextProvider<TestRenderContext>
+    private sealed class TestRenderManager : RenderManager<TestRenderContext>
     {
-        public bool TryProvide([NotNullWhen(true)] out TestRenderContext? renderContext)
+        public TestRenderManager(
+            GpuMemorySystem gpuMemorySystem,
+            ServiceRegistry<IRenderPhase<TestRenderContext>> renderPhases)
+            : base(gpuMemorySystem, renderPhases)
+        {
+        }
+
+        protected override bool TryCreateRenderContext(
+            [NotNullWhen(true)] out TestRenderContext? renderContext)
         {
             renderContext = new TestRenderContext();
             return true;
