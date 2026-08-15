@@ -12,7 +12,6 @@ public class WindowManager : IWindowRegistry, IDisposable
     private readonly PlatformInfo _platformInfo;
     private readonly Dictionary<string, Window> _windowsByName = new(StringComparer.Ordinal);
     private readonly Dictionary<uint, string> _windowNamesBySdlId = new();
-    private readonly HashSet<string> _claimedWindowNames = new(StringComparer.Ordinal);
     private readonly List<Window> _windows = new();
     private bool _disposed;
 
@@ -35,18 +34,12 @@ public class WindowManager : IWindowRegistry, IDisposable
         RegisterWindow(PrimaryWindowName, PrimaryWindow);
     }
 
-    /// <summary>Creates the secondary window claimed by a render coordinator.</summary>
+    /// <summary>Creates a named secondary window.</summary>
     public Window CreateWindow(string name, WindowConfig config)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(config);
-
-        if (!_claimedWindowNames.Contains(name))
-        {
-            throw new InvalidOperationException(
-                $"Window '{name}' has not been claimed by a render coordinator.");
-        }
 
         if (_windowsByName.ContainsKey(name))
         {
@@ -115,31 +108,6 @@ public class WindowManager : IWindowRegistry, IDisposable
         return false;
     }
 
-    void IWindowRegistry.ClaimWindow(string name)
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
-        if (!_claimedWindowNames.Add(name))
-        {
-            throw new InvalidOperationException(
-                $"Window '{name}' is already claimed by another render coordinator.");
-        }
-    }
-
-    void IWindowRegistry.ReleaseWindow(string name)
-    {
-        if (!_claimedWindowNames.Remove(name))
-        {
-            return;
-        }
-
-        if (name != PrimaryWindowName)
-        {
-            DestroyWindow(name);
-        }
-    }
-
     bool IWindowRegistry.TryGetWindow(string name, out Window window)
     {
         return _windowsByName.TryGetValue(name, out window!);
@@ -162,7 +130,6 @@ public class WindowManager : IWindowRegistry, IDisposable
         _windowsByName.Remove(PrimaryWindowName);
         _windowNamesBySdlId.Remove(PrimaryWindow.Id);
         _windows.Remove(PrimaryWindow);
-        _claimedWindowNames.Clear();
         PrimaryWindow.Dispose();
     }
 

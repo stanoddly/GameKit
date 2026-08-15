@@ -28,7 +28,6 @@ internal sealed class WindowRenderCoordinator<TRenderContext> :
         _windowName = windowName;
         _gpuDevice = gpuDevice;
         _contextFactory = contextFactory;
-        _windows.ClaimWindow(windowName);
     }
 
     protected override bool TryCreateRenderContext(
@@ -68,6 +67,9 @@ internal sealed class WindowRenderCoordinator<TRenderContext> :
         }
 
         _disposed = true;
-        _windows.ReleaseWindow(_windowName);
+        if (_windowName != WindowManager.PrimaryWindowName)
+        {
+            _windows.DestroyWindow(_windowName);
+        }
     }
 }

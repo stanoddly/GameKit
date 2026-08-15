@@ -4,11 +4,11 @@ GameKit runs every active `IRenderCoordinator` once per frame. Coordinators regi
 
 Each render-context type identifies one rendering graph in a service-provider hierarchy. Its `IRenderer<TContext>` registrations can come from the root provider or the active stage. Registering a second coordinator for the same context type is rejected; use another context type for an independent graph.
 
-Each window also has a case-sensitive application-defined name. One coordinator claims each name, ensuring that a window has one swapchain acquisition and presentation per frame.
+Each window also has a case-sensitive application-defined name. A window rendering coordinator resolves its window by that name each frame.
 
 ## Primary window
 
-`UseDefaultRendering()` registers the `DefaultRenderContext` graph and claims the primary window named `"main"`:
+`UseDefaultRendering()` registers the `DefaultRenderContext` graph for the primary window named `"main"`:
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
@@ -21,7 +21,7 @@ The name is also available as `WindowManager.PrimaryWindowName`. `DefaultRenderC
 
 ## Stage-owned secondary window
 
-Register a separate context graph on the stage's existing `ServiceCollection`. This claims the window name without opening the native window or creating another service provider:
+Register a separate context graph on the stage's existing `ServiceCollection`. This associates the graph with a window name without opening the native window or creating another service provider:
 
 ```csharp
 stages.Load(services =>
@@ -46,7 +46,7 @@ public static InventoryRenderContext Create(
 }
 ```
 
-The coordinator does no work while its claimed window is closed. Runtime code opens it by name:
+The coordinator does no work while its window is closed. Runtime code opens it by name:
 
 ```csharp
 windows.CreateWindow(
@@ -54,13 +54,13 @@ windows.CreateWindow(
     new WindowConfig(Title: "Inventory"));
 ```
 
-Creating an undeclared name, opening the same name twice, or registering another coordinator for a claimed name throws. A user-closed secondary window can be reopened under the same name while the stage remains active.
+Opening the same name twice throws. A user-closed secondary window can be reopened under the same name while the stage remains active. A window may also be opened without a rendering graph.
 
-Disposing the stage releases its claim and closes the secondary window if it is open. The primary window and its rendering graph are unaffected.
+Disposing the stage closes the secondary window if it is open. The primary window and its rendering graph are unaffected.
 
 ## Composing rendering for one window
 
-Different context types cannot claim the same window name. Multiple coordinators would acquire and present separate swapchain textures rather than compose reliably.
+Do not configure different context types for the same window name. GameKit permits it, but the coordinators acquire and present separate swapchain textures rather than composing reliably.
 
 Use multiple `IRenderer<TContext>` registrations in one graph instead. They execute in order with the same context, command buffer, and swapchain texture. A later render pass using `Clear` replaces existing contents; a pass using `Load` can draw over them.
 
