@@ -5,12 +5,12 @@ namespace GameKit.Tutorials.MultiWindow;
 
 internal static class GameStage
 {
-    internal const string SecondaryWindowName = "inventory";
-
     internal static void Configure(ServiceCollection services)
     {
         services.UseWindowRendering<SecondaryRenderContext>(
-            SecondaryWindowName,
+            new WindowConfig(
+                Size: new Size<uint>(480, 360),
+                Title: "Secondary window - right-click to return"),
             SecondaryRenderContext.Create);
         services.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
         services.AddSingleton<IRenderer<SecondaryRenderContext>>(SecondaryWindowRenderer.Create);

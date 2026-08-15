@@ -45,8 +45,15 @@ public static class PencuilExtensions
             sp.GetRequiredService<GpuMemorySystem>(),
             sp.GetRequiredService<ShaderLoader>(),
             sp.GetRequiredService<GpuDevice>(),
-            sp.GetRequiredService<WindowManager>()));
-        builder.AddSingleton<PencilSystem>();
+            sp.GetRequiredService<Window<TRenderContext>>()));
+        builder.AddSingleton<PencilSystem>(sp => new PencilSystem(
+            sp.GetRequiredService<Pencil>(),
+            sp.GetRequiredService<ViewRegistry>(),
+            sp.GetRequiredService<Window<TRenderContext>>(),
+            sp.GetRequiredService<IMouseService>(),
+            sp.GetRequiredService<IKeyboardService>(),
+            sp.GetRequiredService<ITextInputService>(),
+            sp.GetRequiredService<PencuilOptions>()));
         return builder;
     }
 

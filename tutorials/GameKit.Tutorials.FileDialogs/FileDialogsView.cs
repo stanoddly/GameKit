@@ -1,5 +1,6 @@
 using GameKit.Gpu;
 using GameKit.Pencuil;
+using GameKit.RenderOrchestration;
 using GameKit.Text;
 
 namespace GameKit.Tutorials.FileDialogs;
@@ -56,13 +57,16 @@ public class FileDialogsView : View<FileDialogsViewModel>
     private static readonly Color ButtonColor = new(62, 87, 121, 255);
     private static readonly Color ButtonHoverColor = new(78, 112, 156, 255);
     private static readonly Color TextColor = new(235, 238, 242, 255);
-    private readonly Window _window;
+    private readonly Window<DefaultRenderContext> _window;
     private readonly Font _font;
 
-    public FileDialogsView(FileDialogsViewModel viewModel, WindowManager windowManager, IFontSystem fontSystem)
+    public FileDialogsView(
+        FileDialogsViewModel viewModel,
+        Window<DefaultRenderContext> window,
+        IFontSystem fontSystem)
         : base(viewModel)
     {
-        _window = windowManager.PrimaryWindow;
+        _window = window;
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
     }
 

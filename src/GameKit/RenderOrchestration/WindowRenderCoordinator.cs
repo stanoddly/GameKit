@@ -4,28 +4,22 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-internal sealed class WindowRenderCoordinator<TRenderContext> :
-    RenderCoordinator<TRenderContext>,
-    IDisposable
+internal sealed class WindowRenderCoordinator<TRenderContext> : RenderCoordinator<TRenderContext>
     where TRenderContext : IRenderContext
 {
-    private readonly IWindowRegistry _windows;
-    private readonly string _windowName;
+    private readonly Window<TRenderContext> _window;
     private readonly GpuDevice _gpuDevice;
-    private readonly Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> _contextFactory;
-    private bool _disposed;
+    private readonly Func<Window<TRenderContext>, SwapchainTexture, CommandBuffer, TRenderContext> _contextFactory;
 
     internal WindowRenderCoordinator(
-        IWindowRegistry windows,
-        string windowName,
+        Window<TRenderContext> window,
         GpuDevice gpuDevice,
         GpuMemorySystem gpuMemorySystem,
         ServiceRegistry<IRenderer<TRenderContext>> renderers,
-        Func<Window, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
+        Func<Window<TRenderContext>, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
         : base(gpuMemorySystem, renderers)
     {
-        _windows = windows;
-        _windowName = windowName;
+        _window = window;
         _gpuDevice = gpuDevice;
         _contextFactory = contextFactory;
     }
@@ -33,14 +27,8 @@ internal sealed class WindowRenderCoordinator<TRenderContext> :
     protected override bool TryCreateRenderContext(
         [NotNullWhen(true)] out TRenderContext? renderContext)
     {
-        if (!_windows.TryGetWindow(_windowName, out Window window))
-        {
-            renderContext = default;
-            return false;
-        }
-
         CommandBuffer commandBuffer = _gpuDevice.AcquireCommandBuffer();
-        if (!window.TryWaitAndAcquireSwapchainTexture(commandBuffer, out SwapchainTexture swapchainTexture))
+        if (!_window.TryWaitAndAcquireSwapchainTexture(commandBuffer, out SwapchainTexture swapchainTexture))
         {
             commandBuffer.Dispose();
             renderContext = default;
@@ -49,27 +37,13 @@ internal sealed class WindowRenderCoordinator<TRenderContext> :
 
         try
         {
-            renderContext = _contextFactory(window, swapchainTexture, commandBuffer);
+            renderContext = _contextFactory(_window, swapchainTexture, commandBuffer);
             return true;
         }
         catch
         {
             commandBuffer.Dispose();
             throw;
-        }
-    }
-
-    public void Dispose()
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _disposed = true;
-        if (_windowName != WindowManager.PrimaryWindowName)
-        {
-            _windows.DestroyWindow(_windowName);
         }
     }
 }

@@ -4,11 +4,11 @@ GameKit runs every active `IRenderCoordinator` once per frame. Coordinators regi
 
 Each render-context type identifies one rendering graph in a service-provider hierarchy. Its `IRenderer<TContext>` registrations can come from the root provider or the active stage. Registering a second coordinator for the same context type is rejected; use another context type for an independent graph.
 
-Each window also has a case-sensitive application-defined name. A window rendering coordinator resolves its window by that name each frame.
+Each window rendering graph is identified by its render-context type. Its `Window<TContext>` is a DI-owned singleton created when the owning service provider is built, so a secondary window cannot exist without a corresponding rendering registration.
 
 ## Primary window
 
-`UseDefaultRendering()` registers the `DefaultRenderContext` graph for the primary window named `"main"`:
+`UseDefaultRendering()` registers the `DefaultRenderContext` graph for the primary window:
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
@@ -17,17 +17,20 @@ GameKitAppBuilder builder = new GameKitAppBuilder()
 builder.AddSingleton<IRenderer<DefaultRenderContext>>(GameRenderer.Create);
 ```
 
-The name is also available as `WindowManager.PrimaryWindowName`. `DefaultRenderContext.Window` provides the native window associated with the current swapchain texture.
+`DefaultRenderContext.Window` provides the native window associated with the current swapchain texture.
+Services can inject the primary window as `Window<DefaultRenderContext>`.
 
 ## Stage-owned secondary window
 
-Register a separate context graph on the stage's existing `ServiceCollection`. This associates the graph with a window name without opening the native window or creating another service provider:
+Register a separate context graph and its window configuration on the stage's existing `ServiceCollection`. Building the stage provider creates the secondary window without creating another service provider for it:
 
 ```csharp
 stages.Load(services =>
 {
     services.UseWindowRendering<InventoryRenderContext>(
-        "inventory",
+        new WindowConfig(
+            Size: new Size<uint>(480, 360),
+            Title: "Inventory"),
         InventoryRenderContext.Create);
     services.AddSingleton<IRenderer<InventoryRenderContext>>(InventoryRenderer.Create);
     services.AddSingleton<GameController>();
@@ -38,7 +41,7 @@ The context factory receives the resolved window, its swapchain texture, and the
 
 ```csharp
 public static InventoryRenderContext Create(
-    Window window,
+    Window<InventoryRenderContext> window,
     SwapchainTexture swapchainTexture,
     CommandBuffer commandBuffer)
 {
@@ -46,22 +49,24 @@ public static InventoryRenderContext Create(
 }
 ```
 
-The coordinator does no work while its window is closed. Runtime code opens it by name:
+Services owned by the same provider can inject the typed window directly:
 
 ```csharp
-windows.CreateWindow(
-    "inventory",
-    new WindowConfig(Title: "Inventory"));
+public sealed class InventoryController
+{
+    private readonly Window<InventoryRenderContext> _window;
+
+    public InventoryController(Window<InventoryRenderContext> window)
+    {
+        _window = window;
+    }
+}
 ```
 
-Opening the same name twice throws. A user-closed secondary window can be reopened under the same name while the stage remains active. A window may also be opened without a rendering graph.
-
-Disposing the stage closes the secondary window if it is open. The primary window and its rendering graph are unaffected.
+Disposing the stage unregisters and disposes its secondary window. The primary window and its rendering graph are unaffected.
 
 ## Composing rendering for one window
 
-Do not configure different context types for the same window name. GameKit permits it, but the coordinators acquire and present separate swapchain textures rather than composing reliably.
-
-Use multiple `IRenderer<TContext>` registrations in one graph instead. They execute in order with the same context, command buffer, and swapchain texture. A later render pass using `Clear` replaces existing contents; a pass using `Load` can draw over them.
+Use multiple `IRenderer<TContext>` registrations to compose rendering for one window. They execute in order with the same context, command buffer, and swapchain texture. A later render pass using `Clear` replaces existing contents; a pass using `Load` can draw over them.
 
 The complete menu → game stage → secondary window flow is in `tutorials/GameKit.Tutorials.MultiWindow`.

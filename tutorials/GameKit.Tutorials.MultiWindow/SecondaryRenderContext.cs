@@ -5,13 +5,13 @@ namespace GameKit.Tutorials.MultiWindow;
 
 public sealed class SecondaryRenderContext : IRenderContext
 {
-    public Window Window { get; }
+    public Window<SecondaryRenderContext> Window { get; }
     public SwapchainTexture SwapchainTexture { get; }
     public CommandBuffer CommandBuffer { get; }
     public Texture ColorTarget => SwapchainTexture;
 
     private SecondaryRenderContext(
-        Window window,
+        Window<SecondaryRenderContext> window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {
@@ -26,7 +26,7 @@ public sealed class SecondaryRenderContext : IRenderContext
     }
 
     public static SecondaryRenderContext Create(
-        Window window,
+        Window<SecondaryRenderContext> window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {

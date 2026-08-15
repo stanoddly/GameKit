@@ -1,4 +1,6 @@
+using GameKit.DependencyInjection;
 using GameKit.Input;
+using GameKit.RenderOrchestration;
 using SDL;
 
 namespace GameKit;
@@ -9,16 +11,25 @@ public class EventService
     private readonly GamepadService _gamepadService;
     private readonly MouseService _mouseService;
     private readonly TextInputService _textInputService;
-    private readonly WindowManager _windowManager;
+    private readonly Window<DefaultRenderContext> _primaryWindow;
+    private readonly ServiceRegistry<Window> _windows;
     private readonly AppControl _appControl;
 
-    internal EventService(KeyboardService keyboardService, GamepadService gamepadService, MouseService mouseService, TextInputService textInputService, WindowManager windowManager, AppControl appControl)
+    internal EventService(
+        KeyboardService keyboardService,
+        GamepadService gamepadService,
+        MouseService mouseService,
+        TextInputService textInputService,
+        Window<DefaultRenderContext> primaryWindow,
+        ServiceRegistry<Window> windows,
+        AppControl appControl)
     {
         _keyboardService = keyboardService;
         _gamepadService = gamepadService;
         _mouseService = mouseService;
         _textInputService = textInputService;
-        _windowManager = windowManager;
+        _primaryWindow = primaryWindow;
+        _windows = windows;
         _appControl = appControl;
     }
 
@@ -75,14 +86,14 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_ENTER)
                 {
-                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
+                    if ((uint)evt.window.windowID == _primaryWindow.Id)
                     {
                         _mouseService.OnMouseWindowPresenceEvent(evt.window, true);
                     }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_MOUSE_LEAVE)
                 {
-                    if ((uint)evt.window.windowID == _windowManager.PrimaryWindow.Id)
+                    if ((uint)evt.window.windowID == _primaryWindow.Id)
                     {
                         _mouseService.OnMouseWindowPresenceEvent(evt.window, false);
                     }
@@ -97,23 +108,20 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
                 {
-                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window pixelSizeWindow))
+                    foreach (Window window in _windows)
                     {
-                        pixelSizeWindow.OnPixelSizeChanged(evt.window.timestamp);
+                        if (window.Id == (uint)evt.window.windowID)
+                        {
+                            window.OnPixelSizeChanged(evt.window.timestamp);
+                            break;
+                        }
                     }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED)
                 {
-                    if (_windowManager.TryGetWindow((uint)evt.window.windowID, out Window closedWindow))
+                    if ((uint)evt.window.windowID == _primaryWindow.Id)
                     {
-                        if (closedWindow == _windowManager.PrimaryWindow)
-                        {
-                            _appControl.Quit();
-                        }
-                        else
-                        {
-                            _windowManager.DestroyWindow(closedWindow);
-                        }
+                        _appControl.Quit();
                     }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)

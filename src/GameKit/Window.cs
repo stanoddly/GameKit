@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using GameKit.Content;
 using GameKit.Gpu;
+using GameKit.RenderOrchestration;
 using GameKit.Utilities;
 using SDL;
 
@@ -11,7 +12,7 @@ public readonly record struct ResolutionChangedEventArgs(ShortSize OldSize, Shor
 
 public delegate void ResolutionChangedHandler(ResolutionChangedEventArgs eventArgs);
 
-public class Window : IDisposable
+public abstract class Window : IDisposable
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
@@ -24,7 +25,7 @@ public class Window : IDisposable
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    private protected Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
@@ -497,6 +498,11 @@ public class Window : IDisposable
 
     public void Dispose()
     {
+        if (SdlWindow.IsNull)
+        {
+            return;
+        }
+
         ClearHitTestCallback();
         unsafe
         {
@@ -589,5 +595,19 @@ public class Window : IDisposable
                 Marshal.FreeCoTaskMem(allocatedString);
             }
         }
+    }
+}
+
+public sealed class Window<TRenderContext> : Window
+    where TRenderContext : IRenderContext
+{
+    internal Window(
+        Pointer<SDL_Window> sdlWindow,
+        Pointer<SDL_GPUDevice> sdlGpuDevice,
+        uint id,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo)
+        : base(sdlWindow, sdlGpuDevice, id, frameContext, platformInfo)
+    {
     }
 }

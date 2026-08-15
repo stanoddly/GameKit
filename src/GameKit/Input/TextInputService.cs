@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using GameKit.RenderOrchestration;
 using SDL;
 
 namespace GameKit.Input;
@@ -26,14 +27,14 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly WindowManager _windowManager;
+    private readonly Window<DefaultRenderContext> _primaryWindow;
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive => IsActiveFor(_windowManager.PrimaryWindow);
+    public bool IsActive => IsActiveFor(_primaryWindow);
 
     public bool IsActiveFor(Window window)
     {
@@ -67,7 +68,7 @@ public class TextInputService : ITextInputService
 
     public void Start()
     {
-        Start(_windowManager.PrimaryWindow);
+        Start(_primaryWindow);
     }
 
     public void Start(Window window)
@@ -80,7 +81,7 @@ public class TextInputService : ITextInputService
 
     public void Stop()
     {
-        Stop(_windowManager.PrimaryWindow);
+        Stop(_primaryWindow);
     }
 
     public void Stop(Window window)
@@ -91,9 +92,9 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal TextInputService(WindowManager windowManager)
+    internal TextInputService(Window<DefaultRenderContext> primaryWindow)
     {
-        _windowManager = windowManager;
+        _primaryWindow = primaryWindow;
     }
 
     internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)

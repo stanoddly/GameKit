@@ -23,10 +23,8 @@ static class Program
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 
-        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
+        builder.OnStart((Window<DefaultRenderContext> window, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            Window window = windowManager.PrimaryWindow;
-
             if (window.SupportsSetWindowPosition)
             {
                 Console.WriteLine("Active window dragging path: programmatic positioning");

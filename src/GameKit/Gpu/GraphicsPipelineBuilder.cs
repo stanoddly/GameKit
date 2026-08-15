@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using GameKit.RenderOrchestration;
 using GameKit.Shaders;
 using SDL;
 
@@ -112,7 +113,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly WindowManager _windowManager;
+    private readonly Window<DefaultRenderContext> _primaryWindow;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -121,16 +122,19 @@ public class GraphicsPipelineBuilder
     /// </summary>
     public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, WindowManager windowManager, IShaderLoader shaderLoader)
+    internal GraphicsPipelineBuilder(
+        GpuDevice gpuDevice,
+        Window<DefaultRenderContext> primaryWindow,
+        IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
-        _windowManager = windowManager;
+        _primaryWindow = primaryWindow;
         _shaderLoader = shaderLoader;
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
     {
-        AddColorTarget(_windowManager.PrimaryWindow.ColorTargetFormat, blendingState, colorWriteMask);
+        AddColorTarget(_primaryWindow.ColorTargetFormat, blendingState, colorWriteMask);
 
         return this;
     }

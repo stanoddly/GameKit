@@ -10,7 +10,14 @@ public class PencilSystem : IUpdatable
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+    public PencilSystem(
+        Pencil pencil,
+        ViewRegistry viewRegistry,
+        Window window,
+        IMouseService mouseService,
+        IKeyboardService keyboardService,
+        ITextInputService textInputService,
+        PencuilOptions options)
     {
         _pencil = pencil;
         _viewRegistry = viewRegistry;
@@ -111,11 +118,11 @@ public class PencilSystem : IUpdatable
         {
             if (hasFocus)
             {
-                _textInputService.Start();
+                _textInputService.Start(_window);
             }
             else
             {
-                _textInputService.Stop();
+                _textInputService.Stop(_window);
             }
             _textInputActive = hasFocus;
         }

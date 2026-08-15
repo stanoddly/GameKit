@@ -43,7 +43,7 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
-        WindowManager windowManager)
+        Window<TRenderContext> window)
     {
         ReadOnlySpan<PositionTextureVertex> quad =
         [
@@ -59,8 +59,8 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         GraphicsShaderProgram tintedTextureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_tinted_texture");
         GraphicsShaderProgram textureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_texture");
 
-        TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
-        ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
+        TextureFormat colorTargetFormat = window.ColorTargetFormat;
+        ShortSize renderSize = window.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
