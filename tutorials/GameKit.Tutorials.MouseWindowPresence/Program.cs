@@ -13,19 +13,19 @@ static class Program
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
-        builder.OnStart((IMouseService mouseService) =>
+        builder.OnStart((Window<DefaultRenderContext> window, IMouseService mouseService) =>
         {
-            Console.WriteLine($"Mouse starts in window: {mouseService.IsInWindow}");
+            Console.WriteLine($"Mouse starts in window: {mouseService.IsInWindow(window)}");
             Console.WriteLine("Move the mouse into and out of the window to see enter and leave events.");
 
             mouseService.WindowEnter += eventArgs =>
             {
-                Console.WriteLine($"Mouse entered window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow}");
+                Console.WriteLine($"Mouse entered window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow(window)}");
             };
 
             mouseService.WindowLeave += eventArgs =>
             {
-                Console.WriteLine($"Mouse left window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow}");
+                Console.WriteLine($"Mouse left window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow(window)}");
             };
         });
 

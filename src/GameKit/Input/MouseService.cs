@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Input;
@@ -69,6 +70,7 @@ public class Mouse
 
 public class MouseButtonEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public MouseButton Button { get; internal set; }
     public Vector2 Position { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -78,6 +80,7 @@ public class MouseButtonEventArgs
 
 public class MouseMotionEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public Vector2 Position { get; internal set; }
     public Vector2 RelativeMotion { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -87,6 +90,7 @@ public class MouseMotionEventArgs
 
 public class MouseWheelEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public Vector2 Delta { get; internal set; }
     public Vector2 Position { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -96,6 +100,7 @@ public class MouseWheelEventArgs
 
 public class MouseWindowPresenceEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public bool IsInWindow { get; internal set; }
     public ulong Timestamp { get; internal set; }
 }
@@ -127,12 +132,15 @@ public class MouseService : IMouseService
     {
     }
 
-    internal MouseService(bool isInWindow)
+    public bool IsInWindow(Window window)
     {
-        IsInWindow = isInWindow;
+        unsafe
+        {
+            Pointer<SDL_Window> mouseFocusWindow = SDL3.SDL_GetMouseFocus();
+            return !mouseFocusWindow.IsNull &&
+                (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.Id;
+        }
     }
-
-    public bool IsInWindow { get; private set; }
 
     public MouseState GetGlobalState()
     {
@@ -214,10 +222,12 @@ public class MouseService : IMouseService
         _windowLeaveHandlers.Add(priority, handler);
     }
 
-    internal void OnMouseWindowPresenceEvent(in SDL_WindowEvent windowEvent, bool isInWindow)
+    internal void OnMouseWindowPresenceEvent(
+        Window window,
+        in SDL_WindowEvent windowEvent,
+        bool isInWindow)
     {
-        IsInWindow = isInWindow;
-
+        _windowPresenceEventArgs.Window = window;
         _windowPresenceEventArgs.IsInWindow = isInWindow;
         _windowPresenceEventArgs.Timestamp = windowEvent.timestamp;
 
@@ -231,7 +241,7 @@ public class MouseService : IMouseService
         }
     }
 
-    internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
+    internal void OnMouseButtonEvent(Window window, in SDL_MouseButtonEvent mouseButtonEvent)
     {
         SDL_MouseID mouseId = mouseButtonEvent.which;
         MouseButton button = (MouseButton)mouseButtonEvent.button;
@@ -247,6 +257,7 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
+        _buttonEventArgs.Window = window;
         _buttonEventArgs.Button = button;
         _buttonEventArgs.Position = position;
         _buttonEventArgs.Timestamp = timestamp;
@@ -283,7 +294,7 @@ public class MouseService : IMouseService
         }
     }
 
-    internal void OnMouseMotionEvent(in SDL_MouseMotionEvent mouseMotionEvent)
+    internal void OnMouseMotionEvent(Window window, in SDL_MouseMotionEvent mouseMotionEvent)
     {
         SDL_MouseID mouseId = mouseMotionEvent.which;
         Vector2 position = new(mouseMotionEvent.x, mouseMotionEvent.y);
@@ -299,6 +310,7 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
+        _motionEventArgs.Window = window;
         _motionEventArgs.Position = position;
         _motionEventArgs.RelativeMotion = relativeMotion;
         _motionEventArgs.Timestamp = timestamp;
@@ -315,7 +327,7 @@ public class MouseService : IMouseService
         }
     }
 
-    internal void OnMouseWheelEvent(in SDL_MouseWheelEvent mouseWheelEvent)
+    internal void OnMouseWheelEvent(Window window, in SDL_MouseWheelEvent mouseWheelEvent)
     {
         SDL_MouseID mouseId = mouseWheelEvent.which;
         Vector2 delta = new(mouseWheelEvent.x, mouseWheelEvent.y);
@@ -331,6 +343,7 @@ public class MouseService : IMouseService
 
         mouse.Position = position;
 
+        _wheelEventArgs.Window = window;
         _wheelEventArgs.Delta = delta;
         _wheelEventArgs.Position = position;
         _wheelEventArgs.Timestamp = timestamp;

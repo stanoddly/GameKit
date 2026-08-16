@@ -37,14 +37,15 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
     public int Order { get; }
 
     public PencuilRenderer(
-        Pencil pencil,
-        PencuilOptions options,
+        PencuilState<TRenderContext> state,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
         Window<TRenderContext> window)
     {
+        Pencil pencil = state.Pencil;
+        PencuilOptions options = state.Options;
         ReadOnlySpan<PositionTextureVertex> quad =
         [
             new(new Vector3(0.0f, 0.0f, 0.0f), new Vector2(0, 0)),

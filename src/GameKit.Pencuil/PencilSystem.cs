@@ -1,43 +1,60 @@
 using GameKit.Input;
+using GameKit.RenderOrchestration;
 
 namespace GameKit.Pencuil;
 
-public class PencilSystem : IUpdatable
+internal sealed class PencilSystem<TRenderContext> : IUpdatable
+    where TRenderContext : IRenderContext
 {
     private readonly Pencil _pencil;
     private readonly ViewRegistry _viewRegistry;
-    private readonly Window _window;
+    private readonly Window<TRenderContext> _window;
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencilSystem(
-        Pencil pencil,
-        ViewRegistry viewRegistry,
-        Window window,
+    internal PencilSystem(
+        PencuilState<TRenderContext> state,
+        Window<TRenderContext> window,
         IMouseService mouseService,
         IKeyboardService keyboardService,
-        ITextInputService textInputService,
-        PencuilOptions options)
+        ITextInputService textInputService)
     {
+        Pencil pencil = state.Pencil;
+        PencuilOptions options = state.Options;
         _pencil = pencil;
-        _viewRegistry = viewRegistry;
+        _viewRegistry = state.ViewRegistry;
         _window = window;
         _textInputService = textInputService;
 
         mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
         {
+            if (!ReferenceEquals(args.Window, window))
+            {
+                return;
+            }
+
             pencil.CursorPosition = (Vector2Int)args.Position;
             pencil.Invalidate();
         });
 
-        mouseService.SubscribeWindowLeave(options.InputOrder, _ =>
+        mouseService.SubscribeWindowLeave(options.InputOrder, args =>
         {
+            if (!ReferenceEquals(args.Window, window))
+            {
+                return;
+            }
+
             pencil.CursorPosition = new Vector2Int(-1, -1);
             pencil.Invalidate();
         });
 
         mouseService.SubscribeButtonPress(options.InputOrder, (_, args) =>
         {
+            if (!ReferenceEquals(args.Window, window))
+            {
+                return;
+            }
+
             if (args.Button == MouseButton.Left)
             {
                 if (pencil.IsOverInteractiveArea((Vector2Int)args.Position))
@@ -49,6 +66,11 @@ public class PencilSystem : IUpdatable
 
         mouseService.SubscribeButtonRelease(options.InputOrder, (_, args) =>
         {
+            if (!ReferenceEquals(args.Window, window))
+            {
+                return;
+            }
+
             if (args.Button == MouseButton.Left)
             {
                 pencil.CursorJustReleased = true;
@@ -63,6 +85,11 @@ public class PencilSystem : IUpdatable
 
         keyboardService.SubscribeKeyDown(options.InputOrder, (keyboard, args) =>
         {
+            if (!ReferenceEquals(args.Window, window))
+            {
+                return;
+            }
+
             if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode, keyboard.Shift, keyboard.Ctrl))
             {
                 args.Consume();

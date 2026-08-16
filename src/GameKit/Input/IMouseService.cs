@@ -9,7 +9,7 @@ public interface IMouseService
     event MouseWindowPresenceHandler WindowEnter;
     event MouseWindowPresenceHandler WindowLeave;
 
-    bool IsInWindow { get; }
+    bool IsInWindow(Window window);
 
     MouseState GetGlobalState();
 

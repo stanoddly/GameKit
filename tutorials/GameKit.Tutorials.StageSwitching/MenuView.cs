@@ -1,11 +1,12 @@
 using GameKit.App;
 using GameKit.Gpu;
 using GameKit.Pencuil;
+using GameKit.RenderOrchestration;
 using GameKit.Text;
 
 namespace GameKit.Tutorials.StageSwitching;
 
-public class MenuView : IView
+public class MenuView : IView<DefaultRenderContext>
 {
     private static readonly Color BackgroundColor = new(28, 30, 34, 255);
     private static readonly Color ButtonColor = new(62, 87, 121, 255);

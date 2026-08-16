@@ -5,6 +5,7 @@ using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
+using GameKit.Text;
 
 namespace GameKit.Pencuil;
 
@@ -15,15 +16,12 @@ public static class PencuilExtensions
     {
         builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
         builder.AddSingleton(GuiStyles.Style);
-        builder.AddSingleton(new PencuilOptions { Order = order, InputOrder = inputOrder, ClearTarget = clearTarget });
-        builder.AddSingleton<Pencil>();
-
+        PencuilOptions options = new() { Order = order, InputOrder = inputOrder, ClearTarget = clearTarget };
         ViewRegistry viewRegistry = new();
-        builder.AddSingleton(viewRegistry);
 
         builder.OnActivated((instance, _) =>
         {
-            if (instance is IView view)
+            if (instance is IView<TRenderContext> view)
             {
                 viewRegistry.Add(view);
             }
@@ -31,29 +29,34 @@ public static class PencuilExtensions
 
         builder.OnDisposing((instance, _) =>
         {
-            if (instance is IView view)
+            if (instance is IView<TRenderContext> view)
             {
                 viewRegistry.Remove(view);
             }
         });
 
+        builder.AddSingleton<PencuilState<TRenderContext>>(sp => new PencuilState<TRenderContext>(
+            new Pencil(
+                sp.GetRequiredService<IFontSystem>(),
+                sp.GetRequiredService<IClipboardService>(),
+                sp.GetRequiredService<GuiStyle>()),
+            viewRegistry,
+            options));
+
         // Factory overload required: generated constructor registration cannot bind TRenderContext yet.
         builder.AddSingleton<IRenderer<TRenderContext>, PencuilRenderer<TRenderContext>>(sp => new PencuilRenderer<TRenderContext>(
-            sp.GetRequiredService<Pencil>(),
-            sp.GetRequiredService<PencuilOptions>(),
+            sp.GetRequiredService<PencuilState<TRenderContext>>(),
             sp.GetRequiredService<GraphicsPipelineBuilder>(),
             sp.GetRequiredService<GpuMemorySystem>(),
             sp.GetRequiredService<ShaderLoader>(),
             sp.GetRequiredService<GpuDevice>(),
             sp.GetRequiredService<Window<TRenderContext>>()));
-        builder.AddSingleton<PencilSystem>(sp => new PencilSystem(
-            sp.GetRequiredService<Pencil>(),
-            sp.GetRequiredService<ViewRegistry>(),
+        builder.AddSingleton<PencilSystem<TRenderContext>>(sp => new PencilSystem<TRenderContext>(
+            sp.GetRequiredService<PencuilState<TRenderContext>>(),
             sp.GetRequiredService<Window<TRenderContext>>(),
             sp.GetRequiredService<IMouseService>(),
             sp.GetRequiredService<IKeyboardService>(),
-            sp.GetRequiredService<ITextInputService>(),
-            sp.GetRequiredService<PencuilOptions>()));
+            sp.GetRequiredService<ITextInputService>()));
         return builder;
     }
 

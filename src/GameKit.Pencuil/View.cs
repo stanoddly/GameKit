@@ -1,6 +1,10 @@
+using GameKit.RenderOrchestration;
+
 namespace GameKit.Pencuil;
 
-public abstract class View<TViewModel> : IView where TViewModel : IViewModel
+public abstract class View<TRenderContext, TViewModel> : IView<TRenderContext>
+    where TRenderContext : IRenderContext
+    where TViewModel : IViewModel
 {
     protected TViewModel ViewModel { get; }
 
@@ -21,4 +25,13 @@ public abstract class View<TViewModel> : IView where TViewModel : IViewModel
     }
 
     public abstract void Build(Pencil pencil);
+}
+
+public abstract class View<TViewModel> : View<DefaultRenderContext, TViewModel>
+    where TViewModel : IViewModel
+{
+    protected View(TViewModel viewModel)
+        : base(viewModel)
+    {
+    }
 }

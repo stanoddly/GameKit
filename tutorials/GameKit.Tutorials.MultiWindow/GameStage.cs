@@ -12,7 +12,7 @@ internal static class GameStage
                 Size: new Size<uint>(480, 360),
                 Title: "Secondary window - right-click to return"),
             SecondaryRenderContext.Create);
-        services.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
+        services.AddSingleton<IRenderer<DefaultRenderContext>>(MainWindowRenderer.Create);
         services.AddSingleton<IRenderer<SecondaryRenderContext>>(SecondaryWindowRenderer.Create);
         services.AddSingleton<GameController>();
     }

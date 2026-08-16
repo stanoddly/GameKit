@@ -7,7 +7,7 @@ internal static class MenuStage
 {
     internal static void Configure(ServiceCollection services)
     {
-        services.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
+        services.AddSingleton<IRenderer<DefaultRenderContext>>(MainWindowRenderer.Create);
         services.AddSingleton<MenuController>();
     }
 }

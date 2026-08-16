@@ -6,7 +6,7 @@ Each render-context type identifies one rendering graph in a service-provider hi
 
 Each window rendering graph is identified by its render-context type. Its `Window<TContext>` is a DI-owned singleton created when the owning service provider is built, so a secondary window cannot exist without a corresponding rendering registration.
 
-## Primary window
+## Default window
 
 `UseDefaultRendering()` creates `Window<DefaultRenderContext>` and registers its rendering graph. Omitting it leaves the application without a default window:
 
@@ -19,7 +19,7 @@ GameKitAppBuilder builder = new GameKitAppBuilder()
 builder.AddSingleton<IRenderer<DefaultRenderContext>>(GameRenderer.Create);
 ```
 
-Services can inject the primary window as `Window<DefaultRenderContext>`.
+Services can inject the default window as `Window<DefaultRenderContext>`.
 
 ## Stage-owned secondary window
 
@@ -64,10 +64,13 @@ public sealed class InventoryController
 }
 ```
 
-Disposing the stage unregisters and disposes its secondary window. The primary window and its rendering graph are unaffected.
+Disposing the stage unregisters and disposes its secondary window. The default window and its rendering graph are unaffected.
 
 ## Composing rendering for one window
 
 Use multiple `IRenderer<TContext>` registrations to compose rendering for one window. They execute in order with the same context, command buffer, and swapchain texture. A later render pass using `Clear` replaces existing contents; a pass using `Load` can draw over them.
 
 The complete menu → game stage → secondary window flow is in `tutorials/GameKit.Tutorials.MultiWindow`.
+
+`tutorials/GameKit.Tutorials.MultiWindowTextInput` registers two simultaneous Pencuil graphs in one
+provider. Each graph has independent views, focus, and text input identified by its render-context type.

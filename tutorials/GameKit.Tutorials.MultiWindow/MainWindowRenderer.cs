@@ -3,12 +3,12 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.MultiWindow;
 
-public class PrimaryRenderer : IRenderer<DefaultRenderContext>
+public class MainWindowRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;
 
-    public PrimaryRenderer(GraphicsPipeline graphicsPipeline, GpuVertexBuffer<PositionVertex> vertexBuffer)
+    public MainWindowRenderer(GraphicsPipeline graphicsPipeline, GpuVertexBuffer<PositionVertex> vertexBuffer)
     {
         _graphicsPipeline = graphicsPipeline;
         _vertexBuffer = vertexBuffer;
@@ -27,7 +27,7 @@ public class PrimaryRenderer : IRenderer<DefaultRenderContext>
         renderPass.DrawPrimitive();
     }
 
-    public static PrimaryRenderer Create(
+    public static MainWindowRenderer Create(
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem)
     {
@@ -40,6 +40,6 @@ public class PrimaryRenderer : IRenderer<DefaultRenderContext>
             .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
-        return new PrimaryRenderer(graphicsPipeline, vertexBuffer);
+        return new MainWindowRenderer(graphicsPipeline, vertexBuffer);
     }
 }

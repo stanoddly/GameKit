@@ -17,6 +17,7 @@ public abstract class Window : IDisposable
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
     internal abstract int RenderContextTypeId { get; }
+    internal WindowCloseBehavior CloseBehavior { get; }
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
     
@@ -26,13 +27,20 @@ public abstract class Window : IDisposable
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    private protected Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    private protected Window(
+        Pointer<SDL_Window> sdlWindow,
+        Pointer<SDL_GPUDevice> sdlSdlGpuDevice,
+        uint id,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        WindowCloseBehavior closeBehavior)
     {
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
         Id = id;
         _frameContext = frameContext;
         _platformInfo = platformInfo;
+        CloseBehavior = closeBehavior;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -609,8 +617,9 @@ public sealed class Window<TRenderContext> : Window
         Pointer<SDL_GPUDevice> sdlGpuDevice,
         uint id,
         GameKitFrameContext frameContext,
-        PlatformInfo platformInfo)
-        : base(sdlWindow, sdlGpuDevice, id, frameContext, platformInfo)
+        PlatformInfo platformInfo,
+        WindowCloseBehavior closeBehavior)
+        : base(sdlWindow, sdlGpuDevice, id, frameContext, platformInfo, closeBehavior)
     {
     }
 }

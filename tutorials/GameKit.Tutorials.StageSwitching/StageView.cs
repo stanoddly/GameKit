@@ -1,9 +1,10 @@
 using GameKit.Gpu;
 using GameKit.Pencuil;
+using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.StageSwitching;
 
-public class StageView : IView, IDisposable
+public class StageView : IView<DefaultRenderContext>, IDisposable
 {
     private readonly string _name;
     private readonly Color _color;

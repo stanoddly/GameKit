@@ -5,6 +5,7 @@ namespace GameKit.Input;
 
 public class KeyEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public Scancode Scancode { get; internal set; }
     public VirtualKey Key { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -54,7 +55,7 @@ public class KeyboardService : IKeyboardService
         _appControl = appControl;
     }
 
-    internal void OnKeyEvent(in SDL_KeyboardEvent keyboardEvent)
+    internal void OnKeyEvent(Window window, in SDL_KeyboardEvent keyboardEvent)
     {
         Scancode scancode = (Scancode)keyboardEvent.scancode;
         ulong timestamp = keyboardEvent.timestamp;
@@ -68,6 +69,7 @@ public class KeyboardService : IKeyboardService
             keyboard = new Keyboard();
         }
 
+        _keyEventArgs.Window = window;
         _keyEventArgs.Scancode = scancode;
         _keyEventArgs.Key = virtualKey;
         _keyEventArgs.Timestamp = timestamp;

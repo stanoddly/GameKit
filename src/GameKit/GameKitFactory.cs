@@ -74,7 +74,8 @@ public class GameKitFactory: IDisposable
             config.Resizable,
             config.Transparent,
             config.Borderless,
-            config.AlwaysOnTop);
+            config.AlwaysOnTop,
+            config.CloseBehavior);
     }
 
     private Window<TRenderContext> CreateWindow<TRenderContext>(
@@ -87,7 +88,8 @@ public class GameKitFactory: IDisposable
         bool resizable = false,
         bool transparent = false,
         bool borderless = false,
-        bool alwaysOnTop = false)
+        bool alwaysOnTop = false,
+        WindowCloseBehavior closeBehavior = WindowCloseBehavior.QuitApplication)
         where TRenderContext : IRenderContext
     {
         EnsureSdlInitialized();
@@ -160,7 +162,13 @@ public class GameKitFactory: IDisposable
             }
         }
 
-        return new Window<TRenderContext>(sdlWindow, gpuDevice.SdlGpuDevice, sdlWindowId, frameContext, platformInfo);
+        return new Window<TRenderContext>(
+            sdlWindow,
+            gpuDevice.SdlGpuDevice,
+            sdlWindowId,
+            frameContext,
+            platformInfo,
+            closeBehavior);
     }
 
     internal GpuDevice CreateGpuDevice()
@@ -277,31 +285,10 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(WindowRegistry windowRegistry)
+    internal MouseService CreateMouseService()
     {
         EnsureSdlInitialized();
-
-        if (windowRegistry.TryGetWindow(out Window<DefaultRenderContext> window))
-        {
-            return new MouseService(IsMouseInWindow(window));
-        }
-
         return new MouseService();
-    }
-
-    private static bool IsMouseInWindow(Window window)
-    {
-        unsafe
-        {
-            Pointer<SDL_Window> mouseFocusWindow = SDL3.SDL_GetMouseFocus();
-
-            if (mouseFocusWindow.IsNull)
-            {
-                return false;
-            }
-
-            return (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.Id;
-        }
     }
 
     internal TextInputService CreateTextInputService()
