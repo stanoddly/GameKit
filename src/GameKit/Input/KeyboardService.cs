@@ -5,6 +5,7 @@ namespace GameKit.Input;
 
 public class KeyEventArgs
 {
+    public ViewScope ViewScope { get; internal set; }
     public Scancode Scancode { get; internal set; }
     public VirtualKey Key { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -49,12 +50,40 @@ public class KeyboardService : IKeyboardService
         _keyUpHandlers.Add(priority, handler);
     }
 
+    public void SubscribeKeyDown(
+        ViewScope viewScope,
+        int priority,
+        KeyDownEventHandler handler)
+    {
+        _keyDownHandlers.Add(priority, (keyboard, eventArgs) =>
+        {
+            if (eventArgs.ViewScope == viewScope)
+            {
+                handler(keyboard, eventArgs);
+            }
+        });
+    }
+
+    public void SubscribeKeyUp(
+        ViewScope viewScope,
+        int priority,
+        KeyUpEventHandler handler)
+    {
+        _keyUpHandlers.Add(priority, (keyboard, eventArgs) =>
+        {
+            if (eventArgs.ViewScope == viewScope)
+            {
+                handler(keyboard, eventArgs);
+            }
+        });
+    }
+
     internal KeyboardService(AppControl appControl)
     {
         _appControl = appControl;
     }
 
-    internal void OnKeyEvent(in SDL_KeyboardEvent keyboardEvent)
+    internal void OnKeyEvent(ViewScope viewScope, in SDL_KeyboardEvent keyboardEvent)
     {
         Scancode scancode = (Scancode)keyboardEvent.scancode;
         ulong timestamp = keyboardEvent.timestamp;
@@ -68,6 +97,7 @@ public class KeyboardService : IKeyboardService
             keyboard = new Keyboard();
         }
 
+        _keyEventArgs.ViewScope = viewScope;
         _keyEventArgs.Scancode = scancode;
         _keyEventArgs.Key = virtualKey;
         _keyEventArgs.Timestamp = timestamp;

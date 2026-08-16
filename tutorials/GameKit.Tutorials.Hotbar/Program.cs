@@ -6,16 +6,19 @@ namespace GameKit.Tutorials.Hotbar;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
-            .UseDefaultRendering()
-            .UsePencuil()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (1280, 720), Title: "Hotbar"))
+            .UsePencuil(ViewScope)
             .AddContentFromProjectDirectory("Content");
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Hotbar" });
         builder.AddSingleton(new HotbarViewModel());
-        builder.AddSingleton<IView, Hotbar>();
+        builder.AddSingleton<IPencuilView, Hotbar>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

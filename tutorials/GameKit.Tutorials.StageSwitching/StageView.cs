@@ -3,11 +3,13 @@ using GameKit.Pencuil;
 
 namespace GameKit.Tutorials.StageSwitching;
 
-public class StageView : IView, IDisposable
+public class StageView : IPencuilView, IDisposable
 {
     private readonly string _name;
     private readonly Color _color;
     private bool _dirty = true;
+
+    public ViewScope ViewScope => Program.ViewScope;
 
     public StageView(string name, Color color)
     {

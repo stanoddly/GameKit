@@ -8,6 +8,7 @@ namespace GameKit.Tutorials.Audio;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
     private const string BeepPath = "audio/beep-example.ogg";
     private const int SourceCount = 4;
     private const float BufferedGain = 0.45f;
@@ -17,11 +18,12 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering()
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (640, 480), Title: "Audio Tutorial"))
             .RegisterAudio();
 
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Audio Tutorial" });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
+        builder.AddSingleton<IViewRenderer>(new NullViewRenderer(ViewScope));
 
         builder.OnStart((IAudioSystem audioSystem, IKeyboardService keyboardService, AppControl appControl) =>
         {

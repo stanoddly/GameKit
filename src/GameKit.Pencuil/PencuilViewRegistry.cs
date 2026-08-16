@@ -2,15 +2,28 @@ using System.Runtime.InteropServices;
 
 namespace GameKit.Pencuil;
 
-public class ViewRegistry
+public sealed class PencuilViewRegistry : IViewScoped
 {
-    private readonly List<IView> _views = new();
+    private readonly List<IPencuilView> _views = new();
     private bool _dirty;
 
-    public ReadOnlySpan<IView> Views => CollectionsMarshal.AsSpan(_views);
+    public ViewScope ViewScope { get; }
+    public ReadOnlySpan<IPencuilView> Views => CollectionsMarshal.AsSpan(_views);
 
-    public void Add(IView view)
+    public PencuilViewRegistry(ViewScope viewScope)
     {
+        ViewScope = viewScope;
+    }
+
+    public void Add(IPencuilView view)
+    {
+        if (view.ViewScope != ViewScope)
+        {
+            throw new InvalidOperationException(
+                $"A Pencuil view for ViewScope {view.ViewScope.Value} cannot be registered " +
+                $"with ViewScope {ViewScope.Value}.");
+        }
+
         for (int i = 0; i < _views.Count; i++)
         {
             if (ReferenceEquals(_views[i], view))
@@ -23,7 +36,7 @@ public class ViewRegistry
         _dirty = true;
     }
 
-    public void Remove(IView view)
+    public void Remove(IPencuilView view)
     {
         for (int i = 0; i < _views.Count; i++)
         {
@@ -42,5 +55,4 @@ public class ViewRegistry
         _dirty = false;
         return dirty;
     }
-
 }

@@ -6,8 +6,10 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.TextureArray;
 
-public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
+public class TextureArrayRenderer : IViewRenderer
 {
+    public ViewScope ViewScope => Program.ViewScope;
+
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionTextureVertex> _quadVertexBuffer;
     private readonly Gpu.TextureArray _textureArray;
@@ -26,7 +28,7 @@ public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
         _sampler = sampler;
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(ViewRenderContext renderContext)
     {
         _time += 0.16f; // Approximate 60fps timestep
 
@@ -77,7 +79,7 @@ public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay(Program.ViewScope)
             .Build();
 
         return new TextureArrayRenderer(graphicsPipeline, quadVertexBuffer, textureArray, sampler);

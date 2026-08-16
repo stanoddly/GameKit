@@ -5,15 +5,18 @@ namespace GameKit.Tutorials.TextureArray;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (800, 600), Title: "Texture Array Demo"));
 
-        builder.AddSingleton(new AppConfig { Size = (800, 600), Title = "Texture Array Demo" });
         builder.AddSingleton<TextureArrayRenderer>(TextureArrayRenderer.Create);
-        builder.AddAlias<IRenderer<DefaultRenderContext>, TextureArrayRenderer>();
+        builder.AddAlias<IViewRenderer, TextureArrayRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

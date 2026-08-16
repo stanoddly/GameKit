@@ -5,14 +5,17 @@ namespace GameKit.Tutorials.IndexedRenderPass;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (1280, 720), Title: "Indexed Render Pass"));
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Indexed Render Pass" });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>>(IndexedRenderPassRenderer.Create);
+        builder.AddSingleton<IViewRenderer>(IndexedRenderPassRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

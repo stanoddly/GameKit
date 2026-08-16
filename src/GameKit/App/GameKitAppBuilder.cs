@@ -2,6 +2,7 @@ using GameKit.Content;
 using GameKit.DependencyInjection;
 using GameKit.Gpu;
 using GameKit.Input;
+using GameKit.RenderOrchestration;
 using GameKit.Shaders;
 using GameKit.Text;
 
@@ -13,6 +14,11 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
+        WindowRegistry windowRegistry = new();
+        AddSingleton(windowRegistry);
+        WindowRegistry.RegisterCallbacks(this, windowRegistry);
+        AddRegistry<IRenderCoordinator>();
+        AddRegistry<IViewRenderer>(static (left, right) => left.Order.CompareTo(right.Order));
         AddRegistry<IUpdatable>(static (left, right) =>
         {
             int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;
@@ -63,17 +69,9 @@ public class GameKitAppBuilder : ServiceCollection
         {
             AddSingleton(new GameKitConfig());
         }
-        if (!IsRegistered<AppConfig>())
-        {
-            AddSingleton(new AppConfig());
-        }
-
         AddSingleton<GameKitFactory>();
 
         AddSingleton<PlatformInfo, GameKitFactory>();
-
-        AddSingleton<WindowManager>();
-        AddSingleton<Window>(static sp => sp.GetRequiredService<WindowManager>().PrimaryWindow);
 
         AddSingleton<GpuDevice, GameKitFactory>();
 

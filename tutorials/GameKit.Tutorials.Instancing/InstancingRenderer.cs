@@ -6,8 +6,10 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.Instancing;
 
-public class InstancingRenderer : IRenderer<DefaultRenderContext>
+public class InstancingRenderer : IViewRenderer
 {
+    public ViewScope ViewScope => Program.ViewScope;
+
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
     private readonly GpuStorageBuffer<Vector4> _offsetBuffer;
@@ -25,7 +27,7 @@ public class InstancingRenderer : IRenderer<DefaultRenderContext>
         _colorBuffer = colorBuffer;
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(ViewRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)
@@ -74,7 +76,7 @@ public class InstancingRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay(Program.ViewScope)
             .Build();
 
         return new InstancingRenderer(graphicsPipeline, quadVertexBuffer, offsetBuffer, colorBuffer);

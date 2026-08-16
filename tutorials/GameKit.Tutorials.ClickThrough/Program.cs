@@ -7,6 +7,8 @@ using GameKit.Tutorials.ClickThrough;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     // Matches the NDC quad rendered by ClickThroughRenderer in a 400x400 window.
     // Points outside this region return HitTestResult.Miss — clicks pass through to whatever is behind the window.
     static readonly Rectangle InteractiveRegion = new Rectangle(50, 50, 300, 300);
@@ -15,20 +17,19 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(
+                    Size: (400, 400),
+                    Title: "Click Through",
+                    Borderless: true));
 
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (400, 400),
-            Title = "Click Through",
-            Borderless = true,
-            ClearColor = FColors.Black
-        });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>>(ClickThroughRenderer.Create);
+        builder.AddSingleton<IViewRenderer>(ClickThroughRenderer.Create);
 
-        builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((WindowRegistry windowRegistry, IKeyboardService keyboardService, AppControl appControl) =>
         {
-            windowManager.PrimaryWindow.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
+            Window window = windowRegistry.GetWindow(ViewScope);
+            window.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
 
             keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs e) =>
             {

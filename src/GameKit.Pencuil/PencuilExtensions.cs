@@ -1,29 +1,61 @@
 using GameKit.App;
+using GameKit.Componentize;
 using GameKit.Content;
 using GameKit.DependencyInjection;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
 using GameKit.Shaders;
+using GameKit.Text;
 
 namespace GameKit.Pencuil;
 
 public static class PencuilExtensions
 {
-    public static GameKitAppBuilder UsePencuil<TRenderContext>(this GameKitAppBuilder builder, int order = 10_000, int inputOrder = -10_000, bool clearTarget = false)
-        where TRenderContext : IRenderContext
+    public static GameKitAppBuilder UsePencuil(
+        this GameKitAppBuilder builder,
+        ViewScope viewScope,
+        int order = 10_000,
+        int inputOrder = -10_000,
+        bool clearTarget = false)
     {
-        builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
-        builder.AddSingleton(GuiStyles.Style);
-        builder.AddSingleton(new PencuilOptions { Order = order, InputOrder = inputOrder, ClearTarget = clearTarget });
-        builder.AddSingleton<Pencil>();
+        ArgumentNullException.ThrowIfNull(builder);
 
-        ViewRegistry viewRegistry = new();
-        builder.AddSingleton(viewRegistry);
+        if (!builder.IsRegistered<ServiceRegistry<PencuilState>>())
+        {
+            builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
+            builder.AddSingleton(GuiStyles.Style);
+            builder.AddRegistry<PencuilState>();
+        }
+
+        PencuilOptions options = new(viewScope)
+        {
+            Order = order,
+            InputOrder = inputOrder,
+            ClearTarget = clearTarget
+        };
+        PencuilViewRegistry viewRegistry = new(viewScope);
+        PencuilState? state = null;
+
+        PencuilState ResolveState(ServiceProvider provider)
+        {
+            state ??= new PencuilState(
+                viewScope,
+                new Pencil(
+                    viewScope,
+                    provider.GetRequiredService<IFontSystem>(),
+                    provider.GetRequiredService<IClipboardService>(),
+                    provider.GetRequiredService<GuiStyle>()),
+                viewRegistry,
+                options);
+            return state;
+        }
 
         builder.OnActivated((instance, _) =>
         {
-            if (instance is IView view)
+            if (instance is IPencuilView view &&
+                instance is not GameComponent &&
+                view.ViewScope == viewScope)
             {
                 viewRegistry.Add(view);
             }
@@ -31,25 +63,30 @@ public static class PencuilExtensions
 
         builder.OnDisposing((instance, _) =>
         {
-            if (instance is IView view)
+            if (instance is IPencuilView view &&
+                instance is not GameComponent &&
+                view.ViewScope == viewScope)
             {
                 viewRegistry.Remove(view);
             }
         });
 
-        // Factory overload required: generated constructor registration cannot bind TRenderContext yet.
-        builder.AddSingleton<IRenderer<TRenderContext>, PencuilRenderer<TRenderContext>>(sp => new PencuilRenderer<TRenderContext>(
-            sp.GetRequiredService<Pencil>(),
-            sp.GetRequiredService<PencuilOptions>(),
-            sp.GetRequiredService<GraphicsPipelineBuilder>(),
-            sp.GetRequiredService<GpuMemorySystem>(),
-            sp.GetRequiredService<ShaderLoader>(),
-            sp.GetRequiredService<GpuDevice>(),
-            sp.GetRequiredService<WindowManager>()));
-        builder.AddSingleton<PencilSystem>();
+        builder.AddSingleton<PencuilState>(ResolveState);
+        builder.AddSingleton<IViewRenderer, PencuilRenderer>(provider =>
+            new PencuilRenderer(
+                ResolveState(provider),
+                provider.GetRequiredService<GraphicsPipelineBuilder>(),
+                provider.GetRequiredService<GpuMemorySystem>(),
+                provider.GetRequiredService<ShaderLoader>(),
+                provider.GetRequiredService<GpuDevice>(),
+                provider.GetRequiredService<WindowRegistry>()));
+        builder.AddSingleton<PencilSystem>(provider =>
+            new PencilSystem(
+                ResolveState(provider),
+                provider.GetRequiredService<WindowRegistry>(),
+                provider.GetRequiredService<IMouseService>(),
+                provider.GetRequiredService<IKeyboardService>(),
+                provider.GetRequiredService<ITextInputService>()));
         return builder;
     }
-
-    public static GameKitAppBuilder UsePencuil(this GameKitAppBuilder builder, int order = 10_000, int inputOrder = -10_000, bool clearTarget = true)
-        => builder.UsePencuil<DefaultRenderContext>(order, inputOrder, clearTarget);
 }

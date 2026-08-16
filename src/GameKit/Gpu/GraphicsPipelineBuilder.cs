@@ -112,7 +112,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly WindowManager _windowManager;
+    private readonly WindowRegistry _windowRegistry;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -121,22 +121,22 @@ public class GraphicsPipelineBuilder
     /// </summary>
     public IShaderLoader ShaderLoader => _shaderLoader;
 
-    internal GraphicsPipelineBuilder(GpuDevice gpuDevice, WindowManager windowManager, IShaderLoader shaderLoader)
+    internal GraphicsPipelineBuilder(
+        GpuDevice gpuDevice,
+        WindowRegistry windowRegistry,
+        IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
-        _windowManager = windowManager;
+        _windowRegistry = windowRegistry;
         _shaderLoader = shaderLoader;
     }
 
-    public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
+    public GraphicsPipelineBuilder AddColorFormatFromDisplay(
+        ViewScope viewScope,
+        in BlendingState? blendingState = null,
+        ColorComponentFlags? colorWriteMask = null)
     {
-        AddColorTarget(_windowManager.PrimaryWindow.ColorTargetFormat, blendingState, colorWriteMask);
-
-        return this;
-    }
-
-    public GraphicsPipelineBuilder AddColorFormatFromDisplay(Window window, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
-    {
+        Window window = _windowRegistry.GetWindow(viewScope);
         AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
         return this;
     }

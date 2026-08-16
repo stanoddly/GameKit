@@ -1,8 +1,17 @@
 namespace GameKit.Pencuil;
 
-public abstract class View<TViewModel> : IView where TViewModel : IViewModel
+public abstract class PencuilView<TViewModel> : IPencuilView
+    where TViewModel : IPencuilViewModel
 {
     protected TViewModel ViewModel { get; }
+
+    public ViewScope ViewScope { get; }
+
+    protected PencuilView(ViewScope viewScope, TViewModel viewModel)
+    {
+        ViewScope = viewScope;
+        ViewModel = viewModel;
+    }
 
     public bool ConsumeDirty()
     {
@@ -13,11 +22,6 @@ public abstract class View<TViewModel> : IView where TViewModel : IViewModel
 
         ViewModel.IsDirty = false;
         return true;
-    }
-
-    protected View(TViewModel viewModel)
-    {
-        ViewModel = viewModel;
     }
 
     public abstract void Build(Pencil pencil);

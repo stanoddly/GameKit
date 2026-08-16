@@ -4,7 +4,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.FileDialogs;
 
-public class FileDialogsViewModel : IViewModel
+public class FileDialogsViewModel : IPencuilViewModel
 {
     public bool IsDirty { get; set; } = true;
 
@@ -44,7 +44,7 @@ public class FileDialogsViewModel : IViewModel
     }
 }
 
-public class FileDialogsView : View<FileDialogsViewModel>
+public class FileDialogsView : PencuilView<FileDialogsViewModel>
 {
     private const int ButtonWidth = 180;
     private const int ButtonHeight = 48;
@@ -59,10 +59,13 @@ public class FileDialogsView : View<FileDialogsViewModel>
     private readonly Window _window;
     private readonly Font _font;
 
-    public FileDialogsView(FileDialogsViewModel viewModel, WindowManager windowManager, IFontSystem fontSystem)
-        : base(viewModel)
+    public FileDialogsView(
+        FileDialogsViewModel viewModel,
+        WindowRegistry windowRegistry,
+        IFontSystem fontSystem)
+        : base(Program.ViewScope, viewModel)
     {
-        _window = windowManager.PrimaryWindow;
+        _window = windowRegistry.GetWindow(Program.ViewScope);
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
     }
 

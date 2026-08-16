@@ -5,7 +5,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.TextInput;
 
-public class TextInputViewModel : IViewModel
+public class TextInputViewModel : IPencuilViewModel
 {
     private readonly IClipboardService _clipboardService;
 
@@ -62,7 +62,7 @@ public class TextInputViewModel : IViewModel
     public string ClipboardText => _clipboardService.HasText ? (_clipboardService.GetText() ?? "") : "";
 }
 
-public class TextInputView : View<TextInputViewModel>
+public class TextInputView : PencuilView<TextInputViewModel>
 {
     private static readonly Color BackgroundColor = new(28, 30, 34, 255);
     private static readonly Color LabelColor = new(180, 180, 180, 255);
@@ -72,7 +72,7 @@ public class TextInputView : View<TextInputViewModel>
     private readonly Font _labelFont;
 
     public TextInputView(TextInputViewModel viewModel, IFontSystem fontSystem)
-        : base(viewModel)
+        : base(Program.ViewScope, viewModel)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
         _labelFont = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);

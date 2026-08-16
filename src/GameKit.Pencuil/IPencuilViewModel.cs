@@ -1,6 +1,6 @@
 namespace GameKit.Pencuil;
 
-public interface IViewModel
+public interface IPencuilViewModel
 {
     bool IsDirty { get; set; }
 }

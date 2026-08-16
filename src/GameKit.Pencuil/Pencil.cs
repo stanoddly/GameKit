@@ -55,7 +55,7 @@ public readonly struct GapDisposer : IDisposable
     public void Dispose() => _context.CurrentGap = _previousGap;
 }
 
-public class Pencil
+public class Pencil : IViewScoped
 {
     private readonly IFontSystem _fontSystem;
     private readonly IClipboardService _clipboardService;
@@ -120,16 +120,18 @@ public class Pencil
     internal bool FocusClaimedThisFrame;
     internal TextFieldEditingState? EditingState;
 
-    public Pencil(IFontSystem fontSystem, IClipboardService clipboardService, GuiStyle guiStyle, AppConfig appConfig)
+    public ViewScope ViewScope { get; }
+
+    public Pencil(
+        ViewScope viewScope,
+        IFontSystem fontSystem,
+        IClipboardService clipboardService,
+        GuiStyle guiStyle)
     {
+        ViewScope = viewScope;
         _fontSystem = fontSystem;
         _clipboardService = clipboardService;
         Style = guiStyle;
-        if (appConfig.Size is { } size)
-        {
-            _viewportWidth = (int)size.Width;
-            _viewportHeight = (int)size.Height;
-        }
     }
 
     public void AddHoverTest(Rectangle test)

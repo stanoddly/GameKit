@@ -6,15 +6,18 @@ namespace GameKit.Tutorials.StageSwitching;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering()
-            .UsePencuil()
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (960, 540), Title: "Stage Switching"))
+            .UsePencuil(ViewScope)
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new AppConfig { Size = (960, 540), Title = "Stage Switching" });
-        builder.AddSingleton<IView, MenuView>();
+        builder.AddSingleton<IPencuilView, MenuView>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

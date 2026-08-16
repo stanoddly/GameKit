@@ -5,8 +5,10 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StencilBuffer;
 
-public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
+public class StencilBufferRenderer : IViewRenderer
 {
+    public ViewScope ViewScope => Program.ViewScope;
+
     private readonly GraphicsPipeline _maskPipeline;
     private readonly GraphicsPipeline _drawPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _smallQuadBuffer;
@@ -27,7 +29,7 @@ public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
         _depthStencilTexture = depthStencilTexture;
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(ViewRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture, new ColorTargetSettings
@@ -92,7 +94,7 @@ public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay(Program.ViewScope)
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(maskStencilState, CompareOperation.Always)
             .Build();
@@ -107,7 +109,7 @@ public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay(Program.ViewScope)
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(drawStencilState, CompareOperation.Equal)
             .Build();

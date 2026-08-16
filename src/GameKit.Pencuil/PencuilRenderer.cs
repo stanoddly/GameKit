@@ -5,8 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Pencuil;
 
-internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext>
-    where TRenderContext : IRenderContext
+internal sealed class PencuilRenderer : IViewRenderer
 {
     private static readonly ColorTargetSettings _guiColorTargetSettings = new()
     {
@@ -35,16 +34,19 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
     private bool _retainedTextureDirty;
 
     public int Order { get; }
+    public ViewScope ViewScope { get; }
 
-    public PencuilRenderer(
-        Pencil pencil,
-        PencuilOptions options,
+    internal PencuilRenderer(
+        PencuilState state,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
-        WindowManager windowManager)
+        WindowRegistry windowRegistry)
     {
+        Pencil pencil = state.Pencil;
+        PencuilOptions options = state.Options;
+        ViewScope = state.ViewScope;
         ReadOnlySpan<PositionTextureVertex> quad =
         [
             new(new Vector3(0.0f, 0.0f, 0.0f), new Vector2(0, 0)),
@@ -59,8 +61,9 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         GraphicsShaderProgram tintedTextureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_tinted_texture");
         GraphicsShaderProgram textureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_texture");
 
-        TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
-        ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
+        Window window = windowRegistry.GetWindow(ViewScope);
+        TextureFormat colorTargetFormat = window.ColorTargetFormat;
+        ShortSize renderSize = window.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
@@ -100,7 +103,7 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
     }
 
-    public void Render(TRenderContext renderContext)
+    public void Render(ViewRenderContext renderContext)
     {
         ShortSize targetSize = renderContext.ColorTarget.Size;
         ResizeRetainedTextureIfNeeded(targetSize);

@@ -9,23 +9,23 @@ namespace GameKit.Tutorials.WindowDragging;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering();
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(
+                    Size: (400, 400),
+                    Title: "Window Dragging",
+                    Borderless: true));
 
-        builder.AddSingleton(new AppConfig
+        builder.AddSingleton<IViewRenderer>(static () => new ClearRenderer(FColors.SkyBlue));
+
+        builder.OnStart((WindowRegistry windowRegistry, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            Size = (400, 400),
-            Title = "Window Dragging",
-            Borderless = true
-        });
-
-        builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
-
-        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
-        {
-            Window window = windowManager.PrimaryWindow;
+            Window window = windowRegistry.GetWindow(ViewScope);
 
             if (window.SupportsSetWindowPosition)
             {
@@ -107,16 +107,18 @@ static class Program
     }
 }
 
-internal sealed class ClearRenderer : IRenderer<DefaultRenderContext>
+internal sealed class ClearRenderer : IViewRenderer
 {
     private readonly FColor _color;
+
+    public ViewScope ViewScope => Program.ViewScope;
 
     public ClearRenderer(FColor color)
     {
         _color = color;
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(ViewRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

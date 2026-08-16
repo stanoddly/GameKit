@@ -5,15 +5,18 @@ namespace GameKit.Tutorials.StencilBuffer;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(Size: (1280, 720), Title: "Stencil Buffer"));
 
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Stencil Buffer" });
         builder.AddSingleton<StencilBufferRenderer>(StencilBufferRenderer.Create);
-        builder.AddAlias<IRenderer<DefaultRenderContext>, StencilBufferRenderer>();
+        builder.AddAlias<IViewRenderer, StencilBufferRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

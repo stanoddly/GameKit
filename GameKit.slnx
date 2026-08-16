@@ -55,6 +55,8 @@
     <Project Path="tutorials/GameKit.Tutorials.WindowDragging/GameKit.Tutorials.WindowDragging.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.StageSwitching/GameKit.Tutorials.StageSwitching.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.MouseWindowPresence/GameKit.Tutorials.MouseWindowPresence.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.MultiWindow/GameKit.Tutorials.MultiWindow.csproj" />
+    <Project Path="tutorials/GameKit.Tutorials.MultiWindowTextInput/GameKit.Tutorials.MultiWindowTextInput.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.Audio/GameKit.Tutorials.Audio.csproj" />
     <Project Path="tutorials/GameKit.Tutorials.ZipContent/GameKit.Tutorials.ZipContent.csproj" />
   </Folder>

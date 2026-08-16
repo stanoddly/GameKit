@@ -5,6 +5,7 @@ namespace GameKit.Input;
 
 public class TextInputEventArgs
 {
+    public ViewScope ViewScope { get; internal set; }
     public string Text { get; internal set; } = string.Empty;
     public ulong Timestamp { get; internal set; }
     public bool Consumed { get; internal set; }
@@ -13,6 +14,7 @@ public class TextInputEventArgs
 
 public class TextEditingEventArgs
 {
+    public ViewScope ViewScope { get; internal set; }
     public string Text { get; internal set; } = string.Empty;
     public int Start { get; internal set; }
     public int Length { get; internal set; }
@@ -26,17 +28,16 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly WindowManager _windowManager;
+    private readonly WindowRegistry _windowRegistry;
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive => IsActiveFor(_windowManager.PrimaryWindow);
-
-    public bool IsActiveFor(Window window)
+    public bool IsActiveFor(ViewScope viewScope)
     {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             return SDL3.SDL_TextInputActive(window.SdlWindow);
@@ -65,38 +66,60 @@ public class TextInputService : ITextInputService
         _textEditingHandlers.Add(priority, handler);
     }
 
-    public void Start()
+    public void SubscribeTextInput(
+        ViewScope viewScope,
+        int priority,
+        TextInputHandler handler)
     {
-        Start(_windowManager.PrimaryWindow);
+        _textInputHandlers.Add(priority, eventArgs =>
+        {
+            if (eventArgs.ViewScope == viewScope)
+            {
+                handler(eventArgs);
+            }
+        });
     }
 
-    public void Start(Window window)
+    public void SubscribeTextEditing(
+        ViewScope viewScope,
+        int priority,
+        TextEditingHandler handler)
     {
+        _textEditingHandlers.Add(priority, eventArgs =>
+        {
+            if (eventArgs.ViewScope == viewScope)
+            {
+                handler(eventArgs);
+            }
+        });
+    }
+
+    public void Start(ViewScope viewScope)
+    {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             SDL3.SDL_StartTextInput(window.SdlWindow);
         }
     }
 
-    public void Stop()
+    public void Stop(ViewScope viewScope)
     {
-        Stop(_windowManager.PrimaryWindow);
-    }
-
-    public void Stop(Window window)
-    {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             SDL3.SDL_StopTextInput(window.SdlWindow);
         }
     }
 
-    internal TextInputService(WindowManager windowManager)
+    internal TextInputService(WindowRegistry windowRegistry)
     {
-        _windowManager = windowManager;
+        _windowRegistry = windowRegistry;
     }
 
-    internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)
+    internal void OnTextInputEvent(
+        ViewScope viewScope,
+        in SDL_TextInputEvent textInputEvent)
     {
         string text;
         unsafe
@@ -104,6 +127,7 @@ public class TextInputService : ITextInputService
             text = Marshal.PtrToStringUTF8((IntPtr)textInputEvent.text) ?? string.Empty;
         }
 
+        _textInputEventArgs.ViewScope = viewScope;
         _textInputEventArgs.Text = text;
         _textInputEventArgs.Timestamp = textInputEvent.timestamp;
         _textInputEventArgs.Consumed = false;
@@ -119,7 +143,9 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal void OnTextEditingEvent(in SDL_TextEditingEvent textEditingEvent)
+    internal void OnTextEditingEvent(
+        ViewScope viewScope,
+        in SDL_TextEditingEvent textEditingEvent)
     {
         string text;
         unsafe
@@ -127,6 +153,7 @@ public class TextInputService : ITextInputService
             text = Marshal.PtrToStringUTF8((IntPtr)textEditingEvent.text) ?? string.Empty;
         }
 
+        _textEditingEventArgs.ViewScope = viewScope;
         _textEditingEventArgs.Text = text;
         _textEditingEventArgs.Start = textEditingEvent.start;
         _textEditingEventArgs.Length = textEditingEvent.length;

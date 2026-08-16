@@ -1,6 +1,6 @@
 namespace GameKit.Pencuil;
 
-public interface IView
+public interface IPencuilView : IViewScoped
 {
     bool ConsumeDirty();
     void Build(Pencil pencil);

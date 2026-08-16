@@ -13,25 +13,24 @@ namespace GameKit.Tutorials.TransparentWindow;
 
 static class Program
 {
+    internal static readonly ViewScope ViewScope = new(0);
+
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (800, 600),
-            Title = "Transparent Window",
-            Transparent = true,
-            Borderless = true,
-            ClearColor = FColors.Transparent
-        });
+            .UseWindowRendering(
+                ViewScope,
+                new WindowConfig(
+                    Size: (800, 600),
+                    Title: "Transparent Window",
+                    Transparent: true,
+                    Borderless: true));
         if (OperatingSystem.IsWindows())
         {
             builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Vulkan));
         }
-        builder.AddSingleton<IRenderer<DefaultRenderContext>>(TransparentWindowRenderer.Create);
+        builder.AddSingleton<IViewRenderer>(TransparentWindowRenderer.Create);
 
         builder.OnStart((IMouseService mouseService, AppControl appControl) =>
         {
