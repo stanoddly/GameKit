@@ -104,9 +104,8 @@ and render coordinator.
 
 ## Scoped input
 
-Window-associated event arguments expose their source `ViewScope`. Global events and subscriptions
-are sufficient for a single window and for application-wide shortcuts. In a multi-window application,
-use a scoped subscription when a handler belongs to one window:
+Window-associated events and subscriptions target the implicit default scope. In a multi-window
+application, use a scoped subscription when a handler belongs to another window:
 
 ```csharp
 keyboardService.SubscribeKeyDown(
