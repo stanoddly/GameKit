@@ -74,7 +74,7 @@ public class InstancingRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new InstancingRenderer(graphicsPipeline, quadVertexBuffer, offsetBuffer, colorBuffer);

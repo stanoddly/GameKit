@@ -25,7 +25,7 @@ public class SecondaryWindowRenderer : IRenderer<SecondaryRenderContext>
                 .SetPrimitiveType(PrimitiveType.TriangleStrip)
                 .AddVertexBufferConfig<PositionVertex>()
                 .SetShaderProgram("shaders/shader")
-                .AddColorFormatFromDisplay(renderContext.Window)
+                .AddColorFormatFromDisplay<SecondaryRenderContext>()
                 .Build();
         }
 

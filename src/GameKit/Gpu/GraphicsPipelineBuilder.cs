@@ -113,7 +113,7 @@ internal struct PipelineBuilderInfo
 public class GraphicsPipelineBuilder
 {
     private readonly GpuDevice _gpuDevice;
-    private readonly WindowRegistry _windows;
+    private readonly WindowRegistry _windowRegistry;
     private readonly IShaderLoader _shaderLoader;
     private PipelineBuilderInfo _info = new();
 
@@ -124,29 +124,27 @@ public class GraphicsPipelineBuilder
 
     internal GraphicsPipelineBuilder(
         GpuDevice gpuDevice,
-        WindowRegistry windows,
+        WindowRegistry windowRegistry,
         IShaderLoader shaderLoader)
     {
         _gpuDevice = gpuDevice;
-        _windows = windows;
+        _windowRegistry = windowRegistry;
         _shaderLoader = shaderLoader;
     }
 
-    public GraphicsPipelineBuilder AddColorFormatFromDisplay(in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
+    public GraphicsPipelineBuilder AddColorFormatFromDisplay<TRenderContext>(
+        in BlendingState? blendingState = null,
+        ColorComponentFlags? colorWriteMask = null)
+        where TRenderContext : IRenderContext
     {
-        if (_windows.TryGetWindow(out Window<DefaultRenderContext> window))
+        if (_windowRegistry.TryGetWindow(out Window<TRenderContext> window))
         {
             AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
             return this;
         }
 
-        throw new InvalidOperationException("Default rendering is not configured.");
-    }
-
-    public GraphicsPipelineBuilder AddColorFormatFromDisplay(Window window, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)
-    {
-        AddColorTarget(window.ColorTargetFormat, blendingState, colorWriteMask);
-        return this;
+        throw new InvalidOperationException(
+            $"Window rendering for {typeof(TRenderContext).Name} is not configured.");
     }
 
     public GraphicsPipelineBuilder AddColorTarget(TextureFormat textureFormat, in BlendingState? blendingState = null, ColorComponentFlags? colorWriteMask = null)

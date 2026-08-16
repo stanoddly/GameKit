@@ -14,22 +14,9 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        WindowRegistry windows = new();
-        AddSingleton(windows);
-        OnActivated((instance, _) =>
-        {
-            if (instance is Window window)
-            {
-                windows.Register(window);
-            }
-        });
-        OnDisposing((instance, _) =>
-        {
-            if (instance is Window window)
-            {
-                windows.Unregister(window);
-            }
-        });
+        WindowRegistry windowRegistry = new();
+        AddSingleton(windowRegistry);
+        WindowRegistry.RegisterCallbacks(this, windowRegistry);
         AddRegistry<IRenderCoordinator>();
         AddRegistry<IUpdatable>(static (left, right) =>
         {
@@ -81,11 +68,6 @@ public class GameKitAppBuilder : ServiceCollection
         {
             AddSingleton(new GameKitConfig());
         }
-        if (!IsRegistered<WindowConfig>())
-        {
-            AddSingleton(new WindowConfig());
-        }
-
         AddSingleton<GameKitFactory>();
 
         AddSingleton<PlatformInfo, GameKitFactory>();

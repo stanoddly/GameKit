@@ -71,7 +71,7 @@ public class PencilSystem : IUpdatable
 
         textInputService.SubscribeTextInput(options.InputOrder, args =>
         {
-            if (pencil.HasFocus)
+            if (ReferenceEquals(args.Window, _window) && pencil.HasFocus)
             {
                 pencil.InsertText(args.Text);
                 args.Consume();

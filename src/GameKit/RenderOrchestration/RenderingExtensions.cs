@@ -46,7 +46,7 @@ public static class RenderingExtensions
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(contextFactory);
 
-        ConfigureWindowRendering(services, config, contextFactory, false);
+        ConfigureWindowRendering(services, config, contextFactory);
         return services;
     }
 
@@ -60,33 +60,35 @@ public static class RenderingExtensions
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(contextFactory);
 
-        ConfigureWindowRendering(builder, config, contextFactory, false);
+        ConfigureWindowRendering(builder, config, contextFactory);
         return builder;
     }
 
-    public static GameKitAppBuilder UseDefaultRendering(this GameKitAppBuilder builder)
+    public static GameKitAppBuilder UseDefaultRendering(
+        this GameKitAppBuilder builder,
+        WindowConfig? config = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         ConfigureWindowRendering<DefaultRenderContext>(
             builder,
-            null,
-            static (window, swapchainTexture, commandBuffer) =>
-                new DefaultRenderContext(window, swapchainTexture, commandBuffer),
-            true);
+            config ?? new WindowConfig(),
+            static (_, swapchainTexture, commandBuffer) =>
+                new DefaultRenderContext(swapchainTexture, commandBuffer));
         return builder;
     }
 
-    public static ServiceCollection UseDefaultRendering(this ServiceCollection services)
+    public static ServiceCollection UseDefaultRendering(
+        this ServiceCollection services,
+        WindowConfig? config = null)
     {
         ArgumentNullException.ThrowIfNull(services);
 
         ConfigureWindowRendering<DefaultRenderContext>(
             services,
-            null,
-            static (window, swapchainTexture, commandBuffer) =>
-                new DefaultRenderContext(window, swapchainTexture, commandBuffer),
-            true);
+            config ?? new WindowConfig(),
+            static (_, swapchainTexture, commandBuffer) =>
+                new DefaultRenderContext(swapchainTexture, commandBuffer));
         return services;
     }
 
@@ -110,33 +112,19 @@ public static class RenderingExtensions
 
     private static void ConfigureWindowRendering<TRenderContext>(
         ServiceCollection services,
-        WindowConfig? config,
-        Func<Window<TRenderContext>, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory,
-        bool isPrimary)
+        WindowConfig config,
+        Func<Window<TRenderContext>, SwapchainTexture, CommandBuffer, TRenderContext> contextFactory)
         where TRenderContext : IRenderContext
     {
         ThrowIfGraphRegistered<TRenderContext>(services);
         services.AddRegistry<IRenderer<TRenderContext>>(
             static (left, right) => left.Order.CompareTo(right.Order));
-        if (isPrimary)
-        {
-            services.AddSingleton<Window<TRenderContext>>(provider =>
-                provider.GetRequiredService<GameKitFactory>().CreateWindow<TRenderContext>(
-                    provider.GetRequiredService<GpuDevice>(),
-                    provider.GetRequiredService<GameKitFrameContext>(),
-                    provider.GetRequiredService<WindowConfig>(),
-                    provider.GetRequiredService<PlatformInfo>()));
-        }
-        else
-        {
-            WindowConfig secondaryWindowConfig = config!;
-            services.AddSingleton<Window<TRenderContext>>(provider =>
-                provider.GetRequiredService<GameKitFactory>().CreateWindow<TRenderContext>(
-                    provider.GetRequiredService<GpuDevice>(),
-                    provider.GetRequiredService<GameKitFrameContext>(),
-                    secondaryWindowConfig,
-                    provider.GetRequiredService<PlatformInfo>()));
-        }
+        services.AddSingleton<Window<TRenderContext>>(provider =>
+            provider.GetRequiredService<GameKitFactory>().CreateWindow<TRenderContext>(
+                provider.GetRequiredService<GpuDevice>(),
+                provider.GetRequiredService<GameKitFrameContext>(),
+                config,
+                provider.GetRequiredService<PlatformInfo>()));
         services.AddSingleton<WindowRenderCoordinator<TRenderContext>>(provider =>
             new WindowRenderCoordinator<TRenderContext>(
                 provider.GetRequiredService<Window<TRenderContext>>(),

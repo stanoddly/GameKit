@@ -9,9 +9,8 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseDefaultRendering(new WindowConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
 
-        builder.AddSingleton(new WindowConfig { Size = (800, 600), Title = "Depth-Only Pipeline Test" });
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, DepthOnlyRenderer>();
 

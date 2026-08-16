@@ -61,7 +61,7 @@ public class IndexBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleList)
             .AddVertexBufferConfig<PositionColorVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new IndexBufferRenderer(graphicsPipeline, vertexBuffer, indexBuffer);

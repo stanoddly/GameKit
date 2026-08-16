@@ -17,7 +17,11 @@ public class RenderCoordinatorTests
 
         builder.UseDefaultRendering();
 
-        Assert.That(builder.IsRegistered<Window<DefaultRenderContext>>(), Is.True);
+        Assert.Multiple(() =>
+        {
+            Assert.That(builder.IsRegistered<Window<DefaultRenderContext>>(), Is.True);
+            Assert.That(builder.IsRegistered<WindowConfig>(), Is.False);
+        });
     }
 
     [Test]

@@ -9,9 +9,8 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseDefaultRendering(new WindowConfig { Size = (800, 600), Title = "Storage Buffer Demo" });
 
-        builder.AddSingleton(new WindowConfig { Size = (800, 600), Title = "Storage Buffer Demo" });
         builder.AddSingleton<StorageBufferRenderer>(StorageBufferRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, StorageBufferRenderer>();
 

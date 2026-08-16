@@ -1,3 +1,4 @@
+using GameKit.DependencyInjection;
 using GameKit.RenderOrchestration;
 
 namespace GameKit;
@@ -6,6 +7,26 @@ internal sealed class WindowRegistry
 {
     private Window?[] _windowsByRenderContextTypeId = Array.Empty<Window>();
     private readonly List<(uint Id, Window Window)> _windowsBySdlId = new();
+
+    internal static void RegisterCallbacks(
+        ServiceCollection services,
+        WindowRegistry windowRegistry)
+    {
+        services.OnActivated((instance, _) =>
+        {
+            if (instance is Window window)
+            {
+                windowRegistry.Register(window);
+            }
+        });
+        services.OnDisposing((instance, _) =>
+        {
+            if (instance is Window window)
+            {
+                windowRegistry.Unregister(window);
+            }
+        });
+    }
 
     internal bool TryGetWindow<TRenderContext>(out Window<TRenderContext> window)
         where TRenderContext : IRenderContext

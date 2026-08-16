@@ -14,14 +14,12 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new WindowConfig
-        {
-            Size = (400, 400),
-            Title = "Click Through",
-            Borderless = true
-        });
+            .UseDefaultRendering(new WindowConfig
+            {
+                Size = (400, 400),
+                Title = "Click Through",
+                Borderless = true
+            });
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(ClickThroughRenderer.Create);
 
         builder.OnStart((Window<DefaultRenderContext> window, IKeyboardService keyboardService, AppControl appControl) =>

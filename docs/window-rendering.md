@@ -12,12 +12,13 @@ Each window rendering graph is identified by its render-context type. Its `Windo
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
-    .UseDefaultRendering();
+    .UseDefaultRendering(new WindowConfig(
+        Size: new Size<uint>(1280, 720),
+        Title: "Game"));
 
 builder.AddSingleton<IRenderer<DefaultRenderContext>>(GameRenderer.Create);
 ```
 
-`DefaultRenderContext.Window` provides the native window associated with the current swapchain texture.
 Services can inject the primary window as `Window<DefaultRenderContext>`.
 
 ## Stage-owned secondary window

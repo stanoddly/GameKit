@@ -40,7 +40,7 @@ public class TriangleRenderer: IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new TriangleRenderer(graphicsPipeline, quadVertexBuffer);

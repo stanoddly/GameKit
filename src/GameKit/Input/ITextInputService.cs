@@ -2,11 +2,6 @@ namespace GameKit.Input;
 
 public interface ITextInputService
 {
-    bool IsActive { get; }
-
-    void Start();
-    void Stop();
-
     bool IsActiveFor(Window window);
     void Start(Window window);
     void Stop(Window window);

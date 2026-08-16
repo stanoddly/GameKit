@@ -9,11 +9,10 @@ static class Program
     static int Main(string[] args)
     {
         var builder = new GameKitAppBuilder()
-            .UseDefaultRendering()
+            .UseDefaultRendering(new WindowConfig { Size = (1280, 720), Title = "Hotbar" })
             .UsePencuil()
             .AddContentFromProjectDirectory("Content");
 
-        builder.AddSingleton(new WindowConfig { Size = (1280, 720), Title = "Hotbar" });
         builder.AddSingleton(new HotbarViewModel());
         builder.AddSingleton<IView, Hotbar>();
 

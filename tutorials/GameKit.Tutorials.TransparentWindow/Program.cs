@@ -16,15 +16,13 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new WindowConfig
-        {
-            Size = (800, 600),
-            Title = "Transparent Window",
-            Transparent = true,
-            Borderless = true
-        });
+            .UseDefaultRendering(new WindowConfig
+            {
+                Size = (800, 600),
+                Title = "Transparent Window",
+                Transparent = true,
+                Borderless = true
+            });
         if (OperatingSystem.IsWindows())
         {
             builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Vulkan));

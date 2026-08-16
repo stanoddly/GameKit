@@ -9,9 +9,8 @@ static class Program
     {
         var builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseDefaultRendering(new WindowConfig { Size = (443, 410), Title = "Image Loading Demo" });
 
-        builder.AddSingleton(new WindowConfig { Size = (443, 410), Title = "Image Loading Demo" });
         builder.AddSingleton<ImageLoadingRenderer>(ImageLoadingRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, ImageLoadingRenderer>();
 

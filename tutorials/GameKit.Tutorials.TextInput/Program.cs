@@ -9,11 +9,10 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering()
+            .UseDefaultRendering(new WindowConfig { Size = (640, 440), Title = "Text Input" })
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
-        builder.AddSingleton(new WindowConfig { Size = (640, 440), Title = "Text Input" });
         builder.AddSingleton<TextInputViewModel>();
         builder.AddSingleton<IView, TextInputView>();
 

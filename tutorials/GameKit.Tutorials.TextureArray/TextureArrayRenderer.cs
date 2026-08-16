@@ -77,7 +77,7 @@ public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new TextureArrayRenderer(graphicsPipeline, quadVertexBuffer, textureArray, sampler);

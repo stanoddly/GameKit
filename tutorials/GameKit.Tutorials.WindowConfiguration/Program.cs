@@ -12,14 +12,12 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new WindowConfig
-        {
-            Size = (800, 600),
-            Title = "Window Configuration Demo",
-            AlwaysOnTop = true
-        });
+            .UseDefaultRendering(new WindowConfig
+            {
+                Size = (800, 600),
+                Title = "Window Configuration Demo",
+                AlwaysOnTop = true
+            });
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 

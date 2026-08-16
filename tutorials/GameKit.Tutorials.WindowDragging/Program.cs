@@ -12,14 +12,12 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new WindowConfig
-        {
-            Size = (400, 400),
-            Title = "Window Dragging",
-            Borderless = true
-        });
+            .UseDefaultRendering(new WindowConfig
+            {
+                Size = (400, 400),
+                Title = "Window Dragging",
+                Borderless = true
+            });
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 

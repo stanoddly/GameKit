@@ -50,7 +50,7 @@ public class ClickThroughRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new ClickThroughRenderer(graphicsPipeline, quad);

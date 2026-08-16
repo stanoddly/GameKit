@@ -80,7 +80,7 @@ public class StorageBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new StorageBufferRenderer(graphicsPipeline, quadVertexBuffer, colorBuffer, colors.Length);

@@ -65,7 +65,7 @@ public class TransparentWindowRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new TransparentWindowRenderer(graphicsPipeline, topLeftQuad, bottomRightQuad);

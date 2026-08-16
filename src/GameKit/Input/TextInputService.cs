@@ -6,6 +6,7 @@ namespace GameKit.Input;
 
 public class TextInputEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public string Text { get; internal set; } = string.Empty;
     public ulong Timestamp { get; internal set; }
     public bool Consumed { get; internal set; }
@@ -14,6 +15,7 @@ public class TextInputEventArgs
 
 public class TextEditingEventArgs
 {
+    public Window Window { get; internal set; } = null!;
     public string Text { get; internal set; } = string.Empty;
     public int Start { get; internal set; }
     public int Length { get; internal set; }
@@ -27,15 +29,14 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly WindowRegistry _windows;
-
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive => TryGetDefaultWindow(out Window<DefaultRenderContext> window) &&
-        IsActiveFor(window);
+    internal TextInputService()
+    {
+    }
 
     public bool IsActiveFor(Window window)
     {
@@ -67,22 +68,12 @@ public class TextInputService : ITextInputService
         _textEditingHandlers.Add(priority, handler);
     }
 
-    public void Start()
-    {
-        Start(GetDefaultWindow());
-    }
-
     public void Start(Window window)
     {
         unsafe
         {
             SDL3.SDL_StartTextInput(window.SdlWindow);
         }
-    }
-
-    public void Stop()
-    {
-        Stop(GetDefaultWindow());
     }
 
     public void Stop(Window window)
@@ -93,27 +84,7 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal TextInputService(WindowRegistry windows)
-    {
-        _windows = windows;
-    }
-
-    private Window<DefaultRenderContext> GetDefaultWindow()
-    {
-        if (TryGetDefaultWindow(out Window<DefaultRenderContext> window))
-        {
-            return window;
-        }
-
-        throw new InvalidOperationException("Default rendering is not configured.");
-    }
-
-    private bool TryGetDefaultWindow(out Window<DefaultRenderContext> window)
-    {
-        return _windows.TryGetWindow(out window);
-    }
-
-    internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)
+    internal void OnTextInputEvent(Window window, in SDL_TextInputEvent textInputEvent)
     {
         string text;
         unsafe
@@ -121,6 +92,7 @@ public class TextInputService : ITextInputService
             text = Marshal.PtrToStringUTF8((IntPtr)textInputEvent.text) ?? string.Empty;
         }
 
+        _textInputEventArgs.Window = window;
         _textInputEventArgs.Text = text;
         _textInputEventArgs.Timestamp = textInputEvent.timestamp;
         _textInputEventArgs.Consumed = false;
@@ -136,7 +108,7 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal void OnTextEditingEvent(in SDL_TextEditingEvent textEditingEvent)
+    internal void OnTextEditingEvent(Window window, in SDL_TextEditingEvent textEditingEvent)
     {
         string text;
         unsafe
@@ -144,6 +116,7 @@ public class TextInputService : ITextInputService
             text = Marshal.PtrToStringUTF8((IntPtr)textEditingEvent.text) ?? string.Empty;
         }
 
+        _textEditingEventArgs.Window = window;
         _textEditingEventArgs.Text = text;
         _textEditingEventArgs.Start = textEditingEvent.start;
         _textEditingEventArgs.Length = textEditingEvent.length;

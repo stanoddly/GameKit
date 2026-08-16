@@ -9,13 +9,11 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new WindowConfig
-        {
-            Size = (640, 480),
-            Title = "Main menu - click to start"
-        });
+            .UseDefaultRendering(new WindowConfig
+            {
+                Size = (640, 480),
+                Title = "Main menu - click to start"
+            });
         builder.OnStart(static (IStageManager stages) => stages.Load(MenuStage.Configure));
 
         using IGameKitApp gameKitApp = builder.Build();

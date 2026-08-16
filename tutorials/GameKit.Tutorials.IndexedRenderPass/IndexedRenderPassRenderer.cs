@@ -105,14 +105,14 @@ public class IndexedRenderPassRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleList)
             .AddVertexBufferConfig<PositionColorVertex>()
             .SetShaderProgram("shaders/indexed")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         GraphicsPipeline instancedPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleList)
             .AddVertexBufferConfig<PositionColorVertex>()
             .SetShaderProgram("shaders/instanced")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .Build();
 
         return new IndexedRenderPassRenderer(

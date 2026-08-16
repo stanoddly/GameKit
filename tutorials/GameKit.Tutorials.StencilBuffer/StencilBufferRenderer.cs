@@ -92,7 +92,7 @@ public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(maskStencilState, CompareOperation.Always)
             .Build();
@@ -107,7 +107,7 @@ public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay()
+            .AddColorFormatFromDisplay<DefaultRenderContext>()
             .EnableDepthTesting(DepthBufferFormat.Depth32Stencil8, write: false, compareOp: CompareOperation.Always)
             .EnableStencilTesting(drawStencilState, CompareOperation.Equal)
             .Build();
