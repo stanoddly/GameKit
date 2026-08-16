@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.IndexedRenderPass;
 
-public class IndexedRenderPassRenderer : IRenderer<RenderContext>
+public class IndexedRenderPassRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _indexedPipeline;
     private readonly GraphicsPipeline _instancedPipeline;
@@ -30,7 +30,7 @@ public class IndexedRenderPassRenderer : IRenderer<RenderContext>
         _instanceTints = instanceTints;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

@@ -9,11 +9,11 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (800, 600), Title: "Instancing Demo"));
 
         builder.AddSingleton<InstancingRenderer>(InstancingRenderer.Create);
-        builder.AddAlias<IRenderer<RenderContext>, InstancingRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, InstancingRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

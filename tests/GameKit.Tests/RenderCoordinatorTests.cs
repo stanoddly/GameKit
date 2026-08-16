@@ -17,22 +17,22 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void UseWindowRendering_RegistersWindow()
+    public void UseDefaultRendering_RegistersWindow()
     {
         GameKitAppBuilder builder = new();
 
-        builder.UseWindowRendering();
+        builder.UseDefaultRendering();
 
         Assert.That(builder.IsRegistered<Window>(), Is.True);
     }
 
     [Test]
-    public void UseWindowRendering_NegativeViewScope_Throws()
+    public void UseDefaultRendering_NegativeViewScope_Throws()
     {
         GameKitAppBuilder builder = new();
 
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.UseWindowRendering(new ViewScope(-1)));
+            builder.UseDefaultRendering(new ViewScope(-1)));
     }
 
     [Test]

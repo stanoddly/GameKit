@@ -11,14 +11,14 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (640, 480), Title: "Main Window"))
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 SecondaryView,
                 new WindowConfig(Size: (480, 360), Title: "Secondary Window"));
 
-        builder.AddSingleton<IRenderer<RenderContext>>(PrimaryRenderer.Create);
-        builder.AddSingleton<IRenderer<RenderContext>>(SecondaryWindowRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(SecondaryWindowRenderer.Create);
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

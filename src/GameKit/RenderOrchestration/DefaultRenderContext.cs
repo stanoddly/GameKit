@@ -2,13 +2,13 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-public sealed class RenderContext : IRenderContext
+public sealed class DefaultRenderContext : IRenderContext
 {
     public SwapchainTexture SwapchainTexture { get; }
     public CommandBuffer CommandBuffer { get; }
     public Texture ColorTarget => SwapchainTexture;
 
-    internal RenderContext(
+    internal DefaultRenderContext(
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {

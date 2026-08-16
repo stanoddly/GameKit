@@ -9,7 +9,7 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (640, 440), Title: "Text Input"))
             .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");

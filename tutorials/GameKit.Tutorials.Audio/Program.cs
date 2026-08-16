@@ -17,7 +17,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (640, 480), Title: "Audio Tutorial"))
             .RegisterAudio();
 

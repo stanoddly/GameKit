@@ -10,7 +10,7 @@ static class Program
         GameKitAppBuilder builder = new GameKitAppBuilder()
             //.AddContentFromZipPattern("data*.pak")
             //.AddContentFromProjectDirectory("_Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (1280, 720), Title: "Game"));
 
         using IGameKitApp gameKitApp = builder.Build();

@@ -3,7 +3,7 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.DepthOnly;
 
-public class DepthOnlyRenderer : IRenderer<RenderContext>
+public class DepthOnlyRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _depthOnlyPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;
@@ -19,7 +19,7 @@ public class DepthOnlyRenderer : IRenderer<RenderContext>
         _depthTexture = depthTexture;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         // First pass: Render to depth-only (no color target)
         using (IRenderPass depthPass = new RenderPassBuilder(renderContext.CommandBuffer)

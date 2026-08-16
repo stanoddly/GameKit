@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.IndexBuffer;
 
-public class IndexBufferRenderer : IRenderer<RenderContext>
+public class IndexBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionColorVertex> _vertexBuffer;
@@ -21,7 +21,7 @@ public class IndexBufferRenderer : IRenderer<RenderContext>
         _indexBuffer = indexBuffer;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

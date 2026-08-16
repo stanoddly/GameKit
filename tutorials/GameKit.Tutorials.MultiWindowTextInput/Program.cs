@@ -13,9 +13,9 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (520, 300), Title: "Left text input"))
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 RightView,
                 new WindowConfig(Size: (520, 300), Title: "Right text input"))
             .UsePencuil(clearTarget: true)

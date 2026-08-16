@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.TransparentWindow;
 
-public class TransparentWindowRenderer : IRenderer<RenderContext>
+public class TransparentWindowRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _topLeftQuad;
@@ -18,7 +18,7 @@ public class TransparentWindowRenderer : IRenderer<RenderContext>
         _bottomRightQuad = bottomRightQuad;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

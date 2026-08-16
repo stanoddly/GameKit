@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StorageBuffer;
 
-public class StorageBufferRenderer : IRenderer<RenderContext>
+public class StorageBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
@@ -26,7 +26,7 @@ public class StorageBufferRenderer : IRenderer<RenderContext>
         _colorCount = colorCount;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         _time += 0.016f; // Approximate 60fps timestep
 

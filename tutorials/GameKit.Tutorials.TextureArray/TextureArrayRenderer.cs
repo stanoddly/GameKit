@@ -6,7 +6,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.TextureArray;
 
-public class TextureArrayRenderer : IRenderer<RenderContext>
+public class TextureArrayRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionTextureVertex> _quadVertexBuffer;
@@ -26,7 +26,7 @@ public class TextureArrayRenderer : IRenderer<RenderContext>
         _sampler = sampler;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         _time += 0.16f; // Approximate 60fps timestep
 

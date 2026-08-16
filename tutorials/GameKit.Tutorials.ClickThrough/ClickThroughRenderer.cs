@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.ClickThrough;
 
-public class ClickThroughRenderer : IRenderer<RenderContext>
+public class ClickThroughRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quad;
@@ -16,7 +16,7 @@ public class ClickThroughRenderer : IRenderer<RenderContext>
         _quad = quad;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

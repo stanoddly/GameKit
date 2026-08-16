@@ -18,7 +18,7 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton(windowRegistry);
         WindowRegistry.RegisterCallbacks(this, windowRegistry);
         AddRegistry<IRenderCoordinator>();
-        AddRegistry<IRenderer<RenderContext>>(static (left, right) => left.Order.CompareTo(right.Order));
+        AddRegistry<IRenderer<DefaultRenderContext>>(static (left, right) => left.Order.CompareTo(right.Order));
         AddRegistry<IUpdatable>(static (left, right) =>
         {
             int leftOrder = left is IOrderable leftOrderable ? leftOrderable.Order : 0;

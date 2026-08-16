@@ -17,7 +17,7 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(
                     Size: (800, 600),
                     Title: "Transparent Window",
@@ -27,7 +27,7 @@ static class Program
         {
             builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Vulkan));
         }
-        builder.AddSingleton<IRenderer<RenderContext>>(TransparentWindowRenderer.Create);
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(TransparentWindowRenderer.Create);
 
         builder.OnStart((IMouseService mouseService, AppControl appControl) =>
         {

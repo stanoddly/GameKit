@@ -5,24 +5,24 @@ name scopes when they render more than one window.
 
 ## Single-window rendering
 
-`UseWindowRendering` creates a DI-owned window and render coordinator:
+`UseDefaultRendering` creates a DI-owned window and render coordinator:
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
-    .UseWindowRendering(
+    .UseDefaultRendering(
         new WindowConfig(
             Size: new Size<uint>(1280, 720),
             Title: "Game"));
 ```
 
-Omitting `UseWindowRendering` creates no window.
+Omitting `UseDefaultRendering` creates no window.
 
-Window renderers use the ordinary `IRenderer<RenderContext>` contract:
+Window renderers use the ordinary `IRenderer<DefaultRenderContext>` contract:
 
 ```csharp
-public sealed class GameRenderer : IRenderer<RenderContext>
+public sealed class GameRenderer : IRenderer<DefaultRenderContext>
 {
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         // Record rendering commands.
     }
@@ -32,7 +32,7 @@ public sealed class GameRenderer : IRenderer<RenderContext>
 Register renderers normally through DI:
 
 ```csharp
-builder.AddSingleton<IRenderer<RenderContext>, GameRenderer>(GameRenderer.Create);
+builder.AddSingleton<IRenderer<DefaultRenderContext>, GameRenderer>(GameRenderer.Create);
 ```
 
 The default `IViewScoped.ViewScope` implementation returns `default`, so single-window renderers do
@@ -62,11 +62,11 @@ The implicit window remains `default(ViewScope)` while additional windows receiv
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
-    .UseWindowRendering(
+    .UseDefaultRendering(
         new WindowConfig(
             Size: new Size<uint>(1280, 720),
             Title: "Game"))
-    .UseWindowRendering(
+    .UseDefaultRendering(
         ViewScopes.Inventory,
         new WindowConfig(
             Size: new Size<uint>(480, 360),
@@ -76,11 +76,11 @@ GameKitAppBuilder builder = new GameKitAppBuilder()
 A renderer for an additional window overrides the scope explicitly:
 
 ```csharp
-public sealed class InventoryRenderer : IRenderer<RenderContext>
+public sealed class InventoryRenderer : IRenderer<DefaultRenderContext>
 {
     ViewScope IViewScoped.ViewScope => ViewScopes.Inventory;
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         // Render the inventory window.
     }

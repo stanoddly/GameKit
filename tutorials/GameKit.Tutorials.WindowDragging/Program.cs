@@ -12,13 +12,13 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(
                     Size: (400, 400),
                     Title: "Window Dragging",
                     Borderless: true));
 
-        builder.AddSingleton<IRenderer<RenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
+        builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 
         builder.OnStart((WindowRegistry windowRegistry, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
@@ -104,7 +104,7 @@ static class Program
     }
 }
 
-internal sealed class ClearRenderer : IRenderer<RenderContext>
+internal sealed class ClearRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly FColor _color;
 
@@ -114,7 +114,7 @@ internal sealed class ClearRenderer : IRenderer<RenderContext>
         _color = color;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

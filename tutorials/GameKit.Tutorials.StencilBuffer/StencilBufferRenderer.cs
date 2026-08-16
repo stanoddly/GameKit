@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StencilBuffer;
 
-public class StencilBufferRenderer : IRenderer<RenderContext>
+public class StencilBufferRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _maskPipeline;
     private readonly GraphicsPipeline _drawPipeline;
@@ -27,7 +27,7 @@ public class StencilBufferRenderer : IRenderer<RenderContext>
         _depthStencilTexture = depthStencilTexture;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture, new ColorTargetSettings

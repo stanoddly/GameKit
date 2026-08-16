@@ -32,37 +32,37 @@ public static class RenderingExtensions
         return services;
     }
 
-    public static GameKitAppBuilder UseWindowRendering(
+    public static GameKitAppBuilder UseDefaultRendering(
         this GameKitAppBuilder builder,
         WindowConfig? config = null)
     {
-        return UseWindowRendering(builder, default, config);
+        return UseDefaultRendering(builder, default, config);
     }
 
-    public static GameKitAppBuilder UseWindowRendering(
+    public static GameKitAppBuilder UseDefaultRendering(
         this GameKitAppBuilder builder,
         ViewScope viewScope,
         WindowConfig? config = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
-        ConfigureWindowRendering(builder, viewScope, config ?? new WindowConfig());
+        ConfigureDefaultRendering(builder, viewScope, config ?? new WindowConfig());
         return builder;
     }
 
-    public static ServiceCollection UseWindowRendering(
+    public static ServiceCollection UseDefaultRendering(
         this ServiceCollection services,
         WindowConfig? config = null)
     {
-        return UseWindowRendering(services, default, config);
+        return UseDefaultRendering(services, default, config);
     }
 
-    public static ServiceCollection UseWindowRendering(
+    public static ServiceCollection UseDefaultRendering(
         this ServiceCollection services,
         ViewScope viewScope,
         WindowConfig? config = null)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ConfigureWindowRendering(services, viewScope, config ?? new WindowConfig());
+        ConfigureDefaultRendering(services, viewScope, config ?? new WindowConfig());
         return services;
     }
 
@@ -82,7 +82,7 @@ public static class RenderingExtensions
             provider.GetRequiredService<ServiceRegistry<IRenderer<TRenderContext>>>()));
     }
 
-    private static void ConfigureWindowRendering(
+    private static void ConfigureDefaultRendering(
         ServiceCollection services,
         ViewScope viewScope,
         WindowConfig config)
@@ -103,10 +103,10 @@ public static class RenderingExtensions
                 config,
                 provider.GetRequiredService<PlatformInfo>()));
         services.AddSingleton<IRenderCoordinator>(provider =>
-            new RenderCoordinator(
+            new DefaultRenderCoordinator(
                 provider.GetRequiredService<WindowRegistry>().GetWindow(viewScope),
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
-                provider.GetRequiredService<ServiceRegistry<IRenderer<RenderContext>>>()));
+                provider.GetRequiredService<ServiceRegistry<IRenderer<DefaultRenderContext>>>()));
     }
 }

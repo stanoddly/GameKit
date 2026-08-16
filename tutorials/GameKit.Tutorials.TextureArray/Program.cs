@@ -9,11 +9,11 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseWindowRendering(
+            .UseDefaultRendering(
                 new WindowConfig(Size: (800, 600), Title: "Texture Array Demo"));
 
         builder.AddSingleton<TextureArrayRenderer>(TextureArrayRenderer.Create);
-        builder.AddAlias<IRenderer<RenderContext>, TextureArrayRenderer>();
+        builder.AddAlias<IRenderer<DefaultRenderContext>, TextureArrayRenderer>();
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

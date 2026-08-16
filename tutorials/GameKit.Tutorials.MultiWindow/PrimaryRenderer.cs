@@ -4,7 +4,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.MultiWindow;
 
-public class PrimaryRenderer : IRenderer<RenderContext>
+public class PrimaryRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;
@@ -15,7 +15,7 @@ public class PrimaryRenderer : IRenderer<RenderContext>
         _vertexBuffer = vertexBuffer;
     }
 
-    public void Render(RenderContext renderContext)
+    public void Render(DefaultRenderContext renderContext)
     {
         renderContext.CommandBuffer.PushFragmentUniformData(0, FColors.SkyBlue);
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)

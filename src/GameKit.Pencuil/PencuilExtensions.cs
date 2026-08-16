@@ -78,7 +78,7 @@ public static class PencuilExtensions
         });
 
         builder.AddSingleton<PencuilState>(ResolveState);
-        builder.AddSingleton<IRenderer<RenderContext>, PencuilRenderer>(provider =>
+        builder.AddSingleton<IRenderer<DefaultRenderContext>, PencuilRenderer>(provider =>
             new PencuilRenderer(
                 ResolveState(provider),
                 provider.GetRequiredService<GraphicsPipelineBuilder>(),
