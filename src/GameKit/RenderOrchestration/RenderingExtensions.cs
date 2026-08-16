@@ -103,7 +103,7 @@ public static class RenderingExtensions
                 config,
                 provider.GetRequiredService<PlatformInfo>()));
         services.AddSingleton<IRenderCoordinator>(provider =>
-            new WindowRenderCoordinator(
+            new RenderCoordinator(
                 provider.GetRequiredService<WindowRegistry>().GetWindow(viewScope),
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
