@@ -8,25 +8,22 @@ namespace GameKit.Tutorials.MultiWindowTextInput;
 
 static class Program
 {
-    internal static readonly ViewScope LeftView = new(0);
     internal static readonly ViewScope RightView = new(1);
 
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                LeftView,
                 new WindowConfig(Size: (520, 300), Title: "Left text input"))
             .UseWindowRendering(
                 RightView,
                 new WindowConfig(Size: (520, 300), Title: "Right text input"))
-            .UsePencuil(LeftView, clearTarget: true)
+            .UsePencuil(clearTarget: true)
             .UsePencuil(RightView, clearTarget: true)
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
         builder.AddSingleton<IPencuilView>(provider =>
             new TextInputView(
-                LeftView,
                 "Left View",
                 new TextInputViewModel("left"),
                 provider.GetRequiredService<IFontSystem>()));

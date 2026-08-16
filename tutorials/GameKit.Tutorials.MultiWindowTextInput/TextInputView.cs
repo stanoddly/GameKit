@@ -39,6 +39,14 @@ public sealed class TextInputView : PencuilView<TextInputViewModel>
     private readonly Font _font;
 
     public TextInputView(
+        string name,
+        TextInputViewModel viewModel,
+        IFontSystem fontSystem)
+        : this(default, name, viewModel, fontSystem)
+    {
+    }
+
+    public TextInputView(
         ViewScope viewScope,
         string name,
         TextInputViewModel viewModel,

@@ -5,10 +5,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.Triangle;
 
-public class TriangleRenderer : IViewRenderer
+public class TriangleRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => Program.ViewScope;
-
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
 
@@ -18,7 +16,7 @@ public class TriangleRenderer : IViewRenderer
         _quadVertexBuffer = quadVertexBuffer;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         renderContext.CommandBuffer.PushFragmentUniformData(0, FColors.Magenta);
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
@@ -42,7 +40,7 @@ public class TriangleRenderer : IViewRenderer
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay(Program.ViewScope)
+            .AddColorFormatFromDisplay()
             .Build();
 
         return new TriangleRenderer(graphicsPipeline, quadVertexBuffer);

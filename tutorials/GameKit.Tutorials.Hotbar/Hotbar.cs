@@ -49,7 +49,7 @@ public class Hotbar : PencuilView<HotbarViewModel>
     private int _hoveredSlot = -1;
 
     public Hotbar(HotbarViewModel viewModel, IKeyboardService keyboardService, IFontSystem fontSystem, ITextureLoader textureLoader)
-        : base(Program.ViewScope, viewModel)
+        : base(viewModel)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);
 
@@ -60,7 +60,7 @@ public class Hotbar : PencuilView<HotbarViewModel>
             _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, texture.Size.Width, texture.Size.Height));
         }
 
-        keyboardService.SubscribeKeyDown(Program.ViewScope, 0, (_, args) =>
+        keyboardService.SubscribeKeyDown(0, (_, args) =>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)

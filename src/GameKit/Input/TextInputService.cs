@@ -35,7 +35,7 @@ public class TextInputService : ITextInputService
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActiveFor(ViewScope viewScope)
+    public bool IsActiveFor(ViewScope viewScope = default)
     {
         Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
@@ -94,7 +94,7 @@ public class TextInputService : ITextInputService
         });
     }
 
-    public void Start(ViewScope viewScope)
+    public void Start(ViewScope viewScope = default)
     {
         Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
@@ -103,7 +103,7 @@ public class TextInputService : ITextInputService
         }
     }
 
-    public void Stop(ViewScope viewScope)
+    public void Stop(ViewScope viewScope = default)
     {
         Window window = _windowRegistry.GetWindow(viewScope);
         unsafe

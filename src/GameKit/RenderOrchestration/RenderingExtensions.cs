@@ -34,12 +34,26 @@ public static class RenderingExtensions
 
     public static GameKitAppBuilder UseWindowRendering(
         this GameKitAppBuilder builder,
+        WindowConfig? config = null)
+    {
+        return UseWindowRendering(builder, default, config);
+    }
+
+    public static GameKitAppBuilder UseWindowRendering(
+        this GameKitAppBuilder builder,
         ViewScope viewScope,
         WindowConfig? config = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ConfigureWindowRendering(builder, viewScope, config ?? new WindowConfig());
         return builder;
+    }
+
+    public static ServiceCollection UseWindowRendering(
+        this ServiceCollection services,
+        WindowConfig? config = null)
+    {
+        return UseWindowRendering(services, default, config);
     }
 
     public static ServiceCollection UseWindowRendering(
@@ -89,10 +103,10 @@ public static class RenderingExtensions
                 config,
                 provider.GetRequiredService<PlatformInfo>()));
         services.AddSingleton<IRenderCoordinator>(provider =>
-            new ViewRenderCoordinator(
+            new WindowRenderCoordinator(
                 provider.GetRequiredService<WindowRegistry>().GetWindow(viewScope),
                 provider.GetRequiredService<GpuDevice>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
-                provider.GetRequiredService<ServiceRegistry<IViewRenderer>>()));
+                provider.GetRequiredService<ServiceRegistry<IRenderer<RenderContext>>>()));
     }
 }

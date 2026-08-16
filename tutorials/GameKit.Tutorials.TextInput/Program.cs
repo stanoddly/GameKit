@@ -6,15 +6,12 @@ namespace GameKit.Tutorials.TextInput;
 
 static class Program
 {
-    internal static readonly ViewScope ViewScope = new(0);
-
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                ViewScope,
                 new WindowConfig(Size: (640, 440), Title: "Text Input"))
-            .UsePencuil(ViewScope)
+            .UsePencuil()
             .AddContentFromProjectDirectory("../GameKit.Tutorials.Hotbar/Content");
 
         builder.AddSingleton<TextInputViewModel>();

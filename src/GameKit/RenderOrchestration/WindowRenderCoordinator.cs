@@ -3,20 +3,20 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-internal sealed class ViewRenderCoordinator : IRenderCoordinator, IViewScoped
+internal sealed class WindowRenderCoordinator : IRenderCoordinator, IViewScoped
 {
     private readonly Window _window;
     private readonly GpuDevice _gpuDevice;
     private readonly GpuMemorySystem _gpuMemorySystem;
-    private readonly ServiceRegistry<IViewRenderer> _renderers;
+    private readonly ServiceRegistry<IRenderer<RenderContext>> _renderers;
 
-    public ViewScope ViewScope => _window.ViewScope;
+    ViewScope IViewScoped.ViewScope => _window.ViewScope;
 
-    internal ViewRenderCoordinator(
+    internal WindowRenderCoordinator(
         Window window,
         GpuDevice gpuDevice,
         GpuMemorySystem gpuMemorySystem,
-        ServiceRegistry<IViewRenderer> renderers)
+        ServiceRegistry<IRenderer<RenderContext>> renderers)
     {
         _window = window;
         _gpuDevice = gpuDevice;
@@ -35,10 +35,10 @@ internal sealed class ViewRenderCoordinator : IRenderCoordinator, IViewScoped
             return;
         }
 
-        using ViewRenderContext renderContext = new(_window, swapchainTexture, commandBuffer);
-        foreach (IViewRenderer renderer in _renderers)
+        using RenderContext renderContext = new(_window, swapchainTexture, commandBuffer);
+        foreach (IRenderer<RenderContext> renderer in _renderers)
         {
-            if (renderer.ViewScope == ViewScope)
+            if (renderer.ViewScope == _window.ViewScope)
             {
                 renderer.Render(renderContext);
             }

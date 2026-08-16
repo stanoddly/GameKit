@@ -4,24 +4,30 @@ namespace GameKit.Pencuil;
 
 public sealed class PencuilViewRegistry : IViewScoped
 {
+    private readonly ViewScope _viewScope;
     private readonly List<IPencuilView> _views = new();
     private bool _dirty;
 
-    public ViewScope ViewScope { get; }
+    ViewScope IViewScoped.ViewScope => _viewScope;
     public ReadOnlySpan<IPencuilView> Views => CollectionsMarshal.AsSpan(_views);
+
+    public PencuilViewRegistry()
+        : this(default)
+    {
+    }
 
     public PencuilViewRegistry(ViewScope viewScope)
     {
-        ViewScope = viewScope;
+        _viewScope = viewScope;
     }
 
     public void Add(IPencuilView view)
     {
-        if (view.ViewScope != ViewScope)
+        if (view.ViewScope != _viewScope)
         {
             throw new InvalidOperationException(
                 $"A Pencuil view for ViewScope {view.ViewScope.Value} cannot be registered " +
-                $"with ViewScope {ViewScope.Value}.");
+                $"with ViewScope {_viewScope.Value}.");
         }
 
         for (int i = 0; i < _views.Count; i++)

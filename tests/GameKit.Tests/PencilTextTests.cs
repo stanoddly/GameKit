@@ -34,7 +34,7 @@ public class PencilTextTests
 
     private static Pencil CreatePencil()
     {
-        return new Pencil(new ViewScope(0), new ThrowingFontSystem(), new TestClipboardService(), GuiStyles.Style);
+        return new Pencil(new ThrowingFontSystem(), new TestClipboardService(), GuiStyles.Style);
     }
 
     private sealed class ThrowingFontSystem : IFontSystem

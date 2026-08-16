@@ -132,6 +132,13 @@ public class GraphicsPipelineBuilder
     }
 
     public GraphicsPipelineBuilder AddColorFormatFromDisplay(
+        in BlendingState? blendingState = null,
+        ColorComponentFlags? colorWriteMask = null)
+    {
+        return AddColorFormatFromDisplay(default, blendingState, colorWriteMask);
+    }
+
+    public GraphicsPipelineBuilder AddColorFormatFromDisplay(
         ViewScope viewScope,
         in BlendingState? blendingState = null,
         ColorComponentFlags? colorWriteMask = null)

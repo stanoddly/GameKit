@@ -6,10 +6,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.StorageBuffer;
 
-public class StorageBufferRenderer : IViewRenderer
+public class StorageBufferRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => Program.ViewScope;
-
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;
     private readonly GpuStorageBuffer<Vector4> _colorBuffer;
@@ -28,7 +26,7 @@ public class StorageBufferRenderer : IViewRenderer
         _colorCount = colorCount;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         _time += 0.016f; // Approximate 60fps timestep
 
@@ -82,7 +80,7 @@ public class StorageBufferRenderer : IViewRenderer
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay(Program.ViewScope)
+            .AddColorFormatFromDisplay()
             .Build();
 
         return new StorageBufferRenderer(graphicsPipeline, quadVertexBuffer, colorBuffer, colors.Length);

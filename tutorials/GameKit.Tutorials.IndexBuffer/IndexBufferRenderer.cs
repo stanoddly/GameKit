@@ -5,10 +5,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.IndexBuffer;
 
-public class IndexBufferRenderer : IViewRenderer
+public class IndexBufferRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => Program.ViewScope;
-
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionColorVertex> _vertexBuffer;
     private readonly GpuIndexBuffer _indexBuffer;
@@ -23,7 +21,7 @@ public class IndexBufferRenderer : IViewRenderer
         _indexBuffer = indexBuffer;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)
@@ -63,7 +61,7 @@ public class IndexBufferRenderer : IViewRenderer
             .SetPrimitiveType(PrimitiveType.TriangleList)
             .AddVertexBufferConfig<PositionColorVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay(Program.ViewScope)
+            .AddColorFormatFromDisplay()
             .Build();
 
         return new IndexBufferRenderer(graphicsPipeline, vertexBuffer, indexBuffer);

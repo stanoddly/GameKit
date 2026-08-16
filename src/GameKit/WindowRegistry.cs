@@ -30,7 +30,7 @@ public sealed class WindowRegistry
         });
     }
 
-    public Window GetWindow(ViewScope viewScope)
+    public Window GetWindow(ViewScope viewScope = default)
     {
         if (TryGetWindow(viewScope, out Window window))
         {
@@ -54,6 +54,11 @@ public sealed class WindowRegistry
 
         window = null!;
         return false;
+    }
+
+    public bool TryGetWindow(out Window window)
+    {
+        return TryGetWindow(default(ViewScope), out window);
     }
 
     internal bool TryGetWindow(uint sdlWindowId, out Window window)

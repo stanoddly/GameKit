@@ -8,13 +8,10 @@ namespace GameKit.Tutorials.Logging;
 
 static class Program
 {
-    internal static readonly ViewScope ViewScope = new(0);
-
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                ViewScope,
                 new WindowConfig(Size: (1280, 720), Title: "Logging"));
 
         builder.AddZLogger(logging =>
@@ -40,8 +37,6 @@ static class Program
 #endif
         });
         builder.AddSingleton<PlayerInputService>(PlayerInputService.Create);
-        builder.AddSingleton<IViewRenderer>(new NullViewRenderer(ViewScope));
-
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
     }

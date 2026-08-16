@@ -6,6 +6,17 @@ namespace GameKit.Tests;
 public sealed class WindowRegistryTests
 {
     [Test]
+    public void GetWindow_WithoutScope_ReturnsDefaultWindow()
+    {
+        WindowRegistry windowRegistry = new();
+        Window window = CreateWindow(default, 42);
+
+        windowRegistry.Register(window);
+
+        Assert.That(windowRegistry.GetWindow(), Is.SameAs(window));
+    }
+
+    [Test]
     public void Register_IndexesWindowByViewScopeAndSdlId()
     {
         WindowRegistry windowRegistry = new();

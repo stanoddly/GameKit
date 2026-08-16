@@ -134,7 +134,7 @@ public class MouseService : IMouseService
         _windowRegistry = windowRegistry;
     }
 
-    public bool IsInWindow(ViewScope viewScope)
+    public bool IsInWindow(ViewScope viewScope = default)
     {
         Window window = _windowRegistry.GetWindow(viewScope);
         unsafe

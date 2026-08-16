@@ -4,10 +4,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.ComputeShader;
 
-public class ComputeRenderer : IViewRenderer
+public class ComputeRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => Program.ViewScope;
-
     private readonly ComputePipeline _computePipeline;
     private readonly Texture _outputTexture;
     private float _time;
@@ -18,7 +16,7 @@ public class ComputeRenderer : IViewRenderer
         _outputTexture = outputTexture;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         _time += 0.016f;
 

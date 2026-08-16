@@ -57,6 +57,7 @@ public readonly struct GapDisposer : IDisposable
 
 public class Pencil : IViewScoped
 {
+    private readonly ViewScope _viewScope;
     private readonly IFontSystem _fontSystem;
     private readonly IClipboardService _clipboardService;
     public GuiStyle Style { get; }
@@ -120,7 +121,15 @@ public class Pencil : IViewScoped
     internal bool FocusClaimedThisFrame;
     internal TextFieldEditingState? EditingState;
 
-    public ViewScope ViewScope { get; }
+    ViewScope IViewScoped.ViewScope => _viewScope;
+
+    public Pencil(
+        IFontSystem fontSystem,
+        IClipboardService clipboardService,
+        GuiStyle guiStyle)
+        : this(default, fontSystem, clipboardService, guiStyle)
+    {
+    }
 
     public Pencil(
         ViewScope viewScope,
@@ -128,7 +137,7 @@ public class Pencil : IViewScoped
         IClipboardService clipboardService,
         GuiStyle guiStyle)
     {
-        ViewScope = viewScope;
+        _viewScope = viewScope;
         _fontSystem = fontSystem;
         _clipboardService = clipboardService;
         Style = guiStyle;

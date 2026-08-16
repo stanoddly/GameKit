@@ -1,5 +1,4 @@
 using GameKit.App;
-using GameKit.Componentize;
 using GameKit.Content;
 using GameKit.DependencyInjection;
 using GameKit.Gpu;
@@ -12,6 +11,15 @@ namespace GameKit.Pencuil;
 
 public static class PencuilExtensions
 {
+    public static GameKitAppBuilder UsePencuil(
+        this GameKitAppBuilder builder,
+        int order = 10_000,
+        int inputOrder = -10_000,
+        bool clearTarget = false)
+    {
+        return UsePencuil(builder, default, order, inputOrder, clearTarget);
+    }
+
     public static GameKitAppBuilder UsePencuil(
         this GameKitAppBuilder builder,
         ViewScope viewScope,
@@ -54,7 +62,6 @@ public static class PencuilExtensions
         builder.OnActivated((instance, _) =>
         {
             if (instance is IPencuilView view &&
-                instance is not GameComponent &&
                 view.ViewScope == viewScope)
             {
                 viewRegistry.Add(view);
@@ -64,7 +71,6 @@ public static class PencuilExtensions
         builder.OnDisposing((instance, _) =>
         {
             if (instance is IPencuilView view &&
-                instance is not GameComponent &&
                 view.ViewScope == viewScope)
             {
                 viewRegistry.Remove(view);
@@ -72,7 +78,7 @@ public static class PencuilExtensions
         });
 
         builder.AddSingleton<PencuilState>(ResolveState);
-        builder.AddSingleton<IViewRenderer, PencuilRenderer>(provider =>
+        builder.AddSingleton<IRenderer<RenderContext>, PencuilRenderer>(provider =>
             new PencuilRenderer(
                 ResolveState(provider),
                 provider.GetRequiredService<GraphicsPipelineBuilder>(),

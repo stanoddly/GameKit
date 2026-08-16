@@ -20,7 +20,9 @@ public class Window : IViewScoped, IDisposable
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
 
-    public ViewScope ViewScope { get; }
+    internal ViewScope ViewScope { get; }
+
+    ViewScope IViewScoped.ViewScope => ViewScope;
 
     private ShortSize _lastSize;
 

@@ -4,12 +4,10 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.MultiWindow;
 
-public class PrimaryRenderer : IViewRenderer
+public class PrimaryRenderer : IRenderer<RenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;
-
-    public ViewScope ViewScope => Program.MainView;
 
     public PrimaryRenderer(GraphicsPipeline graphicsPipeline, GpuVertexBuffer<PositionVertex> vertexBuffer)
     {
@@ -17,7 +15,7 @@ public class PrimaryRenderer : IViewRenderer
         _vertexBuffer = vertexBuffer;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         renderContext.CommandBuffer.PushFragmentUniformData(0, FColors.SkyBlue);
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
@@ -38,7 +36,7 @@ public class PrimaryRenderer : IViewRenderer
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay(Program.MainView)
+            .AddColorFormatFromDisplay()
             .Build();
 
         return new PrimaryRenderer(graphicsPipeline, vertexBuffer);

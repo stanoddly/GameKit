@@ -9,7 +9,7 @@ public class StageManagerTests
     [Test]
     public void Load_WithNullConfigure_Throws()
     {
-        ServiceProvider root = BuildRootProvider(new PencuilViewRegistry(new ViewScope(0)));
+        ServiceProvider root = BuildRootProvider(new PencuilViewRegistry());
         StageManager stageManager = new(root);
 
         Assert.Throws<ArgumentNullException>(() => stageManager.Load(null!));
@@ -18,7 +18,7 @@ public class StageManagerTests
     [Test]
     public void Load_DoesNotApplyImmediately()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -33,7 +33,7 @@ public class StageManagerTests
     [Test]
     public void Load_AppliesOnPendingTransition()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -49,7 +49,7 @@ public class StageManagerTests
     [Test]
     public void Load_MultipleBeforePendingTransition_LastWins()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -69,7 +69,7 @@ public class StageManagerTests
     [Test]
     public void Load_DisposesPreviousStageOnPendingTransition()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -91,7 +91,7 @@ public class StageManagerTests
     [Test]
     public void ApplyPendingTransition_WithNoPending_DoesNothing()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -109,7 +109,7 @@ public class StageManagerTests
     [Test]
     public void Dispose_DisposesActiveStage()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -127,7 +127,7 @@ public class StageManagerTests
     [Test]
     public void Dispose_ClearsPendingLoad()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -145,7 +145,7 @@ public class StageManagerTests
     [Test]
     public void Load_RegistersStageServicesViaParentCallbacksOnPendingTransition()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceProvider root = BuildRootProvider(viewRegistry);
         StageManager stageManager = new(root);
 
@@ -184,7 +184,7 @@ public class StageManagerTests
     [Test]
     public void Load_DisposesPreviousStageOwnedDisposables()
     {
-        ServiceProvider root = BuildRootProvider(new PencuilViewRegistry(new ViewScope(0)));
+        ServiceProvider root = BuildRootProvider(new PencuilViewRegistry());
         StageManager stageManager = new(root);
 
         DisposableService disposable = new();
@@ -238,8 +238,6 @@ public class StageManagerTests
     private sealed class TestView : IPencuilView
     {
         public string Name { get; }
-        public ViewScope ViewScope => new(0);
-
         public TestView(string name)
         {
             Name = name;

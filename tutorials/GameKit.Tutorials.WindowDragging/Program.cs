@@ -9,23 +9,20 @@ namespace GameKit.Tutorials.WindowDragging;
 
 static class Program
 {
-    internal static readonly ViewScope ViewScope = new(0);
-
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                ViewScope,
                 new WindowConfig(
                     Size: (400, 400),
                     Title: "Window Dragging",
                     Borderless: true));
 
-        builder.AddSingleton<IViewRenderer>(static () => new ClearRenderer(FColors.SkyBlue));
+        builder.AddSingleton<IRenderer<RenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 
         builder.OnStart((WindowRegistry windowRegistry, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            Window window = windowRegistry.GetWindow(ViewScope);
+            Window window = windowRegistry.GetWindow();
 
             if (window.SupportsSetWindowPosition)
             {
@@ -107,18 +104,17 @@ static class Program
     }
 }
 
-internal sealed class ClearRenderer : IViewRenderer
+internal sealed class ClearRenderer : IRenderer<RenderContext>
 {
     private readonly FColor _color;
 
-    public ViewScope ViewScope => Program.ViewScope;
 
     public ClearRenderer(FColor color)
     {
         _color = color;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)

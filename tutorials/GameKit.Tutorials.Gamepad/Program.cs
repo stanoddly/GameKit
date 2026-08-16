@@ -7,16 +7,11 @@ namespace GameKit.Tutorials.Gamepad;
 
 static class Program
 {
-    internal static readonly ViewScope ViewScope = new(0);
-
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                ViewScope,
                 new WindowConfig(Size: (640, 480), Title: "Gamepad Tutorial"));
-
-        builder.AddSingleton<IViewRenderer>(new NullViewRenderer(ViewScope));
 
         builder.OnStart((IGamepadService gamepadService) =>
         {

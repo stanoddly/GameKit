@@ -2,20 +2,20 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-public sealed class ViewRenderContext : IRenderContext, IViewScoped
+public sealed class RenderContext : IRenderContext, IViewScoped
 {
-    public ViewScope ViewScope { get; }
     public Window Window { get; }
     public SwapchainTexture SwapchainTexture { get; }
     public CommandBuffer CommandBuffer { get; }
     public Texture ColorTarget => SwapchainTexture;
 
-    internal ViewRenderContext(
+    ViewScope IViewScoped.ViewScope => Window.ViewScope;
+
+    internal RenderContext(
         Window window,
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
     {
-        ViewScope = window.ViewScope;
         Window = window;
         SwapchainTexture = swapchainTexture;
         CommandBuffer = commandBuffer;

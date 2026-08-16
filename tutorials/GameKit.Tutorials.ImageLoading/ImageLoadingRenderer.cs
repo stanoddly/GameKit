@@ -4,10 +4,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.ImageLoading;
 
-public class ImageLoadingRenderer : IViewRenderer
+public class ImageLoadingRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => Program.ViewScope;
-
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionTextureVertex> _quadVertexBuffer;
     private readonly Texture _texture;
@@ -25,7 +23,7 @@ public class ImageLoadingRenderer : IViewRenderer
         _sampler = sampler;
     }
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
         using IRenderPass renderPass = new RenderPassBuilder(renderContext.CommandBuffer)
             .AddColorTarget(renderContext.SwapchainTexture)
@@ -62,7 +60,6 @@ public class ImageLoadingRenderer : IViewRenderer
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaderProgram("shaders/shader")
             .AddColorFormatFromDisplay(
-                Program.ViewScope,
                 BlendingState.PremultipliedAlpha)
             .Build();
 

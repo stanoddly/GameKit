@@ -9,23 +9,18 @@ namespace GameKit.Tutorials.WindowConfiguration;
 
 static class Program
 {
-    internal static readonly ViewScope ViewScope = new(0);
-
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .UseWindowRendering(
-                ViewScope,
                 new WindowConfig(
                     Size: (800, 600),
                     Title: "Window Configuration Demo",
                     AlwaysOnTop: true));
 
-        builder.AddSingleton<IViewRenderer>(new NullViewRenderer(ViewScope));
-
         builder.OnStart((WindowRegistry windowRegistry, IKeyboardService keyboardService, PlatformInfo platformInfo) =>
         {
-            Window window = windowRegistry.GetWindow(ViewScope);
+            Window window = windowRegistry.GetWindow();
             using RawImage icon = CreateIcon(32, 32);
             window.SetIcon(icon);
 

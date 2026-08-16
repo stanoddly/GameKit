@@ -72,7 +72,7 @@ public class TextInputView : PencuilView<TextInputViewModel>
     private readonly Font _labelFont;
 
     public TextInputView(TextInputViewModel viewModel, IFontSystem fontSystem)
-        : base(Program.ViewScope, viewModel)
+        : base(viewModel)
     {
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
         _labelFont = fontSystem.Load("fonts/GohuFont-Medium.ttf", 14);

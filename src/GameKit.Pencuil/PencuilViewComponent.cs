@@ -6,13 +6,19 @@ namespace GameKit.Pencuil;
 public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuilView
     where TViewModel : ComponentBase, IPencuilViewModel
 {
+    private readonly ViewScope _viewScope;
+
     protected TViewModel ViewModel { get; private set; } = default!;
 
-    public ViewScope ViewScope { get; }
+    ViewScope IViewScoped.ViewScope => _viewScope;
+
+    protected PencuilViewComponent()
+    {
+    }
 
     protected PencuilViewComponent(ViewScope viewScope)
     {
-        ViewScope = viewScope;
+        _viewScope = viewScope;
     }
 
     public bool ConsumeDirty()
@@ -45,13 +51,13 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
             GetRequiredService<ServiceRegistry<PencuilState>>();
         foreach (PencuilState state in states)
         {
-            if (state.ViewScope == ViewScope)
+            if (state.ViewScope == _viewScope)
             {
                 return state.ViewRegistry;
             }
         }
 
         throw new InvalidOperationException(
-            $"Pencuil is not configured for ViewScope {ViewScope.Value}.");
+            $"Pencuil is not configured for ViewScope {_viewScope.Value}.");
     }
 }

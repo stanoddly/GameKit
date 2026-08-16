@@ -3,13 +3,20 @@ namespace GameKit.Pencuil;
 public abstract class PencuilView<TViewModel> : IPencuilView
     where TViewModel : IPencuilViewModel
 {
+    private readonly ViewScope _viewScope;
+
     protected TViewModel ViewModel { get; }
 
-    public ViewScope ViewScope { get; }
+    ViewScope IViewScoped.ViewScope => _viewScope;
+
+    protected PencuilView(TViewModel viewModel)
+        : this(default, viewModel)
+    {
+    }
 
     protected PencuilView(ViewScope viewScope, TViewModel viewModel)
     {
-        ViewScope = viewScope;
+        _viewScope = viewScope;
         ViewModel = viewModel;
     }
 

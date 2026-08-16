@@ -2,9 +2,9 @@ namespace GameKit.Input;
 
 public interface ITextInputService
 {
-    bool IsActiveFor(ViewScope viewScope);
-    void Start(ViewScope viewScope);
-    void Stop(ViewScope viewScope);
+    bool IsActiveFor(ViewScope viewScope = default);
+    void Start(ViewScope viewScope = default);
+    void Stop(ViewScope viewScope = default);
 
     event TextInputHandler TextInput;
     event TextEditingHandler TextEditing;

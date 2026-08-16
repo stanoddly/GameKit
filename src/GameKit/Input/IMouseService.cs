@@ -9,7 +9,7 @@ public interface IMouseService
     event MouseWindowPresenceHandler WindowEnter;
     event MouseWindowPresenceHandler WindowLeave;
 
-    bool IsInWindow(ViewScope viewScope);
+    bool IsInWindow(ViewScope viewScope = default);
 
     MouseState GetGlobalState();
 

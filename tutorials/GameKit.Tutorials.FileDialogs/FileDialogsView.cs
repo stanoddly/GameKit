@@ -63,9 +63,9 @@ public class FileDialogsView : PencuilView<FileDialogsViewModel>
         FileDialogsViewModel viewModel,
         WindowRegistry windowRegistry,
         IFontSystem fontSystem)
-        : base(Program.ViewScope, viewModel)
+        : base(viewModel)
     {
-        _window = windowRegistry.GetWindow(Program.ViewScope);
+        _window = windowRegistry.GetWindow();
         _font = fontSystem.Load("fonts/GohuFont-Medium.ttf", 16);
     }
 

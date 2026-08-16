@@ -1,29 +1,68 @@
 # Window rendering
 
-GameKit groups each window and its View-side resources through an application-defined `ViewScope`.
-A scope associates a window, renderers, routed input, and optional Pencuil state without using a
-render-context type as an identity.
+GameKit uses `default(ViewScope)` for the ordinary single-window case. Applications only need to
+name scopes when they render more than one window.
 
-Define stable scope values in the application:
+## Single-window rendering
 
-```csharp
-internal static class ViewScopes
-{
-    internal static readonly ViewScope Main = new(0);
-    internal static readonly ViewScope Inventory = new(1);
-}
-```
-
-Scope values must be non-negative. GameKit assigns no primary or default meaning to any value.
-
-## Registering windows and renderers
-
-`UseWindowRendering` creates one DI-owned window and render coordinator for a scope:
+`UseWindowRendering` creates a DI-owned window and render coordinator:
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()
     .UseWindowRendering(
-        ViewScopes.Main,
+        new WindowConfig(
+            Size: new Size<uint>(1280, 720),
+            Title: "Game"));
+```
+
+Omitting `UseWindowRendering` creates no window.
+
+Window renderers use the ordinary `IRenderer<RenderContext>` contract:
+
+```csharp
+public sealed class GameRenderer : IRenderer<RenderContext>
+{
+    public void Render(RenderContext renderContext)
+    {
+        // Record rendering commands.
+    }
+}
+```
+
+Register renderers normally through DI:
+
+```csharp
+builder.AddSingleton<IRenderer<RenderContext>, GameRenderer>(GameRenderer.Create);
+```
+
+The default `IViewScoped.ViewScope` implementation returns `default`, so single-window renderers do
+not declare a scope.
+
+The default window is available without a scope argument:
+
+```csharp
+Window window = windowRegistry.GetWindow();
+graphicsPipelineBuilder.AddColorFormatFromDisplay();
+textInputService.Start();
+bool containsMouse = mouseService.IsInWindow();
+```
+
+## Multiple windows
+
+Define stable non-negative scope values for additional windows:
+
+```csharp
+internal static class ViewScopes
+{
+    internal static readonly ViewScope Inventory = new(1);
+}
+```
+
+The implicit window remains `default(ViewScope)` while additional windows receive explicit scopes:
+
+```csharp
+GameKitAppBuilder builder = new GameKitAppBuilder()
+    .UseWindowRendering(
         new WindowConfig(
             Size: new Size<uint>(1280, 720),
             Title: "Game"))
@@ -34,51 +73,40 @@ GameKitAppBuilder builder = new GameKitAppBuilder()
             Title: "Inventory"));
 ```
 
-Omitting `UseWindowRendering` creates no window.
-
-Renderers implement `IViewRenderer` and declare the scope to which the instance belongs:
+A renderer for an additional window overrides the scope explicitly:
 
 ```csharp
-public sealed class InventoryRenderer : IViewRenderer
+public sealed class InventoryRenderer : IRenderer<RenderContext>
 {
-    public ViewScope ViewScope => ViewScopes.Inventory;
+    ViewScope IViewScoped.ViewScope => ViewScopes.Inventory;
 
-    public void Render(ViewRenderContext renderContext)
+    public void Render(RenderContext renderContext)
     {
-        // Record rendering commands.
+        // Render the inventory window.
     }
 }
 ```
 
-Register renderers normally through DI:
-
-```csharp
-builder.AddSingleton<IViewRenderer, InventoryRenderer>(InventoryRenderer.Create);
-```
-
-The renderer registry preserves `IOrderable.Order` and executes a renderer only for the matching
-scope. A reusable renderer can receive its `ViewScope` through its constructor and be registered more
+The renderer registry preserves `IOrderable.Order` and executes each renderer only for its matching
+scope. A reusable renderer can receive its `ViewScope` through construction and be registered more
 than once.
 
-## Resolving a window
-
-Multiple windows cannot be distinguished through unkeyed `Window` injection. Resolve a specific
-window through `WindowRegistry`:
+Resolve resources for additional windows through their scope:
 
 ```csharp
 Window inventoryWindow = windowRegistry.GetWindow(ViewScopes.Inventory);
+graphicsPipelineBuilder.AddColorFormatFromDisplay(ViewScopes.Inventory);
 ```
 
-The registry exposes logical `ViewScope` lookup. SDL window IDs remain internal and are used only to
-route native events.
-
-Windows registered by a stage use the stage provider's lifetime. Disposing that provider unregisters
-and disposes its window and render coordinator.
+SDL window IDs remain internal and are used only to route native events. Windows registered by a
+stage use the stage provider's lifetime. Disposing that provider unregisters and disposes its window
+and render coordinator.
 
 ## Scoped input
 
-Window-associated event arguments expose their source `ViewScope`. Prefer scoped subscriptions when
-a handler belongs to one View:
+Window-associated event arguments expose their source `ViewScope`. Global events and subscriptions
+are sufficient for a single window and for application-wide shortcuts. In a multi-window application,
+use a scoped subscription when a handler belongs to one window:
 
 ```csharp
 keyboardService.SubscribeKeyDown(
@@ -87,29 +115,25 @@ keyboardService.SubscribeKeyDown(
     (keyboard, eventArgs) => HandleInventoryKey(keyboard, eventArgs));
 ```
 
-Scoped overloads exist for keyboard, mouse, and text-input subscriptions. Global events and
-subscriptions remain available for application-wide shortcuts and diagnostics.
-
-Text-input activation and window-focused mouse queries also use the scope:
-
-```csharp
-textInputService.Start(ViewScopes.Inventory);
-bool containsMouse = mouseService.IsInWindow(ViewScopes.Inventory);
-```
+Scoped overloads exist for keyboard, mouse, and text-input subscriptions.
 
 ## Pencuil
 
-Configure Pencuil independently for each scope:
+The common case requires no scope:
 
 ```csharp
-builder
-    .UsePencuil(ViewScopes.Main)
-    .UsePencuil(ViewScopes.Inventory);
+builder.UsePencuil();
+```
+
+Configure another Pencuil instance only for an additional window:
+
+```csharp
+builder.UsePencuil(ViewScopes.Inventory);
 ```
 
 Pencuil's MVVM contracts use explicit names: `IPencuilView`, `IPencuilViewModel`, and
-`PencuilView<TViewModel>`. Each `IPencuilView` implements `IViewScoped`, allowing its instance to join
-the matching Pencuil state.
+`PencuilView<TViewModel>`. Their default scope is implicit; views belonging to another window
+override `IViewScoped.ViewScope` or pass a scope to the Pencuil view base class.
 
 See `GameKit.Tutorials.MultiWindow` for two independently rendered windows and
 `GameKit.Tutorials.MultiWindowTextInput` for independent Pencuil focus and text input.

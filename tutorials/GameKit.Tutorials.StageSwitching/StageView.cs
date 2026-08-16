@@ -9,7 +9,6 @@ public class StageView : IPencuilView, IDisposable
     private readonly Color _color;
     private bool _dirty = true;
 
-    public ViewScope ViewScope => Program.ViewScope;
 
     public StageView(string name, Color color)
     {

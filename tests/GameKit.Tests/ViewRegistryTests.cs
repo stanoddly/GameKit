@@ -8,7 +8,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void ChildProviderView_IsAddedAfterChildBuild()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(viewRegistry);
         rootCollection.OnActivated((instance, _) =>
@@ -37,7 +37,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void ChildProviderView_IsRemovedWhenChildProviderIsDisposed()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(viewRegistry);
         rootCollection.OnActivated((instance, _) =>
@@ -68,7 +68,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void RootRegisteredView_AppearsInRegistry()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(viewRegistry);
         rootCollection.AddSingleton<IPencuilView>(new TestView("root"));
@@ -94,7 +94,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void MultipleChildProviders_ViewsAddedAndRemovedIndependently()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         ServiceCollection rootCollection = new();
         rootCollection.AddSingleton(viewRegistry);
         rootCollection.OnActivated((instance, _) =>
@@ -129,7 +129,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void DuplicateView_IsNotAddedTwice()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         TestView view = new("test");
 
         viewRegistry.Add(view);
@@ -141,7 +141,7 @@ public class PencuilViewRegistryTests
     [Test]
     public void Add_ViewFromAnotherScope_Throws()
     {
-        PencuilViewRegistry viewRegistry = new(new ViewScope(0));
+        PencuilViewRegistry viewRegistry = new();
         TestView view = new("test", new ViewScope(1));
 
         Assert.Throws<InvalidOperationException>(() => viewRegistry.Add(view));
@@ -160,13 +160,16 @@ public class PencuilViewRegistryTests
 
     private sealed class TestView : IPencuilView
     {
+        private readonly ViewScope _viewScope;
+
         public string Name { get; }
-        public ViewScope ViewScope { get; }
+
+        ViewScope IViewScoped.ViewScope => _viewScope;
 
         public TestView(string name, ViewScope viewScope = default)
         {
             Name = name;
-            ViewScope = viewScope;
+            _viewScope = viewScope;
         }
 
         public bool ConsumeDirty() => false;

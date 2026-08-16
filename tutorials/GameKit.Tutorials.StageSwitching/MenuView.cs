@@ -24,7 +24,6 @@ public class MenuView : IPencuilView
     private string? _activeStage;
     private bool _dirty = true;
 
-    public ViewScope ViewScope => Program.ViewScope;
 
     public MenuView(IStageManager stageManager, IFontSystem fontSystem)
     {
