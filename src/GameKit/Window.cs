@@ -16,6 +16,7 @@ public abstract class Window : IDisposable
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
+    internal abstract int RenderContextTypeId { get; }
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
     
@@ -601,6 +602,8 @@ public abstract class Window : IDisposable
 public sealed class Window<TRenderContext> : Window
     where TRenderContext : IRenderContext
 {
+    internal override int RenderContextTypeId => WindowTypeId<TRenderContext>.Id;
+
     internal Window(
         Pointer<SDL_Window> sdlWindow,
         Pointer<SDL_GPUDevice> sdlGpuDevice,

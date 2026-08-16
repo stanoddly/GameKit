@@ -27,14 +27,15 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly Window<DefaultRenderContext> _primaryWindow;
+    private readonly WindowRegistry _windows;
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
     private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
     private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive => IsActiveFor(_primaryWindow);
+    public bool IsActive => TryGetDefaultWindow(out Window<DefaultRenderContext> window) &&
+        IsActiveFor(window);
 
     public bool IsActiveFor(Window window)
     {
@@ -68,7 +69,7 @@ public class TextInputService : ITextInputService
 
     public void Start()
     {
-        Start(_primaryWindow);
+        Start(GetDefaultWindow());
     }
 
     public void Start(Window window)
@@ -81,7 +82,7 @@ public class TextInputService : ITextInputService
 
     public void Stop()
     {
-        Stop(_primaryWindow);
+        Stop(GetDefaultWindow());
     }
 
     public void Stop(Window window)
@@ -92,9 +93,24 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal TextInputService(Window<DefaultRenderContext> primaryWindow)
+    internal TextInputService(WindowRegistry windows)
     {
-        _primaryWindow = primaryWindow;
+        _windows = windows;
+    }
+
+    private Window<DefaultRenderContext> GetDefaultWindow()
+    {
+        if (TryGetDefaultWindow(out Window<DefaultRenderContext> window))
+        {
+            return window;
+        }
+
+        throw new InvalidOperationException("Default rendering is not configured.");
+    }
+
+    private bool TryGetDefaultWindow(out Window<DefaultRenderContext> window)
+    {
+        return _windows.TryGetWindow(out window);
     }
 
     internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)

@@ -9,6 +9,18 @@ namespace GameKit.Tests;
 public class RenderCoordinatorTests
 {
     [Test]
+    public void UseDefaultRendering_RegistersDefaultWindow()
+    {
+        GameKitAppBuilder builder = new();
+
+        Assert.That(builder.IsRegistered<Window<DefaultRenderContext>>(), Is.False);
+
+        builder.UseDefaultRendering();
+
+        Assert.That(builder.IsRegistered<Window<DefaultRenderContext>>(), Is.True);
+    }
+
+    [Test]
     public void Execute_WithNoRenderers_DoesNotThrow()
     {
         GameKitAppBuilder builder = CreateBuilder(new List<string>());

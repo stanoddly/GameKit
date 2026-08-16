@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using GameKit.DependencyInjection;
 using GameKit.Gpu;
 using GameKit.Input;
 using GameKit.RenderOrchestration;
@@ -278,11 +277,16 @@ public class GameKitFactory: IDisposable
         return gamepadService;
     }
 
-    internal MouseService CreateMouseService(Window<DefaultRenderContext> primaryWindow)
+    internal MouseService CreateMouseService(WindowRegistry windows)
     {
         EnsureSdlInitialized();
 
-        return new MouseService(IsMouseInWindow(primaryWindow));
+        if (windows.TryGetWindow(out Window<DefaultRenderContext> window))
+        {
+            return new MouseService(IsMouseInWindow(window));
+        }
+
+        return new MouseService();
     }
 
     private static bool IsMouseInWindow(Window window)
@@ -300,11 +304,11 @@ public class GameKitFactory: IDisposable
         }
     }
 
-    internal TextInputService CreateTextInputService(Window<DefaultRenderContext> primaryWindow)
+    internal TextInputService CreateTextInputService(WindowRegistry windows)
     {
         EnsureSdlInitialized();
 
-        return new TextInputService(primaryWindow);
+        return new TextInputService(windows);
     }
 
     internal EventService CreateEventService(
@@ -312,8 +316,7 @@ public class GameKitFactory: IDisposable
         GamepadService gamepadService,
         MouseService mouseService,
         TextInputService textInputService,
-        Window<DefaultRenderContext> primaryWindow,
-        ServiceRegistry<Window> windows,
+        WindowRegistry windows,
         AppControl appControl)
     {
         EnsureSdlInitialized();
@@ -323,7 +326,6 @@ public class GameKitFactory: IDisposable
             gamepadService,
             mouseService,
             textInputService,
-            primaryWindow,
             windows,
             appControl);
     }

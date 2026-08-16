@@ -118,7 +118,16 @@ public static class RenderingExtensions
         ThrowIfGraphRegistered<TRenderContext>(services);
         services.AddRegistry<IRenderer<TRenderContext>>(
             static (left, right) => left.Order.CompareTo(right.Order));
-        if (!isPrimary)
+        if (isPrimary)
+        {
+            services.AddSingleton<Window<TRenderContext>>(provider =>
+                provider.GetRequiredService<GameKitFactory>().CreateWindow<TRenderContext>(
+                    provider.GetRequiredService<GpuDevice>(),
+                    provider.GetRequiredService<GameKitFrameContext>(),
+                    provider.GetRequiredService<WindowConfig>(),
+                    provider.GetRequiredService<PlatformInfo>()));
+        }
+        else
         {
             WindowConfig secondaryWindowConfig = config!;
             services.AddSingleton<Window<TRenderContext>>(provider =>

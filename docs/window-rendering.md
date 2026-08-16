@@ -8,7 +8,7 @@ Each window rendering graph is identified by its render-context type. Its `Windo
 
 ## Primary window
 
-`UseDefaultRendering()` registers the `DefaultRenderContext` graph for the primary window:
+`UseDefaultRendering()` creates `Window<DefaultRenderContext>` and registers its rendering graph. Omitting it leaves the application without a default window:
 
 ```csharp
 GameKitAppBuilder builder = new GameKitAppBuilder()

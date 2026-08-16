@@ -14,7 +14,22 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        AddRegistry<Window>();
+        WindowRegistry windows = new();
+        AddSingleton(windows);
+        OnActivated((instance, _) =>
+        {
+            if (instance is Window window)
+            {
+                windows.Register(window);
+            }
+        });
+        OnDisposing((instance, _) =>
+        {
+            if (instance is Window window)
+            {
+                windows.Unregister(window);
+            }
+        });
         AddRegistry<IRenderCoordinator>();
         AddRegistry<IUpdatable>(static (left, right) =>
         {
@@ -74,13 +89,6 @@ public class GameKitAppBuilder : ServiceCollection
         AddSingleton<GameKitFactory>();
 
         AddSingleton<PlatformInfo, GameKitFactory>();
-
-        AddSingleton<Window<DefaultRenderContext>>(static provider =>
-            provider.GetRequiredService<GameKitFactory>().CreateWindow<DefaultRenderContext>(
-                provider.GetRequiredService<GpuDevice>(),
-                provider.GetRequiredService<GameKitFrameContext>(),
-                provider.GetRequiredService<WindowConfig>(),
-                provider.GetRequiredService<PlatformInfo>()));
 
         AddSingleton<GpuDevice, GameKitFactory>();
 
