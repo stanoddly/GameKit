@@ -3,9 +3,9 @@ using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.MultiWindowTextInput;
 
-public sealed class SecondaryRenderContext : DefaultRenderContext
+public sealed class PrimaryRenderContext : DefaultRenderContext
 {
-    public SecondaryRenderContext(
+    public PrimaryRenderContext(
         SwapchainTexture swapchainTexture,
         CommandBuffer commandBuffer)
         : base(swapchainTexture, commandBuffer)
