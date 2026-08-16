@@ -27,15 +27,6 @@ public class RenderCoordinatorTests
     }
 
     [Test]
-    public void UseDefaultRendering_NegativeViewScope_Throws()
-    {
-        GameKitAppBuilder builder = new();
-
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            builder.UseDefaultRendering(new ViewScope(-1)));
-    }
-
-    [Test]
     public void Renderer_WithoutExplicitViewScope_UsesDefaultScope()
     {
         IRenderer<TestRenderContext> renderer =

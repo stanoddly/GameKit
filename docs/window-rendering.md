@@ -49,7 +49,7 @@ bool containsMouse = mouseService.IsInWindow();
 
 ## Multiple windows
 
-Define stable non-negative scope values for additional windows:
+Define stable scope values for additional windows:
 
 ```csharp
 internal static class ViewScopes

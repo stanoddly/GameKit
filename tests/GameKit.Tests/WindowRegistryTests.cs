@@ -57,14 +57,14 @@ public sealed class WindowRegistryTests
     }
 
     [Test]
-    public void Register_NegativeViewScope_Throws()
+    public void Register_NegativeViewScope_IndexesWindow()
     {
         WindowRegistry windowRegistry = new();
+        Window window = CreateWindow(new ViewScope(-1), 42);
 
-        InvalidOperationException? exception = Assert.Throws<InvalidOperationException>(() =>
-            windowRegistry.Register(CreateWindow(new ViewScope(-1), 42)));
+        windowRegistry.Register(window);
 
-        Assert.That(exception!.Message, Does.Contain("ViewScope -1"));
+        Assert.That(windowRegistry.GetWindow(new ViewScope(-1)), Is.SameAs(window));
     }
 
     [Test]

@@ -1,10 +1,14 @@
+using GameKit.Collections;
 using GameKit.DependencyInjection;
 
 namespace GameKit;
 
 public sealed class WindowRegistry
 {
-    private readonly List<(uint SdlId, Window Window)> _windows = new();
+    private FastListStruct<(
+        ViewScope ViewScope,
+        uint SdlId,
+        Window Window)> _windows = new(4);
 
     internal WindowRegistry()
     {
@@ -43,9 +47,11 @@ public sealed class WindowRegistry
 
     public bool TryGetWindow(ViewScope viewScope, out Window window)
     {
-        foreach ((_, Window registeredWindow) in _windows)
+        ReadOnlySpan<(ViewScope ViewScope, uint SdlId, Window Window)> windows =
+            _windows.AsReadOnlySpan();
+        foreach ((ViewScope registeredViewScope, _, Window registeredWindow) in windows)
         {
-            if (registeredWindow.ViewScope == viewScope)
+            if (registeredViewScope == viewScope)
             {
                 window = registeredWindow;
                 return true;
@@ -63,7 +69,9 @@ public sealed class WindowRegistry
 
     internal bool TryGetWindow(uint sdlWindowId, out Window window)
     {
-        foreach ((uint registeredSdlId, Window registeredWindow) in _windows)
+        ReadOnlySpan<(ViewScope ViewScope, uint SdlId, Window Window)> windows =
+            _windows.AsReadOnlySpan();
+        foreach ((_, uint registeredSdlId, Window registeredWindow) in windows)
         {
             if (registeredSdlId == sdlWindowId)
             {
@@ -78,42 +86,45 @@ public sealed class WindowRegistry
 
     internal void Register(Window window)
     {
-        if (window.ViewScope.Value < 0)
-        {
-            throw new InvalidOperationException(
-                $"ViewScope {window.ViewScope.Value} cannot identify a window.");
-        }
-
-        foreach ((uint registeredSdlId, Window registeredWindow) in _windows)
+        ViewScope viewScope = window.ViewScope;
+        uint sdlId = window.SdlId;
+        ReadOnlySpan<(ViewScope ViewScope, uint SdlId, Window Window)> windows =
+            _windows.AsReadOnlySpan();
+        foreach ((
+            ViewScope registeredViewScope,
+            uint registeredSdlId,
+            Window registeredWindow) in windows)
         {
             if (ReferenceEquals(registeredWindow, window))
             {
                 return;
             }
 
-            if (registeredWindow.ViewScope == window.ViewScope)
+            if (registeredViewScope == viewScope)
             {
                 throw new InvalidOperationException(
-                    $"A window for ViewScope {window.ViewScope.Value} is already registered.");
+                    $"A window for ViewScope {viewScope.Value} is already registered.");
             }
 
-            if (registeredSdlId == window.SdlId)
+            if (registeredSdlId == sdlId)
             {
                 throw new InvalidOperationException(
-                    $"SDL window ID {window.SdlId} is already registered.");
+                    $"SDL window ID {sdlId} is already registered.");
             }
         }
 
-        _windows.Add((window.SdlId, window));
+        _windows.Add((viewScope, sdlId, window));
     }
 
     internal void Unregister(Window window)
     {
-        for (int i = 0; i < _windows.Count; i++)
+        ReadOnlySpan<(ViewScope ViewScope, uint SdlId, Window Window)> windows =
+            _windows.AsReadOnlySpan();
+        for (int i = 0; i < windows.Length; i++)
         {
-            if (ReferenceEquals(_windows[i].Window, window))
+            if (ReferenceEquals(windows[i].Window, window))
             {
-                _windows.RemoveAt(i);
+                _windows.SwapRemove(i);
                 return;
             }
         }

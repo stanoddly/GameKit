@@ -87,14 +87,6 @@ public static class RenderingExtensions
         ViewScope viewScope,
         WindowConfig config)
     {
-        if (viewScope.Value < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(viewScope),
-                viewScope,
-                "A window ViewScope must be non-negative.");
-        }
-
         services.AddSingleton<Window>(provider =>
             provider.GetRequiredService<GameKitFactory>().CreateWindow(
                 viewScope,
