@@ -65,58 +65,28 @@ public static class PencuilExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        if (!builder.IsRegistered<ServiceRegistry<PencuilState>>())
+        if (!builder.IsRegistered<ServiceRegistry<Pencuil>>())
         {
             builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
             builder.AddSingleton(GuiStyles.Style);
-            builder.AddRegistry<PencuilState>();
+            builder.AddRegistry<Pencuil>();
+            builder.AddRegistry<IPencuilView>();
         }
 
-        PencuilOptions options = new(viewScope)
-        {
-            Order = order,
-            InputOrder = inputOrder,
-            ClearTarget = clearTarget
-        };
-        PencuilViewRegistry viewRegistry = new(viewScope);
-        PencuilState? state = null;
-
-        PencuilState ResolveState(ServiceProvider provider)
-        {
-            state ??= new PencuilState(
+        builder.AddSingleton<Pencuil>(provider =>
+            new Pencuil(
                 viewScope,
                 new Pencil(
                     viewScope,
                     provider.GetRequiredService<IFontSystem>(),
                     provider.GetRequiredService<IClipboardService>(),
-                    provider.GetRequiredService<GuiStyle>()),
-                viewRegistry,
-                options);
-            return state;
-        }
+                    provider.GetRequiredService<GuiStyle>())));
 
-        builder.OnActivated((instance, _) =>
-        {
-            if (instance is IPencuilView view &&
-                view.ViewScope == viewScope)
-            {
-                viewRegistry.Add(view);
-            }
-        });
-
-        builder.OnDisposing((instance, _) =>
-        {
-            if (instance is IPencuilView view &&
-                view.ViewScope == viewScope)
-            {
-                viewRegistry.Remove(view);
-            }
-        });
-
-        builder.AddSingleton<PencuilState>(ResolveState);
         builder.AddSingleton<IRenderer<TRenderContext>, PencuilRenderer<TRenderContext>>(provider =>
             new PencuilRenderer<TRenderContext>(
-                ResolveState(provider),
+                Pencuil.GetRequired(provider, viewScope),
+                order,
+                clearTarget,
                 provider.GetRequiredService<GraphicsPipelineBuilder>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
                 provider.GetRequiredService<ShaderLoader>(),
@@ -124,7 +94,9 @@ public static class PencuilExtensions
                 provider.GetRequiredService<WindowRegistry>()));
         builder.AddSingleton<PencilSystem>(provider =>
             new PencilSystem(
-                ResolveState(provider),
+                Pencuil.GetRequired(provider, viewScope),
+                inputOrder,
+                provider.GetRequiredService<ServiceRegistry<IPencuilView>>(),
                 provider.GetRequiredService<WindowRegistry>(),
                 provider.GetRequiredService<IMouseService>(),
                 provider.GetRequiredService<IKeyboardService>(),

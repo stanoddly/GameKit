@@ -242,7 +242,9 @@ The registry is enumerable but is not a list. Activated services remain pending 
 outermost iteration begins. Services activated during iteration are therefore excluded from that
 iteration and become visible to the next one. Services removed during iteration are skipped
 immediately. Nested iterations use the same published service generation as their outer iteration.
-Enumeration uses a struct enumerator without creating a snapshot.
+Enumeration uses a struct enumerator without creating a snapshot. `Version` changes when the
+published service generation changes, allowing consumers to avoid rescanning an unchanged registry.
+Pending additions do not affect it until an outermost iteration publishes them.
 
 ```csharp
 services.AddRegistry<IUpdatable>(static (left, right) =>

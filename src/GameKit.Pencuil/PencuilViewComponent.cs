@@ -7,6 +7,7 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
     where TViewModel : ComponentBase, IPencuilViewModel
 {
     private readonly ViewScope _viewScope;
+    private Pencuil? _pencuil;
 
     protected TViewModel ViewModel { get; private set; } = default!;
 
@@ -37,27 +38,14 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
     protected override void OnAttach()
     {
         ViewModel = GetSibling<TViewModel>();
-        GetViewRegistry().Add(this);
+        ServiceRegistry<Pencuil> pencuils = GetRequiredService<ServiceRegistry<Pencuil>>();
+        _pencuil = Pencuil.GetRequired(pencuils, _viewScope);
+        _pencuil.AddComponentView(this);
     }
 
     protected override void OnDetach()
     {
-        GetViewRegistry().Remove(this);
-    }
-
-    private PencuilViewRegistry GetViewRegistry()
-    {
-        ServiceRegistry<PencuilState> states =
-            GetRequiredService<ServiceRegistry<PencuilState>>();
-        foreach (PencuilState state in states)
-        {
-            if (state.ViewScope == _viewScope)
-            {
-                return state.ViewRegistry;
-            }
-        }
-
-        throw new InvalidOperationException(
-            $"Pencuil is not configured for ViewScope {_viewScope.Value}.");
+        _pencuil!.RemoveComponentView(this);
+        _pencuil = null;
     }
 }

@@ -10,6 +10,8 @@ public sealed class ServiceRegistry<TService> : IEnumerable<TService>
     private readonly List<TService> _pendingAdditions = new();
     private int _activeEnumerationCount;
 
+    public ulong Version { get; private set; }
+
     internal ServiceRegistry(Comparison<TService>? comparison)
     {
         _comparison = comparison;
@@ -82,6 +84,7 @@ public sealed class ServiceRegistry<TService> : IEnumerable<TService>
             {
                 _services.RemoveAt(i);
             }
+            Version++;
             return;
         }
     }
@@ -97,6 +100,8 @@ public sealed class ServiceRegistry<TService> : IEnumerable<TService>
             {
                 _services.Sort(_comparison);
             }
+
+            Version++;
         }
     }
 
