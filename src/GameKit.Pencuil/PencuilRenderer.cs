@@ -5,7 +5,8 @@ using GameKit.Shaders;
 
 namespace GameKit.Pencuil;
 
-internal sealed class PencuilRenderer : IRenderer<DefaultRenderContext>
+internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext>
+    where TRenderContext : IRenderContext
 {
     private static readonly ColorTargetSettings _guiColorTargetSettings = new()
     {
@@ -103,7 +104,7 @@ internal sealed class PencuilRenderer : IRenderer<DefaultRenderContext>
         _viewProjection = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, renderSize.Width, renderSize.Height, 0, 0, 1);
     }
 
-    public void Render(DefaultRenderContext renderContext)
+    public void Render(TRenderContext renderContext)
     {
         ShortSize targetSize = renderContext.ColorTarget.Size;
         ResizeRetainedTextureIfNeeded(targetSize);

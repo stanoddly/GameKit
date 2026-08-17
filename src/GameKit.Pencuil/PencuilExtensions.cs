@@ -17,7 +17,12 @@ public static class PencuilExtensions
         int inputOrder = -10_000,
         bool clearTarget = false)
     {
-        return UsePencuil(builder, default, order, inputOrder, clearTarget);
+        return UsePencuil<DefaultRenderContext>(
+            builder,
+            default,
+            order,
+            inputOrder,
+            clearTarget);
     }
 
     public static GameKitAppBuilder UsePencuil(
@@ -26,6 +31,37 @@ public static class PencuilExtensions
         int order = 10_000,
         int inputOrder = -10_000,
         bool clearTarget = false)
+    {
+        return UsePencuil<DefaultRenderContext>(
+            builder,
+            viewScope,
+            order,
+            inputOrder,
+            clearTarget);
+    }
+
+    public static GameKitAppBuilder UsePencuil<TRenderContext>(
+        this GameKitAppBuilder builder,
+        int order = 10_000,
+        int inputOrder = -10_000,
+        bool clearTarget = false)
+        where TRenderContext : IRenderContext
+    {
+        return UsePencuil<TRenderContext>(
+            builder,
+            default,
+            order,
+            inputOrder,
+            clearTarget);
+    }
+
+    public static GameKitAppBuilder UsePencuil<TRenderContext>(
+        this GameKitAppBuilder builder,
+        ViewScope viewScope,
+        int order = 10_000,
+        int inputOrder = -10_000,
+        bool clearTarget = false)
+        where TRenderContext : IRenderContext
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -78,8 +114,8 @@ public static class PencuilExtensions
         });
 
         builder.AddSingleton<PencuilState>(ResolveState);
-        builder.AddSingleton<IRenderer<DefaultRenderContext>, PencuilRenderer>(provider =>
-            new PencuilRenderer(
+        builder.AddSingleton<IRenderer<TRenderContext>, PencuilRenderer<TRenderContext>>(provider =>
+            new PencuilRenderer<TRenderContext>(
                 ResolveState(provider),
                 provider.GetRequiredService<GraphicsPipelineBuilder>(),
                 provider.GetRequiredService<GpuMemorySystem>(),
