@@ -22,18 +22,29 @@ enum InterceptionKind
     GetServiceEnumerable
 }
 
+enum ServiceResolutionKind
+{
+    Required,
+    Optional,
+    Collection
+}
+
 readonly record struct ExtractionResult(InterceptionInfo? Interception, DiagnosticInfo? Diagnostic);
 
 readonly record struct DiagnosticInfo(string Id, string Message, string FilePath, int Line, int Column, int EndLine, int EndColumn);
+
+readonly record struct ServiceParameter(
+    string DeclaredTypeFullName,
+    string ResolutionTypeFullName,
+    ServiceResolutionKind ResolutionKind);
 
 readonly record struct InterceptionInfo(
     InterceptionKind Kind,
     string InterceptsLocationAttribute,
     string? ImplementationTypeFullName,
-    EquatableArray<string> ConstructorParameterTypes,
+    EquatableArray<ServiceParameter> Parameters,
     string? ServiceTypeFullName,
     string? DelegateTypeFullName,
-    EquatableArray<string> ParameterTypes,
     bool ReturnsVoid,
     string? FactoryTypeFullName,
     string? FactoryMethodName
@@ -268,10 +279,9 @@ public class InterceptorGenerator : IIncrementalGenerator
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
+            new EquatableArray<ServiceParameter>(ImmutableArray<ServiceParameter>.Empty),
             elementTypeFullName,
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
             ReturnsVoid: false,
             null,
             null
@@ -374,18 +384,17 @@ public class InterceptorGenerator : IIncrementalGenerator
                 $"{methodDisplayName}<{implementationTypeName}>() requires exactly one constructor accessible at the call site."));
         }
 
-        ImmutableArray<string> paramTypes = constructor.Parameters
-            .Select(p => GetTypeName(p.Type))
+        ImmutableArray<ServiceParameter> parameters = constructor.Parameters
+            .Select(CreateServiceParameter)
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             GetTypeName(implType),
-            new EquatableArray<string>(paramTypes),
+            new EquatableArray<ServiceParameter>(parameters),
             null,
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
             ReturnsVoid: false,
             null,
             null
@@ -424,18 +433,17 @@ public class InterceptorGenerator : IIncrementalGenerator
                 $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() requires {implementationTypeName} to have exactly one constructor accessible at the call site."));
         }
 
-        ImmutableArray<string> paramTypes = constructor.Parameters
-            .Select(p => GetTypeName(p.Type))
+        ImmutableArray<ServiceParameter> parameters = constructor.Parameters
+            .Select(CreateServiceParameter)
             .ToImmutableArray();
 
         return new ExtractionResult(new InterceptionInfo(
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             GetTypeName(implType),
-            new EquatableArray<string>(paramTypes),
+            new EquatableArray<ServiceParameter>(parameters),
             GetTypeName(serviceType),
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
             ReturnsVoid: false,
             null,
             null
@@ -484,8 +492,8 @@ public class InterceptorGenerator : IIncrementalGenerator
         }
 
         IMethodSymbol factoryMethod = candidates[0];
-        ImmutableArray<string> paramTypes = factoryMethod.Parameters
-            .Select(p => GetTypeName(p.Type))
+        ImmutableArray<ServiceParameter> parameters = factoryMethod.Parameters
+            .Select(CreateServiceParameter)
             .ToImmutableArray();
 
         string serviceTypeFullName = GetTypeName(serviceType);
@@ -495,10 +503,9 @@ public class InterceptorGenerator : IIncrementalGenerator
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
+            new EquatableArray<ServiceParameter>(parameters),
             serviceTypeFullName,
             null,
-            new EquatableArray<string>(paramTypes),
             ReturnsVoid: false,
             factoryTypeFullName,
             factoryMethod.Name
@@ -549,8 +556,8 @@ public class InterceptorGenerator : IIncrementalGenerator
         {
             IMethodSymbol invokeMethod = namedDelegateType.DelegateInvokeMethod;
 
-            ImmutableArray<string> paramTypes = invokeMethod.Parameters
-                .Select(p => GetTypeName(p.Type))
+            ImmutableArray<ServiceParameter> delegateParameters = invokeMethod.Parameters
+                .Select(CreateServiceParameter)
                 .ToImmutableArray();
 
             string delegateTypeStr = GetTypeName(namedDelegateType);
@@ -560,10 +567,9 @@ public class InterceptorGenerator : IIncrementalGenerator
                 kind,
                 interceptableLocation.GetInterceptsLocationAttributeSyntax(),
                 null,
-                new EquatableArray<string>(ImmutableArray<string>.Empty),
+                new EquatableArray<ServiceParameter>(delegateParameters),
                 serviceTypeFullName,
                 delegateTypeStr,
-                new EquatableArray<string>(paramTypes),
                 returnsVoid,
                 null,
                 null
@@ -581,8 +587,8 @@ public class InterceptorGenerator : IIncrementalGenerator
             return null;
         }
 
-        ImmutableArray<string> methodParamTypes = targetMethod.Parameters
-            .Select(p => GetTypeName(p.Type))
+        ImmutableArray<ServiceParameter> methodParameters = targetMethod.Parameters
+            .Select(CreateServiceParameter)
             .ToImmutableArray();
 
         // Build the appropriate Func<> or Action<> delegate type string
@@ -591,25 +597,25 @@ public class InterceptorGenerator : IIncrementalGenerator
 
         if (methodReturnsVoid)
         {
-            if (methodParamTypes.Length == 0)
+            if (methodParameters.Length == 0)
             {
                 methodDelegateTypeStr = "global::System.Action";
             }
             else
             {
-                methodDelegateTypeStr = $"global::System.Action<{string.Join(", ", methodParamTypes)}>";
+                methodDelegateTypeStr = $"global::System.Action<{string.Join(", ", methodParameters.Select(p => p.DeclaredTypeFullName))}>";
             }
         }
         else
         {
             string returnType = GetTypeName(targetMethod.ReturnType);
-            if (methodParamTypes.Length == 0)
+            if (methodParameters.Length == 0)
             {
                 methodDelegateTypeStr = $"global::System.Func<{returnType}>";
             }
             else
             {
-                methodDelegateTypeStr = $"global::System.Func<{string.Join(", ", methodParamTypes)}, {returnType}>";
+                methodDelegateTypeStr = $"global::System.Func<{string.Join(", ", methodParameters.Select(p => p.DeclaredTypeFullName))}, {returnType}>";
             }
         }
 
@@ -617,10 +623,9 @@ public class InterceptorGenerator : IIncrementalGenerator
             kind,
             interceptableLocation.GetInterceptsLocationAttributeSyntax(),
             null,
-            new EquatableArray<string>(ImmutableArray<string>.Empty),
+            new EquatableArray<ServiceParameter>(methodParameters),
             serviceTypeFullName,
             methodDelegateTypeStr,
-            new EquatableArray<string>(methodParamTypes),
             methodReturnsVoid,
             null,
             null
@@ -655,6 +660,39 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static string GetTypeName(ITypeSymbol type)
     {
         return type.ToDisplayString(FullyQualifiedNullableFormat);
+    }
+
+    private static ServiceParameter CreateServiceParameter(IParameterSymbol parameter)
+    {
+        ITypeSymbol type = parameter.Type;
+        string declaredTypeFullName = GetTypeName(type);
+
+        if (type is INamedTypeSymbol namedType &&
+            namedType.ConstructedFrom.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T)
+        {
+            return new ServiceParameter(
+                declaredTypeFullName,
+                GetResolutionTypeName(namedType.TypeArguments[0]),
+                ServiceResolutionKind.Collection);
+        }
+
+        ServiceResolutionKind resolutionKind = type.IsReferenceType &&
+            parameter.NullableAnnotation == NullableAnnotation.Annotated
+                ? ServiceResolutionKind.Optional
+                : ServiceResolutionKind.Required;
+
+        return new ServiceParameter(
+            declaredTypeFullName,
+            GetResolutionTypeName(type),
+            resolutionKind);
+    }
+
+    private static string GetResolutionTypeName(ITypeSymbol type)
+    {
+        ITypeSymbol resolutionType = type.IsReferenceType
+            ? type.WithNullableAnnotation(NullableAnnotation.NotAnnotated)
+            : type;
+        return GetTypeName(resolutionType);
     }
 
     private static string GetDiagnosticTypeName(ITypeSymbol type)
@@ -806,22 +844,14 @@ public class InterceptorGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    // IEnumerable<T> in fully qualified format starts with this prefix
-    private const string IEnumerablePrefix = "global::System.Collections.Generic.IEnumerable<";
-
-    private static string BuildConstructorArgExpression(string paramTypeFullName)
+    private static string BuildServiceArgumentExpression(ServiceParameter parameter)
     {
-        if (paramTypeFullName.StartsWith(IEnumerablePrefix))
+        return parameter.ResolutionKind switch
         {
-            // Strip the IEnumerable< prefix and its matching closing >
-            // Must handle nested generics like IEnumerable<IDictionary<string, int>>
-            string elementType = paramTypeFullName.Substring(
-                IEnumerablePrefix.Length,
-                paramTypeFullName.Length - IEnumerablePrefix.Length - 1);
-            return $"sp.GetServices<{elementType}>()";
-        }
-
-        return $"sp.GetRequiredService<{paramTypeFullName}>()";
+            ServiceResolutionKind.Collection => $"sp.GetServices<{parameter.ResolutionTypeFullName}>()",
+            ServiceResolutionKind.Optional => $"sp.GetService<{parameter.ResolutionTypeFullName}>()",
+            _ => $"sp.GetRequiredService<{parameter.ResolutionTypeFullName}>()"
+        };
     }
 
     private static void GenerateAddSingletonInterceptor(StringBuilder sb, InterceptionInfo info, int index, bool emitTrimAnnotations)
@@ -840,13 +870,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddSingleton<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
-        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -870,13 +900,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}, {info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
-        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine($"));");
@@ -900,13 +930,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(static sp => sp.GetRequiredService<{info.FactoryTypeFullName}>().{info.FactoryMethodName}(");
 
-        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -931,13 +961,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
         sb.Append($"            collection.AddSingleton<{info.ServiceTypeFullName}>(sp => typedFactory(");
 
-        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -960,13 +990,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddTransient<{info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
-        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -990,13 +1020,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}, {info.ImplementationTypeFullName}>(static sp => new {info.ImplementationTypeFullName}(");
 
-        for (int j = 0; j < info.ConstructorParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ConstructorParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine($"));");
@@ -1020,13 +1050,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}>(static sp => sp.GetRequiredService<{info.FactoryTypeFullName}>().{info.FactoryMethodName}(");
 
-        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -1051,13 +1081,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            {info.DelegateTypeFullName} typedFactory = ({info.DelegateTypeFullName})factory;");
         sb.Append($"            collection.AddTransient<{info.ServiceTypeFullName}>(sp => typedFactory(");
 
-        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");
@@ -1074,13 +1104,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         sb.AppendLine($"            {info.DelegateTypeFullName} typedAction = ({info.DelegateTypeFullName})action;");
         sb.AppendLine($"            collection.OnStart(sp => typedAction(");
 
-        for (int j = 0; j < info.ParameterTypes.Length; j++)
+        for (int j = 0; j < info.Parameters.Length; j++)
         {
             if (j > 0)
             {
                 sb.Append(", ");
             }
-            sb.Append(BuildConstructorArgExpression(info.ParameterTypes[j]));
+            sb.Append(BuildServiceArgumentExpression(info.Parameters[j]));
         }
 
         sb.AppendLine("));");

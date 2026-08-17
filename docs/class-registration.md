@@ -189,6 +189,18 @@ services.AddTransient<DomainEventCursor>(static sp =>
 
 Registers a typed transient factory under an interface or base service type. Activation and disposal callbacks receive `typeof(TImpl)`.
 
+### Optional injected dependencies
+
+Source-generated constructor registrations, delegate factories, instance factory methods, and `OnStart` callbacks use nullable reference annotations to choose how each parameter is resolved:
+
+- Non-nullable and nullable-oblivious reference parameters use `GetRequiredService<T>()` and throw when no service is available.
+- Nullable reference parameters use `GetService<T>()` and receive `null` when no service is available.
+- `IEnumerable<T>` parameters use `GetServices<T>()` and receive an empty collection when no services are available, regardless of the collection's outer nullability.
+
+Only the parameter's top-level annotation controls optionality. For example, `Handler<Input?>` is required, while `Handler<Input?>?` is optional. The rules apply only to reference types.
+
+Nullability is read from the parameter declaration, including metadata from another assembly. Parameters declared by code compiled without nullable annotations are therefore treated as required. Explicit parameter default values are not used because generated activation always supplies every argument.
+
 ### Nullable factory results
 
 All singleton and transient factory overloads may return `null`. A null result means that descriptor contributes no service:
@@ -554,4 +566,4 @@ void RegisterHandler<T>(
 
 **Constructor requirements.** `AddSingleton<T>()`, `AddSingleton<TService, TImplementation>()`, `AddTransient<T>()`, and `AddTransient<TService, TImplementation>()` require the implementation type to have exactly one public constructor (or an implicit parameterless constructor). Multiple public constructors produce a compile-time error `GK0002`.
 
-**`IEnumerable<T>` injection.** The generator intercepts `GetRequiredService<IEnumerable<T>>()` and `GetService<IEnumerable<T>>()` at call sites and rewrites them to `GetServices<T>()`. Constructor injection of `IEnumerable<T>` via generated registrations is handled the same way — the generated constructor call uses `sp.GetServices<T>()` for any `IEnumerable<T>` parameter. If a singleton receives an `IEnumerable<T>` containing transient entries, those transient instances are created during singleton construction and captured by that singleton, matching Microsoft.Extensions.DependencyInjection semantics.
+**`IEnumerable<T>` injection.** The generator intercepts `GetRequiredService<IEnumerable<T>>()` and `GetService<IEnumerable<T>>()` at call sites and rewrites them to `GetServices<T>()`. Constructor injection of `IEnumerable<T>` via generated registrations is handled the same way — the generated constructor call uses `sp.GetServices<T>()` for any `IEnumerable<T>` parameter. An outer nullable annotation does not change this behavior; `IEnumerable<T>?` still receives a non-null collection. Other collection types such as `IReadOnlyList<T>`, `List<T>`, and arrays use ordinary required or optional single-service resolution. If a singleton receives an `IEnumerable<T>` containing transient entries, those transient instances are created during singleton construction and captured by that singleton, matching Microsoft.Extensions.DependencyInjection semantics.

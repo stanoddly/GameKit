@@ -47,6 +47,86 @@ public class InterceptorGeneratorTests
 
         """;
 
+    private const string NullableDependencyRegistrationSource = """
+        #nullable enable
+        using GameKit.DependencyInjection;
+        using System;
+        using System.Collections.Generic;
+
+        public sealed class RequiredDependency { }
+        public sealed class OptionalDependency { }
+        public sealed class Item { }
+        public sealed class Container<T> { }
+        public interface IConsumer { }
+
+        public sealed class Consumer : IConsumer
+        {
+            public Consumer(
+                RequiredDependency required,
+                OptionalDependency? optional,
+                IEnumerable<Item>? items,
+                IEnumerable<OptionalDependency?> nullableItems,
+                Container<OptionalDependency?>? nested) { }
+        }
+
+        public sealed class ImplementationConsumer : IConsumer
+        {
+            public ImplementationConsumer(OptionalDependency? optional) { }
+        }
+
+        public sealed class Product { }
+
+        public sealed class ProductFactory
+        {
+            internal Product Create(OptionalDependency? optional) => new Product();
+        }
+
+        public static class Registrations
+        {
+            private static Product CreateProduct(OptionalDependency? optional) => new Product();
+            private static void Start(OptionalDependency? optional) { }
+
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<Consumer>();
+                services.AddSingleton<IConsumer, ImplementationConsumer>();
+                services.AddSingleton<ProductFactory>();
+                services.AddSingleton<Product, ProductFactory>();
+                services.AddSingleton<Product>(CreateProduct);
+                services.AddSingleton<Product>((OptionalDependency? optional) => new Product());
+
+                services.AddTransient<Consumer>();
+                services.AddTransient<IConsumer, ImplementationConsumer>();
+                services.AddTransient<Product, ProductFactory>();
+                services.AddTransient<Product>(CreateProduct);
+                services.AddTransient<Product>((OptionalDependency? optional) => new Product());
+
+                services.OnStart(Start);
+                services.OnStart((OptionalDependency? optional) => { });
+            }
+        }
+        """;
+
+    private const string ObliviousDependencyRegistrationSource = """
+        #nullable disable
+        using GameKit.DependencyInjection;
+
+        public sealed class Dependency { }
+
+        public sealed class Consumer
+        {
+            public Consumer(Dependency dependency) { }
+        }
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<Consumer>();
+            }
+        }
+        """;
+
     private const string GenericHelperRegistrationSource = """
         using GameKit.DependencyInjection;
 
@@ -275,6 +355,58 @@ public class InterceptorGeneratorTests
     }
 
     [Test]
+    public void GeneratedCode_UsesNullableAnnotationsForServiceResolution()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            NullableDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null,
+            out Compilation outputCompilation);
+        string generated = GetGeneratedCode(result);
+
+        Diagnostic[] generatedDiagnostics = outputCompilation.GetDiagnostics()
+            .Where(diagnostic =>
+                diagnostic.Location.SourceTree?.FilePath.EndsWith(
+                    "ServiceCollectionInterceptors.g.cs",
+                    StringComparison.Ordinal) == true &&
+                diagnostic.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                generated.Split("sp.GetService<global::OptionalDependency>()").Length - 1,
+                Is.EqualTo(12));
+            Assert.That(
+                generated.Split("sp.GetRequiredService<global::RequiredDependency>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetServices<global::Item>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetServices<global::OptionalDependency>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetService<global::Container<global::OptionalDependency?>>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(generated, Does.Contain("global::System.Func<global::OptionalDependency?, global::Product>"));
+            Assert.That(generated, Does.Contain("global::System.Action<global::OptionalDependency?>"));
+            Assert.That(generatedDiagnostics, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void GeneratedCode_TreatsObliviousReferenceDependencyAsRequired()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            ObliviousDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null);
+        string generated = GetGeneratedCode(result);
+
+        Assert.That(generated, Does.Contain("sp.GetRequiredService<global::Dependency>()"));
+        Assert.That(generated, Does.Not.Contain("sp.GetService<global::Dependency>()"));
+    }
+
+    [Test]
     public void ConstructorRegistration_UnnamedImplementationType_ReportsAccurateGK0001()
     {
         GeneratorDriverRunResult result = RunGenerator(
@@ -390,7 +522,8 @@ public class InterceptorGeneratorTests
             "TestAssembly",
             new[] { tree },
             references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                .WithNullableContextOptions(NullableContextOptions.Enable));
     }
 
     // Provides controlled AnalyzerConfigOptions that simulate the MSBuild property.
