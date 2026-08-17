@@ -15,20 +15,18 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseDefaultRendering(
+                new WindowConfig(
+                    Size: (400, 400),
+                    Title: "Click Through",
+                    Borderless: true));
 
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (400, 400),
-            Title = "Click Through",
-            Borderless = true,
-            ClearColor = FColors.Black
-        });
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(ClickThroughRenderer.Create);
 
-        builder.OnStart((WindowManager windowManager, IKeyboardService keyboardService, AppControl appControl) =>
+        builder.OnStart((WindowRegistry windowRegistry, IKeyboardService keyboardService, AppControl appControl) =>
         {
-            windowManager.PrimaryWindow.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
+            Window window = windowRegistry.GetWindow();
+            window.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
 
             keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs e) =>
             {

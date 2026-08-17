@@ -2,6 +2,7 @@ namespace GameKit.RenderOrchestration;
 
 public interface IRenderer<in TRenderContext> : IOrderable
 {
+    ViewScope ViewScope => default;
     void Render(TRenderContext renderContext);
 }
 

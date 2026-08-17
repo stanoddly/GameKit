@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using GameKit.Utilities;
 using SDL;
 
 namespace GameKit.Input;
@@ -108,6 +109,7 @@ public delegate void MouseWindowPresenceHandler(MouseWindowPresenceEventArgs eve
 
 public class MouseService : IMouseService
 {
+    private readonly WindowRegistry _windowRegistry;
     private readonly Dictionary<SDL_MouseID, Mouse> _mice = new();
 
     // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
@@ -116,23 +118,28 @@ public class MouseService : IMouseService
     private readonly MouseWheelEventArgs _wheelEventArgs = new();
     private readonly MouseWindowPresenceEventArgs _windowPresenceEventArgs = new();
 
-    private readonly PriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
-    private readonly PriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
-    private readonly PriorityEventHandlers<MouseMotionHandler> _motionHandlers = new();
-    private readonly PriorityEventHandlers<MouseWheelHandler> _wheelHandlers = new();
-    private readonly PriorityEventHandlers<MouseWindowPresenceHandler> _windowEnterHandlers = new();
-    private readonly PriorityEventHandlers<MouseWindowPresenceHandler> _windowLeaveHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseButtonPressedHandler> _buttonPressHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseButtonReleasedHandler> _buttonReleaseHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseMotionHandler> _motionHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseWheelHandler> _wheelHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseWindowPresenceHandler> _windowEnterHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<MouseWindowPresenceHandler> _windowLeaveHandlers = new();
 
-    public MouseService()
+    internal MouseService(WindowRegistry windowRegistry)
     {
+        _windowRegistry = windowRegistry;
     }
 
-    internal MouseService(bool isInWindow)
+    public bool IsInWindow(ViewScope viewScope = default)
     {
-        IsInWindow = isInWindow;
+        Window window = _windowRegistry.GetWindow(viewScope);
+        unsafe
+        {
+            Pointer<SDL_Window> mouseFocusWindow = SDL3.SDL_GetMouseFocus();
+            return !mouseFocusWindow.IsNull &&
+                (uint)SDL3.SDL_GetWindowID(mouseFocusWindow) == window.SdlId;
+        }
     }
-
-    public bool IsInWindow { get; private set; }
 
     public MouseState GetGlobalState()
     {
@@ -150,88 +157,133 @@ public class MouseService : IMouseService
 
     public event MouseButtonPressedHandler ButtonPress
     {
-        add => _buttonPressHandlers.Add(0, value);
-        remove => _buttonPressHandlers.Remove(value);
+        add => _buttonPressHandlers.Add(default, 0, value);
+        remove => _buttonPressHandlers.Remove(default, value);
     }
 
     public event MouseButtonReleasedHandler ButtonRelease
     {
-        add => _buttonReleaseHandlers.Add(0, value);
-        remove => _buttonReleaseHandlers.Remove(value);
+        add => _buttonReleaseHandlers.Add(default, 0, value);
+        remove => _buttonReleaseHandlers.Remove(default, value);
     }
 
     public event MouseMotionHandler Motion
     {
-        add => _motionHandlers.Add(0, value);
-        remove => _motionHandlers.Remove(value);
+        add => _motionHandlers.Add(default, 0, value);
+        remove => _motionHandlers.Remove(default, value);
     }
 
     public event MouseWheelHandler Wheel
     {
-        add => _wheelHandlers.Add(0, value);
-        remove => _wheelHandlers.Remove(value);
+        add => _wheelHandlers.Add(default, 0, value);
+        remove => _wheelHandlers.Remove(default, value);
     }
 
     public event MouseWindowPresenceHandler WindowEnter
     {
-        add => _windowEnterHandlers.Add(0, value);
-        remove => _windowEnterHandlers.Remove(value);
+        add => _windowEnterHandlers.Add(default, 0, value);
+        remove => _windowEnterHandlers.Remove(default, value);
     }
 
     public event MouseWindowPresenceHandler WindowLeave
     {
-        add => _windowLeaveHandlers.Add(0, value);
-        remove => _windowLeaveHandlers.Remove(value);
+        add => _windowLeaveHandlers.Add(default, 0, value);
+        remove => _windowLeaveHandlers.Remove(default, value);
     }
 
     public void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler)
     {
-        _buttonPressHandlers.Add(priority, handler);
+        _buttonPressHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeButtonRelease(int priority, MouseButtonReleasedHandler handler)
     {
-        _buttonReleaseHandlers.Add(priority, handler);
+        _buttonReleaseHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeMotion(int priority, MouseMotionHandler handler)
     {
-        _motionHandlers.Add(priority, handler);
+        _motionHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeWheel(int priority, MouseWheelHandler handler)
     {
-        _wheelHandlers.Add(priority, handler);
+        _wheelHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeWindowEnter(int priority, MouseWindowPresenceHandler handler)
     {
-        _windowEnterHandlers.Add(priority, handler);
+        _windowEnterHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeWindowLeave(int priority, MouseWindowPresenceHandler handler)
     {
-        _windowLeaveHandlers.Add(priority, handler);
+        _windowLeaveHandlers.Add(default, priority, handler);
     }
 
-    internal void OnMouseWindowPresenceEvent(in SDL_WindowEvent windowEvent, bool isInWindow)
+    public void SubscribeButtonPress(
+        ViewScope viewScope,
+        int priority,
+        MouseButtonPressedHandler handler)
     {
-        IsInWindow = isInWindow;
+        _buttonPressHandlers.Add(viewScope, priority, handler);
+    }
 
+    public void SubscribeButtonRelease(
+        ViewScope viewScope,
+        int priority,
+        MouseButtonReleasedHandler handler)
+    {
+        _buttonReleaseHandlers.Add(viewScope, priority, handler);
+    }
+
+    public void SubscribeMotion(ViewScope viewScope, int priority, MouseMotionHandler handler)
+    {
+        _motionHandlers.Add(viewScope, priority, handler);
+    }
+
+    public void SubscribeWheel(ViewScope viewScope, int priority, MouseWheelHandler handler)
+    {
+        _wheelHandlers.Add(viewScope, priority, handler);
+    }
+
+    public void SubscribeWindowEnter(
+        ViewScope viewScope,
+        int priority,
+        MouseWindowPresenceHandler handler)
+    {
+        _windowEnterHandlers.Add(viewScope, priority, handler);
+    }
+
+    public void SubscribeWindowLeave(
+        ViewScope viewScope,
+        int priority,
+        MouseWindowPresenceHandler handler)
+    {
+        _windowLeaveHandlers.Add(viewScope, priority, handler);
+    }
+
+    internal void OnMouseWindowPresenceEvent(
+        ViewScope viewScope,
+        in SDL_WindowEvent windowEvent,
+        bool isInWindow)
+    {
         _windowPresenceEventArgs.IsInWindow = isInWindow;
         _windowPresenceEventArgs.Timestamp = windowEvent.timestamp;
 
-        PriorityEventHandlers<MouseWindowPresenceHandler> handlers = isInWindow
+        ViewScopedPriorityEventHandlers<MouseWindowPresenceHandler> handlers = isInWindow
             ? _windowEnterHandlers
             : _windowLeaveHandlers;
 
-        foreach ((_, MouseWindowPresenceHandler handler) in handlers.GetSorted())
+        foreach ((_, MouseWindowPresenceHandler handler) in handlers.GetSorted(viewScope))
         {
             handler(_windowPresenceEventArgs);
         }
     }
 
-    internal void OnMouseButtonEvent(in SDL_MouseButtonEvent mouseButtonEvent)
+    internal void OnMouseButtonEvent(
+        ViewScope viewScope,
+        in SDL_MouseButtonEvent mouseButtonEvent)
     {
         SDL_MouseID mouseId = mouseButtonEvent.which;
         MouseButton button = (MouseButton)mouseButtonEvent.button;
@@ -256,7 +308,7 @@ public class MouseService : IMouseService
         {
             if (mouse.Set(button))
             {
-                foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted())
+                foreach ((_, MouseButtonPressedHandler handler) in _buttonPressHandlers.GetSorted(viewScope))
                 {
                     handler(mouse, _buttonEventArgs);
 
@@ -271,7 +323,7 @@ public class MouseService : IMouseService
         {
             mouse.Unset(button);
 
-            foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted())
+            foreach ((_, MouseButtonReleasedHandler handler) in _buttonReleaseHandlers.GetSorted(viewScope))
             {
                 handler(mouse, _buttonEventArgs);
 
@@ -283,7 +335,9 @@ public class MouseService : IMouseService
         }
     }
 
-    internal void OnMouseMotionEvent(in SDL_MouseMotionEvent mouseMotionEvent)
+    internal void OnMouseMotionEvent(
+        ViewScope viewScope,
+        in SDL_MouseMotionEvent mouseMotionEvent)
     {
         SDL_MouseID mouseId = mouseMotionEvent.which;
         Vector2 position = new(mouseMotionEvent.x, mouseMotionEvent.y);
@@ -304,7 +358,7 @@ public class MouseService : IMouseService
         _motionEventArgs.Timestamp = timestamp;
         _motionEventArgs.Consumed = false;
 
-        foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted())
+        foreach ((_, MouseMotionHandler handler) in _motionHandlers.GetSorted(viewScope))
         {
             handler(mouse, _motionEventArgs);
 
@@ -315,7 +369,9 @@ public class MouseService : IMouseService
         }
     }
 
-    internal void OnMouseWheelEvent(in SDL_MouseWheelEvent mouseWheelEvent)
+    internal void OnMouseWheelEvent(
+        ViewScope viewScope,
+        in SDL_MouseWheelEvent mouseWheelEvent)
     {
         SDL_MouseID mouseId = mouseWheelEvent.which;
         Vector2 delta = new(mouseWheelEvent.x, mouseWheelEvent.y);
@@ -336,7 +392,7 @@ public class MouseService : IMouseService
         _wheelEventArgs.Timestamp = timestamp;
         _wheelEventArgs.Consumed = false;
 
-        foreach ((_, MouseWheelHandler handler) in _wheelHandlers.GetSorted())
+        foreach ((_, MouseWheelHandler handler) in _wheelHandlers.GetSorted(viewScope))
         {
             handler(mouse, _wheelEventArgs);
 

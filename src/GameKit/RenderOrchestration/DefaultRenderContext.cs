@@ -2,19 +2,21 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-public class DefaultRenderContext : IRenderContext
+public sealed class DefaultRenderContext : IRenderContext
 {
     public SwapchainTexture SwapchainTexture { get; }
     public CommandBuffer CommandBuffer { get; }
-    public virtual Texture ColorTarget => SwapchainTexture;
+    public Texture ColorTarget => SwapchainTexture;
 
-    public DefaultRenderContext(SwapchainTexture swapchainTexture, CommandBuffer commandBuffer)
+    internal DefaultRenderContext(
+        SwapchainTexture swapchainTexture,
+        CommandBuffer commandBuffer)
     {
         SwapchainTexture = swapchainTexture;
         CommandBuffer = commandBuffer;
     }
 
-    public virtual void Dispose()
+    public void Dispose()
     {
         CommandBuffer.Submit();
     }

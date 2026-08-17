@@ -71,7 +71,7 @@ Use when:
 Registers an already-constructed instance. No source generator required.
 
 ```csharp
-services.AddSingleton(new AppConfig { Width = 1280, Height = 720 });
+services.AddSingleton(new GameSettings { StartingLives = 3, EnableHints = true });
 services.AddSingleton<ILogger>(new ConsoleLogger());
 ```
 
@@ -242,7 +242,9 @@ The registry is enumerable but is not a list. Activated services remain pending 
 outermost iteration begins. Services activated during iteration are therefore excluded from that
 iteration and become visible to the next one. Services removed during iteration are skipped
 immediately. Nested iterations use the same published service generation as their outer iteration.
-Enumeration uses a struct enumerator without creating a snapshot.
+Enumeration uses a struct enumerator without creating a snapshot. `Version` changes when the
+published service generation changes, allowing consumers to avoid rescanning an unchanged registry.
+Pending additions do not affect it until an outermost iteration publishes them.
 
 ```csharp
 services.AddRegistry<IUpdatable>(static (left, right) =>
@@ -360,7 +362,7 @@ A child provider flattens the parent's singleton service array and registration 
 
 ```csharp
 ServiceCollection rootCollection = new();
-rootCollection.AddSingleton(new AppConfig());
+rootCollection.AddSingleton(new GameSettings());
 ServiceProvider root = rootCollection.BuildServiceProvider();
 
 ServiceCollection stageCollection = root.CreateServiceCollection();
@@ -368,7 +370,7 @@ stageCollection.AddSingleton<IView>(new GameplayView());
 ServiceProvider stage = stageCollection.BuildServiceProvider();
 
 // stage can resolve both its own and parent services
-AppConfig config = stage.GetRequiredService<AppConfig>();
+GameSettings config = stage.GetRequiredService<GameSettings>();
 IView view = stage.GetRequiredService<IView>();
 ```
 

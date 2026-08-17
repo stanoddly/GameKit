@@ -2,34 +2,45 @@ using GameKit.Input;
 
 namespace GameKit.Pencuil;
 
-public class PencilSystem : IUpdatable
+internal sealed class PencilSystem : IUpdatable
 {
     private readonly Pencil _pencil;
-    private readonly ViewRegistry _viewRegistry;
+    private readonly PencuilViewRegistry _viewRegistry;
+    private readonly List<IPencuilView> _views = new();
+    private readonly ViewScope _viewScope;
     private readonly Window _window;
     private readonly ITextInputService _textInputService;
     private bool _textInputActive;
 
-    public PencilSystem(Pencil pencil, ViewRegistry viewRegistry, Window window, IMouseService mouseService, IKeyboardService keyboardService, ITextInputService textInputService, PencuilOptions options)
+    internal PencilSystem(
+        Pencuil pencuil,
+        int inputOrder,
+        PencuilViewRegistry viewRegistry,
+        WindowRegistry windowRegistry,
+        IMouseService mouseService,
+        IKeyboardService keyboardService,
+        ITextInputService textInputService)
     {
+        Pencil pencil = pencuil.Pencil;
         _pencil = pencil;
         _viewRegistry = viewRegistry;
-        _window = window;
+        _viewScope = pencuil.ViewScope;
+        _window = windowRegistry.GetWindow(_viewScope);
         _textInputService = textInputService;
 
-        mouseService.SubscribeMotion(options.InputOrder, (_, args) =>
+        mouseService.SubscribeMotion(_viewScope, inputOrder, (_, args) =>
         {
             pencil.CursorPosition = (Vector2Int)args.Position;
             pencil.Invalidate();
         });
 
-        mouseService.SubscribeWindowLeave(options.InputOrder, _ =>
+        mouseService.SubscribeWindowLeave(_viewScope, inputOrder, _ =>
         {
             pencil.CursorPosition = new Vector2Int(-1, -1);
             pencil.Invalidate();
         });
 
-        mouseService.SubscribeButtonPress(options.InputOrder, (_, args) =>
+        mouseService.SubscribeButtonPress(_viewScope, inputOrder, (_, args) =>
         {
             if (args.Button == MouseButton.Left)
             {
@@ -40,7 +51,7 @@ public class PencilSystem : IUpdatable
             }
         });
 
-        mouseService.SubscribeButtonRelease(options.InputOrder, (_, args) =>
+        mouseService.SubscribeButtonRelease(_viewScope, inputOrder, (_, args) =>
         {
             if (args.Button == MouseButton.Left)
             {
@@ -54,7 +65,7 @@ public class PencilSystem : IUpdatable
             }
         });
 
-        keyboardService.SubscribeKeyDown(options.InputOrder, (keyboard, args) =>
+        keyboardService.SubscribeKeyDown(_viewScope, inputOrder, (keyboard, args) =>
         {
             if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode, keyboard.Shift, keyboard.Ctrl))
             {
@@ -62,7 +73,7 @@ public class PencilSystem : IUpdatable
             }
         });
 
-        textInputService.SubscribeTextInput(options.InputOrder, args =>
+        textInputService.SubscribeTextInput(_viewScope, inputOrder, args =>
         {
             if (pencil.HasFocus)
             {
@@ -77,10 +88,15 @@ public class PencilSystem : IUpdatable
         ShortSize renderSize = _window.RenderSizeInPixels;
         _pencil.UpdateViewport(renderSize.Width, renderSize.Height);
 
-        bool needsBuild = _pencil.NeedsUpdate | _viewRegistry.ConsumeDirty();
-        ReadOnlySpan<IView> views = _viewRegistry.Views;
+        bool viewsChanged = _viewRegistry.ConsumeChanged(_viewScope);
+        if (viewsChanged)
+        {
+            _viewRegistry.CopyViews(_viewScope, _views);
+        }
 
-        foreach (IView view in views)
+        bool needsBuild = _pencil.NeedsUpdate | viewsChanged;
+
+        foreach (IPencuilView view in _views)
         {
             needsBuild |= view.ConsumeDirty();
         }
@@ -90,7 +106,7 @@ public class PencilSystem : IUpdatable
             _pencil.FocusClaimedThisFrame = false;
             _pencil.ResetInteractionTests();
 
-            foreach (IView view in views)
+            foreach (IPencuilView view in _views)
             {
                 view.Build(_pencil);
             }
@@ -111,11 +127,11 @@ public class PencilSystem : IUpdatable
         {
             if (hasFocus)
             {
-                _textInputService.Start();
+                _textInputService.Start(_viewScope);
             }
             else
             {
-                _textInputService.Stop();
+                _textInputService.Stop(_viewScope);
             }
             _textInputActive = hasFocus;
         }

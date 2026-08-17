@@ -12,20 +12,17 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering();
-
-        builder.AddSingleton(new AppConfig
-        {
-            Size = (400, 400),
-            Title = "Window Dragging",
-            Borderless = true
-        });
+            .UseDefaultRendering(
+                new WindowConfig(
+                    Size: (400, 400),
+                    Title: "Window Dragging",
+                    Borderless: true));
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(static () => new ClearRenderer(FColors.SkyBlue));
 
-        builder.OnStart((WindowManager windowManager, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
+        builder.OnStart((WindowRegistry windowRegistry, IMouseService mouseService, IKeyboardService keyboardService, UpdateSystem updateSystem, AppControl appControl) =>
         {
-            Window window = windowManager.PrimaryWindow;
+            Window window = windowRegistry.GetWindow();
 
             if (window.SupportsSetWindowPosition)
             {
@@ -110,6 +107,7 @@ static class Program
 internal sealed class ClearRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly FColor _color;
+
 
     public ClearRenderer(FColor color)
     {

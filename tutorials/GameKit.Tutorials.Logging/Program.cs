@@ -11,7 +11,8 @@ static class Program
     static int Main(string[] args)
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
-            .UseDefaultRendering();
+            .UseDefaultRendering(
+                new WindowConfig(Size: (1280, 720), Title: "Logging"));
 
         builder.AddZLogger(logging =>
         {
@@ -36,9 +37,6 @@ static class Program
 #endif
         });
         builder.AddSingleton<PlayerInputService>(PlayerInputService.Create);
-        builder.AddSingleton(new AppConfig { Size = (1280, 720), Title = "Logging" });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
-
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();
     }

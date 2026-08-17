@@ -15,22 +15,33 @@ public class Window : IDisposable
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
+    internal uint SdlId { get; }
+    internal WindowCloseBehavior CloseBehavior { get; }
     private readonly GameKitFrameContext _frameContext;
     private readonly PlatformInfo _platformInfo;
-    
-    public uint Id { get; }
+
+    internal ViewScope ViewScope { get; }
 
     private ShortSize _lastSize;
 
     public event ResolutionChangedHandler? ResolutionChanged;
 
-    internal Window(Pointer<SDL_Window> sdlWindow, Pointer<SDL_GPUDevice> sdlSdlGpuDevice, uint id, GameKitFrameContext frameContext, PlatformInfo platformInfo)
+    internal Window(
+        ViewScope viewScope,
+        Pointer<SDL_Window> sdlWindow,
+        Pointer<SDL_GPUDevice> sdlSdlGpuDevice,
+        uint sdlId,
+        GameKitFrameContext frameContext,
+        PlatformInfo platformInfo,
+        WindowCloseBehavior closeBehavior)
     {
+        ViewScope = viewScope;
         SdlGpuDevice = sdlSdlGpuDevice;
         SdlWindow = sdlWindow;
-        Id = id;
+        SdlId = sdlId;
         _frameContext = frameContext;
         _platformInfo = platformInfo;
+        CloseBehavior = closeBehavior;
         _lastSize = RenderSizeInPixels;
     }
 
@@ -492,7 +503,7 @@ public class Window : IDisposable
 
     public override int GetHashCode()
     {
-        return Id.GetHashCode();
+        return ViewScope.GetHashCode();
     }
 
     public void Dispose()

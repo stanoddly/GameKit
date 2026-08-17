@@ -9,7 +9,7 @@ public interface IMouseService
     event MouseWindowPresenceHandler WindowEnter;
     event MouseWindowPresenceHandler WindowLeave;
 
-    bool IsInWindow { get; }
+    bool IsInWindow(ViewScope viewScope = default);
 
     MouseState GetGlobalState();
 
@@ -19,4 +19,10 @@ public interface IMouseService
     void SubscribeWheel(int priority, MouseWheelHandler handler);
     void SubscribeWindowEnter(int priority, MouseWindowPresenceHandler handler);
     void SubscribeWindowLeave(int priority, MouseWindowPresenceHandler handler);
+    void SubscribeButtonPress(ViewScope viewScope, int priority, MouseButtonPressedHandler handler);
+    void SubscribeButtonRelease(ViewScope viewScope, int priority, MouseButtonReleasedHandler handler);
+    void SubscribeMotion(ViewScope viewScope, int priority, MouseMotionHandler handler);
+    void SubscribeWheel(ViewScope viewScope, int priority, MouseWheelHandler handler);
+    void SubscribeWindowEnter(ViewScope viewScope, int priority, MouseWindowPresenceHandler handler);
+    void SubscribeWindowLeave(ViewScope viewScope, int priority, MouseWindowPresenceHandler handler);
 }

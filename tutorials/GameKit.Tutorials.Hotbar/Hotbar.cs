@@ -7,7 +7,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.Hotbar;
 
-public class HotbarViewModel : IViewModel
+public class HotbarViewModel : IPencuilViewModel
 {
     public bool IsDirty { get; set; } = true;
 
@@ -27,7 +27,7 @@ public class HotbarViewModel : IViewModel
     }
 }
 
-public class Hotbar : View<HotbarViewModel>
+public class Hotbar : PencuilView<HotbarViewModel>
 {
     private const int SlotCount = 9;
     private const int SlotSize = 48;
@@ -60,14 +60,14 @@ public class Hotbar : View<HotbarViewModel>
             _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, texture.Size.Width, texture.Size.Height));
         }
 
-        keyboardService.KeyDown += (_, args) =>
+        keyboardService.SubscribeKeyDown(0, (_, args) =>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)
             {
                 ViewModel.SelectedSlot = index;
             }
-        };
+        });
     }
 
     public override void Build(Pencil pencil)

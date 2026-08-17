@@ -59,7 +59,8 @@ public class ImageLoadingRenderer : IRenderer<DefaultRenderContext>
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
             .AddVertexBufferConfig<PositionTextureVertex>()
             .SetShaderProgram("shaders/shader")
-            .AddColorFormatFromDisplay(BlendingState.PremultipliedAlpha)
+            .AddColorFormatFromDisplay(
+                BlendingState.PremultipliedAlpha)
             .Build();
 
         return new ImageLoadingRenderer(graphicsPipeline, quadVertexBuffer, texture, sampler);

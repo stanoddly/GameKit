@@ -26,17 +26,16 @@ public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
-    private readonly WindowManager _windowManager;
+    private readonly WindowRegistry _windowRegistry;
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
-    private readonly PriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
-    private readonly PriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
 
-    public bool IsActive => IsActiveFor(_windowManager.PrimaryWindow);
-
-    public bool IsActiveFor(Window window)
+    public bool IsActiveFor(ViewScope viewScope = default)
     {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             return SDL3.SDL_TextInputActive(window.SdlWindow);
@@ -45,58 +44,68 @@ public class TextInputService : ITextInputService
 
     public event TextInputHandler TextInput
     {
-        add => _textInputHandlers.Add(0, value);
-        remove => _textInputHandlers.Remove(value);
+        add => _textInputHandlers.Add(default, 0, value);
+        remove => _textInputHandlers.Remove(default, value);
     }
 
     public event TextEditingHandler TextEditing
     {
-        add => _textEditingHandlers.Add(0, value);
-        remove => _textEditingHandlers.Remove(value);
+        add => _textEditingHandlers.Add(default, 0, value);
+        remove => _textEditingHandlers.Remove(default, value);
     }
 
     public void SubscribeTextInput(int priority, TextInputHandler handler)
     {
-        _textInputHandlers.Add(priority, handler);
+        _textInputHandlers.Add(default, priority, handler);
     }
 
     public void SubscribeTextEditing(int priority, TextEditingHandler handler)
     {
-        _textEditingHandlers.Add(priority, handler);
+        _textEditingHandlers.Add(default, priority, handler);
     }
 
-    public void Start()
+    public void SubscribeTextInput(
+        ViewScope viewScope,
+        int priority,
+        TextInputHandler handler)
     {
-        Start(_windowManager.PrimaryWindow);
+        _textInputHandlers.Add(viewScope, priority, handler);
     }
 
-    public void Start(Window window)
+    public void SubscribeTextEditing(
+        ViewScope viewScope,
+        int priority,
+        TextEditingHandler handler)
     {
+        _textEditingHandlers.Add(viewScope, priority, handler);
+    }
+
+    public void Start(ViewScope viewScope = default)
+    {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             SDL3.SDL_StartTextInput(window.SdlWindow);
         }
     }
 
-    public void Stop()
+    public void Stop(ViewScope viewScope = default)
     {
-        Stop(_windowManager.PrimaryWindow);
-    }
-
-    public void Stop(Window window)
-    {
+        Window window = _windowRegistry.GetWindow(viewScope);
         unsafe
         {
             SDL3.SDL_StopTextInput(window.SdlWindow);
         }
     }
 
-    internal TextInputService(WindowManager windowManager)
+    internal TextInputService(WindowRegistry windowRegistry)
     {
-        _windowManager = windowManager;
+        _windowRegistry = windowRegistry;
     }
 
-    internal void OnTextInputEvent(in SDL_TextInputEvent textInputEvent)
+    internal void OnTextInputEvent(
+        ViewScope viewScope,
+        in SDL_TextInputEvent textInputEvent)
     {
         string text;
         unsafe
@@ -108,7 +117,7 @@ public class TextInputService : ITextInputService
         _textInputEventArgs.Timestamp = textInputEvent.timestamp;
         _textInputEventArgs.Consumed = false;
 
-        foreach ((_, TextInputHandler handler) in _textInputHandlers.GetSorted())
+        foreach ((_, TextInputHandler handler) in _textInputHandlers.GetSorted(viewScope))
         {
             handler(_textInputEventArgs);
 
@@ -119,7 +128,9 @@ public class TextInputService : ITextInputService
         }
     }
 
-    internal void OnTextEditingEvent(in SDL_TextEditingEvent textEditingEvent)
+    internal void OnTextEditingEvent(
+        ViewScope viewScope,
+        in SDL_TextEditingEvent textEditingEvent)
     {
         string text;
         unsafe
@@ -133,7 +144,7 @@ public class TextInputService : ITextInputService
         _textEditingEventArgs.Timestamp = textEditingEvent.timestamp;
         _textEditingEventArgs.Consumed = false;
 
-        foreach ((_, TextEditingHandler handler) in _textEditingHandlers.GetSorted())
+        foreach ((_, TextEditingHandler handler) in _textEditingHandlers.GetSorted(viewScope))
         {
             handler(_textEditingEventArgs);
 

@@ -35,16 +35,20 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
     private bool _retainedTextureDirty;
 
     public int Order { get; }
+    public ViewScope ViewScope { get; }
 
-    public PencuilRenderer(
-        Pencil pencil,
-        PencuilOptions options,
+    internal PencuilRenderer(
+        Pencuil pencuil,
+        int order,
+        bool clearTarget,
         GraphicsPipelineBuilder graphicsPipelineBuilder,
         GpuMemorySystem gpuMemorySystem,
         ShaderLoader shaderLoader,
         GpuDevice gpuDevice,
-        WindowManager windowManager)
+        WindowRegistry windowRegistry)
     {
+        Pencil pencil = pencuil.Pencil;
+        ViewScope = pencuil.ViewScope;
         ReadOnlySpan<PositionTextureVertex> quad =
         [
             new(new Vector3(0.0f, 0.0f, 0.0f), new Vector2(0, 0)),
@@ -59,8 +63,9 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         GraphicsShaderProgram tintedTextureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_tinted_texture");
         GraphicsShaderProgram textureShaderProgram = shaderLoader.LoadGraphicsShaderProgram("shaders/pencuil_texture");
 
-        TextureFormat colorTargetFormat = windowManager.PrimaryWindow.ColorTargetFormat;
-        ShortSize renderSize = windowManager.PrimaryWindow.RenderSizeInPixels;
+        Window window = windowRegistry.GetWindow(ViewScope);
+        TextureFormat colorTargetFormat = window.ColorTargetFormat;
+        ShortSize renderSize = window.RenderSizeInPixels;
 
         _colorPipeline = graphicsPipelineBuilder
             .SetPrimitiveType(PrimitiveType.TriangleStrip)
@@ -90,8 +95,8 @@ internal sealed class PencuilRenderer<TRenderContext> : IRenderer<TRenderContext
         _gpuDevice = gpuDevice;
         _colorTargetFormat = colorTargetFormat;
         _pencil = pencil;
-        _clearTarget = options.ClearTarget;
-        Order = options.Order;
+        _clearTarget = clearTarget;
+        Order = order;
 
         _sampler = gpuDevice.CreateSampler(SamplerConfig.PixelArt);
         _retainedTexture = gpuDevice.CreateColorTargetTexture(renderSize, colorTargetFormat);

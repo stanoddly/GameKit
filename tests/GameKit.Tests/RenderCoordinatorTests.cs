@@ -9,6 +9,33 @@ namespace GameKit.Tests;
 public class RenderCoordinatorTests
 {
     [Test]
+    public void Builder_DoesNotRegisterWindowWithoutWindowRendering()
+    {
+        GameKitAppBuilder builder = new();
+
+        Assert.That(builder.IsRegistered<Window>(), Is.False);
+    }
+
+    [Test]
+    public void UseDefaultRendering_RegistersWindow()
+    {
+        GameKitAppBuilder builder = new();
+
+        builder.UseDefaultRendering();
+
+        Assert.That(builder.IsRegistered<Window>(), Is.True);
+    }
+
+    [Test]
+    public void Renderer_WithoutExplicitViewScope_UsesDefaultScope()
+    {
+        IRenderer<TestRenderContext> renderer =
+            new TestRenderer("renderer", new List<string>());
+
+        Assert.That(renderer.ViewScope, Is.EqualTo(default(ViewScope)));
+    }
+
+    [Test]
     public void Execute_WithNoRenderers_DoesNotThrow()
     {
         GameKitAppBuilder builder = CreateBuilder(new List<string>());

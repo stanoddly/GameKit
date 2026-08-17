@@ -5,7 +5,7 @@ using GameKit.Shaders;
 
 namespace GameKit.Tutorials.Triangle;
 
-public class TriangleRenderer: IRenderer<DefaultRenderContext>
+public class TriangleRenderer : IRenderer<DefaultRenderContext>
 {
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _quadVertexBuffer;

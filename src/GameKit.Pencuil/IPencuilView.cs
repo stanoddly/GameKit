@@ -1,7 +1,8 @@
 namespace GameKit.Pencuil;
 
-public interface IView
+public interface IPencuilView
 {
+    ViewScope ViewScope => default;
     bool ConsumeDirty();
     void Build(Pencil pencil);
 }

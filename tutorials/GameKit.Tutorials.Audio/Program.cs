@@ -17,11 +17,9 @@ static class Program
     {
         GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering()
+            .UseDefaultRendering(
+                new WindowConfig(Size: (640, 480), Title: "Audio Tutorial"))
             .RegisterAudio();
-
-        builder.AddSingleton(new AppConfig { Size = (640, 480), Title = "Audio Tutorial" });
-        builder.AddSingleton<IRenderer<DefaultRenderContext>, NullRenderer<DefaultRenderContext>>();
 
         builder.OnStart((IAudioSystem audioSystem, IKeyboardService keyboardService, AppControl appControl) =>
         {

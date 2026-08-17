@@ -5,7 +5,7 @@ using GameKit.Text;
 
 namespace GameKit.Tutorials.StageSwitching;
 
-public class MenuView : IView
+public class MenuView : IPencuilView
 {
     private static readonly Color BackgroundColor = new(28, 30, 34, 255);
     private static readonly Color ButtonColor = new(62, 87, 121, 255);
@@ -23,6 +23,7 @@ public class MenuView : IView
     private readonly Font _font;
     private string? _activeStage;
     private bool _dirty = true;
+
 
     public MenuView(IStageManager stageManager, IFontSystem fontSystem)
     {
@@ -52,7 +53,7 @@ public class MenuView : IView
             _dirty = true;
             _stageManager.Load(services =>
             {
-                services.AddSingleton<IView>(new StageView("Stage A", new Color(70, 130, 180, 255)));
+                services.AddSingleton<IPencuilView>(new StageView("Stage A", new Color(70, 130, 180, 255)));
             });
         }
 
@@ -62,7 +63,7 @@ public class MenuView : IView
             _dirty = true;
             _stageManager.Load(services =>
             {
-                services.AddSingleton<IView>(new StageView("Stage B", new Color(180, 100, 70, 255)));
+                services.AddSingleton<IPencuilView>(new StageView("Stage B", new Color(180, 100, 70, 255)));
             });
         }
     }

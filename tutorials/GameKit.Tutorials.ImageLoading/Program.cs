@@ -7,11 +7,11 @@ static class Program
 {
     static int Main(string[] args)
     {
-        var builder = new GameKitAppBuilder()
+        GameKitAppBuilder builder = new GameKitAppBuilder()
             .AddContentFromProjectDirectory("Content")
-            .UseDefaultRendering();
+            .UseDefaultRendering(
+                new WindowConfig(Size: (443, 410), Title: "Image Loading Demo"));
 
-        builder.AddSingleton(new AppConfig { Size = (443, 410), Title = "Image Loading Demo" });
         builder.AddSingleton<ImageLoadingRenderer>(ImageLoadingRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, ImageLoadingRenderer>();
 

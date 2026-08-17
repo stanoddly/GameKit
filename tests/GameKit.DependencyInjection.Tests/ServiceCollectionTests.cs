@@ -715,6 +715,60 @@ public class ServiceCollectionTests
     }
 
     [Test]
+    public void ServiceRegistry_VersionChangesWhenServiceIsAddedAndRemoved()
+    {
+        ServiceCollection rootServices = new();
+        rootServices.AddRegistry<IMyService>();
+        using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
+        Assert.That(registry.Version, Is.EqualTo(0UL));
+
+        ServiceCollection childServices = rootProvider.CreateServiceCollection();
+        childServices.AddSingleton<IMyService>(new MyServiceImpl());
+        ServiceProvider childProvider = childServices.BuildServiceProvider();
+
+        Assert.That(registry.Version, Is.EqualTo(0UL));
+        Assert.That(registry.ToArray(), Has.Length.EqualTo(1));
+        Assert.That(registry.Version, Is.EqualTo(1UL));
+
+        childProvider.Dispose();
+
+        Assert.That(registry.Version, Is.EqualTo(2UL));
+    }
+
+    [Test]
+    public void ServiceRegistry_DuplicateActivationDoesNotChangeVersion()
+    {
+        MyServiceImpl service = new();
+        ServiceCollection collection = new();
+        collection.AddRegistry<IMyService>();
+        collection.AddSingleton<IMyService>(service);
+        collection.AddSingleton<IMyService>(service);
+        using ServiceProvider provider = collection.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = provider.GetRequiredService<ServiceRegistry<IMyService>>();
+
+        Assert.That(registry.ToArray(), Has.Length.EqualTo(1));
+        Assert.That(registry.Version, Is.EqualTo(1UL));
+    }
+
+    [Test]
+    public void ServiceRegistry_PendingServiceRemovedBeforePublicationDoesNotChangeVersion()
+    {
+        ServiceCollection rootServices = new();
+        rootServices.AddRegistry<IMyService>();
+        using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
+        ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
+        ServiceCollection childServices = rootProvider.CreateServiceCollection();
+        childServices.AddSingleton<IMyService>(new MyServiceImpl());
+        ServiceProvider childProvider = childServices.BuildServiceProvider();
+
+        childProvider.Dispose();
+
+        Assert.That(registry.ToArray(), Is.Empty);
+        Assert.That(registry.Version, Is.EqualTo(0UL));
+    }
+
+    [Test]
     public void ServiceRegistry_GetEnumerator_ReturnsValueTypeEnumerator()
     {
         ServiceCollection collection = new();
@@ -748,6 +802,7 @@ public class ServiceCollectionTests
         using ServiceProvider rootProvider = rootServices.BuildServiceProvider();
         ServiceRegistry<IMyService> registry = rootProvider.GetRequiredService<ServiceRegistry<IMyService>>();
         ServiceRegistry<IMyService>.Enumerator enumerator = registry.GetEnumerator();
+        Assert.That(registry.Version, Is.EqualTo(1UL));
 
         try
         {
@@ -758,8 +813,10 @@ public class ServiceCollectionTests
             childServices.AddSingleton<IMyService>(second);
             _ = childServices.BuildServiceProvider();
 
+            Assert.That(registry.Version, Is.EqualTo(1UL));
             Assert.That(enumerator.MoveNext(), Is.False);
             Assert.That(registry.ToArray(), Is.EqualTo(new[] { first }));
+            Assert.That(registry.Version, Is.EqualTo(1UL));
         }
         finally
         {
@@ -767,6 +824,7 @@ public class ServiceCollectionTests
         }
 
         Assert.That(registry.ToArray(), Is.EqualTo(new IMyService[] { first, second }));
+        Assert.That(registry.Version, Is.EqualTo(2UL));
     }
 
     [Test]

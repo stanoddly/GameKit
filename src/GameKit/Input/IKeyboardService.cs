@@ -7,4 +7,6 @@ public interface IKeyboardService
 
     void SubscribeKeyDown(int priority, KeyDownEventHandler handler);
     void SubscribeKeyUp(int priority, KeyUpEventHandler handler);
+    void SubscribeKeyDown(ViewScope viewScope, int priority, KeyDownEventHandler handler);
+    void SubscribeKeyUp(ViewScope viewScope, int priority, KeyUpEventHandler handler);
 }

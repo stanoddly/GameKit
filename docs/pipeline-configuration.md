@@ -44,7 +44,7 @@ GraphicsShaderProgram shaderProgram = shaderLoader.LoadGraphicsShaderProgram("sh
 
 ```csharp
 // Single target (forward rendering)
-.AddColorFormatFromDisplay()  // Match swapchain format
+.AddColorFormatFromDisplay()  // Match the default window's swapchain format
 
 // Multiple targets (deferred rendering)
 .AddColorTarget(renderContextBuffers.AlbedoBuffer.Format)
