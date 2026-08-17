@@ -353,18 +353,25 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         ITypeSymbol implType = methodSymbol.TypeArguments[0];
 
-        if (implType is not INamedTypeSymbol implNamedType || ContainsTypeParameter(implType))
+        string implementationTypeName = GetDiagnosticTypeName(implType);
+
+        if (ContainsTypeParameter(implType))
         {
-            string implementationTypeName = implType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
                 $"{methodDisplayName}<{implementationTypeName}>() cannot be used when the implementation type is or contains a type parameter. Use {methodDisplayName}<{implementationTypeName}>(Func<ServiceProvider, {implementationTypeName}>) instead."));
+        }
+
+        if (implType is not INamedTypeSymbol implNamedType)
+        {
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
+                $"{methodDisplayName}<{implementationTypeName}>() requires the implementation type to be a named concrete type."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"{methodDisplayName}<{implType.Name}>() requires exactly one constructor accessible at the call site."));
+                $"{methodDisplayName}<{implementationTypeName}>() requires exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -395,20 +402,26 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
         ITypeSymbol implType = methodSymbol.TypeArguments[1];
+        string serviceTypeName = GetDiagnosticTypeName(serviceType);
+        string implementationTypeName = GetDiagnosticTypeName(implType);
 
-        if (implType is not INamedTypeSymbol implNamedType || ContainsTypeParameter(implType))
+        if (ContainsTypeParameter(implType))
         {
-            string serviceTypeName = serviceType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
-            string implementationTypeName = implType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
-                $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() cannot be used when the implementation type is or contains a type parameter. Use {methodDisplayName}<{serviceTypeName}>(Func<ServiceProvider, {serviceTypeName}>) instead."));
+                $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() cannot be used when the implementation type is or contains a type parameter. Use {methodDisplayName}<{serviceTypeName}, {implementationTypeName}>(Func<ServiceProvider, {implementationTypeName}>) instead."));
+        }
+
+        if (implType is not INamedTypeSymbol implNamedType)
+        {
+            return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
+                $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() requires the implementation type to be a named concrete type."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
         if (constructor == null)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0002",
-                $"{methodDisplayName}<{serviceType.Name}, {implType.Name}>() requires {implType.Name} to have exactly one constructor accessible at the call site."));
+                $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() requires {implementationTypeName} to have exactly one constructor accessible at the call site."));
         }
 
         ImmutableArray<string> paramTypes = constructor.Parameters
@@ -439,11 +452,13 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
         ITypeSymbol factoryType = methodSymbol.TypeArguments[1];
+        string serviceTypeName = GetDiagnosticTypeName(serviceType);
+        string factoryTypeName = GetDiagnosticTypeName(factoryType);
 
         if (factoryType is not INamedTypeSymbol namedFactoryType)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0003",
-                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to be a concrete type."));
+                $"{methodDisplayName}<{serviceTypeName}, {factoryTypeName}>() requires {factoryTypeName} to be a concrete type."));
         }
 
         List<IMethodSymbol> candidates = new();
@@ -459,13 +474,13 @@ public class InterceptorGenerator : IIncrementalGenerator
         if (candidates.Count == 0)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0003",
-                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() requires {factoryType.Name} to have an accessible instance method returning {serviceType.Name}."));
+                $"{methodDisplayName}<{serviceTypeName}, {factoryTypeName}>() requires {factoryTypeName} to have an accessible instance method returning {serviceTypeName}."));
         }
 
         if (candidates.Count > 1)
         {
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0004",
-                $"{methodDisplayName}<{serviceType.Name}, {factoryType.Name}>() found multiple methods on {factoryType.Name} returning {serviceType.Name}: {string.Join(", ", candidates.Select(m => m.Name))}."));
+                $"{methodDisplayName}<{serviceTypeName}, {factoryTypeName}>() found multiple methods on {factoryTypeName} returning {serviceTypeName}: {string.Join(", ", candidates.Select(m => m.Name))}."));
         }
 
         IMethodSymbol factoryMethod = candidates[0];
@@ -642,11 +657,21 @@ public class InterceptorGenerator : IIncrementalGenerator
         return type.ToDisplayString(FullyQualifiedNullableFormat);
     }
 
+    private static string GetDiagnosticTypeName(ITypeSymbol type)
+    {
+        return type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+    }
+
     private static bool ContainsTypeParameter(ITypeSymbol type)
     {
         if (type is ITypeParameterSymbol)
         {
             return true;
+        }
+
+        if (type is IArrayTypeSymbol arrayType)
+        {
+            return ContainsTypeParameter(arrayType.ElementType);
         }
 
         if (type is not INamedTypeSymbol namedType)

@@ -11,7 +11,7 @@ public class InterceptorGeneratorTests
 {
     private const string DamAttribute = "[global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]";
 
-    // Minimal source that triggers intercepted overloads of AddSingleton and AddTransient:
+    // Source that triggers intercepted overloads of AddSingleton and AddTransient:
     // - AddSingleton<T>()
     // - AddSingleton<TService, TImplementation>()
     // - AddSingleton<T>(Delegate factory)
@@ -44,6 +44,7 @@ public class InterceptorGeneratorTests
                 services.AddTransient<ProductService, MyFactory>();
             }
         }
+
         """;
 
     private const string GenericHelperRegistrationSource = """
@@ -51,6 +52,10 @@ public class InterceptorGeneratorTests
 
         public interface IService<T> { }
         public sealed class Dependency { }
+        public sealed class SimpleService
+        {
+            public SimpleService(Dependency dependency) { }
+        }
 
         public sealed class GenericImplementation<T> : IService<T>
         {
@@ -68,11 +73,78 @@ public class InterceptorGeneratorTests
         public static class Registrations
         {
             public static void Register<T>(ServiceCollection services)
+                where T : class
             {
+                services.AddSingleton<SimpleService>();
+                services.AddTransient<T>();
                 services.AddSingleton<GenericImplementation<T>>();
                 services.AddSingleton<IService<T>, GenericImplementation<T>>();
                 services.AddTransient<GenericContainer<T>.NestedImplementation>();
                 services.AddTransient<IService<T>, GenericContainer<T>.NestedImplementation>();
+                services.AddSingleton<GenericImplementation<T[]>>();
+            }
+
+            public static void RegisterClosed(ServiceCollection services)
+            {
+                services.AddSingleton<GenericImplementation<int>>();
+                services.AddSingleton<IService<int>, GenericImplementation<int>>();
+                services.AddTransient<GenericContainer<int>.NestedImplementation>();
+                services.AddTransient<IService<int>, GenericContainer<int>.NestedImplementation>();
+            }
+        }
+
+        public sealed class GenericRegistrar<T>
+        {
+            public void Register(ServiceCollection services)
+            {
+                services.AddTransient<GenericImplementation<T>>();
+            }
+        }
+        """;
+
+    private const string ArrayImplementationRegistrationSource = """
+        using GameKit.DependencyInjection;
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<byte[]>();
+            }
+        }
+        """;
+
+    private const string NestedDiagnosticTypeRegistrationSource = """
+        using GameKit.DependencyInjection;
+
+        public interface IService<T> { }
+        public sealed class Dependency { }
+        public sealed class Implementation<T> : IService<T> { }
+
+        public static class Outer<T>
+        {
+            public sealed class MultipleConstructors : IService<T>
+            {
+                public MultipleConstructors() { }
+                public MultipleConstructors(Dependency dependency) { }
+            }
+
+            public sealed class MissingFactory { }
+
+            public sealed class AmbiguousFactory
+            {
+                public IService<T> Create() => new Implementation<T>();
+                public IService<T> Build() => new Implementation<T>();
+            }
+        }
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<IService<int>, Outer<int>.MultipleConstructors>();
+                services.AddSingleton<IService<int>, Outer<int>.MissingFactory>();
+                services.AddSingleton<IService<int>, Outer<int>.AmbiguousFactory>();
             }
         }
         """;
@@ -160,22 +232,79 @@ public class InterceptorGeneratorTests
     [Test]
     public void ConstructorRegistration_GenericImplementationContainingMethodTypeParameter_ReportsGK0001()
     {
-        GeneratorDriverRunResult result = RunGenerator(GenericHelperRegistrationSource, emitTrimAnnotationsPropertyValue: null);
+        Compilation outputCompilation;
+        GeneratorDriverRunResult result = RunGenerator(
+            GenericHelperRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null,
+            out outputCompilation);
         Diagnostic[] diagnostics = result.Diagnostics
             .Where(diagnostic => diagnostic.Id == "GK0001")
+            .ToArray();
+        string generated = GetGeneratedCode(result);
+        string[] expectedMessages =
+        [
+            "AddTransient<T>() cannot be used when the implementation type is or contains a type parameter. Use AddTransient<T>(Func<ServiceProvider, T>) instead.",
+            "AddSingleton<GenericImplementation<T>>() cannot be used when the implementation type is or contains a type parameter. Use AddSingleton<GenericImplementation<T>>(Func<ServiceProvider, GenericImplementation<T>>) instead.",
+            "AddSingleton<IService<T>, GenericImplementation<T>>() cannot be used when the implementation type is or contains a type parameter. Use AddSingleton<IService<T>, GenericImplementation<T>>(Func<ServiceProvider, GenericImplementation<T>>) instead.",
+            "AddTransient<GenericContainer<T>.NestedImplementation>() cannot be used when the implementation type is or contains a type parameter. Use AddTransient<GenericContainer<T>.NestedImplementation>(Func<ServiceProvider, GenericContainer<T>.NestedImplementation>) instead.",
+            "AddTransient<IService<T>, GenericContainer<T>.NestedImplementation>() cannot be used when the implementation type is or contains a type parameter. Use AddTransient<IService<T>, GenericContainer<T>.NestedImplementation>(Func<ServiceProvider, GenericContainer<T>.NestedImplementation>) instead.",
+            "AddSingleton<GenericImplementation<T[]>>() cannot be used when the implementation type is or contains a type parameter. Use AddSingleton<GenericImplementation<T[]>>(Func<ServiceProvider, GenericImplementation<T[]>>) instead.",
+            "AddTransient<GenericImplementation<T>>() cannot be used when the implementation type is or contains a type parameter. Use AddTransient<GenericImplementation<T>>(Func<ServiceProvider, GenericImplementation<T>>) instead."
+        ];
+        Diagnostic[] compilationErrors = outputCompilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .ToArray();
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.Diagnostics, Has.Length.EqualTo(4));
-            Assert.That(diagnostics, Has.Length.EqualTo(4));
-            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddSingleton")), Is.EqualTo(2));
-            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddTransient")), Is.EqualTo(2));
-            Assert.That(diagnostics.Select(diagnostic => diagnostic.GetMessage()), Has.Some.Contains("GenericImplementation<T>"));
-            Assert.That(diagnostics.Select(diagnostic => diagnostic.GetMessage()), Has.Some.Contains("GenericContainer<T>.NestedImplementation"));
+            Assert.That(result.Diagnostics, Has.Length.EqualTo(7));
+            Assert.That(diagnostics, Has.Length.EqualTo(7));
+            Assert.That(diagnostics, Has.All.Property(nameof(Diagnostic.Severity)).EqualTo(DiagnosticSeverity.Error));
+            Assert.That(diagnostics.Select(diagnostic => diagnostic.GetMessage()), Is.EquivalentTo(expectedMessages));
+            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddSingleton")), Is.EqualTo(3));
+            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddTransient")), Is.EqualTo(4));
+            Assert.That(diagnostics.Select(diagnostic => diagnostic.Location.GetLineSpan().StartLinePosition.Line), Has.All.GreaterThan(0));
+            Assert.That(generated, Does.Contain("global::SimpleService"));
+            Assert.That(generated, Does.Contain("global::GenericImplementation<int>"));
+            Assert.That(generated, Does.Contain("global::GenericContainer<int>.NestedImplementation"));
+            Assert.That(generated, Does.Not.Contain("global::GenericImplementation<T>"));
+            Assert.That(generated, Does.Not.Contain("global::GenericImplementation<T[]>"));
+            Assert.That(generated, Does.Not.Contain("global::GenericContainer<T>.NestedImplementation"));
+            Assert.That(compilationErrors, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void ConstructorRegistration_UnnamedImplementationType_ReportsAccurateGK0001()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            ArrayImplementationRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null);
+
+        Assert.That(result.Diagnostics, Has.Length.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics[0].Id, Is.EqualTo("GK0001"));
+            Assert.That(result.Diagnostics[0].Severity, Is.EqualTo(DiagnosticSeverity.Error));
             Assert.That(
-                result.Results.SelectMany(generatorResult => generatorResult.GeneratedSources),
-                Has.None.Matches<GeneratedSourceResult>(source => source.HintName == "ServiceCollectionInterceptors.g.cs"));
+                result.Diagnostics[0].GetMessage(),
+                Is.EqualTo("AddSingleton<byte[]>() requires the implementation type to be a named concrete type."));
+        });
+    }
+
+    [Test]
+    public void GeneratorDiagnostics_NestedGenericTypes_IncludeContainingTypeNames()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            NestedDiagnosticTypeRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Id), Is.EqualTo(new[] { "GK0002", "GK0003", "GK0004" }));
+            Assert.That(result.Diagnostics[0].GetMessage(), Does.Contain("Outer<int>.MultipleConstructors"));
+            Assert.That(result.Diagnostics[1].GetMessage(), Does.Contain("Outer<int>.MissingFactory"));
+            Assert.That(result.Diagnostics[2].GetMessage(), Does.Contain("Outer<int>.AmbiguousFactory"));
         });
     }
 
@@ -183,6 +312,11 @@ public class InterceptorGeneratorTests
     {
         GeneratorDriverRunResult result = RunGenerator(RegistrationSource, emitTrimAnnotationsPropertyValue);
 
+        return GetGeneratedCode(result);
+    }
+
+    private static string GetGeneratedCode(GeneratorDriverRunResult result)
+    {
         // Find the interceptors file
         foreach (GeneratorRunResult generatorResult in result.Results)
         {
@@ -200,6 +334,14 @@ public class InterceptorGeneratorTests
 
     private static GeneratorDriverRunResult RunGenerator(string source, string? emitTrimAnnotationsPropertyValue)
     {
+        return RunGenerator(source, emitTrimAnnotationsPropertyValue, out _);
+    }
+
+    private static GeneratorDriverRunResult RunGenerator(
+        string source,
+        string? emitTrimAnnotationsPropertyValue,
+        out Compilation outputCompilation)
+    {
         CSharpCompilation compilation = CreateCompilation(source);
         InterceptorGenerator generator = new InterceptorGenerator();
 
@@ -210,7 +352,10 @@ public class InterceptorGeneratorTests
             optionsProvider: optionsProvider,
             parseOptions: (CSharpParseOptions)compilation.SyntaxTrees[0].Options);
 
-        GeneratorDriver ran = driver.RunGenerators(compilation);
+        GeneratorDriver ran = driver.RunGeneratorsAndUpdateCompilation(
+            compilation,
+            out outputCompilation,
+            out ImmutableArray<Diagnostic> _);
         return ran.GetRunResult();
     }
 
@@ -231,7 +376,13 @@ public class InterceptorGeneratorTests
 
         CSharpParseOptions parseOptions = new CSharpParseOptions(
             languageVersion: LanguageVersion.CSharp13,
-            preprocessorSymbols: ImmutableArray<string>.Empty);
+            preprocessorSymbols: ImmutableArray<string>.Empty)
+            .WithFeatures(
+            [
+                new KeyValuePair<string, string>(
+                    "InterceptorsNamespaces",
+                    "GameKit.DependencyInjection.Generated")
+            ]);
 
         SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
 

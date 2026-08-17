@@ -502,19 +502,19 @@ Aliases appear in `GetServices<TService>()` collections alongside any direct reg
 
 ## Source Generator Caveats
 
-The following overloads are **intercepted at each call site** by the Roslyn source generator (`GameKit.DependencyInjection.Generator`). Their runtime bodies throw `InvalidOperationException`. They only work when the generator is active and the type arguments are concrete at the call site:
+The following overloads are **intercepted at each call site** by the Roslyn source generator (`GameKit.DependencyInjection.Generator`). Their runtime bodies throw `InvalidOperationException` when a call is not intercepted, such as when the generator is absent. With the generator active, unsupported constructor implementation types produce `GK0001`:
 
 | Overload | Interception requirement |
 |---|---|
-| `AddSingleton<T>()` | `T` must be a named concrete type, not a type parameter |
-| `AddSingleton<TService, TImplementation>()` | Both types must be named concrete types |
+| `AddSingleton<T>()` | `T` must be a named concrete type that does not contain a type parameter from a generic calling scope |
+| `AddSingleton<TService, TImplementation>()` | Constructor implementations must be named concrete types that do not contain type parameters from a generic calling scope |
 | `AddSingleton<T>(Delegate factory)` | `T` must be a named concrete type; delegate argument must be resolvable at compile time |
-| `AddTransient<T>()` | `T` must be a named concrete type, not a type parameter |
-| `AddTransient<TService, TImplementation>()` | Both types must be named concrete types |
+| `AddTransient<T>()` | `T` must be a named concrete type that does not contain a type parameter from a generic calling scope |
+| `AddTransient<TService, TImplementation>()` | Constructor implementations must be named concrete types that do not contain type parameters from a generic calling scope |
 | `AddTransient<T>(Delegate factory)` | `T` must be a named concrete type; delegate argument must be resolvable at compile time |
 | `OnStart(Delegate action)` | Delegate argument must be resolvable at compile time |
 
-**The generic-helper failure mode.** Constructor registration cannot be used in a generic method when the implementation type is a type parameter or is a known generic type containing one. The generator reports `GK0001` at the registration call and does not emit an interceptor:
+**The generic-scope failure mode.** Constructor registration cannot be used when the implementation type is a type parameter, or is a known generic type containing a type parameter from an enclosing method or type. The generator reports `GK0001` at the registration call and does not emit an interceptor:
 
 ```csharp
 // Does NOT work — T is a type parameter
@@ -540,6 +540,15 @@ If you need a generic registration helper, use the non-intercepted overload with
 void Register<T>(ServiceCollection services, Func<ServiceProvider, T?> factory) where T : class
 {
     services.AddSingleton<T>(factory); // Func<ServiceProvider, T?> overload — no generator needed
+}
+
+void RegisterHandler<T>(
+    ServiceCollection services,
+    Func<ServiceProvider, Handler<T>?> factory)
+    where T : class
+{
+    // Preserves Handler<T> as the concrete type used by lifecycle callbacks
+    services.AddTransient<IHandler<T>, Handler<T>>(factory);
 }
 ```
 
