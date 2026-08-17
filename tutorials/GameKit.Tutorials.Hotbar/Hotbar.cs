@@ -60,7 +60,7 @@ public class Hotbar : PencuilView<HotbarViewModel>
             _slotSprites[i] = new SpriteAsset(texture, new ShortRectangle(0, 0, texture.Size.Width, texture.Size.Height));
         }
 
-        keyboardService.SubscribeKeyDown(0, (_, args) =>
+        keyboardService.SubscribeKeyDown(0, args =>
         {
             int index = args.Scancode - Scancode.Number1;
             if (index >= 0 && index < SlotCount)

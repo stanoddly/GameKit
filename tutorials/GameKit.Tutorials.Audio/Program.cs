@@ -43,7 +43,7 @@ static class Program
             Console.WriteLine($"Source group: {currentGroup.Name}");
             Console.WriteLine($"Source position: {sourceX:0.0}");
 
-            keyboardService.KeyDown += (Keyboard _, KeyEventArgs eventArgs) =>
+            keyboardService.KeyDown += eventArgs =>
             {
                 if (eventArgs.Key == VirtualKey.Space)
                 {

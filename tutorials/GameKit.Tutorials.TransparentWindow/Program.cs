@@ -31,7 +31,7 @@ static class Program
 
         builder.OnStart((IMouseService mouseService, AppControl appControl) =>
         {
-            mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs eventArgs) => appControl.Quit();
+            mouseService.ButtonPress += eventArgs => appControl.Quit();
         });
 
         using IGameKitApp gameKitApp = builder.Build();

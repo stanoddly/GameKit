@@ -28,7 +28,7 @@ internal sealed class PencilSystem : IUpdatable
         _window = windowRegistry.GetWindow(_viewScope);
         _textInputService = textInputService;
 
-        mouseService.SubscribeMotion(_viewScope, inputOrder, (_, args) =>
+        mouseService.SubscribeMotion(_viewScope, inputOrder, args =>
         {
             pencil.CursorPosition = (Vector2Int)args.Position;
             pencil.Invalidate();
@@ -40,7 +40,7 @@ internal sealed class PencilSystem : IUpdatable
             pencil.Invalidate();
         });
 
-        mouseService.SubscribeButtonPress(_viewScope, inputOrder, (_, args) =>
+        mouseService.SubscribeButtonPress(_viewScope, inputOrder, args =>
         {
             if (args.Button == MouseButton.Left)
             {
@@ -51,7 +51,7 @@ internal sealed class PencilSystem : IUpdatable
             }
         });
 
-        mouseService.SubscribeButtonRelease(_viewScope, inputOrder, (_, args) =>
+        mouseService.SubscribeButtonRelease(_viewScope, inputOrder, args =>
         {
             if (args.Button == MouseButton.Left)
             {
@@ -65,9 +65,9 @@ internal sealed class PencilSystem : IUpdatable
             }
         });
 
-        keyboardService.SubscribeKeyDown(_viewScope, inputOrder, (keyboard, args) =>
+        keyboardService.SubscribeKeyDown(_viewScope, inputOrder, args =>
         {
-            if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode, keyboard.Shift, keyboard.Ctrl))
+            if (pencil.HasFocus && pencil.HandleEditingKeyDown(args.Scancode, args.Keyboard.Shift, args.Keyboard.Ctrl))
             {
                 args.Consume();
             }

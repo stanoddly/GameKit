@@ -63,26 +63,26 @@ static class Program
                 Console.WriteLine("Active window dragging path: native window-manager dragging");
                 Console.WriteLine("Hold Ctrl and drag with the left mouse button.");
 
-                keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+                keyboardService.KeyDown += eventArgs =>
                 {
                     if (eventArgs.Scancode == Scancode.LeftCtrl || eventArgs.Scancode == Scancode.RightCtrl)
                     {
-                        window.Draggable = keyboard.Ctrl;
+                        window.Draggable = eventArgs.Keyboard.Ctrl;
                     }
                 };
 
-                keyboardService.KeyUp += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+                keyboardService.KeyUp += eventArgs =>
                 {
                     if (eventArgs.Scancode == Scancode.LeftCtrl || eventArgs.Scancode == Scancode.RightCtrl)
                     {
-                        window.Draggable = keyboard.Ctrl;
+                        window.Draggable = eventArgs.Keyboard.Ctrl;
                     }
                 };
             }
 
             Console.WriteLine("Right mouse button or Escape: quit");
 
-            mouseService.ButtonPress += (Mouse mouse, MouseButtonEventArgs eventArgs) =>
+            mouseService.ButtonPress += eventArgs =>
             {
                 if (eventArgs.Button == MouseButton.Right)
                 {
@@ -90,7 +90,7 @@ static class Program
                 }
             };
 
-            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+            keyboardService.KeyDown += eventArgs =>
             {
                 if (eventArgs.Key == VirtualKey.Escape)
                 {

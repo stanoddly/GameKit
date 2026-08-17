@@ -1,75 +1,95 @@
 namespace GameKit.Input;
 
-internal class PriorityEventHandlers<TDelegate> where TDelegate : Delegate
+internal sealed class PriorityEventHandlers<TEventArgs>
+    where TEventArgs : ConsumableInputEventArgs
 {
-    private readonly List<(int Priority, TDelegate Handler)> _handlers = new();
+    private readonly List<(int Priority, InputEventHandler<TEventArgs> Handler)> _handlers = new();
     private bool _dirty;
 
-    public void Add(int priority, TDelegate handler)
+    public void Add(int priority, InputEventHandler<TEventArgs> handler)
     {
         _handlers.Add((priority, handler));
         _dirty = true;
     }
 
-    public void Remove(TDelegate handler)
+    public void Remove(InputEventHandler<TEventArgs> handler)
     {
         _handlers.RemoveAll(entry => entry.Handler == handler);
     }
 
-    public ReadOnlySpan<(int Priority, TDelegate Handler)> GetSorted()
+    public void Invoke(TEventArgs eventArgs)
     {
         if (_dirty)
         {
-            _handlers.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            _handlers.Sort(static (left, right) => left.Priority.CompareTo(right.Priority));
             _dirty = false;
         }
 
-        return System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_handlers);
+        eventArgs.Consumed = false;
+
+        foreach ((_, InputEventHandler<TEventArgs> handler) in _handlers)
+        {
+            handler(eventArgs);
+
+            if (eventArgs.Consumed)
+            {
+                break;
+            }
+        }
     }
 }
 
-internal sealed class ViewScopedPriorityEventHandlers<TDelegate> where TDelegate : Delegate
+internal sealed class ViewScopedPriorityEventHandlers<TEventArgs>
+    where TEventArgs : ConsumableInputEventArgs
 {
-    private readonly List<(ViewScope ViewScope, PriorityEventHandlers<TDelegate> Handlers)> _handlers = new();
+    private readonly List<(
+        ViewScope ViewScope,
+        int Priority,
+        InputEventHandler<TEventArgs> Handler)> _handlers = new();
+    private bool _dirty;
 
-    public void Add(ViewScope viewScope, int priority, TDelegate handler)
+    public void Add(
+        ViewScope viewScope,
+        int priority,
+        InputEventHandler<TEventArgs> handler)
     {
-        foreach ((ViewScope registeredViewScope, PriorityEventHandlers<TDelegate> handlers) in _handlers)
-        {
-            if (registeredViewScope == viewScope)
-            {
-                handlers.Add(priority, handler);
-                return;
-            }
-        }
-
-        PriorityEventHandlers<TDelegate> newHandlers = new();
-        newHandlers.Add(priority, handler);
-        _handlers.Add((viewScope, newHandlers));
+        _handlers.Add((viewScope, priority, handler));
+        _dirty = true;
     }
 
-    public void Remove(ViewScope viewScope, TDelegate handler)
+    public void Remove(
+        ViewScope viewScope,
+        InputEventHandler<TEventArgs> handler)
     {
-        foreach ((ViewScope registeredViewScope, PriorityEventHandlers<TDelegate> handlers) in _handlers)
-        {
-            if (registeredViewScope == viewScope)
-            {
-                handlers.Remove(handler);
-                return;
-            }
-        }
+        _handlers.RemoveAll(entry =>
+            entry.ViewScope == viewScope && entry.Handler == handler);
     }
 
-    public ReadOnlySpan<(int Priority, TDelegate Handler)> GetSorted(ViewScope viewScope)
+    public void Invoke(
+        ViewScope viewScope,
+        TEventArgs eventArgs)
     {
-        foreach ((ViewScope registeredViewScope, PriorityEventHandlers<TDelegate> handlers) in _handlers)
+        if (_dirty)
         {
-            if (registeredViewScope == viewScope)
-            {
-                return handlers.GetSorted();
-            }
+            _handlers.Sort(static (left, right) => left.Priority.CompareTo(right.Priority));
+            _dirty = false;
         }
 
-        return ReadOnlySpan<(int Priority, TDelegate Handler)>.Empty;
+        eventArgs.Consumed = false;
+
+        foreach ((ViewScope registeredViewScope, _, InputEventHandler<TEventArgs> handler) in _handlers)
+        {
+            if (registeredViewScope != viewScope)
+            {
+                continue;
+            }
+
+            handler(eventArgs);
+
+            if (eventArgs.Consumed)
+            {
+                break;
+            }
+        }
     }
 }

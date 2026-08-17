@@ -28,7 +28,7 @@ static class Program
             Window window = windowRegistry.GetWindow();
             window.SetHitTest(point => InteractiveRegion.Intersects(point) ? HitTestResult.Normal : HitTestResult.Miss);
 
-            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs e) =>
+            keyboardService.KeyDown += e =>
             {
                 if (e.Key == VirtualKey.Escape)
                 {

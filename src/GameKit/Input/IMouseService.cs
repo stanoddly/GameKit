@@ -2,27 +2,27 @@ namespace GameKit.Input;
 
 public interface IMouseService
 {
-    event MouseButtonPressedHandler ButtonPress;
-    event MouseButtonReleasedHandler ButtonRelease;
-    event MouseMotionHandler Motion;
-    event MouseWheelHandler Wheel;
-    event MouseWindowPresenceHandler WindowEnter;
-    event MouseWindowPresenceHandler WindowLeave;
+    event InputEventHandler<MouseButtonEventArgs> ButtonPress;
+    event InputEventHandler<MouseButtonEventArgs> ButtonRelease;
+    event InputEventHandler<MouseMotionEventArgs> Motion;
+    event InputEventHandler<MouseWheelEventArgs> Wheel;
+    event InputEventHandler<MouseWindowPresenceEventArgs> WindowEnter;
+    event InputEventHandler<MouseWindowPresenceEventArgs> WindowLeave;
 
     bool IsInWindow(ViewScope viewScope = default);
 
     MouseState GetGlobalState();
 
-    void SubscribeButtonPress(int priority, MouseButtonPressedHandler handler);
-    void SubscribeButtonRelease(int priority, MouseButtonReleasedHandler handler);
-    void SubscribeMotion(int priority, MouseMotionHandler handler);
-    void SubscribeWheel(int priority, MouseWheelHandler handler);
-    void SubscribeWindowEnter(int priority, MouseWindowPresenceHandler handler);
-    void SubscribeWindowLeave(int priority, MouseWindowPresenceHandler handler);
-    void SubscribeButtonPress(ViewScope viewScope, int priority, MouseButtonPressedHandler handler);
-    void SubscribeButtonRelease(ViewScope viewScope, int priority, MouseButtonReleasedHandler handler);
-    void SubscribeMotion(ViewScope viewScope, int priority, MouseMotionHandler handler);
-    void SubscribeWheel(ViewScope viewScope, int priority, MouseWheelHandler handler);
-    void SubscribeWindowEnter(ViewScope viewScope, int priority, MouseWindowPresenceHandler handler);
-    void SubscribeWindowLeave(ViewScope viewScope, int priority, MouseWindowPresenceHandler handler);
+    void SubscribeButtonPress(int priority, InputEventHandler<MouseButtonEventArgs> handler);
+    void SubscribeButtonRelease(int priority, InputEventHandler<MouseButtonEventArgs> handler);
+    void SubscribeMotion(int priority, InputEventHandler<MouseMotionEventArgs> handler);
+    void SubscribeWheel(int priority, InputEventHandler<MouseWheelEventArgs> handler);
+    void SubscribeWindowEnter(int priority, InputEventHandler<MouseWindowPresenceEventArgs> handler);
+    void SubscribeWindowLeave(int priority, InputEventHandler<MouseWindowPresenceEventArgs> handler);
+    void SubscribeButtonPress(ViewScope viewScope, int priority, InputEventHandler<MouseButtonEventArgs> handler);
+    void SubscribeButtonRelease(ViewScope viewScope, int priority, InputEventHandler<MouseButtonEventArgs> handler);
+    void SubscribeMotion(ViewScope viewScope, int priority, InputEventHandler<MouseMotionEventArgs> handler);
+    void SubscribeWheel(ViewScope viewScope, int priority, InputEventHandler<MouseWheelEventArgs> handler);
+    void SubscribeWindowEnter(ViewScope viewScope, int priority, InputEventHandler<MouseWindowPresenceEventArgs> handler);
+    void SubscribeWindowLeave(ViewScope viewScope, int priority, InputEventHandler<MouseWindowPresenceEventArgs> handler);
 }
