@@ -20,18 +20,21 @@ public class Gamepad
 
 public class GamepadButtonEventArgs : ConsumableInputEventArgs
 {
+    public Gamepad Gamepad { get; internal set; } = null!;
     public GamepadButton Button { get; internal set; }
     public ulong Timestamp { get; internal set; }
 }
 
 public class GamepadStickEventArgs : ConsumableInputEventArgs
 {
+    public Gamepad Gamepad { get; internal set; } = null!;
     public Vector2 Value { get; internal set; }
     public ulong Timestamp { get; internal set; }
 }
 
 public class GamepadTriggerEventArgs : ConsumableInputEventArgs
 {
+    public Gamepad Gamepad { get; internal set; } = null!;
     public float Value { get; internal set; }
     public ulong Timestamp { get; internal set; }
 }
@@ -50,46 +53,46 @@ public class GamepadService : IGamepadService
     private readonly GamepadStickEventArgs _stickEventArgs = new();
     private readonly GamepadTriggerEventArgs _triggerEventArgs = new();
 
-    private readonly PriorityEventHandlers<Gamepad, GamepadStickEventArgs> _leftStickMotionHandlers = new();
-    private readonly PriorityEventHandlers<Gamepad, GamepadStickEventArgs> _rightStickMotionHandlers = new();
-    private readonly PriorityEventHandlers<Gamepad, GamepadTriggerEventArgs> _leftTriggerMotionHandlers = new();
-    private readonly PriorityEventHandlers<Gamepad, GamepadTriggerEventArgs> _rightTriggerMotionHandlers = new();
-    private readonly PriorityEventHandlers<Gamepad, GamepadButtonEventArgs> _buttonPressHandlers = new();
-    private readonly PriorityEventHandlers<Gamepad, GamepadButtonEventArgs> _buttonReleaseHandlers = new();
+    private readonly PriorityEventHandlers<GamepadStickEventArgs> _leftStickMotionHandlers = new();
+    private readonly PriorityEventHandlers<GamepadStickEventArgs> _rightStickMotionHandlers = new();
+    private readonly PriorityEventHandlers<GamepadTriggerEventArgs> _leftTriggerMotionHandlers = new();
+    private readonly PriorityEventHandlers<GamepadTriggerEventArgs> _rightTriggerMotionHandlers = new();
+    private readonly PriorityEventHandlers<GamepadButtonEventArgs> _buttonPressHandlers = new();
+    private readonly PriorityEventHandlers<GamepadButtonEventArgs> _buttonReleaseHandlers = new();
 
     public IReadOnlyCollection<Gamepad> Gamepads => _gamepads.Values;
 
-    public event InputEventHandler<Gamepad, GamepadStickEventArgs> LeftStickMotion
+    public event InputEventHandler<GamepadStickEventArgs> LeftStickMotion
     {
         add => _leftStickMotionHandlers.Add(0, value);
         remove => _leftStickMotionHandlers.Remove(value);
     }
 
-    public event InputEventHandler<Gamepad, GamepadStickEventArgs> RightStickMotion
+    public event InputEventHandler<GamepadStickEventArgs> RightStickMotion
     {
         add => _rightStickMotionHandlers.Add(0, value);
         remove => _rightStickMotionHandlers.Remove(value);
     }
 
-    public event InputEventHandler<Gamepad, GamepadTriggerEventArgs> LeftTriggerMotion
+    public event InputEventHandler<GamepadTriggerEventArgs> LeftTriggerMotion
     {
         add => _leftTriggerMotionHandlers.Add(0, value);
         remove => _leftTriggerMotionHandlers.Remove(value);
     }
 
-    public event InputEventHandler<Gamepad, GamepadTriggerEventArgs> RightTriggerMotion
+    public event InputEventHandler<GamepadTriggerEventArgs> RightTriggerMotion
     {
         add => _rightTriggerMotionHandlers.Add(0, value);
         remove => _rightTriggerMotionHandlers.Remove(value);
     }
 
-    public event InputEventHandler<Gamepad, GamepadButtonEventArgs> ButtonPress
+    public event InputEventHandler<GamepadButtonEventArgs> ButtonPress
     {
         add => _buttonPressHandlers.Add(0, value);
         remove => _buttonPressHandlers.Remove(value);
     }
 
-    public event InputEventHandler<Gamepad, GamepadButtonEventArgs> ButtonRelease
+    public event InputEventHandler<GamepadButtonEventArgs> ButtonRelease
     {
         add => _buttonReleaseHandlers.Add(0, value);
         remove => _buttonReleaseHandlers.Remove(value);
@@ -98,32 +101,32 @@ public class GamepadService : IGamepadService
     public event GamepadConnectionEventHandler? GamepadConnected;
     public event GamepadConnectionEventHandler? GamepadDisconnected;
 
-    public void SubscribeLeftStickMotion(int priority, InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
+    public void SubscribeLeftStickMotion(int priority, InputEventHandler<GamepadStickEventArgs> handler)
     {
         _leftStickMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeRightStickMotion(int priority, InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
+    public void SubscribeRightStickMotion(int priority, InputEventHandler<GamepadStickEventArgs> handler)
     {
         _rightStickMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeLeftTriggerMotion(int priority, InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
+    public void SubscribeLeftTriggerMotion(int priority, InputEventHandler<GamepadTriggerEventArgs> handler)
     {
         _leftTriggerMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeRightTriggerMotion(int priority, InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
+    public void SubscribeRightTriggerMotion(int priority, InputEventHandler<GamepadTriggerEventArgs> handler)
     {
         _rightTriggerMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeButtonPress(int priority, InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
+    public void SubscribeButtonPress(int priority, InputEventHandler<GamepadButtonEventArgs> handler)
     {
         _buttonPressHandlers.Add(priority, handler);
     }
 
-    public void SubscribeButtonRelease(int priority, InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
+    public void SubscribeButtonRelease(int priority, InputEventHandler<GamepadButtonEventArgs> handler)
     {
         _buttonReleaseHandlers.Add(priority, handler);
     }
@@ -207,9 +210,10 @@ public class GamepadService : IGamepadService
 
         gamepad.ButtonFlags |= buttonState;
 
+        _buttonEventArgs.Gamepad = gamepad;
         _buttonEventArgs.Button = (GamepadButton)gamepadButtonEvent.Button;
         _buttonEventArgs.Timestamp = gamepadButtonEvent.timestamp;
-        _buttonPressHandlers.Invoke(gamepad, _buttonEventArgs);
+        _buttonPressHandlers.Invoke(_buttonEventArgs);
     }
 
     internal void OnGamepadButtonReleased(SDL_GamepadButtonEvent gamepadButtonEvent)
@@ -233,9 +237,10 @@ public class GamepadService : IGamepadService
 
         gamepad.ButtonFlags &= ~buttonState;
 
+        _buttonEventArgs.Gamepad = gamepad;
         _buttonEventArgs.Button = (GamepadButton)gamepadButtonEvent.Button;
         _buttonEventArgs.Timestamp = gamepadButtonEvent.timestamp;
-        _buttonReleaseHandlers.Invoke(gamepad, _buttonEventArgs);
+        _buttonReleaseHandlers.Invoke(_buttonEventArgs);
     }
 
     internal void OnGamepadStickMotion(in SDL_GamepadAxisEvent gamepadAxisEvent)
@@ -273,9 +278,10 @@ public class GamepadService : IGamepadService
 
             gamepad.LeftStick = originalLeftStickState with { X = normalizedValue };
 
+            _stickEventArgs.Gamepad = gamepad;
             _stickEventArgs.Value = gamepad.LeftStick;
             _stickEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _leftStickMotionHandlers.Invoke(gamepad, _stickEventArgs);
+            _leftStickMotionHandlers.Invoke(_stickEventArgs);
         }
         else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFTY)
         {
@@ -289,9 +295,10 @@ public class GamepadService : IGamepadService
 
             gamepad.LeftStick = originalLeftStickState with { Y = normalizedValue };
 
+            _stickEventArgs.Gamepad = gamepad;
             _stickEventArgs.Value = gamepad.LeftStick;
             _stickEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _leftStickMotionHandlers.Invoke(gamepad, _stickEventArgs);
+            _leftStickMotionHandlers.Invoke(_stickEventArgs);
         }
         else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTX)
         {
@@ -305,9 +312,10 @@ public class GamepadService : IGamepadService
 
             gamepad.RightStick = originalRightStickState with { X = normalizedValue };
 
+            _stickEventArgs.Gamepad = gamepad;
             _stickEventArgs.Value = gamepad.RightStick;
             _stickEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _rightStickMotionHandlers.Invoke(gamepad, _stickEventArgs);
+            _rightStickMotionHandlers.Invoke(_stickEventArgs);
         }
         else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHTY)
         {
@@ -321,9 +329,10 @@ public class GamepadService : IGamepadService
 
             gamepad.RightStick = originalRightStickState with { Y = normalizedValue };
 
+            _stickEventArgs.Gamepad = gamepad;
             _stickEventArgs.Value = gamepad.RightStick;
             _stickEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _rightStickMotionHandlers.Invoke(gamepad, _stickEventArgs);
+            _rightStickMotionHandlers.Invoke(_stickEventArgs);
         }
         else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_LEFT_TRIGGER)
         {
@@ -337,9 +346,10 @@ public class GamepadService : IGamepadService
 
             gamepad.LeftTrigger = triggerValue;
 
+            _triggerEventArgs.Gamepad = gamepad;
             _triggerEventArgs.Value = triggerValue;
             _triggerEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _leftTriggerMotionHandlers.Invoke(gamepad, _triggerEventArgs);
+            _leftTriggerMotionHandlers.Invoke(_triggerEventArgs);
         }
         else if (gamepadAxis == SDL_GamepadAxis.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
         {
@@ -353,9 +363,10 @@ public class GamepadService : IGamepadService
 
             gamepad.RightTrigger = triggerValue;
 
+            _triggerEventArgs.Gamepad = gamepad;
             _triggerEventArgs.Value = triggerValue;
             _triggerEventArgs.Timestamp = gamepadAxisEvent.timestamp;
-            _rightTriggerMotionHandlers.Invoke(gamepad, _triggerEventArgs);
+            _rightTriggerMotionHandlers.Invoke(_triggerEventArgs);
         }
     }
 }

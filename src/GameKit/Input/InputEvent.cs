@@ -10,7 +10,5 @@ public abstract class ConsumableInputEventArgs : EventArgs
     }
 }
 
-public delegate void InputEventHandler<in TSender, in TEventArgs>(
-    TSender sender,
-    TEventArgs eventArgs)
+public delegate void InputEventHandler<in TEventArgs>(TEventArgs eventArgs)
     where TEventArgs : ConsumableInputEventArgs;

@@ -1,23 +1,23 @@
 namespace GameKit.Input;
 
-internal sealed class PriorityEventHandlers<TSender, TEventArgs>
+internal sealed class PriorityEventHandlers<TEventArgs>
     where TEventArgs : ConsumableInputEventArgs
 {
-    private readonly List<(int Priority, InputEventHandler<TSender, TEventArgs> Handler)> _handlers = new();
+    private readonly List<(int Priority, InputEventHandler<TEventArgs> Handler)> _handlers = new();
     private bool _dirty;
 
-    public void Add(int priority, InputEventHandler<TSender, TEventArgs> handler)
+    public void Add(int priority, InputEventHandler<TEventArgs> handler)
     {
         _handlers.Add((priority, handler));
         _dirty = true;
     }
 
-    public void Remove(InputEventHandler<TSender, TEventArgs> handler)
+    public void Remove(InputEventHandler<TEventArgs> handler)
     {
         _handlers.RemoveAll(entry => entry.Handler == handler);
     }
 
-    public void Invoke(TSender sender, TEventArgs eventArgs)
+    public void Invoke(TEventArgs eventArgs)
     {
         if (_dirty)
         {
@@ -27,9 +27,9 @@ internal sealed class PriorityEventHandlers<TSender, TEventArgs>
 
         eventArgs.Consumed = false;
 
-        foreach ((_, InputEventHandler<TSender, TEventArgs> handler) in _handlers)
+        foreach ((_, InputEventHandler<TEventArgs> handler) in _handlers)
         {
-            handler(sender, eventArgs);
+            handler(eventArgs);
 
             if (eventArgs.Consumed)
             {
@@ -39,19 +39,19 @@ internal sealed class PriorityEventHandlers<TSender, TEventArgs>
     }
 }
 
-internal sealed class ViewScopedPriorityEventHandlers<TSender, TEventArgs>
+internal sealed class ViewScopedPriorityEventHandlers<TEventArgs>
     where TEventArgs : ConsumableInputEventArgs
 {
     private readonly List<(
         ViewScope ViewScope,
         int Priority,
-        InputEventHandler<TSender, TEventArgs> Handler)> _handlers = new();
+        InputEventHandler<TEventArgs> Handler)> _handlers = new();
     private bool _dirty;
 
     public void Add(
         ViewScope viewScope,
         int priority,
-        InputEventHandler<TSender, TEventArgs> handler)
+        InputEventHandler<TEventArgs> handler)
     {
         _handlers.Add((viewScope, priority, handler));
         _dirty = true;
@@ -59,7 +59,7 @@ internal sealed class ViewScopedPriorityEventHandlers<TSender, TEventArgs>
 
     public void Remove(
         ViewScope viewScope,
-        InputEventHandler<TSender, TEventArgs> handler)
+        InputEventHandler<TEventArgs> handler)
     {
         _handlers.RemoveAll(entry =>
             entry.ViewScope == viewScope && entry.Handler == handler);
@@ -67,7 +67,6 @@ internal sealed class ViewScopedPriorityEventHandlers<TSender, TEventArgs>
 
     public void Invoke(
         ViewScope viewScope,
-        TSender sender,
         TEventArgs eventArgs)
     {
         if (_dirty)
@@ -105,7 +104,7 @@ internal sealed class ViewScopedPriorityEventHandlers<TSender, TEventArgs>
             index < _handlers.Count && _handlers[index].ViewScope == viewScope;
             index++)
         {
-            _handlers[index].Handler(sender, eventArgs);
+            _handlers[index].Handler(eventArgs);
 
             if (eventArgs.Consumed)
             {

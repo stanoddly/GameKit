@@ -23,10 +23,8 @@ public class TextInputService : ITextInputService
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
-    private readonly ViewScopedPriorityEventHandlers<ITextInputService, TextInputEventArgs>
-        _textInputHandlers = new();
-    private readonly ViewScopedPriorityEventHandlers<ITextInputService, TextEditingEventArgs>
-        _textEditingHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<TextInputEventArgs> _textInputHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<TextEditingEventArgs> _textEditingHandlers = new();
 
     public bool IsActiveFor(ViewScope viewScope = default)
     {
@@ -37,34 +35,34 @@ public class TextInputService : ITextInputService
         }
     }
 
-    public event InputEventHandler<ITextInputService, TextInputEventArgs> TextInput
+    public event InputEventHandler<TextInputEventArgs> TextInput
     {
         add => _textInputHandlers.Add(default, 0, value);
         remove => _textInputHandlers.Remove(default, value);
     }
 
-    public event InputEventHandler<ITextInputService, TextEditingEventArgs> TextEditing
+    public event InputEventHandler<TextEditingEventArgs> TextEditing
     {
         add => _textEditingHandlers.Add(default, 0, value);
         remove => _textEditingHandlers.Remove(default, value);
     }
 
-    public void SubscribeTextInput(int priority, InputEventHandler<ITextInputService, TextInputEventArgs> handler)
+    public void SubscribeTextInput(int priority, InputEventHandler<TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeTextEditing(int priority, InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
+    public void SubscribeTextEditing(int priority, InputEventHandler<TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeTextInput(ViewScope viewScope, int priority, InputEventHandler<ITextInputService, TextInputEventArgs> handler)
+    public void SubscribeTextInput(ViewScope viewScope, int priority, InputEventHandler<TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(viewScope, priority, handler);
     }
 
-    public void SubscribeTextEditing(ViewScope viewScope, int priority, InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
+    public void SubscribeTextEditing(ViewScope viewScope, int priority, InputEventHandler<TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(viewScope, priority, handler);
     }
@@ -104,7 +102,7 @@ public class TextInputService : ITextInputService
 
         _textInputEventArgs.Text = text;
         _textInputEventArgs.Timestamp = textInputEvent.timestamp;
-        _textInputHandlers.Invoke(viewScope, this, _textInputEventArgs);
+        _textInputHandlers.Invoke(viewScope, _textInputEventArgs);
     }
 
     internal void OnTextEditingEvent(
@@ -121,6 +119,6 @@ public class TextInputService : ITextInputService
         _textEditingEventArgs.Start = textEditingEvent.start;
         _textEditingEventArgs.Length = textEditingEvent.length;
         _textEditingEventArgs.Timestamp = textEditingEvent.timestamp;
-        _textEditingHandlers.Invoke(viewScope, this, _textEditingEventArgs);
+        _textEditingHandlers.Invoke(viewScope, _textEditingEventArgs);
     }
 }

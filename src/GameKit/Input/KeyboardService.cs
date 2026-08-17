@@ -5,6 +5,7 @@ namespace GameKit.Input;
 
 public class KeyEventArgs : ConsumableInputEventArgs
 {
+    public Keyboard Keyboard { get; internal set; } = null!;
     public Scancode Scancode { get; internal set; }
     public VirtualKey Key { get; internal set; }
     public ulong Timestamp { get; internal set; }
@@ -19,37 +20,37 @@ public class KeyboardService : IKeyboardService
 
     // Cached to avoid per-event allocations. Do not hold references to event args beyond the callback.
     private readonly KeyEventArgs _keyEventArgs = new();
-    private readonly ViewScopedPriorityEventHandlers<Keyboard, KeyEventArgs> _keyDownHandlers = new();
-    private readonly ViewScopedPriorityEventHandlers<Keyboard, KeyEventArgs> _keyUpHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<KeyEventArgs> _keyDownHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<KeyEventArgs> _keyUpHandlers = new();
 
-    public event InputEventHandler<Keyboard, KeyEventArgs> KeyDown
+    public event InputEventHandler<KeyEventArgs> KeyDown
     {
         add => _keyDownHandlers.Add(default, 0, value);
         remove => _keyDownHandlers.Remove(default, value);
     }
 
-    public event InputEventHandler<Keyboard, KeyEventArgs> KeyUp
+    public event InputEventHandler<KeyEventArgs> KeyUp
     {
         add => _keyUpHandlers.Add(default, 0, value);
         remove => _keyUpHandlers.Remove(default, value);
     }
 
-    public void SubscribeKeyDown(int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyDown(int priority, InputEventHandler<KeyEventArgs> handler)
     {
         _keyDownHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeKeyUp(int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyUp(int priority, InputEventHandler<KeyEventArgs> handler)
     {
         _keyUpHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeKeyDown(ViewScope viewScope, int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyDown(ViewScope viewScope, int priority, InputEventHandler<KeyEventArgs> handler)
     {
         _keyDownHandlers.Add(viewScope, priority, handler);
     }
 
-    public void SubscribeKeyUp(ViewScope viewScope, int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyUp(ViewScope viewScope, int priority, InputEventHandler<KeyEventArgs> handler)
     {
         _keyUpHandlers.Add(viewScope, priority, handler);
     }
@@ -73,6 +74,7 @@ public class KeyboardService : IKeyboardService
             keyboard = new Keyboard();
         }
 
+        _keyEventArgs.Keyboard = keyboard;
         _keyEventArgs.Scancode = scancode;
         _keyEventArgs.Key = virtualKey;
         _keyEventArgs.Timestamp = timestamp;
@@ -85,14 +87,14 @@ public class KeyboardService : IKeyboardService
                     _appControl.Quit();
                 }
 
-                _keyDownHandlers.Invoke(viewScope, keyboard, _keyEventArgs);
+                _keyDownHandlers.Invoke(viewScope, _keyEventArgs);
             }
         }
         else
         {
             keyboard.Unset(scancode);
 
-            _keyUpHandlers.Invoke(viewScope, keyboard, _keyEventArgs);
+            _keyUpHandlers.Invoke(viewScope, _keyEventArgs);
         }
     }
 }

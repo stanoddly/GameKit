@@ -28,36 +28,36 @@ static class Program
 
             Console.WriteLine("Listening for gamepad input...");
 
-            gamepadService.LeftStickMotion += (gamepad, motion) =>
+            gamepadService.LeftStickMotion += motion =>
             {
                 Vector2 value = motion.Value;
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Stick: ({value.X:F2}, {value.Y:F2})");
+                Console.WriteLine($"[Gamepad {motion.Gamepad.DeviceId}] Left Stick: ({value.X:F2}, {value.Y:F2})");
             };
 
-            gamepadService.RightStickMotion += (gamepad, motion) =>
+            gamepadService.RightStickMotion += motion =>
             {
                 Vector2 value = motion.Value;
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Stick: ({value.X:F2}, {value.Y:F2})");
+                Console.WriteLine($"[Gamepad {motion.Gamepad.DeviceId}] Right Stick: ({value.X:F2}, {value.Y:F2})");
             };
 
-            gamepadService.LeftTriggerMotion += (gamepad, motion) =>
+            gamepadService.LeftTriggerMotion += motion =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Left Trigger: {motion.Value:F2}");
+                Console.WriteLine($"[Gamepad {motion.Gamepad.DeviceId}] Left Trigger: {motion.Value:F2}");
             };
 
-            gamepadService.RightTriggerMotion += (gamepad, motion) =>
+            gamepadService.RightTriggerMotion += motion =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Right Trigger: {motion.Value:F2}");
+                Console.WriteLine($"[Gamepad {motion.Gamepad.DeviceId}] Right Trigger: {motion.Value:F2}");
             };
 
-            gamepadService.ButtonPress += (gamepad, button) =>
+            gamepadService.ButtonPress += button =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Button Pressed: {button}");
+                Console.WriteLine($"[Gamepad {button.Gamepad.DeviceId}] Button Pressed: {button}");
             };
 
-            gamepadService.ButtonRelease += (gamepad, button) =>
+            gamepadService.ButtonRelease += button =>
             {
-                Console.WriteLine($"[Gamepad {gamepad.DeviceId}] Button Released: {button}");
+                Console.WriteLine($"[Gamepad {button.Gamepad.DeviceId}] Button Released: {button}");
             };
 
             gamepadService.GamepadConnected += gamepad =>

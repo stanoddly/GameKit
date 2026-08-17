@@ -111,7 +111,7 @@ application, use a scoped subscription when a handler belongs to another window:
 keyboardService.SubscribeKeyDown(
     ViewScopes.Inventory,
     priority: 0,
-    (keyboard, eventArgs) => HandleInventoryKey(keyboard, eventArgs));
+    eventArgs => HandleInventoryKey(eventArgs));
 ```
 
 Scoped overloads exist for keyboard, mouse, and text-input subscriptions.

@@ -37,7 +37,7 @@ static class Program
                 Console.WriteLine("On KDE Wayland, try running with: SDL_VIDEO_DRIVER=x11 dotnet run");
             }
 
-            keyboardService.KeyDown += (Keyboard keyboard, KeyEventArgs eventArgs) =>
+            keyboardService.KeyDown += eventArgs =>
             {
                 if (eventArgs.Key != VirtualKey.Space)
                 {

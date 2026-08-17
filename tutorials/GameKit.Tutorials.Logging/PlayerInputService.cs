@@ -34,7 +34,7 @@ sealed class PlayerInputService : IDisposable
         _keyboardService.KeyDown += OnKeyDown;
     }
 
-    private void OnKeyDown(Keyboard _, KeyEventArgs eventArgs)
+    private void OnKeyDown(KeyEventArgs eventArgs)
     {
         _logger.ZLogConditionalDebug($"Key {eventArgs.Key} pressed using scancode {eventArgs.Scancode}");
 
