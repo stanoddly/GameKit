@@ -30,7 +30,7 @@ public sealed class PriorityEventHandlersTests
     {
         ViewScopedPriorityEventHandlers<TestEventArgs> handlers = new();
         List<string> calls = new();
-        handlers.Add(_secondView, -10, _ => calls.Add("second"));
+        handlers.Add(_secondView, 0, _ => calls.Add("second"));
         handlers.Add(_firstView, 10, _ => calls.Add("late"));
         handlers.Add(_firstView, -10, _ => calls.Add("early"));
 

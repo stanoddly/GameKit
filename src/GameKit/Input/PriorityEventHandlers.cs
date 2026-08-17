@@ -71,40 +71,20 @@ internal sealed class ViewScopedPriorityEventHandlers<TEventArgs>
     {
         if (_dirty)
         {
-            _handlers.Sort(static (left, right) =>
-            {
-                int viewScopeComparison = left.ViewScope.Value.CompareTo(right.ViewScope.Value);
-                return viewScopeComparison != 0
-                    ? viewScopeComparison
-                    : left.Priority.CompareTo(right.Priority);
-            });
+            _handlers.Sort(static (left, right) => left.Priority.CompareTo(right.Priority));
             _dirty = false;
         }
 
         eventArgs.Consumed = false;
 
-        int start = 0;
-        int end = _handlers.Count;
-
-        while (start < end)
+        foreach ((ViewScope registeredViewScope, _, InputEventHandler<TEventArgs> handler) in _handlers)
         {
-            int middle = start + ((end - start) / 2);
-
-            if (_handlers[middle].ViewScope.Value < viewScope.Value)
+            if (registeredViewScope != viewScope)
             {
-                start = middle + 1;
+                continue;
             }
-            else
-            {
-                end = middle;
-            }
-        }
 
-        for (int index = start;
-            index < _handlers.Count && _handlers[index].ViewScope == viewScope;
-            index++)
-        {
-            _handlers[index].Handler(eventArgs);
+            handler(eventArgs);
 
             if (eventArgs.Consumed)
             {
