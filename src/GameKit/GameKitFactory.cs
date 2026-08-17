@@ -75,6 +75,7 @@ public class GameKitFactory: IDisposable
             config.Transparent,
             config.Borderless,
             config.AlwaysOnTop,
+            config.InitiallyVisible,
             config.CloseBehavior);
     }
 
@@ -90,6 +91,7 @@ public class GameKitFactory: IDisposable
         bool transparent = false,
         bool borderless = false,
         bool alwaysOnTop = false,
+        bool initiallyVisible = true,
         WindowCloseBehavior closeBehavior = WindowCloseBehavior.QuitApplication)
     {
         EnsureSdlInitialized();
@@ -130,6 +132,11 @@ public class GameKitFactory: IDisposable
         if (alwaysOnTop)
         {
             windowFlags |= SDL_WindowFlags.SDL_WINDOW_ALWAYS_ON_TOP;
+        }
+
+        if (!initiallyVisible)
+        {
+            windowFlags |= SDL_WindowFlags.SDL_WINDOW_HIDDEN;
         }
 
         Pointer<SDL_Window> sdlWindow;

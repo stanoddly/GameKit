@@ -2,7 +2,8 @@ namespace GameKit;
 
 public enum WindowCloseBehavior
 {
-    QuitApplication
+    QuitApplication,
+    HideWindow
 }
 
 public sealed record WindowConfig(
@@ -13,4 +14,5 @@ public sealed record WindowConfig(
     bool Transparent = false,
     bool Borderless = false,
     bool AlwaysOnTop = false,
+    bool InitiallyVisible = true,
     WindowCloseBehavior CloseBehavior = WindowCloseBehavior.QuitApplication);

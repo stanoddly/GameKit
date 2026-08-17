@@ -98,6 +98,28 @@ Window inventoryWindow = windowRegistry.GetWindow(ViewScopes.Inventory);
 graphicsPipelineBuilder.AddColorFormatFromDisplay(ViewScopes.Inventory);
 ```
 
+Secondary windows can be created hidden and shown on request. A reusable window can hide when its
+close button is pressed instead of quitting the application:
+
+```csharp
+builder.UseDefaultRendering(
+    ViewScopes.Inventory,
+    new WindowConfig(
+        Size: new Size<uint>(480, 360),
+        Title: "Inventory",
+        InitiallyVisible: false,
+        CloseBehavior: WindowCloseBehavior.HideWindow));
+
+Window inventoryWindow = windowRegistry.GetWindow(ViewScopes.Inventory);
+inventoryWindow.Show();
+inventoryWindow.Hide();
+```
+
+Hidden windows remain registered and retain their renderer and GPU resources, but their render
+coordinators do not acquire a swapchain texture or invoke renderers. They are disposed with the
+service provider that owns them. `InitiallyVisible` controls initial visibility; it does not defer
+native window creation.
+
 SDL window IDs remain internal and are used only to route native events. Windows registered by a
 stage use the stage provider's lifetime. Disposing that provider unregisters and disposes its window
 and render coordinator.
