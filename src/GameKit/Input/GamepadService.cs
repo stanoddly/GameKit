@@ -98,44 +98,32 @@ public class GamepadService : IGamepadService
     public event GamepadConnectionEventHandler? GamepadConnected;
     public event GamepadConnectionEventHandler? GamepadDisconnected;
 
-    public void SubscribeLeftStickMotion(
-        int priority,
-        InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
+    public void SubscribeLeftStickMotion(int priority, InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
     {
         _leftStickMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeRightStickMotion(
-        int priority,
-        InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
+    public void SubscribeRightStickMotion(int priority, InputEventHandler<Gamepad, GamepadStickEventArgs> handler)
     {
         _rightStickMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeLeftTriggerMotion(
-        int priority,
-        InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
+    public void SubscribeLeftTriggerMotion(int priority, InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
     {
         _leftTriggerMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeRightTriggerMotion(
-        int priority,
-        InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
+    public void SubscribeRightTriggerMotion(int priority, InputEventHandler<Gamepad, GamepadTriggerEventArgs> handler)
     {
         _rightTriggerMotionHandlers.Add(priority, handler);
     }
 
-    public void SubscribeButtonPress(
-        int priority,
-        InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
+    public void SubscribeButtonPress(int priority, InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
     {
         _buttonPressHandlers.Add(priority, handler);
     }
 
-    public void SubscribeButtonRelease(
-        int priority,
-        InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
+    public void SubscribeButtonRelease(int priority, InputEventHandler<Gamepad, GamepadButtonEventArgs> handler)
     {
         _buttonReleaseHandlers.Add(priority, handler);
     }

@@ -49,32 +49,22 @@ public class TextInputService : ITextInputService
         remove => _textEditingHandlers.Remove(default, value);
     }
 
-    public void SubscribeTextInput(
-        int priority,
-        InputEventHandler<ITextInputService, TextInputEventArgs> handler)
+    public void SubscribeTextInput(int priority, InputEventHandler<ITextInputService, TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeTextEditing(
-        int priority,
-        InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
+    public void SubscribeTextEditing(int priority, InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeTextInput(
-        ViewScope viewScope,
-        int priority,
-        InputEventHandler<ITextInputService, TextInputEventArgs> handler)
+    public void SubscribeTextInput(ViewScope viewScope, int priority, InputEventHandler<ITextInputService, TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(viewScope, priority, handler);
     }
 
-    public void SubscribeTextEditing(
-        ViewScope viewScope,
-        int priority,
-        InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
+    public void SubscribeTextEditing(ViewScope viewScope, int priority, InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(viewScope, priority, handler);
     }

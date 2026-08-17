@@ -44,18 +44,12 @@ public class KeyboardService : IKeyboardService
         _keyUpHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeKeyDown(
-        ViewScope viewScope,
-        int priority,
-        InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyDown(ViewScope viewScope, int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
     {
         _keyDownHandlers.Add(viewScope, priority, handler);
     }
 
-    public void SubscribeKeyUp(
-        ViewScope viewScope,
-        int priority,
-        InputEventHandler<Keyboard, KeyEventArgs> handler)
+    public void SubscribeKeyUp(ViewScope viewScope, int priority, InputEventHandler<Keyboard, KeyEventArgs> handler)
     {
         _keyUpHandlers.Add(viewScope, priority, handler);
     }
