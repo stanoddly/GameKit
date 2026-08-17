@@ -30,7 +30,7 @@ static class Program
             Window secondaryWindow = windowRegistry.GetWindow(SecondaryView);
             Console.WriteLine("Press Space in the main window to show or hide the secondary window.");
 
-            keyboardService.KeyDown += eventArgs =>
+            keyboardService.KeyUp += eventArgs =>
             {
                 if (eventArgs.Key != VirtualKey.Space)
                 {
