@@ -14,9 +14,7 @@ public class GameKitAppBuilder : ServiceCollection
 
     public GameKitAppBuilder()
     {
-        WindowRegistry windowRegistry = new();
-        AddSingleton(windowRegistry);
-        WindowRegistry.RegisterCallbacks(this, windowRegistry);
+        WindowRegistry.AddWindowRegistry(this);
         AddRegistry<IRenderCoordinator>();
         AddRegistry<IRenderer<DefaultRenderContext>>(static (left, right) => left.Order.CompareTo(right.Order));
         AddRegistry<IUpdatable>(static (left, right) =>

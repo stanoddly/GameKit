@@ -5,19 +5,17 @@ namespace GameKit;
 
 public sealed class WindowRegistry
 {
-    private FastListStruct<(
-        ViewScope ViewScope,
-        uint SdlId,
-        Window Window)> _windows = new(4);
+    private FastListStruct<(ViewScope ViewScope, uint SdlId, Window Window)> _windows = new(4);
 
     internal WindowRegistry()
     {
     }
 
-    internal static void RegisterCallbacks(
-        ServiceCollection services,
-        WindowRegistry windowRegistry)
+    internal static void AddWindowRegistry(ServiceCollection services)
     {
+        WindowRegistry windowRegistry = new();
+        services.AddSingleton(windowRegistry);
+        
         services.OnActivated((instance, _) =>
         {
             if (instance is Window window)
