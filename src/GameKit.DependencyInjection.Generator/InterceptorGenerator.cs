@@ -353,10 +353,11 @@ public class InterceptorGenerator : IIncrementalGenerator
     {
         ITypeSymbol implType = methodSymbol.TypeArguments[0];
 
-        if (implType is not INamedTypeSymbol implNamedType)
+        if (implType is not INamedTypeSymbol implNamedType || ContainsTypeParameter(implType))
         {
+            string implementationTypeName = implType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
-                $"{methodDisplayName}<{implType.Name}>() cannot be used with an open generic type parameter. Use {methodDisplayName}<{implType.Name}>(Func<ServiceProvider, {implType.Name}>) instead."));
+                $"{methodDisplayName}<{implementationTypeName}>() cannot be used when the implementation type is or contains a type parameter. Use {methodDisplayName}<{implementationTypeName}>(Func<ServiceProvider, {implementationTypeName}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
@@ -395,10 +396,12 @@ public class InterceptorGenerator : IIncrementalGenerator
         ITypeSymbol serviceType = methodSymbol.TypeArguments[0];
         ITypeSymbol implType = methodSymbol.TypeArguments[1];
 
-        if (implType is not INamedTypeSymbol implNamedType)
+        if (implType is not INamedTypeSymbol implNamedType || ContainsTypeParameter(implType))
         {
+            string serviceTypeName = serviceType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+            string implementationTypeName = implType.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
             return new ExtractionResult(null, CreateDiagnostic(invocation, "GK0001",
-                $"{methodDisplayName}<{serviceType.Name}, {implType.Name}>() cannot be used with open generic type parameters. Use {methodDisplayName}<{serviceType.Name}>(Func<ServiceProvider, {serviceType.Name}>) instead."));
+                $"{methodDisplayName}<{serviceTypeName}, {implementationTypeName}>() cannot be used when the implementation type is or contains a type parameter. Use {methodDisplayName}<{serviceTypeName}>(Func<ServiceProvider, {serviceTypeName}>) instead."));
         }
 
         IMethodSymbol? constructor = GetSingleAccessibleConstructor(implNamedType, context.SemanticModel, invocation.SpanStart);
@@ -637,6 +640,34 @@ public class InterceptorGenerator : IIncrementalGenerator
     private static string GetTypeName(ITypeSymbol type)
     {
         return type.ToDisplayString(FullyQualifiedNullableFormat);
+    }
+
+    private static bool ContainsTypeParameter(ITypeSymbol type)
+    {
+        if (type is ITypeParameterSymbol)
+        {
+            return true;
+        }
+
+        if (type is not INamedTypeSymbol namedType)
+        {
+            return false;
+        }
+
+        if (namedType.ContainingType != null && ContainsTypeParameter(namedType.ContainingType))
+        {
+            return true;
+        }
+
+        foreach (ITypeSymbol typeArgument in namedType.TypeArguments)
+        {
+            if (ContainsTypeParameter(typeArgument))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static IMethodSymbol? GetSingleAccessibleConstructor(INamedTypeSymbol type, SemanticModel semanticModel, int position)

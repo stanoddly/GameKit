@@ -7,7 +7,7 @@ using GameKit.DependencyInjection.Generator;
 
 namespace GameKit.DependencyInjection.Generator.Tests;
 
-public class GeneratorTrimAnnotationTests
+public class InterceptorGeneratorTests
 {
     private const string DamAttribute = "[global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(global::System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces)]";
 
@@ -42,6 +42,37 @@ public class GeneratorTrimAnnotationTests
                 services.AddTransient<IMyService, MyServiceImpl>();
                 services.AddTransient<MyService>(() => new MyService());
                 services.AddTransient<ProductService, MyFactory>();
+            }
+        }
+        """;
+
+    private const string GenericHelperRegistrationSource = """
+        using GameKit.DependencyInjection;
+
+        public interface IService<T> { }
+        public sealed class Dependency { }
+
+        public sealed class GenericImplementation<T> : IService<T>
+        {
+            public GenericImplementation(Dependency dependency) { }
+        }
+
+        public static class GenericContainer<T>
+        {
+            public sealed class NestedImplementation : IService<T>
+            {
+                public NestedImplementation(Dependency dependency) { }
+            }
+        }
+
+        public static class Registrations
+        {
+            public static void Register<T>(ServiceCollection services)
+            {
+                services.AddSingleton<GenericImplementation<T>>();
+                services.AddSingleton<IService<T>, GenericImplementation<T>>();
+                services.AddTransient<GenericContainer<T>.NestedImplementation>();
+                services.AddTransient<IService<T>, GenericContainer<T>.NestedImplementation>();
             }
         }
         """;
@@ -126,20 +157,31 @@ public class GeneratorTrimAnnotationTests
         Assert.That(generated, Does.Contain("AddTransient_"));
     }
 
+    [Test]
+    public void ConstructorRegistration_GenericImplementationContainingMethodTypeParameter_ReportsGK0001()
+    {
+        GeneratorDriverRunResult result = RunGenerator(GenericHelperRegistrationSource, emitTrimAnnotationsPropertyValue: null);
+        Diagnostic[] diagnostics = result.Diagnostics
+            .Where(diagnostic => diagnostic.Id == "GK0001")
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics, Has.Length.EqualTo(4));
+            Assert.That(diagnostics, Has.Length.EqualTo(4));
+            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddSingleton")), Is.EqualTo(2));
+            Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().StartsWith("AddTransient")), Is.EqualTo(2));
+            Assert.That(diagnostics.Select(diagnostic => diagnostic.GetMessage()), Has.Some.Contains("GenericImplementation<T>"));
+            Assert.That(diagnostics.Select(diagnostic => diagnostic.GetMessage()), Has.Some.Contains("GenericContainer<T>.NestedImplementation"));
+            Assert.That(
+                result.Results.SelectMany(generatorResult => generatorResult.GeneratedSources),
+                Has.None.Matches<GeneratedSourceResult>(source => source.HintName == "ServiceCollectionInterceptors.g.cs"));
+        });
+    }
+
     private static string RunGenerator(string? emitTrimAnnotationsPropertyValue)
     {
-        CSharpCompilation compilation = CreateCompilation(RegistrationSource);
-        InterceptorGenerator generator = new InterceptorGenerator();
-
-        OptionsProvider optionsProvider = new OptionsProvider(emitTrimAnnotationsPropertyValue);
-
-        CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: new ISourceGenerator[] { generator.AsSourceGenerator() },
-            optionsProvider: optionsProvider,
-            parseOptions: (CSharpParseOptions)compilation.SyntaxTrees[0].Options);
-
-        GeneratorDriver ran = driver.RunGenerators(compilation);
-        GeneratorDriverRunResult result = ran.GetRunResult();
+        GeneratorDriverRunResult result = RunGenerator(RegistrationSource, emitTrimAnnotationsPropertyValue);
 
         // Find the interceptors file
         foreach (GeneratorRunResult generatorResult in result.Results)
@@ -154,6 +196,22 @@ public class GeneratorTrimAnnotationTests
         }
 
         return string.Empty;
+    }
+
+    private static GeneratorDriverRunResult RunGenerator(string source, string? emitTrimAnnotationsPropertyValue)
+    {
+        CSharpCompilation compilation = CreateCompilation(source);
+        InterceptorGenerator generator = new InterceptorGenerator();
+
+        OptionsProvider optionsProvider = new OptionsProvider(emitTrimAnnotationsPropertyValue);
+
+        CSharpGeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: new ISourceGenerator[] { generator.AsSourceGenerator() },
+            optionsProvider: optionsProvider,
+            parseOptions: (CSharpParseOptions)compilation.SyntaxTrees[0].Options);
+
+        GeneratorDriver ran = driver.RunGenerators(compilation);
+        return ran.GetRunResult();
     }
 
     private static CSharpCompilation CreateCompilation(string source)

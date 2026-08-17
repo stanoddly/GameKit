@@ -514,13 +514,19 @@ The following overloads are **intercepted at each call site** by the Roslyn sour
 | `AddTransient<T>(Delegate factory)` | `T` must be a named concrete type; delegate argument must be resolvable at compile time |
 | `OnStart(Delegate action)` | Delegate argument must be resolvable at compile time |
 
-**The generic-helper failure mode.** If you wrap a call in a generic method where the type argument is itself a type parameter, the generator cannot see the concrete type and will not emit an interceptor. The runtime body throws:
+**The generic-helper failure mode.** Constructor registration cannot be used in a generic method when the implementation type is a type parameter or is a known generic type containing one. The generator reports `GK0001` at the registration call and does not emit an interceptor:
 
 ```csharp
-// Does NOT work — T is a type parameter, generator cannot intercept
+// Does NOT work — T is a type parameter
 void Register<T>(ServiceCollection services) where T : class
 {
-    services.AddSingleton<T>(); // throws InvalidOperationException at runtime
+    services.AddSingleton<T>(); // GK0001
+}
+
+// Does NOT work — Handler<T> still contains the helper's type parameter
+void RegisterHandler<T>(ServiceCollection services) where T : class
+{
+    services.AddTransient<IHandler<T>, Handler<T>>(); // GK0001
 }
 
 // Works — concrete type visible at each call site
