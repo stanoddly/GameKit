@@ -2,7 +2,7 @@ using GameKit.DependencyInjection;
 
 namespace GameKit.Pencuil;
 
-internal sealed class Pencuil : IViewScoped
+internal sealed class Pencuil
 {
     internal Pencil Pencil { get; }
 

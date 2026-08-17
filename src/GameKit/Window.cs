@@ -11,7 +11,7 @@ public readonly record struct ResolutionChangedEventArgs(ShortSize OldSize, Shor
 
 public delegate void ResolutionChangedHandler(ResolutionChangedEventArgs eventArgs);
 
-public class Window : IViewScoped, IDisposable
+public class Window : IDisposable
 {
     internal Pointer<SDL_GPUDevice> SdlGpuDevice { get; }
     internal Pointer<SDL_Window> SdlWindow { get; private set; }
@@ -21,8 +21,6 @@ public class Window : IViewScoped, IDisposable
     private readonly PlatformInfo _platformInfo;
 
     internal ViewScope ViewScope { get; }
-
-    ViewScope IViewScoped.ViewScope => ViewScope;
 
     private ShortSize _lastSize;
 

@@ -35,7 +35,7 @@ Register renderers normally through DI:
 builder.AddSingleton<IRenderer<DefaultRenderContext>, GameRenderer>(GameRenderer.Create);
 ```
 
-The default `IViewScoped.ViewScope` implementation returns `default`, so single-window renderers do
+The default `IRenderer.ViewScope` implementation returns `default`, so single-window renderers do
 not declare a scope.
 
 The default window is available without a scope argument:
@@ -78,7 +78,7 @@ A renderer for an additional window overrides the scope explicitly:
 ```csharp
 public sealed class InventoryRenderer : IRenderer<DefaultRenderContext>
 {
-    ViewScope IViewScoped.ViewScope => ViewScopes.Inventory;
+    ViewScope IRenderer<DefaultRenderContext>.ViewScope => ViewScopes.Inventory;
 
     public void Render(DefaultRenderContext renderContext)
     {
@@ -132,7 +132,7 @@ builder.UsePencuil(ViewScopes.Inventory);
 
 Pencuil's MVVM contracts use explicit names: `IPencuilView`, `IPencuilViewModel`, and
 `PencuilView<TViewModel>`. Their default scope is implicit; views belonging to another window
-override `IViewScoped.ViewScope` or pass a scope to the Pencuil view base class.
+override `IPencuilView.ViewScope` or pass a scope to the Pencuil view base class.
 
 See `GameKit.Tutorials.MultiWindow` for two independently rendered windows and
 `GameKit.Tutorials.MultiWindowTextInput` for independent Pencuil focus and text input.

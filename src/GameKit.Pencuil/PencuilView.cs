@@ -7,7 +7,7 @@ public abstract class PencuilView<TViewModel> : IPencuilView
 
     protected TViewModel ViewModel { get; }
 
-    ViewScope IViewScoped.ViewScope => _viewScope;
+    ViewScope IPencuilView.ViewScope => _viewScope;
 
     protected PencuilView(TViewModel viewModel)
         : this(default, viewModel)

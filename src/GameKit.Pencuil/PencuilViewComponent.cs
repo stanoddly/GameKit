@@ -11,7 +11,7 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
 
     protected TViewModel ViewModel { get; private set; } = default!;
 
-    ViewScope IViewScoped.ViewScope => _viewScope;
+    ViewScope IPencuilView.ViewScope => _viewScope;
 
     protected PencuilViewComponent()
     {

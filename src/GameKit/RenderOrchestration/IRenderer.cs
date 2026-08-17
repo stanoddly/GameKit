@@ -1,7 +1,8 @@
 namespace GameKit.RenderOrchestration;
 
-public interface IRenderer<in TRenderContext> : IOrderable, IViewScoped
+public interface IRenderer<in TRenderContext> : IOrderable
 {
+    ViewScope ViewScope => default;
     void Render(TRenderContext renderContext);
 }
 

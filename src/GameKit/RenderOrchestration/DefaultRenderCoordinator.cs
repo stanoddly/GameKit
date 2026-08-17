@@ -3,14 +3,12 @@ using GameKit.Gpu;
 
 namespace GameKit.RenderOrchestration;
 
-internal sealed class DefaultRenderCoordinator : IRenderCoordinator, IViewScoped
+internal sealed class DefaultRenderCoordinator : IRenderCoordinator
 {
     private readonly Window _window;
     private readonly GpuDevice _gpuDevice;
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly ServiceRegistry<IRenderer<DefaultRenderContext>> _renderers;
-
-    ViewScope IViewScoped.ViewScope => _window.ViewScope;
 
     internal DefaultRenderCoordinator(
         Window window,

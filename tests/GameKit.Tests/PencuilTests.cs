@@ -121,7 +121,7 @@ public sealed class PencuilTests
 
         public string Name { get; }
 
-        ViewScope IViewScoped.ViewScope => _viewScope;
+        ViewScope IPencuilView.ViewScope => _viewScope;
 
         public TestView(string name, ViewScope viewScope = default)
         {

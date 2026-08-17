@@ -9,7 +9,7 @@ public sealed class SecondaryWindowRenderer : IRenderer<DefaultRenderContext>
     private readonly GraphicsPipeline _graphicsPipeline;
     private readonly GpuVertexBuffer<PositionVertex> _vertexBuffer;
 
-    ViewScope IViewScoped.ViewScope => Program.SecondaryView;
+    ViewScope IRenderer<DefaultRenderContext>.ViewScope => Program.SecondaryView;
 
     private SecondaryWindowRenderer(
         GraphicsPipeline graphicsPipeline,
