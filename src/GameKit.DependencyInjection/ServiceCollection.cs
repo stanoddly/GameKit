@@ -22,9 +22,9 @@ public class ServiceCollection
     }
 
     /// <summary>Registers <typeparamref name="T"/> as a singleton, constructing it via its single public constructor with dependencies resolved from the provider.</summary>
-    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
-    /// <remarks>This overload is intercepted by the source generator at each call site. The type argument must be a named concrete type — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
-    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because <typeparamref name="T"/> is a type parameter at the call site.</exception>
+    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type that does not contain type parameters from a generic calling scope.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. Unsupported implementation types produce compile-time error <c>GK0001</c>.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call, such as when the generator is not referenced.</exception>
     public void AddSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         throw new InvalidOperationException(
@@ -37,9 +37,9 @@ public class ServiceCollection
     /// When <typeparamref name="T"/> is not assignable to <typeparamref name="TService"/>, resolves <typeparamref name="T"/> from the provider and invokes the single accessible instance method on <typeparamref name="T"/> that returns <typeparamref name="TService"/>, with its parameters resolved from the provider.
     /// </summary>
     /// <typeparam name="TService">The service type (interface or base class) under which the instance is resolved.</typeparam>
-    /// <typeparam name="T">Either the concrete implementation type (when assignable to <typeparamref name="TService"/>), or a factory type with an instance method returning <typeparamref name="TService"/>. Must be a named concrete type at the call site, not a type parameter.</typeparam>
-    /// <remarks>This overload is intercepted by the source generator at each call site. Both type arguments must be named concrete types — passing a type parameter prevents interception and causes the method to throw at runtime.</remarks>
-    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call — either because the generator is not referenced or because either type argument is a type parameter at the call site.</exception>
+    /// <typeparam name="T">Either the concrete implementation type (when assignable to <typeparamref name="TService"/>), or a factory type with an instance method returning <typeparamref name="TService"/>. Constructor implementations must be named concrete types that do not contain type parameters from a generic calling scope.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. Unsupported constructor implementation types produce compile-time error <c>GK0001</c>.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown at runtime if the source generator did not intercept this call, such as when the generator is not referenced.</exception>
     public void AddSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>()
         where TService : class
         where T : class
@@ -103,8 +103,8 @@ public class ServiceCollection
     }
 
     /// <summary>Registers <typeparamref name="T"/> as a transient, constructing a new instance for each resolution.</summary>
-    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type at the call site, not a type parameter.</typeparam>
-    /// <remarks>This overload is intercepted by the source generator at each call site.</remarks>
+    /// <typeparam name="T">The concrete service type to register. Must be a named concrete type that does not contain type parameters from a generic calling scope.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. Unsupported implementation types produce compile-time error <c>GK0001</c>.</remarks>
     public void AddTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>() where T : class
     {
         throw new InvalidOperationException(
@@ -113,8 +113,8 @@ public class ServiceCollection
 
     /// <summary>Registers <typeparamref name="T"/> under <typeparamref name="TService"/> as a transient.</summary>
     /// <typeparam name="TService">The service type under which instances are resolved.</typeparam>
-    /// <typeparam name="T">The concrete implementation or factory type. Must be a named concrete type at the call site.</typeparam>
-    /// <remarks>This overload is intercepted by the source generator at each call site.</remarks>
+    /// <typeparam name="T">The concrete implementation or factory type. Constructor implementations must be named concrete types that do not contain type parameters from a generic calling scope.</typeparam>
+    /// <remarks>This overload is intercepted by the source generator at each call site. Unsupported constructor implementation types produce compile-time error <c>GK0001</c>.</remarks>
     public void AddTransient<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] T>()
         where TService : class
         where T : class
