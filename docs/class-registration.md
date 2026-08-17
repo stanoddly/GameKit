@@ -71,7 +71,7 @@ Use when:
 Registers an already-constructed instance. No source generator required.
 
 ```csharp
-services.AddSingleton(new GameSettings { Width = 1280, Height = 720 });
+services.AddSingleton(new GameSettings { StartingLives = 3, EnableHints = true });
 services.AddSingleton<ILogger>(new ConsoleLogger());
 ```
 
