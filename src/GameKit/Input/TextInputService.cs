@@ -3,26 +3,19 @@ using SDL;
 
 namespace GameKit.Input;
 
-public class TextInputEventArgs
+public class TextInputEventArgs : ConsumableInputEventArgs
 {
     public string Text { get; internal set; } = string.Empty;
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; internal set; }
-    public void Consume() { Consumed = true; }
 }
 
-public class TextEditingEventArgs
+public class TextEditingEventArgs : ConsumableInputEventArgs
 {
     public string Text { get; internal set; } = string.Empty;
     public int Start { get; internal set; }
     public int Length { get; internal set; }
     public ulong Timestamp { get; internal set; }
-    public bool Consumed { get; internal set; }
-    public void Consume() { Consumed = true; }
 }
-
-public delegate void TextInputHandler(TextInputEventArgs eventArgs);
-public delegate void TextEditingHandler(TextEditingEventArgs eventArgs);
 
 public class TextInputService : ITextInputService
 {
@@ -30,8 +23,10 @@ public class TextInputService : ITextInputService
 
     private readonly TextInputEventArgs _textInputEventArgs = new();
     private readonly TextEditingEventArgs _textEditingEventArgs = new();
-    private readonly ViewScopedPriorityEventHandlers<TextInputHandler> _textInputHandlers = new();
-    private readonly ViewScopedPriorityEventHandlers<TextEditingHandler> _textEditingHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<ITextInputService, TextInputEventArgs>
+        _textInputHandlers = new();
+    private readonly ViewScopedPriorityEventHandlers<ITextInputService, TextEditingEventArgs>
+        _textEditingHandlers = new();
 
     public bool IsActiveFor(ViewScope viewScope = default)
     {
@@ -42,24 +37,28 @@ public class TextInputService : ITextInputService
         }
     }
 
-    public event TextInputHandler TextInput
+    public event InputEventHandler<ITextInputService, TextInputEventArgs> TextInput
     {
         add => _textInputHandlers.Add(default, 0, value);
         remove => _textInputHandlers.Remove(default, value);
     }
 
-    public event TextEditingHandler TextEditing
+    public event InputEventHandler<ITextInputService, TextEditingEventArgs> TextEditing
     {
         add => _textEditingHandlers.Add(default, 0, value);
         remove => _textEditingHandlers.Remove(default, value);
     }
 
-    public void SubscribeTextInput(int priority, TextInputHandler handler)
+    public void SubscribeTextInput(
+        int priority,
+        InputEventHandler<ITextInputService, TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(default, priority, handler);
     }
 
-    public void SubscribeTextEditing(int priority, TextEditingHandler handler)
+    public void SubscribeTextEditing(
+        int priority,
+        InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(default, priority, handler);
     }
@@ -67,7 +66,7 @@ public class TextInputService : ITextInputService
     public void SubscribeTextInput(
         ViewScope viewScope,
         int priority,
-        TextInputHandler handler)
+        InputEventHandler<ITextInputService, TextInputEventArgs> handler)
     {
         _textInputHandlers.Add(viewScope, priority, handler);
     }
@@ -75,7 +74,7 @@ public class TextInputService : ITextInputService
     public void SubscribeTextEditing(
         ViewScope viewScope,
         int priority,
-        TextEditingHandler handler)
+        InputEventHandler<ITextInputService, TextEditingEventArgs> handler)
     {
         _textEditingHandlers.Add(viewScope, priority, handler);
     }
@@ -115,17 +114,7 @@ public class TextInputService : ITextInputService
 
         _textInputEventArgs.Text = text;
         _textInputEventArgs.Timestamp = textInputEvent.timestamp;
-        _textInputEventArgs.Consumed = false;
-
-        foreach ((_, TextInputHandler handler) in _textInputHandlers.GetSorted(viewScope))
-        {
-            handler(_textInputEventArgs);
-
-            if (_textInputEventArgs.Consumed)
-            {
-                break;
-            }
-        }
+        _textInputHandlers.Invoke(viewScope, this, _textInputEventArgs);
     }
 
     internal void OnTextEditingEvent(
@@ -142,16 +131,6 @@ public class TextInputService : ITextInputService
         _textEditingEventArgs.Start = textEditingEvent.start;
         _textEditingEventArgs.Length = textEditingEvent.length;
         _textEditingEventArgs.Timestamp = textEditingEvent.timestamp;
-        _textEditingEventArgs.Consumed = false;
-
-        foreach ((_, TextEditingHandler handler) in _textEditingHandlers.GetSorted(viewScope))
-        {
-            handler(_textEditingEventArgs);
-
-            if (_textEditingEventArgs.Consumed)
-            {
-                break;
-            }
-        }
+        _textEditingHandlers.Invoke(viewScope, this, _textEditingEventArgs);
     }
 }

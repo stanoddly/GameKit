@@ -6,11 +6,21 @@ public interface ITextInputService
     void Start(ViewScope viewScope = default);
     void Stop(ViewScope viewScope = default);
 
-    event TextInputHandler TextInput;
-    event TextEditingHandler TextEditing;
+    event InputEventHandler<ITextInputService, TextInputEventArgs> TextInput;
+    event InputEventHandler<ITextInputService, TextEditingEventArgs> TextEditing;
 
-    void SubscribeTextInput(int priority, TextInputHandler handler);
-    void SubscribeTextEditing(int priority, TextEditingHandler handler);
-    void SubscribeTextInput(ViewScope viewScope, int priority, TextInputHandler handler);
-    void SubscribeTextEditing(ViewScope viewScope, int priority, TextEditingHandler handler);
+    void SubscribeTextInput(
+        int priority,
+        InputEventHandler<ITextInputService, TextInputEventArgs> handler);
+    void SubscribeTextEditing(
+        int priority,
+        InputEventHandler<ITextInputService, TextEditingEventArgs> handler);
+    void SubscribeTextInput(
+        ViewScope viewScope,
+        int priority,
+        InputEventHandler<ITextInputService, TextInputEventArgs> handler);
+    void SubscribeTextEditing(
+        ViewScope viewScope,
+        int priority,
+        InputEventHandler<ITextInputService, TextEditingEventArgs> handler);
 }

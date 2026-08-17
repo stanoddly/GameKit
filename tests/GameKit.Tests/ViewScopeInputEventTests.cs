@@ -60,9 +60,9 @@ public sealed class ViewScopeInputEventTests
         int defaultCalls = 0;
         int firstCalls = 0;
         int secondCalls = 0;
-        textInputService.TextInput += _ => defaultCalls++;
-        textInputService.SubscribeTextInput(_firstView, 0, _ => firstCalls++);
-        textInputService.SubscribeTextInput(_secondView, 0, _ => secondCalls++);
+        textInputService.TextInput += (_, _) => defaultCalls++;
+        textInputService.SubscribeTextInput(_firstView, 0, (_, _) => firstCalls++);
+        textInputService.SubscribeTextInput(_secondView, 0, (_, _) => secondCalls++);
         SDL_TextInputEvent textInputEvent = new() { timestamp = 42 };
 
         textInputService.OnTextInputEvent(_firstView, textInputEvent);

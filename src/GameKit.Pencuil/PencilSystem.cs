@@ -34,7 +34,7 @@ internal sealed class PencilSystem : IUpdatable
             pencil.Invalidate();
         });
 
-        mouseService.SubscribeWindowLeave(_viewScope, inputOrder, _ =>
+        mouseService.SubscribeWindowLeave(_viewScope, inputOrder, (_, _) =>
         {
             pencil.CursorPosition = new Vector2Int(-1, -1);
             pencil.Invalidate();
@@ -73,7 +73,7 @@ internal sealed class PencilSystem : IUpdatable
             }
         });
 
-        textInputService.SubscribeTextInput(_viewScope, inputOrder, args =>
+        textInputService.SubscribeTextInput(_viewScope, inputOrder, (_, args) =>
         {
             if (pencil.HasFocus)
             {

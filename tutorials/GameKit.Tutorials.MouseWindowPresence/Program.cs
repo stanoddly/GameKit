@@ -17,12 +17,12 @@ static class Program
             Console.WriteLine($"Mouse starts in window: {mouseService.IsInWindow()}");
             Console.WriteLine("Move the mouse into and out of the window to see enter and leave events.");
 
-            mouseService.WindowEnter += eventArgs =>
+            mouseService.WindowEnter += (_, eventArgs) =>
             {
                 Console.WriteLine($"Mouse entered window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow()}");
             };
 
-            mouseService.WindowLeave += eventArgs =>
+            mouseService.WindowLeave += (_, eventArgs) =>
             {
                 Console.WriteLine($"Mouse left window at {eventArgs.Timestamp}. IsInWindow: {mouseService.IsInWindow()}");
             };
