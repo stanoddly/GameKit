@@ -65,19 +65,18 @@ public static class PencuilExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        if (!builder.IsRegistered<ServiceRegistry<Pencuil>>())
+        if (!builder.IsRegistered<PencuilViewRegistry>())
         {
             builder.AddFileSystem(EmbeddedFileSystem.Create(typeof(PencuilExtensions).Assembly));
             builder.AddSingleton(GuiStyles.Style);
             builder.AddRegistry<Pencuil>();
-            builder.AddRegistry<IPencuilView>();
+            PencuilViewRegistry.AddPencuilViewRegistry(builder);
         }
 
         builder.AddSingleton<Pencuil>(provider =>
             new Pencuil(
                 viewScope,
                 new Pencil(
-                    viewScope,
                     provider.GetRequiredService<IFontSystem>(),
                     provider.GetRequiredService<IClipboardService>(),
                     provider.GetRequiredService<GuiStyle>())));
@@ -96,7 +95,7 @@ public static class PencuilExtensions
             new PencilSystem(
                 Pencuil.GetRequired(provider, viewScope),
                 inputOrder,
-                provider.GetRequiredService<ServiceRegistry<IPencuilView>>(),
+                provider.GetRequiredService<PencuilViewRegistry>(),
                 provider.GetRequiredService<WindowRegistry>(),
                 provider.GetRequiredService<IMouseService>(),
                 provider.GetRequiredService<IKeyboardService>(),

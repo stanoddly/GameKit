@@ -7,7 +7,7 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
     where TViewModel : ComponentBase, IPencuilViewModel
 {
     private readonly ViewScope _viewScope;
-    private Pencuil? _pencuil;
+    private PencuilViewRegistry? _viewRegistry;
 
     protected TViewModel ViewModel { get; private set; } = default!;
 
@@ -39,13 +39,14 @@ public abstract class PencuilViewComponent<TViewModel> : GameComponent, IPencuil
     {
         ViewModel = GetSibling<TViewModel>();
         ServiceRegistry<Pencuil> pencuils = GetRequiredService<ServiceRegistry<Pencuil>>();
-        _pencuil = Pencuil.GetRequired(pencuils, _viewScope);
-        _pencuil.AddComponentView(this);
+        _ = Pencuil.GetRequired(pencuils, _viewScope);
+        _viewRegistry = GetRequiredService<PencuilViewRegistry>();
+        _viewRegistry.Add(this);
     }
 
     protected override void OnDetach()
     {
-        _pencuil!.RemoveComponentView(this);
-        _pencuil = null;
+        _viewRegistry!.Remove(this);
+        _viewRegistry = null;
     }
 }

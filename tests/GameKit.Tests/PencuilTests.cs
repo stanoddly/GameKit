@@ -7,81 +7,73 @@ namespace GameKit.Tests;
 public sealed class PencuilTests
 {
     [Test]
-    public void SynchronizeViews_TracksOnlyMatchingScope()
+    public void ViewRegistry_TracksViewsByScope()
     {
         ViewScope rightScope = new(1);
-        TestView leftView = new("left");
-        TestView rightView = new("right", rightScope);
-        using ServiceProvider provider = BuildViewProvider(
-            out ServiceRegistry<IPencuilView> views,
-            leftView,
-            rightView);
-        PencuilInstance left = new(default, null!);
-        PencuilInstance right = new(rightScope, null!);
-
-        bool leftChanged = left.SynchronizeViews(views);
-        bool rightChanged = right.SynchronizeViews(views);
+        PencuilViewRegistry registry = new();
+        registry.Add(new TestView("left"));
+        registry.Add(new TestView("right", rightScope));
 
         Assert.Multiple(() =>
         {
-            Assert.That(leftChanged, Is.True);
-            Assert.That(rightChanged, Is.True);
-            Assert.That(ViewNames(left), Is.EqualTo(new[] { "left" }));
-            Assert.That(ViewNames(right), Is.EqualTo(new[] { "right" }));
+            Assert.That(registry.ConsumeChanged(default), Is.True);
+            Assert.That(registry.ConsumeChanged(rightScope), Is.True);
+            Assert.That(ViewNames(registry, default), Is.EqualTo(new[] { "left" }));
+            Assert.That(ViewNames(registry, rightScope), Is.EqualTo(new[] { "right" }));
         });
     }
 
     [Test]
-    public void SynchronizeViews_ChangeInAnotherScopeDoesNotInvalidateViews()
+    public void ViewRegistry_ChangeInAnotherScopeDoesNotInvalidateScope()
     {
         ViewScope rightScope = new(1);
-        using ServiceProvider root = BuildViewProvider(
-            out ServiceRegistry<IPencuilView> views);
-        PencuilInstance left = new(default, null!);
-        Assert.That(left.SynchronizeViews(views), Is.False);
+        PencuilViewRegistry registry = new();
 
-        ServiceCollection childServices = root.CreateServiceCollection();
-        childServices.AddSingleton<IPencuilView>(new TestView("right", rightScope));
-        using ServiceProvider child = childServices.BuildServiceProvider();
+        registry.Add(new TestView("right", rightScope));
 
-        Assert.That(left.SynchronizeViews(views), Is.False);
-        Assert.That(ViewNames(left), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.ConsumeChanged(default), Is.False);
+            Assert.That(registry.ConsumeChanged(rightScope), Is.True);
+        });
     }
 
     [Test]
-    public void SynchronizeViews_RemovesDisposedChildProviderView()
+    public void ViewRegistry_RemovesDisposedChildProviderView()
     {
-        using ServiceProvider root = BuildViewProvider(
-            out ServiceRegistry<IPencuilView> views);
+        ServiceCollection rootServices = new();
+        PencuilViewRegistry.AddPencuilViewRegistry(rootServices);
+        using ServiceProvider root = rootServices.BuildServiceProvider();
+        PencuilViewRegistry registry = root.GetRequiredService<PencuilViewRegistry>();
         ServiceCollection childServices = root.CreateServiceCollection();
         childServices.AddSingleton<IPencuilView>(new TestView("child"));
         ServiceProvider child = childServices.BuildServiceProvider();
-        PencuilInstance pencuil = new(default, null!);
-        Assert.That(pencuil.SynchronizeViews(views), Is.True);
+        Assert.That(ViewNames(registry, default), Is.EqualTo(new[] { "child" }));
+        Assert.That(registry.ConsumeChanged(default), Is.True);
 
         child.Dispose();
 
-        Assert.That(pencuil.SynchronizeViews(views), Is.True);
-        Assert.That(ViewNames(pencuil), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.ConsumeChanged(default), Is.True);
+            Assert.That(ViewNames(registry, default), Is.Empty);
+        });
     }
 
     [Test]
-    public void ComponentView_IsAddedAndRemoved()
+    public void ViewRegistry_AddAndRemoveTrackViewOnce()
     {
-        using ServiceProvider provider = BuildViewProvider(
-            out ServiceRegistry<IPencuilView> views);
-        PencuilInstance pencuil = new(default, null!);
+        PencuilViewRegistry registry = new();
         TestView view = new("component");
 
-        pencuil.AddComponentView(view);
+        registry.Add(view);
+        registry.Add(view);
 
-        Assert.That(pencuil.SynchronizeViews(views), Is.True);
-        Assert.That(ViewNames(pencuil), Is.EqualTo(new[] { "component" }));
+        Assert.That(ViewNames(registry, default), Is.EqualTo(new[] { "component" }));
 
-        pencuil.RemoveComponentView(view);
+        registry.Remove(view);
 
-        Assert.That(pencuil.SynchronizeViews(views), Is.True);
-        Assert.That(ViewNames(pencuil), Is.Empty);
+        Assert.That(ViewNames(registry, default), Is.Empty);
     }
 
     [Test]
@@ -110,30 +102,16 @@ public sealed class PencuilTests
         Assert.Throws<InvalidOperationException>(() => PencuilInstance.GetRequired(pencuils, default));
     }
 
-    private static ServiceProvider BuildViewProvider(
-        out ServiceRegistry<IPencuilView> registry,
-        params IPencuilView[] views)
+    private static string[] ViewNames(PencuilViewRegistry registry, ViewScope viewScope)
     {
-        ServiceCollection services = new();
-        services.AddRegistry<IPencuilView>();
-        foreach (IPencuilView view in views)
-        {
-            services.AddSingleton(view);
-        }
-
-        ServiceProvider provider = services.BuildServiceProvider();
-        registry = provider.GetRequiredService<ServiceRegistry<IPencuilView>>();
-        return provider;
-    }
-
-    private static string[] ViewNames(PencuilInstance pencuil)
-    {
-        ReadOnlySpan<IPencuilView> views = pencuil.Views;
-        string[] names = new string[views.Length];
-        for (int i = 0; i < views.Length; i++)
+        List<IPencuilView> views = new();
+        registry.CopyViews(viewScope, views);
+        string[] names = new string[views.Count];
+        for (int i = 0; i < views.Count; i++)
         {
             names[i] = ((TestView)views[i]).Name;
         }
+
         return names;
     }
 
