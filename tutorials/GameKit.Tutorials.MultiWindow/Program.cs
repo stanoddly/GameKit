@@ -1,4 +1,5 @@
 using GameKit.App;
+using GameKit.Input;
 using GameKit.RenderOrchestration;
 
 namespace GameKit.Tutorials.MultiWindow;
@@ -15,10 +16,39 @@ static class Program
                 new WindowConfig(Size: (640, 480), Title: "Main Window"))
             .UseDefaultRendering(
                 SecondaryView,
-                new WindowConfig(Size: (480, 360), Title: "Secondary Window"));
+                new WindowConfig(
+                    Size: (480, 360),
+                    Title: "Secondary Window",
+                    InitiallyVisible: false,
+                    CloseBehavior: WindowCloseBehavior.HideWindow));
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(PrimaryRenderer.Create);
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(SecondaryWindowRenderer.Create);
+
+        builder.OnStart((WindowRegistry windowRegistry, IKeyboardService keyboardService) =>
+        {
+            Window secondaryWindow = windowRegistry.GetWindow(SecondaryView);
+            Console.WriteLine("Press Space in the main window to show or hide the secondary window.");
+
+            keyboardService.KeyDown += eventArgs =>
+            {
+                if (eventArgs.Key != VirtualKey.Space)
+                {
+                    return;
+                }
+
+                if (secondaryWindow.IsVisible)
+                {
+                    secondaryWindow.Hide();
+                }
+                else
+                {
+                    secondaryWindow.Show();
+                }
+
+                eventArgs.Consume();
+            };
+        });
 
         using IGameKitApp gameKitApp = builder.Build();
         return gameKitApp.Run();

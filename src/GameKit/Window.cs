@@ -182,6 +182,39 @@ public class Window : IDisposable
         }
     }
 
+    public bool IsVisible
+    {
+        get
+        {
+            unsafe
+            {
+                return (SDL3.SDL_GetWindowFlags(SdlWindow) & SDL_WindowFlags.SDL_WINDOW_HIDDEN) == 0;
+            }
+        }
+    }
+
+    public void Show()
+    {
+        unsafe
+        {
+            if (SDL3.SDL_ShowWindow(SdlWindow) == false)
+            {
+                throw new GameKitException($"SDL_ShowWindow failed: {SDL3.SDL_GetError()}");
+            }
+        }
+    }
+
+    public void Hide()
+    {
+        unsafe
+        {
+            if (SDL3.SDL_HideWindow(SdlWindow) == false)
+            {
+                throw new GameKitException($"SDL_HideWindow failed: {SDL3.SDL_GetError()}");
+            }
+        }
+    }
+
     private bool _draggable;
     private GCHandle _hitTestHandle;
     private Func<Vector2Int, HitTestResult>? _hitTestCallback;

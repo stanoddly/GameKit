@@ -134,10 +134,16 @@ public class EventService
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED)
                 {
-                    if (_windowRegistry.TryGetWindow((uint)evt.window.windowID, out Window closedWindow) &&
-                        closedWindow.CloseBehavior == WindowCloseBehavior.QuitApplication)
+                    if (_windowRegistry.TryGetWindow((uint)evt.window.windowID, out Window closedWindow))
                     {
-                        _appControl.Quit();
+                        if (closedWindow.CloseBehavior == WindowCloseBehavior.QuitApplication)
+                        {
+                            _appControl.Quit();
+                        }
+                        else if (closedWindow.CloseBehavior == WindowCloseBehavior.HideWindow)
+                        {
+                            closedWindow.Hide();
+                        }
                     }
                 }
                 else if (evt.Type == SDL_EventType.SDL_EVENT_QUIT)

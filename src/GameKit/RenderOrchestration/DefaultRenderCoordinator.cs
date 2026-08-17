@@ -24,6 +24,11 @@ internal sealed class DefaultRenderCoordinator : IRenderCoordinator
 
     public void Execute()
     {
+        if (!_window.IsVisible)
+        {
+            return;
+        }
+
         CommandBuffer commandBuffer = _gpuDevice.AcquireCommandBuffer();
         if (!_window.TryWaitAndAcquireSwapchainTexture(
                 commandBuffer,
