@@ -5,13 +5,14 @@
         TaskFactory="TaskHostFactory"
         Runtime="NET" />
 
-    <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang">
+    <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang"
+            Condition="'$(_OwnsSlangInstallation)' == 'true' and ('$(_DownloadSlangOnlyWhenShaders)' != 'true' or '@(SdlangShader)' != '')">
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
                Condition="'$(SlangPlatform)' == ''" />
     </Target>
 
     <Target Name="DownloadSlang" BeforeTargets="BeforeBuild"
-            Condition="'$(_OwnsSlangInstallation)' == 'true'">
+            Condition="'$(_OwnsSlangInstallation)' == 'true' and ('$(_DownloadSlangOnlyWhenShaders)' != 'true' or '@(SdlangShader)' != '')">
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
                       DestinationFolder="$(SlangObjDir)"
@@ -23,8 +24,19 @@
                Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
-    <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild"
-            Condition="'$(_OwnsSlangInstallation)' == 'true'">
+    <Target Name="ValidateSlangArchive" AfterTargets="DownloadSlang" BeforeTargets="ExtractSlang"
+            Condition="'$(_OwnsSlangInstallation)' == 'true' and ('$(_DownloadSlangOnlyWhenShaders)' != 'true' or '@(SdlangShader)' != '')">
+        <Error Text="No SHA-256 digest is configured for $(SlangZipFile). Set SlangZipSha256 when overriding the Slang bundle."
+               Condition="'$(SlangZipSha256)' == ''" />
+        <GetFileHash Files="$(SlangZipPath)" Algorithm="SHA256">
+            <Output TaskParameter="Items" ItemName="_SlangArchiveHash" />
+        </GetFileHash>
+        <Error Text="Slang archive checksum mismatch for $(SlangZipPath). Expected $(SlangZipSha256), received %(_SlangArchiveHash.FileHash)."
+               Condition="'%(_SlangArchiveHash.FileHash)' != '$(SlangZipSha256)'" />
+    </Target>
+
+    <Target Name="ExtractSlang" DependsOnTargets="ValidateSlangArchive" BeforeTargets="BeforeBuild"
+            Condition="'$(_OwnsSlangInstallation)' == 'true' and ('$(_DownloadSlangOnlyWhenShaders)' != 'true' or '@(SdlangShader)' != '')">
         <PropertyGroup>
             <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
         </PropertyGroup>
@@ -40,7 +52,8 @@
         <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
     </Target>
 
-    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" Condition="'@(SdlangShader)' != ''">
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" DependsOnTargets="DownloadSlang;ExtractSlang"
+            Condition="'@(SdlangShader)' != ''">
         <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)">
             <Output TaskParameter="GeneratedFiles" ItemName="SdlangShaderOutput" />
         </SdlangCompileTask>

@@ -1,23 +1,28 @@
 <Project>
     <PropertyGroup>
-        <SlangVersion>2026.14.1</SlangVersion>
-        <DxcVersion>1.9.2602</DxcVersion>
+        <SlangVersion Condition="'$(SlangVersion)' == ''">2026.14.1</SlangVersion>
+        <DxcVersion Condition="'$(DxcVersion)' == ''">1.9.2602</DxcVersion>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">macos-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">macos-aarch64</SlangPlatform>
-        <SlangBundleVersion>slang-$(SlangVersion)-dxc-$(DxcVersion)</SlangBundleVersion>
-        <SlangDirName>$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
-        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
-        <SlangDownloadUrl>https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
-        <SlangObjDir>$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
-        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
-        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
-        <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
+        <SlangBundleVersion Condition="'$(SlangBundleVersion)' == ''">slang-$(SlangVersion)-dxc-$(DxcVersion)</SlangBundleVersion>
+        <SlangDirName Condition="'$(SlangDirName)' == ''">$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
+        <SlangZipFile Condition="'$(SlangZipFile)' == ''">$(SlangDirName).zip</SlangZipFile>
+        <SlangDownloadUrl Condition="'$(SlangDownloadUrl)' == ''">https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
+        <SlangZipSha256 Condition="'$(SlangZipSha256)' == '' and '$(SlangBundleVersion)' == 'slang-2026.14.1-dxc-1.9.2602' and '$(SlangPlatform)' == 'linux-aarch64'">2aa12e099216fd6e69e4a33d7f0e79812b92d49e7bd7210da2eccd146d7b1164</SlangZipSha256>
+        <SlangZipSha256 Condition="'$(SlangZipSha256)' == '' and '$(SlangBundleVersion)' == 'slang-2026.14.1-dxc-1.9.2602' and '$(SlangPlatform)' == 'linux-x86_64'">6033dfe9de6b0b4cf07a4a8b1b88c51a95bc94355cfaf6e2020574a6ddedecc4</SlangZipSha256>
+        <SlangZipSha256 Condition="'$(SlangZipSha256)' == '' and '$(SlangBundleVersion)' == 'slang-2026.14.1-dxc-1.9.2602' and '$(SlangPlatform)' == 'macos-aarch64'">0747c08b7d7122940d064af0a05f13c10e0eb16f702f5e8829f0a46eca5a113f</SlangZipSha256>
+        <SlangZipSha256 Condition="'$(SlangZipSha256)' == '' and '$(SlangBundleVersion)' == 'slang-2026.14.1-dxc-1.9.2602' and '$(SlangPlatform)' == 'macos-x86_64'">73f4a825830a5dfcf938928625baeb026be1876bb145860b1fa9a0ee746fa14f</SlangZipSha256>
+        <SlangZipSha256 Condition="'$(SlangZipSha256)' == '' and '$(SlangBundleVersion)' == 'slang-2026.14.1-dxc-1.9.2602' and '$(SlangPlatform)' == 'windows-x86_64'">4815cc6497e957b7e7089fdcbce56cdc1afe2d736e28fd1f304ce88a208d1e46</SlangZipSha256>
+        <SlangObjDir Condition="'$(SlangObjDir)' == ''">$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
+        <SlangZipPath Condition="'$(SlangZipPath)' == ''">$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
+        <SlangBaseDir Condition="'$(SlangBaseDir)' == ''">$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
+        <SlangBinDir Condition="'$(SlangBinDir)' == ''">$(SlangBaseDir)/bin</SlangBinDir>
         <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
         <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
-        <SlangCompilerPath>$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
+        <SlangCompilerPath Condition="'$(SlangCompilerPath)' == ''">$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
         <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
         <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>

@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);Pixely.DependencyInjection.Generated</InterceptorsNamespaces>
+        <SdlangCompilerAssembly>$(MSBuildThisFileDirectory)..\tools\net10.0\any\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
+        <SlangObjDir>$(BaseIntermediateOutputPath)Pixely.SdlangCompiler/</SlangObjDir>
+        <_OwnsSlangInstallation>true</_OwnsSlangInstallation>
+        <_DownloadSlangOnlyWhenShaders>true</_DownloadSlangOnlyWhenShaders>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <CompilerVisibleProperty Include="PixelyDIEmitTrimAnnotations" />
+    </ItemGroup>
+
+    <Import Project="$(MSBuildThisFileDirectory)..\tools\net10.0\any\build\Pixely.SdlangCompiler.props" />
+</Project>

@@ -3,18 +3,29 @@ name: Test
 on:
   pull_request:
     branches: [main]
+  workflow_call:
+    inputs:
+      package_version:
+        required: false
+        type: string
+        default: 0.0.0-alpha.package-tests
+
+env:
+  PIXELY_PACKAGE_VERSION: ${{ inputs.package_version || '0.0.0-alpha.package-tests' }}
+  PIXELY_PACKAGE_ARTIFACT: Pixely-${{ inputs.package_version || '0.0.0-alpha.package-tests' }}
 
 jobs:
   test:
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-24.04-arm, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: '10.0.x'
 
@@ -36,3 +47,75 @@ jobs:
       - name: Publish logging consumer with NativeAOT
         if: runner.os == 'Linux'
         run: dotnet publish tutorials/Pixely.Tutorials.Logging/Pixely.Tutorials.Logging.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true
+
+  package:
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack validated commit
+        env:
+          REPOSITORY_COMMIT: ${{ github.sha }}
+          REPOSITORY_BRANCH: ${{ github.ref }}
+        run: >-
+          dotnet pack packaging/Pixely/Pixely.Package.csproj
+          --configuration Release
+          --output artifacts/packages
+          --property:PackageVersion=$PIXELY_PACKAGE_VERSION
+          --property:Version=$PIXELY_PACKAGE_VERSION
+          --property:RepositoryCommit=$REPOSITORY_COMMIT
+          --property:RepositoryBranch=$REPOSITORY_BRANCH
+          --property:ContinuousIntegrationBuild=true
+          -p:TreatWarningsAsErrors=true
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.PIXELY_PACKAGE_ARTIFACT }}
+          path: |
+            artifacts/packages/Pixely.${{ env.PIXELY_PACKAGE_VERSION }}.nupkg
+            artifacts/packages/Pixely.${{ env.PIXELY_PACKAGE_VERSION }}.snupkg
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+
+  package-consumer:
+    needs: package
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - windows-latest
+          - macos-15-intel
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ${{ env.PIXELY_PACKAGE_ARTIFACT }}
+          path: artifacts/package-under-test
+
+      - name: Build package integration tests
+        run: dotnet build tests/Pixely.Package.Tests/Pixely.Package.Tests.csproj -p:TreatWarningsAsErrors=true
+
+      - name: Test local package consumers
+        env:
+          PIXELY_PACKAGE_DIRECTORY: ${{ github.workspace }}/artifacts/package-under-test
+        run: dotnet test tests/Pixely.Package.Tests/Pixely.Package.Tests.csproj --no-build --filter 'TestCategory=PackageIntegration' -p:TreatWarningsAsErrors=true
