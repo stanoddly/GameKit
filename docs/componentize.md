@@ -1,4 +1,4 @@
-# GameKit.Componentize
+# Pixely.Componentize
 
 A component-based game architecture: GameObjects hold GameComponents, components react to events, Behaviors implement state machines, and a ServiceLocator provides global access to shared services.
 
@@ -81,7 +81,7 @@ public class MyComponent : ComponentBase
 **Other members on `GameComponent`:**
 - `HasOwner()` — returns true if attached to a GameObject
 - `Owner` — the owning `GameObject`; throws if unattached
-- `ServiceProvider` — the `GameKit.DependencyInjection.ServiceProvider`; throws if unattached
+- `ServiceProvider` — the `Pixely.DependencyInjection.ServiceProvider`; throws if unattached
 - `World` — shorthand for `ServiceProvider.GetRequiredService<GameWorld>()`
 - `GetRequiredService<T>()` / `GetService<T>()` — service lookup
 

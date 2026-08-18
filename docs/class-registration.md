@@ -1,6 +1,6 @@
 # Dependency Injection
 
-GameKit's DI container (`GameKit.DependencyInjection`) supports singleton and transient lifetimes. Singletons are instantiated eagerly during `BuildServiceProvider`; transients are constructed lazily each time they are requested. A Roslyn source generator intercepts specific registration overloads at each call site to emit type-safe construction code — several overloads throw at runtime if the generator is not active.
+Pixely's DI container (`Pixely.DependencyInjection`) supports singleton and transient lifetimes. Singletons are instantiated eagerly during `BuildServiceProvider`; transients are constructed lazily each time they are requested. A Roslyn source generator intercepts specific registration overloads at each call site to emit type-safe construction code — several overloads throw at runtime if the generator is not active.
 
 ## Overview
 
@@ -313,7 +313,7 @@ Both delegates receive:
 
 `OnActivated` callbacks fire in the order services are constructed. `OnDisposing` callbacks fire in reverse construction order, matching service disposal. Transient `IDisposable` instances created by the provider are tracked and disposed by the provider that created them. Multiple callbacks of the same kind run in registration order for each service.
 
-The annotated `Type` parameter is important for NativeAOT and trimming. Generator-emitted registrations pass a `typeof(T)` value from an annotated generic type parameter into the callback path, so consumers can inspect interface metadata without falling back to `instance.GetType()`. This is what allows integrations such as `GameKit.Events.AddEvents()` to discover `IEventHandler<T>` implementations in an AOT-clean way.
+The annotated `Type` parameter is important for NativeAOT and trimming. Generator-emitted registrations pass a `typeof(T)` value from an annotated generic type parameter into the callback path, so consumers can inspect interface metadata without falling back to `instance.GetType()`. This is what allows integrations such as `Pixely.Events.AddEvents()` to discover `IEventHandler<T>` implementations in an AOT-clean way.
 
 ```csharp
 services.OnActivated(static (instance, type) =>
@@ -502,7 +502,7 @@ Aliases appear in `GetServices<TService>()` collections alongside any direct reg
 
 ## Source Generator Caveats
 
-The following overloads are **intercepted at each call site** by the Roslyn source generator (`GameKit.DependencyInjection.Generator`). Their runtime bodies throw `InvalidOperationException` when a call is not intercepted, such as when the generator is absent. With the generator active, unsupported constructor implementation types produce `GK0001`:
+The following overloads are **intercepted at each call site** by the Roslyn source generator (`Pixely.DependencyInjection.Generator`). Their runtime bodies throw `InvalidOperationException` when a call is not intercepted, such as when the generator is absent. With the generator active, unsupported constructor implementation types produce `GK0001`:
 
 | Overload | Interception requirement |
 |---|---|

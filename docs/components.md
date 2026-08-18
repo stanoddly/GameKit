@@ -1,6 +1,6 @@
 # Components
 
-GameKit provides a lightweight component system for game logic through `GameKit.Componentize`.
+Pixely provides a lightweight component system for game logic through `Pixely.Componentize`.
 
 ## Core Types
 

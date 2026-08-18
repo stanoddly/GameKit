@@ -19,20 +19,20 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build solution
-        run: dotnet build GameKit.slnx -p:TreatWarningsAsErrors=true
+        run: dotnet build Pixely.slnx -p:TreatWarningsAsErrors=true
 
       - name: Run tests
-        run: dotnet test GameKit.slnx --no-build -p:TreatWarningsAsErrors=true
+        run: dotnet test Pixely.slnx --no-build -p:TreatWarningsAsErrors=true
 
       - name: Stop build servers
         run: dotnet build-server shutdown
 
       - name: Run shader build integration tests
-        run: dotnet test tests/GameKit.SdlangBuildIntegration.Tests/GameKit.SdlangBuildIntegration.Tests.csproj --no-build --filter 'TestCategory=BuildIntegration' -p:TreatWarningsAsErrors=true
+        run: dotnet test tests/Pixely.SdlangBuildIntegration.Tests/Pixely.SdlangBuildIntegration.Tests.csproj --no-build --filter 'TestCategory=BuildIntegration' -p:TreatWarningsAsErrors=true
 
       - name: Verify conditional logging in Release
-        run: dotnet test tests/GameKit.Logging.Tests/GameKit.Logging.Tests.csproj --configuration Release -p:TreatWarningsAsErrors=true
+        run: dotnet test tests/Pixely.Logging.Tests/Pixely.Logging.Tests.csproj --configuration Release -p:TreatWarningsAsErrors=true
 
       - name: Publish logging consumer with NativeAOT
         if: runner.os == 'Linux'
-        run: dotnet publish tutorials/GameKit.Tutorials.Logging/GameKit.Tutorials.Logging.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true
+        run: dotnet publish tutorials/Pixely.Tutorials.Logging/Pixely.Tutorials.Logging.csproj --configuration Release --runtime linux-arm64 -p:TreatWarningsAsErrors=true

@@ -1,6 +1,6 @@
 # Window rendering
 
-GameKit uses `default(ViewScope)` for the ordinary single-window case. Applications only need to
+Pixely uses `default(ViewScope)` for the ordinary single-window case. Applications only need to
 name scopes when they render more than one window.
 
 ## Single-window rendering
@@ -8,7 +8,7 @@ name scopes when they render more than one window.
 `UseDefaultRendering` creates a DI-owned window and render coordinator:
 
 ```csharp
-GameKitAppBuilder builder = new GameKitAppBuilder()
+PixelyAppBuilder builder = new PixelyAppBuilder()
     .UseDefaultRendering(
         new WindowConfig(
             Size: new Size<uint>(1280, 720),
@@ -61,7 +61,7 @@ internal static class ViewScopes
 The implicit window remains `default(ViewScope)` while additional windows receive explicit scopes:
 
 ```csharp
-GameKitAppBuilder builder = new GameKitAppBuilder()
+PixelyAppBuilder builder = new PixelyAppBuilder()
     .UseDefaultRendering(
         new WindowConfig(
             Size: new Size<uint>(1280, 720),
@@ -156,5 +156,5 @@ Pencuil's MVVM contracts use explicit names: `IPencuilView`, `IPencuilViewModel`
 `PencuilView<TViewModel>`. Their default scope is implicit; views belonging to another window
 override `IPencuilView.ViewScope` or pass a scope to the Pencuil view base class.
 
-See `GameKit.Tutorials.MultiWindow` for two independently rendered windows and
-`GameKit.Tutorials.MultiWindowTextInput` for independent Pencuil focus and text input.
+See `Pixely.Tutorials.MultiWindow` for two independently rendered windows and
+`Pixely.Tutorials.MultiWindowTextInput` for independent Pencuil focus and text input.

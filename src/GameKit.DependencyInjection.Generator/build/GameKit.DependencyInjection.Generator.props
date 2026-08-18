@@ -1,7 +1,0 @@
-<Project>
-  <!-- Declares GameKitDIEmitTrimAnnotations as visible to the source generator via AnalyzerConfigOptions.
-       Set to 'false' to suppress [DynamicallyAccessedMembers] on generated registration methods. -->
-  <ItemGroup>
-    <CompilerVisibleProperty Include="GameKitDIEmitTrimAnnotations" />
-  </ItemGroup>
-</Project>

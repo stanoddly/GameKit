@@ -87,5 +87,5 @@ GraphicsPipeline pipeline = graphicsPipelineBuilder
 
 - Call `.Build()` last to create the pipeline
 - Pipeline is immutable after build
-- GraphicsPipelineBuilder is injected as a dependency and available by default from GameKit
+- GraphicsPipelineBuilder is injected as a dependency and available by default from Pixely
 - Store pipelines, don't rebuild every frame

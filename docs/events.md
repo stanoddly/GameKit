@@ -1,6 +1,6 @@
 # Events
 
-`GameKit.Events` provides a small in-process event bus.
+`Pixely.Events` provides a small in-process event bus.
 
 ## Core API
 
@@ -31,7 +31,7 @@ Handlers for the same event type run in subscription order. Subscriptions can ch
 
 ## DI Integration
 
-`AddEvents()` integrates the event bus with `GameKit.DependencyInjection`:
+`AddEvents()` integrates the event bus with `Pixely.DependencyInjection`:
 
 ```csharp
 ServiceCollection services = new();

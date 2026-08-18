@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <InterceptorsNamespaces>$(InterceptorsNamespaces);Pixely.DependencyInjection.Generated</InterceptorsNamespaces>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Pixely.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
+      <PackageReference Include="ppy.SDL3_image-CS" Version="2026.722.0" />
+      <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.722.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Pixely.Collections\Pixely.Collections.csproj" />
+      <ProjectReference Include="..\Pixely.DependencyInjection\Pixely.DependencyInjection.csproj" />
+      <ProjectReference Include="..\Pixely.DependencyInjection.Generator\Pixely.DependencyInjection.Generator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false" />
+      <ProjectReference Include="..\Pixely.Core\Pixely.Core.csproj" />
+      <ProjectReference Include="..\Pixely.ShaderCommon\Pixely.ShaderCommon.csproj" />
+    </ItemGroup>
+
+</Project>

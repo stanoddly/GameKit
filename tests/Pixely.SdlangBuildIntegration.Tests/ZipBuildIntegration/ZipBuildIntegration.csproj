@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPublishable>true</IsPublishable>
+        <ContentSourceDirectory>$(MSBuildProjectDirectory)/Content</ContentSourceDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <Import Project="..\..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.props" />
+    <Import Project="..\..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets" />
+
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\zip_output.slang" />
+    </ItemGroup>
+
+    <Target Name="CopyContentToBuildOutput"
+            AfterTargets="CopyFilesToOutputDirectory">
+        <ItemGroup>
+            <_ContentForBuild Include="$(ContentSourceDirectory)\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_ContentForBuild)"
+              DestinationFiles="@(_ContentForBuild->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true">
+            <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+        </Copy>
+    </Target>
+
+    <Target Name="PackageContent"
+            BeforeTargets="ComputeFilesToPublish">
+        <ZipDirectory SourceDirectory="$(OutDir)Content"
+                      DestinationFile="$(IntermediateOutputPath)Content.pk3"
+                      Overwrite="true" />
+        <ItemGroup>
+            <ResolvedFileToPublish Include="$(IntermediateOutputPath)Content.pk3">
+                <RelativePath>Content.pk3</RelativePath>
+                <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+                <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            </ResolvedFileToPublish>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CleanContentPackage"
+            AfterTargets="Clean">
+        <Delete Files="$(IntermediateOutputPath)Content.pk3" />
+    </Target>
+
+    <!-- The no-build publish test enables this guard to prove that publishing does not invoke the compiler. -->
+    <Target Name="RejectUnexpectedShaderCompilation"
+            BeforeTargets="CompileSdlangShaders"
+            Condition="'$(RejectUnexpectedShaderCompilation)' == 'true'">
+        <Error Text="Shader compilation was not expected for this build." />
+    </Target>
+
+</Project>
