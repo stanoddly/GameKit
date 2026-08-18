@@ -26,6 +26,7 @@ This checklist tracks the actionable findings from the independent Claude Opus 5
 
 - [x] Pin publication workflow actions to immutable commit SHAs.
 - [x] Verify downloaded Slang bundles against platform-specific SHA-256 digests.
+- [x] Acquire Slang/DXC during packaging and embed verified platform tool directories so consumer builds have no non-NuGet download.
 - [x] Pass the temporary NuGet credential through an environment variable and make symbol publication explicit.
 - [x] Distinguish package-consumer shader setup from in-repository project-reference setup.
 - [x] Document trusted-publishing activation and concurrency behavior.

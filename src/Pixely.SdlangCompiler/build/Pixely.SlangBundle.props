@@ -1,0 +1,41 @@
+<Project>
+    <PropertyGroup>
+        <_SlangPinnedVersion>2026.14.1</_SlangPinnedVersion>
+        <_DxcPinnedVersion>1.9.2602</_DxcPinnedVersion>
+        <SlangVersion Condition="'$(SlangVersion)' == ''">$(_SlangPinnedVersion)</SlangVersion>
+        <DxcVersion Condition="'$(DxcVersion)' == ''">$(_DxcPinnedVersion)</DxcVersion>
+        <SlangBundleVersion Condition="'$(SlangBundleVersion)' == ''">slang-$(SlangVersion)-dxc-$(DxcVersion)</SlangBundleVersion>
+        <_SlangCommonBundleEntries>LICENSE;LICENSES/*;SLANG-DXC-BUNDLE.json</_SlangCommonBundleEntries>
+        <_SlangLinuxBundleEntries>$(_SlangCommonBundleEntries);bin/slangc;lib/libslang-compiler.so.*;lib/libslang-glslang-*.so;lib/libdxcompiler.so</_SlangLinuxBundleEntries>
+        <_SlangMacosBundleEntries>$(_SlangCommonBundleEntries);bin/slangc;lib/libslang-compiler.*.dylib;lib/libslang-glslang-*.dylib;lib/libdxcompiler.dylib</_SlangMacosBundleEntries>
+        <_SlangWindowsBundleEntries>$(_SlangCommonBundleEntries);bin/slangc.exe;bin/slang-compiler.dll;bin/slang-glslang.dll;bin/dxcompiler.dll</_SlangWindowsBundleEntries>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <_SlangBundleDistribution Include="linux-aarch64">
+            <Platform>linux-aarch64</Platform>
+            <BundleEntries>$(_SlangLinuxBundleEntries)</BundleEntries>
+            <RequiredFiles>linux-aarch64/bin/slangc;linux-aarch64/lib/libslang-compiler.so.0.$(SlangVersion);linux-aarch64/lib/libslang-glslang-$(SlangVersion).so;linux-aarch64/lib/libdxcompiler.so;linux-aarch64/LICENSE;linux-aarch64/LICENSES/Apache-2.0.txt;linux-aarch64/LICENSES/BSL-1.0.txt;linux-aarch64/LICENSES/CC-BY-4.0.txt;linux-aarch64/LICENSES/DXC-LICENSE.txt;linux-aarch64/LICENSES/DXC-ThirdPartyNotices.txt;linux-aarch64/LICENSES/LLVM-exception.txt;linux-aarch64/LICENSES/LicenseRef-UOI-NCSA.txt;linux-aarch64/LICENSES/MIT.txt;linux-aarch64/LICENSES/Unlicense.txt;linux-aarch64/SLANG-DXC-BUNDLE.json</RequiredFiles>
+        </_SlangBundleDistribution>
+        <_SlangBundleDistribution Include="linux-x86_64">
+            <Platform>linux-x86_64</Platform>
+            <BundleEntries>$(_SlangLinuxBundleEntries)</BundleEntries>
+            <RequiredFiles>linux-x86_64/bin/slangc;linux-x86_64/lib/libslang-compiler.so.0.$(SlangVersion);linux-x86_64/lib/libslang-glslang-$(SlangVersion).so;linux-x86_64/lib/libdxcompiler.so;linux-x86_64/LICENSE;linux-x86_64/LICENSES/Apache-2.0.txt;linux-x86_64/LICENSES/BSL-1.0.txt;linux-x86_64/LICENSES/CC-BY-4.0.txt;linux-x86_64/LICENSES/DXC-LICENSE.txt;linux-x86_64/LICENSES/DXC-ThirdPartyNotices.txt;linux-x86_64/LICENSES/LLVM-exception.txt;linux-x86_64/LICENSES/LicenseRef-UOI-NCSA.txt;linux-x86_64/LICENSES/MIT.txt;linux-x86_64/LICENSES/Unlicense.txt;linux-x86_64/SLANG-DXC-BUNDLE.json</RequiredFiles>
+        </_SlangBundleDistribution>
+        <_SlangBundleDistribution Include="macos-aarch64">
+            <Platform>macos-aarch64</Platform>
+            <BundleEntries>$(_SlangMacosBundleEntries)</BundleEntries>
+            <RequiredFiles>macos-aarch64/bin/slangc;macos-aarch64/lib/libslang-compiler.0.$(SlangVersion).dylib;macos-aarch64/lib/libslang-glslang-$(SlangVersion).dylib;macos-aarch64/lib/libdxcompiler.dylib;macos-aarch64/LICENSE;macos-aarch64/LICENSES/Apache-2.0.txt;macos-aarch64/LICENSES/BSL-1.0.txt;macos-aarch64/LICENSES/CC-BY-4.0.txt;macos-aarch64/LICENSES/DXC-LICENSE.txt;macos-aarch64/LICENSES/DXC-ThirdPartyNotices.txt;macos-aarch64/LICENSES/LLVM-exception.txt;macos-aarch64/LICENSES/LicenseRef-UOI-NCSA.txt;macos-aarch64/LICENSES/MIT.txt;macos-aarch64/LICENSES/Unlicense.txt;macos-aarch64/SLANG-DXC-BUNDLE.json</RequiredFiles>
+        </_SlangBundleDistribution>
+        <_SlangBundleDistribution Include="macos-x86_64">
+            <Platform>macos-x86_64</Platform>
+            <BundleEntries>$(_SlangMacosBundleEntries)</BundleEntries>
+            <RequiredFiles>macos-x86_64/bin/slangc;macos-x86_64/lib/libslang-compiler.0.$(SlangVersion).dylib;macos-x86_64/lib/libslang-glslang-$(SlangVersion).dylib;macos-x86_64/lib/libdxcompiler.dylib;macos-x86_64/LICENSE;macos-x86_64/LICENSES/Apache-2.0.txt;macos-x86_64/LICENSES/BSL-1.0.txt;macos-x86_64/LICENSES/CC-BY-4.0.txt;macos-x86_64/LICENSES/DXC-LICENSE.txt;macos-x86_64/LICENSES/DXC-ThirdPartyNotices.txt;macos-x86_64/LICENSES/LLVM-exception.txt;macos-x86_64/LICENSES/LicenseRef-UOI-NCSA.txt;macos-x86_64/LICENSES/MIT.txt;macos-x86_64/LICENSES/Unlicense.txt;macos-x86_64/SLANG-DXC-BUNDLE.json</RequiredFiles>
+        </_SlangBundleDistribution>
+        <_SlangBundleDistribution Include="windows-x86_64">
+            <Platform>windows-x86_64</Platform>
+            <BundleEntries>$(_SlangWindowsBundleEntries)</BundleEntries>
+            <RequiredFiles>windows-x86_64/bin/slangc.exe;windows-x86_64/bin/slang-compiler.dll;windows-x86_64/bin/slang-glslang.dll;windows-x86_64/bin/dxcompiler.dll;windows-x86_64/LICENSE;windows-x86_64/LICENSES/Apache-2.0.txt;windows-x86_64/LICENSES/BSL-1.0.txt;windows-x86_64/LICENSES/CC-BY-4.0.txt;windows-x86_64/LICENSES/DXC-LICENSE.txt;windows-x86_64/LICENSES/DXC-ThirdPartyNotices.txt;windows-x86_64/LICENSES/LLVM-exception.txt;windows-x86_64/LICENSES/LicenseRef-UOI-NCSA.txt;windows-x86_64/LICENSES/MIT.txt;windows-x86_64/LICENSES/Unlicense.txt;windows-x86_64/SLANG-DXC-BUNDLE.json</RequiredFiles>
+        </_SlangBundleDistribution>
+    </ItemGroup>
+</Project>
