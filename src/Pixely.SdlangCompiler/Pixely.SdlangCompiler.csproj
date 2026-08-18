@@ -8,7 +8,6 @@
         <IsPublishable>false</IsPublishable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
-        <_PrepareSlangOnBuild>true</_PrepareSlangOnBuild>
     </PropertyGroup>
 
     <Import Project="build\Pixely.SdlangCompiler.props" />

@@ -11,8 +11,19 @@
                Condition="'$(SlangPlatform)' == ''" />
     </Target>
 
+    <Target Name="PrepareSourceSlangTool"
+            Condition="'$(_PrepareSlangOnBuild)' != 'true' and '$(SlangToolRoot)' == ''">
+        <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
+               Condition="'$(SlangPlatform)' == ''" />
+        <Error Text="Slang compiler project does not exist: $(SlangCompilerProjectPath)"
+               Condition="'$(SlangCompilerProjectPath)' == '' or !Exists('$(SlangCompilerProjectPath)')" />
+        <MSBuild Projects="$(SlangCompilerProjectPath)"
+                 Targets="ExtractSlangArchive"
+                 Properties="Configuration=$(Configuration);SlangObjDir=$(SlangObjDir);SlangPlatform=$(SlangPlatform);_PrepareSlangOnBuild=true" />
+    </Target>
+
     <Target Name="PrepareSlangTool"
-            DependsOnTargets="$(PrepareSlangToolDependsOn)"
+            DependsOnTargets="$(PrepareSlangToolDependsOn);PrepareSourceSlangTool"
             BeforeTargets="BeforeBuild"
             Condition="'$(_PrepareSlangOnBuild)' == 'true' or '@(SdlangShader)' != ''">
         <Error Text="Slang tool directory does not exist: $(SlangToolSourceDirectory)"

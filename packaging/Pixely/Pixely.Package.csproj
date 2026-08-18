@@ -27,7 +27,8 @@
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CollectPixelyBuildOutputs</TargetsForTfmSpecificBuildOutput>
         <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);CollectPixelyDebugSymbols</TargetsForTfmSpecificDebugSymbolsInPackage>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CollectSlangToolOutputs</TargetsForTfmSpecificContentInPackage>
-        <SlangBundleIntermediateDirectory>$(BaseIntermediateOutputPath)slang-bundles/</SlangBundleIntermediateDirectory>
+        <BeforePack>PrepareSlangToolOutputs;$(BeforePack)</BeforePack>
+        <SlangBundleIntermediateDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)', 'slang-bundles'))</SlangBundleIntermediateDirectory>
         <SlangFullBundleDirectory>$(SlangBundleIntermediateDirectory)full/</SlangFullBundleDirectory>
         <SlangBundleStagingDirectory>$(SlangBundleIntermediateDirectory)staging/</SlangBundleStagingDirectory>
     </PropertyGroup>
@@ -58,10 +59,7 @@
         <_PixelyRuntimeProject Include="..\..\src\Pixely\Pixely.csproj" />
         <ProjectReference Include="@(_PixelyRuntimeProject)" ReferenceOutputAssembly="false" PrivateAssets="all" />
         <ProjectReference Include="..\..\src\Pixely.DependencyInjection.Generator\Pixely.DependencyInjection.Generator.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
-        <ProjectReference Include="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj"
-                          ReferenceOutputAssembly="false"
-                          PrivateAssets="all"
-                          AdditionalProperties="_PrepareSlangOnBuild=false" />
+        <ProjectReference Include="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
@@ -87,7 +85,7 @@
         <_SlangSourceArchive Include="@(_SlangBundleDistribution->'$(SlangFullBundleDirectory)$(SlangBundleVersion)-%(Platform).zip')" />
     </ItemGroup>
 
-    <Target Name="CollectSlangToolOutputs" Returns="@(TfmSpecificPackageFile)">
+    <Target Name="PrepareSlangToolOutputs">
         <MakeDir Directories="$(SlangFullBundleDirectory);$(SlangBundleStagingDirectory)" />
         <DownloadFile SourceUrl="https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension).sha256"
                       DestinationFolder="$(SlangFullBundleDirectory)"
@@ -125,6 +123,17 @@
         </ItemGroup>
         <Error Text="Required Slang bundle files were not extracted: @(_MissingSlangBundleRequiredFile, ', ')"
                Condition="'@(_MissingSlangBundleRequiredFile)' != ''" />
+        <ItemGroup>
+            <ProjectReference Update="@(_PixelyRuntimeProject)">
+                <AdditionalProperties>_PrepareSlangOnBuild=false;SlangToolRoot=$(SlangBundleStagingDirectory)</AdditionalProperties>
+            </ProjectReference>
+            <ProjectReference Update="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj">
+                <AdditionalProperties>_PrepareSlangOnBuild=false;SlangToolRoot=$(SlangBundleStagingDirectory)</AdditionalProperties>
+            </ProjectReference>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CollectSlangToolOutputs" DependsOnTargets="PrepareSlangToolOutputs" Returns="@(TfmSpecificPackageFile)">
         <ItemGroup>
             <TfmSpecificPackageFile Include="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)/**/*">
                 <PackagePath>tools\slang\%(_SlangSourceArchive.Platform)</PackagePath>

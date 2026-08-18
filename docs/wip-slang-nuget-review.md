@@ -12,3 +12,4 @@
 - [x] Make the cross-RID package test assert generated shader outputs in addition to the selected host directory.
 - [x] Keep the package-level `MIT` license metadata and add a root third-party notice directing consumers to the complete embedded Slang and DXC license sets.
 - [x] Keep the five-host package-consumer CI matrix as the required validation for the trimmed platform directories.
+- [x] Make source-tree shader builds depend explicitly on the shared extraction target so a clean parallel solution build cannot validate `slangc` before extraction finishes; prepare package staging before the pack build and pass it to package project references.

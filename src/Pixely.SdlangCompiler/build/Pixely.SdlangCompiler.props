@@ -12,6 +12,7 @@
     <PropertyGroup>
         <SlangDirName Condition="'$(SlangDirName)' == ''">$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
         <SlangObjDir Condition="'$(SlangObjDir)' == ''">$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
+        <SlangCompilerProjectPath Condition="'$(SlangCompilerProjectPath)' == '' and Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj</SlangCompilerProjectPath>
         <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangToolRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangToolRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
         <SlangBaseDir Condition="'$(SlangBaseDir)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)</SlangBaseDir>
         <SlangBaseDir Condition="'$(SlangBaseDir)' == ''">$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
