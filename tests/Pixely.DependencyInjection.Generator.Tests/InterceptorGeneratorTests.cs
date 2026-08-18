@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Emit;
 using Pixely.DependencyInjection.Generator;
 
 namespace Pixely.DependencyInjection.Generator.Tests;
@@ -45,6 +46,123 @@ public class InterceptorGeneratorTests
             }
         }
 
+        """;
+
+    private const string NullableDependencyRegistrationSource = """
+        #nullable enable
+        using Pixely.DependencyInjection;
+        using System;
+        using System.Collections.Generic;
+
+        public sealed class RequiredDependency { }
+        public sealed class OptionalDependency { }
+        public sealed class Item { }
+        public sealed class Container<T> { }
+        public interface IConsumer { }
+
+        public sealed class Consumer : IConsumer
+        {
+            public Consumer(
+                RequiredDependency required,
+                OptionalDependency? optional,
+                IEnumerable<Item>? items,
+                IEnumerable<OptionalDependency?> nullableItems,
+                Container<OptionalDependency?>? nested) { }
+        }
+
+        public sealed class ImplementationConsumer : IConsumer
+        {
+            public ImplementationConsumer(OptionalDependency? optional) { }
+        }
+
+        public sealed class Product { }
+
+        public sealed class ProductFactory
+        {
+            internal Product Create(OptionalDependency? optional) => new Product();
+        }
+
+        public static class Registrations
+        {
+            private static Product CreateProduct(OptionalDependency? optional) => new Product();
+            private static void Start(OptionalDependency? optional) { }
+
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<Consumer>();
+                services.AddSingleton<IConsumer, ImplementationConsumer>();
+                services.AddSingleton<ProductFactory>();
+                services.AddSingleton<Product, ProductFactory>();
+                services.AddSingleton<Product>(CreateProduct);
+                services.AddSingleton<Product>((OptionalDependency? optional) => new Product());
+
+                services.AddTransient<Consumer>();
+                services.AddTransient<IConsumer, ImplementationConsumer>();
+                services.AddTransient<Product, ProductFactory>();
+                services.AddTransient<Product>(CreateProduct);
+                services.AddTransient<Product>((OptionalDependency? optional) => new Product());
+
+                services.OnStart(Start);
+                services.OnStart((OptionalDependency? optional) => { });
+            }
+
+            public static void ResolveCollections(ServiceProvider provider)
+            {
+                _ = provider.GetRequiredService<IEnumerable<OptionalDependency?>>();
+                _ = provider.GetService<IEnumerable<OptionalDependency?>>();
+            }
+        }
+        """;
+
+    private const string ObliviousDependencyRegistrationSource = """
+        #nullable disable
+        using Pixely.DependencyInjection;
+
+        public sealed class Dependency { }
+
+        public sealed class Consumer
+        {
+            public Consumer(Dependency dependency) { }
+        }
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<Consumer>();
+            }
+        }
+        """;
+
+    private const string MetadataDependencySource = """
+        #nullable enable
+
+        public sealed class MetadataDependency { }
+
+        public sealed class NullableMetadataConsumer
+        {
+            public NullableMetadataConsumer(MetadataDependency? dependency) { }
+        }
+
+        #nullable disable
+
+        public sealed class ObliviousMetadataConsumer
+        {
+            public ObliviousMetadataConsumer(MetadataDependency dependency) { }
+        }
+        """;
+
+    private const string MetadataDependencyRegistrationSource = """
+        using Pixely.DependencyInjection;
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<NullableMetadataConsumer>();
+                services.AddSingleton<ObliviousMetadataConsumer>();
+            }
+        }
         """;
 
     private const string GenericHelperRegistrationSource = """
@@ -275,6 +393,91 @@ public class InterceptorGeneratorTests
     }
 
     [Test]
+    public void GeneratedCode_UsesNullableAnnotationsForServiceResolution()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            NullableDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null,
+            out Compilation outputCompilation);
+        string generated = GetGeneratedCode(result);
+
+        Diagnostic[] generatedDiagnostics = outputCompilation.GetDiagnostics()
+            .Where(diagnostic =>
+                diagnostic.Location.SourceTree?.FilePath.EndsWith(
+                    "ServiceCollectionInterceptors.g.cs",
+                    StringComparison.Ordinal) == true &&
+                diagnostic.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                generated.Split("sp.GetService<global::OptionalDependency>()").Length - 1,
+                Is.EqualTo(12));
+            Assert.That(
+                generated.Split("sp.GetRequiredService<global::RequiredDependency>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetServices<global::Item>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetServices<global::OptionalDependency>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("sp.GetService<global::Container<global::OptionalDependency?>>()").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(
+                generated.Split("return provider.GetServices<global::OptionalDependency>();").Length - 1,
+                Is.EqualTo(2));
+            Assert.That(generated, Does.Contain("global::System.Func<global::OptionalDependency?, global::Product>"));
+            Assert.That(generated, Does.Contain("global::System.Action<global::OptionalDependency?>"));
+            Assert.That(generatedDiagnostics, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void GeneratedCode_TreatsObliviousReferenceDependencyAsRequired()
+    {
+        GeneratorDriverRunResult result = RunGenerator(
+            ObliviousDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null);
+        string generated = GetGeneratedCode(result);
+
+        Assert.That(generated, Does.Contain("sp.GetRequiredService<global::Dependency>()"));
+        Assert.That(generated, Does.Not.Contain("sp.GetService<global::Dependency>()"));
+    }
+
+    [Test]
+    public void GeneratedCode_UsesNullableAnnotationsFromReferencedCompilation()
+    {
+        CSharpCompilation metadataCompilation = CreateCompilation(
+            MetadataDependencySource,
+            assemblyName: "MetadataDependencyAssembly");
+        using MemoryStream metadataStream = new();
+        EmitResult emitResult = metadataCompilation.Emit(metadataStream);
+        Assert.That(emitResult.Success, Is.True);
+        metadataStream.Position = 0;
+        MetadataReference metadataReference = MetadataReference.CreateFromStream(metadataStream);
+
+        GeneratorDriverRunResult result = RunGenerator(
+            MetadataDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null,
+            out Compilation outputCompilation,
+            new MetadataReference[] { metadataReference });
+        string generated = GetGeneratedCode(result);
+        Diagnostic[] compilationErrors = outputCompilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(generated, Does.Contain("new global::NullableMetadataConsumer(sp.GetService<global::MetadataDependency>())"));
+            Assert.That(generated, Does.Contain("new global::ObliviousMetadataConsumer(sp.GetRequiredService<global::MetadataDependency>())"));
+            Assert.That(compilationErrors, Is.Empty);
+        });
+    }
+
+    [Test]
     public void ConstructorRegistration_UnnamedImplementationType_ReportsAccurateGK0001()
     {
         GeneratorDriverRunResult result = RunGenerator(
@@ -340,9 +543,12 @@ public class InterceptorGeneratorTests
     private static GeneratorDriverRunResult RunGenerator(
         string source,
         string? emitTrimAnnotationsPropertyValue,
-        out Compilation outputCompilation)
+        out Compilation outputCompilation,
+        IEnumerable<MetadataReference>? additionalReferences = null)
     {
-        CSharpCompilation compilation = CreateCompilation(source);
+        CSharpCompilation compilation = CreateCompilation(
+            source,
+            additionalReferences: additionalReferences);
         InterceptorGenerator generator = new InterceptorGenerator();
 
         OptionsProvider optionsProvider = new OptionsProvider(emitTrimAnnotationsPropertyValue);
@@ -359,7 +565,10 @@ public class InterceptorGeneratorTests
         return ran.GetRunResult();
     }
 
-    private static CSharpCompilation CreateCompilation(string source)
+    private static CSharpCompilation CreateCompilation(
+        string source,
+        string assemblyName = "TestAssembly",
+        IEnumerable<MetadataReference>? additionalReferences = null)
     {
         // Collect references: mscorlib/System.Runtime + the DI runtime assembly
         List<MetadataReference> references = new List<MetadataReference>();
@@ -374,6 +583,11 @@ public class InterceptorGeneratorTests
         Assembly diAssembly = typeof(Pixely.DependencyInjection.ServiceCollection).Assembly;
         references.Add(MetadataReference.CreateFromFile(diAssembly.Location));
 
+        if (additionalReferences != null)
+        {
+            references.AddRange(additionalReferences);
+        }
+
         CSharpParseOptions parseOptions = new CSharpParseOptions(
             languageVersion: LanguageVersion.CSharp13,
             preprocessorSymbols: ImmutableArray<string>.Empty)
@@ -387,10 +601,11 @@ public class InterceptorGeneratorTests
         SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         return CSharpCompilation.Create(
-            "TestAssembly",
+            assemblyName,
             new[] { tree },
             references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                .WithNullableContextOptions(NullableContextOptions.Enable));
     }
 
     // Provides controlled AnalyzerConfigOptions that simulate the MSBuild property.
