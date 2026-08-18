@@ -65,7 +65,7 @@ public interface IGeometrySubrenderer : IOrderable
 }
 ```
 
-Inherit from `IOrderable` (from GameKit) to control execution order.
+Inherit from `IOrderable` (from Pixely) to control execution order.
 
 ### Implementing the Interface
 

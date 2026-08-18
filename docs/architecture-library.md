@@ -1,4 +1,4 @@
-# GameKit.Architecture
+# Pixely.Architecture
 
 The CQS + domain-event infrastructure for a Model layer: command/query handler contracts, a command
 dispatcher with command-dispatch hooks, and a pull-based domain-event stream. For the reasoning behind
@@ -142,7 +142,7 @@ services.AddSingleton<DialogTrigger>();
 ```
 
 `AddDomainEventDispatchHook()` uses `ServiceRegistry<IDomainEventListener>` to auto-subscribe
-activated singleton services that implement `IDomainEventListener`, similar to `GameKit.Events`.
+activated singleton services that implement `IDomainEventListener`, similar to `Pixely.Events`.
 Do not register listeners as `IDomainEventListener` aliases; register their concrete type. A
 listener may depend on `ICommandDispatcher` and dispatch follow-up commands during processing.
 

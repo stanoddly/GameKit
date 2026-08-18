@@ -1,0 +1,19 @@
+﻿using Pixely.App;
+using Pixely.RenderOrchestration;
+
+namespace Pixely.Tutorials.WindowCreation;
+
+static class Program
+{
+    static int Main(string[] args)
+    {
+        PixelyAppBuilder builder = new PixelyAppBuilder()
+            //.AddContentFromZipPattern("data*.pak")
+            //.AddContentFromProjectDirectory("_Content")
+            .UseDefaultRendering(
+                new WindowConfig(Size: (1280, 720), Title: "Game"));
+
+        using IPixelyApp gameKitApp = builder.Build();
+        return gameKitApp.Run();
+    }
+}

@@ -1,6 +1,6 @@
-# GameKit
+# Pixely
 
-GameKit is a personal, highly experimental .NET game-development toolkit.
+Pixely is a personal, highly experimental .NET game-development toolkit.
 
 It is public for practical reasons: easier CI integration across my projects,
 easier sharing with peers, and less friction around GitHub's open-source
@@ -33,7 +33,7 @@ Experimental. Expect breaking changes.
 
 ## Development
 
-GameKit is developed by stanoddly. Since November 2025, most changes have been
+Pixely is developed by stanoddly. Since November 2025, most changes have been
 made through AI pair-programming: botoddly contributes the implementation work,
 and stanoddly reviews, directs, and merges the changes through PRs. Earlier
 parts of the project were mostly written manually.

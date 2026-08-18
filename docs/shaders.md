@@ -1,6 +1,6 @@
 # Shaders
 
-Guide to writing and using shaders with GameKit. Shaders are written in Slang and compiled to SPIR-V, DXIL, and MSL at build time.
+Guide to writing and using shaders with Pixely. Shaders are written in Slang and compiled to SPIR-V, DXIL, and MSL at build time.
 
 ## File Structure
 
@@ -21,16 +21,16 @@ Shaders are automatically compiled during build. The build system generates SPIR
 
 ## Build Integration
 
-Reference `GameKit.SdlangCompiler`, import its props and targets, and declare the shaders to compile:
+Reference `Pixely.SdlangCompiler`, import its props and targets, and declare the shaders to compile:
 
 ```xml
 <ItemGroup>
-    <ProjectReference Include="..\..\src\GameKit.SdlangCompiler\GameKit.SdlangCompiler.csproj"
+    <ProjectReference Include="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj"
                       ReferenceOutputAssembly="false" />
 </ItemGroup>
 
-<Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.props" />
-<Import Project="..\..\src\GameKit.SdlangCompiler\build\GameKit.SdlangCompiler.targets" />
+<Import Project="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.props" />
+<Import Project="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets" />
 
 <ItemGroup>
     <SdlangShader Include="Content\shaders\*.slang" />
@@ -41,7 +41,7 @@ The targets file compiles every `SdlangShader` item before `CoreCompile` and exp
 
 Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
-The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `GameKit.SdlangCompiler`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `GameKit.SdlangCompiler` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into application build or publish output. Build integrations pass `$(SlangCompilerPath)` to `SdlangCompiler`.
+The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `Pixely.SdlangCompiler`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `Pixely.SdlangCompiler` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into application build or publish output. Build integrations pass `$(SlangCompilerPath)` to `SdlangCompiler`.
 
 ### Custom compilation targets
 
@@ -178,25 +178,25 @@ void fragmentMain(VertexToFragment input)
 }
 ```
 
-See `GameKit.Tutorials.DepthOnly` for a complete example.
+See `Pixely.Tutorials.DepthOnly` for a complete example.
 
 ## GPU Backend Selection
 
-GameKit lets SDL choose the GPU backend automatically by default. Register `GameKitConfig` before building the application to request a specific backend:
+Pixely lets SDL choose the GPU backend automatically by default. Register `PixelyConfig` before building the application to request a specific backend:
 
 ```csharp
-builder.AddSingleton(new GameKitConfig(GpuBackend: GpuBackend.Direct3D12));
+builder.AddSingleton(new PixelyConfig(GpuBackend: GpuBackend.Direct3D12));
 ```
 
 `GpuBackend` supports `Automatic`, `Vulkan`, `Direct3D12`, and `Metal`. An explicit choice is passed to SDL as `vulkan`, `direct3d12`, or `metal` and advertises only that backend's shader format; device creation fails if the requested driver is unavailable. Automatic Windows device creation advertises both SPIR-V and DXIL, allowing SDL to select Vulkan or Direct3D 12. Vulkan-specific device options remain enabled whenever Vulkan can be selected.
 
-Set the `GK_GRAPHICS` environment variable to override `GameKitConfig` without changing application code:
+Set the `PIXELY_GRAPHICS` environment variable to override `PixelyConfig` without changing application code:
 
 ```shell
-GK_GRAPHICS=vulkan dotnet run --project tutorials/GameKit.Tutorials.Triangle
+PIXELY_GRAPHICS=vulkan dotnet run --project tutorials/Pixely.Tutorials.Triangle
 ```
 
-Supported values are `automatic`, `vulkan`, `direct3d12`, and `metal`, matched case-insensitively. An unset, empty, or whitespace-only value leaves `GameKitConfig.GpuBackend` in effect. Any other value stops initialization with an error that lists the supported values.
+Supported values are `automatic`, `vulkan`, `direct3d12`, and `metal`, matched case-insensitively. An unset, empty, or whitespace-only value leaves `PixelyConfig.GpuBackend` in effect. Any other value stops initialization with an error that lists the supported values.
 
 The selected SDL driver is available from `GpuDevice.Driver` for diagnostics.
 
@@ -205,7 +205,7 @@ The selected SDL driver is available from `GpuDevice.Driver` for diagnostics.
 On a GPU-equipped Windows system, add the following registrations to each application under test:
 
 ```csharp
-builder.AddSingleton(new GameKitConfig(
+builder.AddSingleton(new PixelyConfig(
     EnableGpuValidation: true,
     GpuBackend: GpuBackend.Direct3D12));
 
@@ -221,10 +221,10 @@ builder.OnStart((GpuDevice gpuDevice) =>
 Run these representative workloads and confirm that each renders without SDL GPU validation errors:
 
 ```shell
-dotnet run --project tutorials/GameKit.Tutorials.Triangle
-dotnet run --project tutorials/GameKit.Tutorials.ImageLoading
-dotnet run --project tutorials/GameKit.Tutorials.StorageBuffer
-dotnet run --project tutorials/GameKit.Tutorials.ComputeShader
+dotnet run --project tutorials/Pixely.Tutorials.Triangle
+dotnet run --project tutorials/Pixely.Tutorials.ImageLoading
+dotnet run --project tutorials/Pixely.Tutorials.StorageBuffer
+dotnet run --project tutorials/Pixely.Tutorials.ComputeShader
 ```
 
 Together these cover basic graphics, texture/sampler bindings, storage buffers, and compute dispatch.
