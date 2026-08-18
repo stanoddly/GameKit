@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPublishable>true</IsPublishable>
+        <BuildIntegrationContentDirectory>$(MSBuildProjectDirectory)/Content</BuildIntegrationContentDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj"
+                          ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <Import Project="..\..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.props" />
+    <Import Project="..\..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets" />
+
+    <ItemGroup>
+        <SdlangShader Include="Content\shaders\copy_output.slang" />
+        <SdlangShader Include="..\ExternalShaders\*.slang" />
+        <SdlangShader Include="Content\shaders\embedded_output.slang" />
+        <SdlangShader Include="Content\shaders\nested\embedded_nested.slang" />
+    </ItemGroup>
+
+    <Target Name="EmbedBuildIntegrationShaderOutputs"
+            BeforeTargets="AssignTargetPaths"
+            DependsOnTargets="CompileSdlangShaders"
+            Condition="'$(NoBuild)' != 'true'">
+        <ItemGroup>
+            <_EmbeddedShaderOutput Include="@(SdlangShaderOutput)"
+                                   Condition="$([System.String]::Copy('%(Filename)').StartsWith('embedded_'))">
+                <ContentRelativePath>$([MSBuild]::MakeRelative('$(BuildIntegrationContentDirectory)', '%(FullPath)'))</ContentRelativePath>
+            </_EmbeddedShaderOutput>
+            <EmbeddedResource Include="@(_EmbeddedShaderOutput)">
+                <WithCulture>false</WithCulture>
+                <LogicalName>$([System.String]::Copy('%(ContentRelativePath)').Replace('\', '/'))</LogicalName>
+            </EmbeddedResource>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CopyBuildIntegrationContentToBuildOutput"
+            AfterTargets="CopyFilesToOutputDirectory">
+        <ItemGroup>
+            <_BuildIntegrationContent Include="$(BuildIntegrationContentDirectory)\**\*" />
+            <_BuildIntegrationContent Remove="$(BuildIntegrationContentDirectory)\shaders\.generated\embedded_output.*" />
+            <_BuildIntegrationContent Remove="$(BuildIntegrationContentDirectory)\shaders\nested\.generated\embedded_nested.*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_BuildIntegrationContent)"
+              DestinationFiles="@(_BuildIntegrationContent->'$(OutDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true">
+            <Output TaskParameter="DestinationFiles" ItemName="FileWrites" />
+        </Copy>
+    </Target>
+
+    <Target Name="CopyBuildIntegrationContentToPublishOutput"
+            AfterTargets="Publish">
+        <ItemGroup>
+            <_BuildIntegrationPublishContent Include="$(BuildIntegrationContentDirectory)\**\*" />
+            <_BuildIntegrationPublishContent Remove="$(BuildIntegrationContentDirectory)\shaders\.generated\embedded_output.*" />
+            <_BuildIntegrationPublishContent Remove="$(BuildIntegrationContentDirectory)\shaders\nested\.generated\embedded_nested.*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_BuildIntegrationPublishContent)"
+              DestinationFiles="@(_BuildIntegrationPublishContent->'$(PublishDir)Content\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+    </Target>
+
+    <Target Name="RejectUnexpectedShaderCompilation"
+            BeforeTargets="CompileSdlangShaders"
+            Condition="'$(RejectUnexpectedShaderCompilation)' == 'true'">
+        <Error Text="Shader compilation was not expected for this build." />
+    </Target>
+</Project>

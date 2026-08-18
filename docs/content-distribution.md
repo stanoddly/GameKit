@@ -1,10 +1,10 @@
 # Content distribution
 
-GameKit loads runtime content through a `VirtualFileSystem`. Content paths such as `shaders/terrain` do not identify a physical distribution format. A project can provide the same path from a directory, a ZIP archive, an assembly resource, or a composition of those sources.
+Pixely loads runtime content through a `VirtualFileSystem`. Content paths such as `shaders/terrain` do not identify a physical distribution format. A project can provide the same path from a directory, a ZIP archive, an assembly resource, or a composition of those sources.
 
 ## Runtime sources
 
-`GameKitAppBuilder` exposes the common content sources:
+`PixelyAppBuilder` exposes the common content sources:
 
 - `AddContentFromDirectory` adds one physical directory.
 - `AddContentFromProjectDirectory` resolves a directory from the application output or project tree.
@@ -16,7 +16,7 @@ Patterns are resolved relative to `AppContext.BaseDirectory`. Matching directory
 
 ## Build and publish policy
 
-Content producers do not choose how a consumer distributes their outputs. In particular, `GameKit.SdlangCompiler.SdlangCompileTask` compiles `@(SdlangShader)` and exposes the physical generated files as `@(SdlangShaderOutput)`. The consuming project decides whether those files are copied, embedded, or packaged.
+Content producers do not choose how a consumer distributes their outputs. In particular, `Pixely.SdlangCompiler.SdlangCompileTask` compiles `@(SdlangShader)` and exposes the physical generated files as `@(SdlangShaderOutput)`. The consuming project decides whether those files are copied, embedded, or packaged.
 
 Files generated during a build do not exist when MSBuild evaluates the project. A content pipeline that must include generated files therefore enumerates its content tree inside an execution-time target, after the producer has run. An evaluation-time item glob is not sufficient for a clean build.
 
@@ -30,10 +30,10 @@ The policies are independent of file type. Generated shaders motivate the execut
 
 ## Tutorials
 
-- [Embed generated shaders in an assembly](../tutorials/GameKit.Tutorials.EmbeddedContent/README.md)
-- [Publish content in a ZIP archive](../tutorials/GameKit.Tutorials.ZipContent/README.md)
+- [Embed generated shaders in an assembly](../tutorials/Pixely.Tutorials.EmbeddedContent/README.md)
+- [Publish content in a ZIP archive](../tutorials/Pixely.Tutorials.ZipContent/README.md)
 
-The embedded tutorial follows the policy used by `GameKit.Pencuil`. The ZIP tutorial follows the policy used by Nerudova: normal builds use a loose `Content` directory, while published builds use `Content.pk3`.
+The embedded tutorial follows the policy used by `Pixely.Pencuil`. The ZIP tutorial follows the policy used by Nerudova: normal builds use a loose `Content` directory, while published builds use `Content.pk3`.
 
 ## Publish without building
 

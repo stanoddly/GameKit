@@ -1,20 +1,20 @@
 # Logging
 
-`GameKit.Logging` integrates ZLogger with GameKit's service collection. The logger factory belongs to the root service provider, remains available across stage transitions, and drains queued entries when the application is disposed.
+`Pixely.Logging` integrates ZLogger with Pixely's service collection. The logger factory belongs to the root service provider, remains available across stage transitions, and drains queued entries when the application is disposed.
 
-See the [logging tutorial](../tutorials/GameKit.Tutorials.Logging) for a complete runnable example with file and debug-console providers and an injected application logger inside a registered service.
+See the [logging tutorial](../tutorials/Pixely.Tutorials.Logging) for a complete runnable example with file and debug-console providers and an injected application logger inside a registered service.
 
 ## Registration
 
 Register the logger factory and application logger:
 
 ```csharp
-using GameKit.App;
-using GameKit.Logging;
+using Pixely.App;
+using Pixely.Logging;
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
-GameKitAppBuilder builder = new();
+PixelyAppBuilder builder = new();
 builder.AddZLogger(logging =>
 {
     logging.SetMinimumLevel(LogLevel.Information);
@@ -41,7 +41,7 @@ builder.AddZLogger(logging =>
 {prefix}_20260807_090416Z_pid48545.log
 ```
 
-The timestamp is UTC and the process ID is labeled explicitly. When no directory is supplied, the helper first attempts `AppContext.BaseDirectory`, then falls back to `LocalApplicationData/GameKit/Logs`. A failed preferred location is reported through `InternalErrorLogger`. Before opening the new file, the helper keeps the latest nine existing matching files, leaving at most 10 after the new file is created. Other prefixes and unrelated files are not changed.
+The timestamp is UTC and the process ID is labeled explicitly. When no directory is supplied, the helper first attempts `AppContext.BaseDirectory`, then falls back to `LocalApplicationData/Pixely/Logs`. A failed preferred location is reported through `InternalErrorLogger`. Before opening the new file, the helper keeps the latest nine existing matching files, leaving at most 10 after the new file is created. Other prefixes and unrelated files are not changed.
 
 Pass a directory explicitly when the application has a platform-provided location. Explicit paths are strict and do not fall back:
 
@@ -101,6 +101,6 @@ The background writer formats captured values later. Prefer small immutable valu
 
 ## Shutdown and durability
 
-Dispose `IGameKitApp`, normally with a `using` declaration. Disposal completes the logging channel, drains queued entries, flushes the stream, and closes the current file.
+Dispose `IPixelyApp`, normally with a `using` declaration. Disposal completes the logging channel, drains queued entries, flushes the stream, and closes the current file.
 
 Logging is best-effort. Returning from a logging call does not mean the entry is on disk, and a process crash can lose queued or operating-system-buffered entries.
