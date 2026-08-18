@@ -147,6 +147,18 @@ public sealed class NullableDependencyTests
     }
 
     [Test]
+    public void Transient_MissingNullableDependencyAfterFreeze_ReceivesNull()
+    {
+        ServiceCollection collection = new();
+        collection.AddTransient<NullableTransientConsumer>();
+        ServiceProvider provider = collection.BuildServiceProvider();
+
+        NullableTransientConsumer consumer = provider.GetRequiredService<NullableTransientConsumer>();
+
+        Assert.That(consumer.Service, Is.Null);
+    }
+
+    [Test]
     public void OnStart_MissingNullableDependency_ReceivesNull()
     {
         SimpleService? captured = new();

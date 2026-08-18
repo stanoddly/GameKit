@@ -269,7 +269,7 @@ public class InterceptorGenerator : IIncrementalGenerator
             return null;
         }
 
-        string elementTypeFullName = GetTypeName(namedTypeArg.TypeArguments[0]);
+        string elementTypeFullName = GetResolutionTypeName(namedTypeArg.TypeArguments[0]);
 
         InterceptionKind kind = calledMethodName == "GetRequiredService"
             ? InterceptionKind.GetRequiredServiceEnumerable

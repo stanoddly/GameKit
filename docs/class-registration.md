@@ -25,7 +25,7 @@ services.AddSingleton<RenderPipeline>();
 
 Use when:
 - `T` has exactly one public constructor (or an implicit parameterless constructor).
-- All constructor parameters are registered services.
+- Constructor parameters follow the [injected dependency rules](#optional-injected-dependencies).
 
 Constraints: `T` must be a named concrete type at the call site — not a type parameter (see [Source Generator Caveats](#source-generator-caveats)).
 
@@ -83,7 +83,7 @@ Use when:
 
 ### `AddSingleton<T>(Delegate factory)` — requires source generator
 
-Registers a factory delegate whose parameters are resolved as services. The delegate may be a static method group or a lambda; its parameter types must all be registered services.
+Registers a factory delegate whose parameters are resolved according to the [injected dependency rules](#optional-injected-dependencies). The delegate may be a static method group or a lambda.
 
 ```csharp
 services.AddSingleton<Camera>(Camera.CreateDefault);
@@ -197,7 +197,7 @@ Source-generated constructor registrations, delegate factories, instance factory
 - Nullable reference parameters use `GetService<T>()` and receive `null` when no service is available.
 - `IEnumerable<T>` parameters use `GetServices<T>()` and receive an empty collection when no services are available, regardless of the collection's outer nullability.
 
-Only the parameter's top-level annotation controls optionality. For example, `Handler<Input?>` is required, while `Handler<Input?>?` is optional. The rules apply only to reference types.
+Only reference types are supported as injected dependencies; nullable value types are not treated as optional services. For reference types, only the parameter's top-level annotation controls optionality. For example, `Handler<Input?>` is required, while `Handler<Input?>?` is optional.
 
 Nullability is read from the parameter declaration, including metadata from another assembly. Parameters declared by code compiled without nullable annotations are therefore treated as required. Explicit parameter default values are not used because generated activation always supplies every argument.
 

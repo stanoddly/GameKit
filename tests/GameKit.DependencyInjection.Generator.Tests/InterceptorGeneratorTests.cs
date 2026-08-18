@@ -3,6 +3,7 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Emit;
 using GameKit.DependencyInjection.Generator;
 
 namespace GameKit.DependencyInjection.Generator.Tests;
@@ -104,6 +105,12 @@ public class InterceptorGeneratorTests
                 services.OnStart(Start);
                 services.OnStart((OptionalDependency? optional) => { });
             }
+
+            public static void ResolveCollections(ServiceProvider provider)
+            {
+                _ = provider.GetRequiredService<IEnumerable<OptionalDependency?>>();
+                _ = provider.GetService<IEnumerable<OptionalDependency?>>();
+            }
         }
         """;
 
@@ -123,6 +130,37 @@ public class InterceptorGeneratorTests
             public static void Register(ServiceCollection services)
             {
                 services.AddSingleton<Consumer>();
+            }
+        }
+        """;
+
+    private const string MetadataDependencySource = """
+        #nullable enable
+
+        public sealed class MetadataDependency { }
+
+        public sealed class NullableMetadataConsumer
+        {
+            public NullableMetadataConsumer(MetadataDependency? dependency) { }
+        }
+
+        #nullable disable
+
+        public sealed class ObliviousMetadataConsumer
+        {
+            public ObliviousMetadataConsumer(MetadataDependency dependency) { }
+        }
+        """;
+
+    private const string MetadataDependencyRegistrationSource = """
+        using GameKit.DependencyInjection;
+
+        public static class Registrations
+        {
+            public static void Register(ServiceCollection services)
+            {
+                services.AddSingleton<NullableMetadataConsumer>();
+                services.AddSingleton<ObliviousMetadataConsumer>();
             }
         }
         """;
@@ -388,6 +426,9 @@ public class InterceptorGeneratorTests
             Assert.That(
                 generated.Split("sp.GetService<global::Container<global::OptionalDependency?>>()").Length - 1,
                 Is.EqualTo(2));
+            Assert.That(
+                generated.Split("return provider.GetServices<global::OptionalDependency>();").Length - 1,
+                Is.EqualTo(2));
             Assert.That(generated, Does.Contain("global::System.Func<global::OptionalDependency?, global::Product>"));
             Assert.That(generated, Does.Contain("global::System.Action<global::OptionalDependency?>"));
             Assert.That(generatedDiagnostics, Is.Empty);
@@ -404,6 +445,36 @@ public class InterceptorGeneratorTests
 
         Assert.That(generated, Does.Contain("sp.GetRequiredService<global::Dependency>()"));
         Assert.That(generated, Does.Not.Contain("sp.GetService<global::Dependency>()"));
+    }
+
+    [Test]
+    public void GeneratedCode_UsesNullableAnnotationsFromReferencedCompilation()
+    {
+        CSharpCompilation metadataCompilation = CreateCompilation(
+            MetadataDependencySource,
+            assemblyName: "MetadataDependencyAssembly");
+        using MemoryStream metadataStream = new();
+        EmitResult emitResult = metadataCompilation.Emit(metadataStream);
+        Assert.That(emitResult.Success, Is.True);
+        metadataStream.Position = 0;
+        MetadataReference metadataReference = MetadataReference.CreateFromStream(metadataStream);
+
+        GeneratorDriverRunResult result = RunGenerator(
+            MetadataDependencyRegistrationSource,
+            emitTrimAnnotationsPropertyValue: null,
+            out Compilation outputCompilation,
+            new MetadataReference[] { metadataReference });
+        string generated = GetGeneratedCode(result);
+        Diagnostic[] compilationErrors = outputCompilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(generated, Does.Contain("new global::NullableMetadataConsumer(sp.GetService<global::MetadataDependency>())"));
+            Assert.That(generated, Does.Contain("new global::ObliviousMetadataConsumer(sp.GetRequiredService<global::MetadataDependency>())"));
+            Assert.That(compilationErrors, Is.Empty);
+        });
     }
 
     [Test]
@@ -472,9 +543,12 @@ public class InterceptorGeneratorTests
     private static GeneratorDriverRunResult RunGenerator(
         string source,
         string? emitTrimAnnotationsPropertyValue,
-        out Compilation outputCompilation)
+        out Compilation outputCompilation,
+        IEnumerable<MetadataReference>? additionalReferences = null)
     {
-        CSharpCompilation compilation = CreateCompilation(source);
+        CSharpCompilation compilation = CreateCompilation(
+            source,
+            additionalReferences: additionalReferences);
         InterceptorGenerator generator = new InterceptorGenerator();
 
         OptionsProvider optionsProvider = new OptionsProvider(emitTrimAnnotationsPropertyValue);
@@ -491,7 +565,10 @@ public class InterceptorGeneratorTests
         return ran.GetRunResult();
     }
 
-    private static CSharpCompilation CreateCompilation(string source)
+    private static CSharpCompilation CreateCompilation(
+        string source,
+        string assemblyName = "TestAssembly",
+        IEnumerable<MetadataReference>? additionalReferences = null)
     {
         // Collect references: mscorlib/System.Runtime + the DI runtime assembly
         List<MetadataReference> references = new List<MetadataReference>();
@@ -506,6 +583,11 @@ public class InterceptorGeneratorTests
         Assembly diAssembly = typeof(GameKit.DependencyInjection.ServiceCollection).Assembly;
         references.Add(MetadataReference.CreateFromFile(diAssembly.Location));
 
+        if (additionalReferences != null)
+        {
+            references.AddRange(additionalReferences);
+        }
+
         CSharpParseOptions parseOptions = new CSharpParseOptions(
             languageVersion: LanguageVersion.CSharp13,
             preprocessorSymbols: ImmutableArray<string>.Empty)
@@ -519,7 +601,7 @@ public class InterceptorGeneratorTests
         SyntaxTree tree = CSharpSyntaxTree.ParseText(source, parseOptions);
 
         return CSharpCompilation.Create(
-            "TestAssembly",
+            assemblyName,
             new[] { tree },
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
