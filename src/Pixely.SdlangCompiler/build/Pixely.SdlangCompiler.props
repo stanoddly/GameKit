@@ -13,10 +13,12 @@
         <SlangCompilerExeName>slangc</SlangCompilerExeName>
         <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
         <SlangCompilerPath>$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
+        <!-- Source imports use the build output; package imports use the task assembly beside the build directory. -->
         <SdlangCompilerAssembly Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
         <SdlangCompilerAssembly Condition="!Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
 
+    <!-- ProjectReference does not expose the toolchain's buildTransitive property to source projects importing these assets. -->
     <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">
         <PackageReference Include="SlangDxcBundle.Toolchain" Version="[$(SlangVersion)]" />
     </ItemGroup>
