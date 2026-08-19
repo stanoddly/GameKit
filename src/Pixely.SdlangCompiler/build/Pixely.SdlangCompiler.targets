@@ -5,42 +5,19 @@
         TaskFactory="TaskHostFactory"
         Runtime="NET" />
 
-    <Target Name="ValidateSlangPlatform" BeforeTargets="DownloadSlang">
+    <Target Name="ValidateSlangToolchain">
+        <Error Text="SlangDxcBundle.Toolchain did not expose SlangDxcToolchainRoot."
+               Condition="'$(SlangDxcToolchainRoot)' == ''" />
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
                Condition="'$(SlangPlatform)' == ''" />
+        <Error Text="Slang tool directory does not exist: $(SlangToolSourceDirectory)"
+               Condition="!Exists('$(SlangToolSourceDirectory)')" />
+        <Error Text="Slang compiler does not exist: $(SlangCompilerPath)"
+               Condition="!Exists('$(SlangCompilerPath)')" />
     </Target>
 
-    <Target Name="DownloadSlang" BeforeTargets="BeforeBuild"
-            Condition="'$(_OwnsSlangInstallation)' == 'true'">
-        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
-        <DownloadFile SourceUrl="$(SlangDownloadUrl)"
-                      DestinationFolder="$(SlangObjDir)"
-                      DestinationFileName="$(SlangZipFile)"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('$(SlangZipPath)')" />
-        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
-               Condition="!Exists('$(SlangZipPath)')" />
-    </Target>
-
-    <Target Name="ExtractSlang" AfterTargets="DownloadSlang" BeforeTargets="BeforeBuild"
-            Condition="'$(_OwnsSlangInstallation)' == 'true'">
-        <PropertyGroup>
-            <NeedsExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsExtraction>
-        </PropertyGroup>
-
-        <Message Text="Extracting Slang to $(SlangBaseDir)..." Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
-        <Unzip SourceFiles="$(SlangZipPath)"
-               DestinationFolder="$(SlangBaseDir)"
-               Condition="'$(NeedsExtraction)' == 'true'" />
-        <RemoveDir Directories="$(SlangBaseDir)/include;$(SlangBaseDir)/share;$(SlangBaseDir)/lib/cmake"
-                   Condition="'$(NeedsExtraction)' == 'true'" />
-        <Delete Files="$(SlangBaseDir)/LICENSE;$(SlangBaseDir)/README.md"
-                Condition="'$(NeedsExtraction)' == 'true'" />
-        <Message Text="Slang extracted and cleaned up at $(SlangBaseDir)" Importance="high" Condition="'$(NeedsExtraction)' == 'true'" />
-    </Target>
-
-    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" Condition="'@(SdlangShader)' != ''">
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" DependsOnTargets="ValidateSlangToolchain"
+            Condition="'@(SdlangShader)' != ''">
         <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)">
             <Output TaskParameter="GeneratedFiles" ItemName="SdlangShaderOutput" />
         </SdlangCompileTask>

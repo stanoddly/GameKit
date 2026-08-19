@@ -4,24 +4,19 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <IsPackable>true</IsPackable>
+        <IsPackable>false</IsPackable>
         <IsPublishable>false</IsPublishable>
         <PublishAot>false</PublishAot>
         <PublishTrimmed>false</PublishTrimmed>
-        <_OwnsSlangInstallation>true</_OwnsSlangInstallation>
     </PropertyGroup>
 
     <Import Project="build\Pixely.SdlangCompiler.props" />
+
     <Import Project="build\Pixely.SdlangCompiler.targets" />
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Framework" Version="18.9.6" />
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.9.6" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="build\**" Pack="true" PackagePath="build\" />
     </ItemGroup>
 
     <ItemGroup>

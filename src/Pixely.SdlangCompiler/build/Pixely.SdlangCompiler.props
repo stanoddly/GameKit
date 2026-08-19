@@ -1,24 +1,25 @@
 <Project>
     <PropertyGroup>
-        <SlangVersion>2026.14.1</SlangVersion>
-        <DxcVersion>1.9.2602</DxcVersion>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">linux-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Linux')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-aarch64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">windows-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">macos-x86_64</SlangPlatform>
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">macos-aarch64</SlangPlatform>
-        <SlangBundleVersion>slang-$(SlangVersion)-dxc-$(DxcVersion)</SlangBundleVersion>
-        <SlangDirName>$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
-        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
-        <SlangDownloadUrl>https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
-        <SlangObjDir>$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
-        <SlangZipPath>$(SlangObjDir)$(SlangZipFile)</SlangZipPath>
-        <SlangBaseDir>$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
-        <SlangBinDir>$(SlangBaseDir)/bin</SlangBinDir>
-        <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
-        <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
-        <SlangCompilerPath>$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
-        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
-        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
+
+    <PropertyGroup>
+        <SlangVersion>2026.14.1</SlangVersion>
+        <SlangToolSourceDirectory>$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
+        <SlangCompilerExeName>slangc</SlangCompilerExeName>
+        <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
+        <SlangCompilerPath>$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
+        <!-- Source imports use the build output; package imports use the task assembly beside the build directory. -->
+        <SdlangCompilerAssembly Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
+        <SdlangCompilerAssembly Condition="!Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
+    </PropertyGroup>
+
+    <!-- ProjectReference does not expose the toolchain's buildTransitive property to source projects importing these assets. -->
+    <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">
+        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[$(SlangVersion)]" />
+    </ItemGroup>
 </Project>

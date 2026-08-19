@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <!-- Keep the packaging project's own output out of lib while retaining pack's build-output and symbol extension points. -->
+        <TargetExt>.packaging</TargetExt>
+        <DebugType>none</DebugType>
+        <IsPackable>true</IsPackable>
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <PackageId>Pixely</PackageId>
+        <PackageVersion Condition="'$(PackageVersion)' == ''">0.0.0-alpha.local</PackageVersion>
+        <Authors>stanoddly</Authors>
+        <PackageDescription>Personal, highly experimental .NET game-development toolkit. APIs, architecture, and package boundaries may change without notice.</PackageDescription>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageTags>game-development;graphics;audio;dependency-injection;experimental</PackageTags>
+        <RepositoryUrl>https://github.com/stanoddly/Pixely</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CollectPixelyBuildOutputs</TargetsForTfmSpecificBuildOutput>
+        <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);CollectPixelyDebugSymbols</TargetsForTfmSpecificDebugSymbolsInPackage>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11" />
+        <PackageReference Include="ZLogger" Version="2.5.10" />
+        <PackageReference Include="ppy.SDL3-CS" Version="2026.722.0" />
+        <PackageReference Include="ppy.SDL3_image-CS" Version="2026.722.0" />
+        <PackageReference Include="ppy.SDL3_mixer-CS" Version="2026.722.0" />
+        <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.722.0" />
+        <!-- Declare the dependency directly so Pixely.nuspec propagates its buildTransitive assets. -->
+        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[2026.14.1]" PrivateAssets="none" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Pixely.AStar\Pixely.AStar.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Architecture.Testing\Pixely.Architecture.Testing.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Architecture\Pixely.Architecture.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Audio\Pixely.Audio.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Collections\Pixely.Collections.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Componentize\Pixely.Componentize.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Core\Pixely.Core.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.DependencyInjection\Pixely.DependencyInjection.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Events\Pixely.Events.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Logging\Pixely.Logging.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Pencuil\Pixely.Pencuil.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.ShaderCommon\Pixely.ShaderCommon.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Utils\Pixely.Utils.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely\Pixely.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+        <None Include="..\..\src\Pixely.DependencyInjection.Generator\bin\$(Configuration)\netstandard2.0\Pixely.DependencyInjection.Generator.dll"
+              Pack="true" PackagePath="analyzers\dotnet\cs" />
+        <None Include="..\..\src\Pixely.SdlangCompiler\bin\$(Configuration)\net10.0\Pixely.SdlangCompiler.dll"
+              Pack="true" PackagePath="tools\net10.0\any" />
+        <None Include="..\..\src\Pixely.ShaderCommon\bin\$(Configuration)\net10.0\Pixely.ShaderCommon.dll"
+              Pack="true" PackagePath="tools\net10.0\any" />
+        <None Include="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.props"
+              Pack="true" PackagePath="tools\net10.0\any\build" />
+        <None Include="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets"
+              Pack="true" PackagePath="tools\net10.0\any\build" />
+        <None Include="buildTransitive\Pixely.props" Pack="true" PackagePath="buildTransitive" />
+        <None Include="buildTransitive\Pixely.targets" Pack="true" PackagePath="buildTransitive" />
+    </ItemGroup>
+
+    <Target Name="ResolvePixelyRuntimeOutputs">
+        <MSBuild Projects="@(ProjectReference)"
+                 Targets="GetTargetPath"
+                 BuildInParallel="true"
+                 Properties="Configuration=$(Configuration);Version=$(Version);PackageVersion=$(PackageVersion);RepositoryCommit=$(RepositoryCommit);RepositoryBranch=$(RepositoryBranch);ContinuousIntegrationBuild=$(ContinuousIntegrationBuild)">
+            <Output TaskParameter="TargetOutputs" ItemName="_PixelyRuntimeAssembly" />
+        </MSBuild>
+        <ItemGroup>
+            <_PixelyRuntimeSymbol Include="@(_PixelyRuntimeAssembly->'%(RootDir)%(Directory)%(Filename).pdb')" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CollectPixelyBuildOutputs" DependsOnTargets="ResolvePixelyRuntimeOutputs" Returns="@(BuildOutputInPackage)">
+        <ItemGroup>
+            <BuildOutputInPackage Include="@(_PixelyRuntimeAssembly)">
+                <FinalOutputPath>%(Identity)</FinalOutputPath>
+                <TargetPath>%(Filename)%(Extension)</TargetPath>
+            </BuildOutputInPackage>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CollectPixelyDebugSymbols" DependsOnTargets="ResolvePixelyRuntimeOutputs" Returns="@(TfmSpecificDebugSymbolsFile)">
+        <ItemGroup>
+            <TfmSpecificDebugSymbolsFile Include="@(_PixelyRuntimeSymbol)">
+                <FinalOutputPath>%(Identity)</FinalOutputPath>
+                <TargetPath>%(Filename)%(Extension)</TargetPath>
+                <TargetFramework>$(TargetFramework)</TargetFramework>
+            </TfmSpecificDebugSymbolsFile>
+        </ItemGroup>
+    </Target>
+
+</Project>

@@ -21,34 +21,27 @@ Shaders are automatically compiled during build. The build system generates SPIR
 
 ## Build Integration
 
-Reference `Pixely.SdlangCompiler`, import its props and targets, and declare the shaders to compile:
+Reference the `Pixely` package and declare the shaders to compile:
 
 ```xml
 <ItemGroup>
-    <ProjectReference Include="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj"
-                      ReferenceOutputAssembly="false" />
-</ItemGroup>
-
-<Import Project="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.props" />
-<Import Project="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets" />
-
-<ItemGroup>
+    <PackageReference Include="Pixely" Version="0.0.N-alpha" />
     <SdlangShader Include="Content\shaders\*.slang" />
 </ItemGroup>
 ```
 
-The targets file compiles every `SdlangShader` item before `CoreCompile` and exposes the generated files as `@(SdlangShaderOutput)`. Generated files remain beside their shader sources; the compilation targets do not copy, package, or embed them. This lets each project own its complete content pipeline independently of shader compilation. `ReferenceOutputAssembly="false"` keeps the build task assemblies out of the application's output, since the task is loaded by MSBuild rather than referenced by the application.
+The package imports the shader build integration automatically. It compiles every `SdlangShader` item before `CoreCompile` and exposes the generated files as `@(SdlangShaderOutput)`. Generated files remain beside their shader sources; the compilation targets do not copy, package, or embed them. This lets each project own its complete content pipeline independently of shader compilation. The shader task and its dependencies are build tools and do not enter the application's references or output.
 
 Generated shaders are runtime content. See [Content distribution](content-distribution.md) for the loose-directory, embedded-resource, and ZIP policies, with runnable tutorials for embedding generated shaders in an assembly and publishing content in a ZIP archive.
 
-The Slang compiler is downloaded from [`stanoddly/slang-dxc-bundle`](https://github.com/stanoddly/slang-dxc-bundle) into `Pixely.SdlangCompiler`'s `obj/` directory and stays there. The distribution includes the DXC downstream compiler required for DXIL output and provides bundles for every supported shader-compilation host: Linux x64/ARM64, Windows x64, and macOS x64/ARM64. DXIL generation is therefore required on every supported host and is never silently omitted. `Pixely.SdlangCompiler` alone owns the shared download and extraction. Slang and DXC are build-host tooling and are never copied into application build or publish output. Build integrations pass `$(SlangCompilerPath)` to `SdlangCompiler`.
+Pixely provides the shader compiler for Linux x64/ARM64, Windows x64, and macOS x64/ARM64. Compilation uses the build host's compiler regardless of the application's target runtime. Custom compilation targets can use the compiler path exposed through `$(SlangCompilerPath)`.
 
 ### Custom compilation targets
 
 The `SdlangShader` item plus the shared target covers the normal case. To compile from somewhere else, or at a different point in the build, invoke the task directly and pass the compiler path:
 
 ```xml
-<Target Name="CompileGeneratedShaders" AfterTargets="CopyFilesToOutputDirectory">
+<Target Name="CompileGeneratedShaders" AfterTargets="CopyFilesToOutputDirectory" DependsOnTargets="ValidateSlangToolchain">
     <ItemGroup>
         <GeneratedShader Include="$(OutputPath)\Generated\*.slang" />
     </ItemGroup>
