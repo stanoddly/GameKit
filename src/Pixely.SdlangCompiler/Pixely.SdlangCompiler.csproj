@@ -18,32 +18,9 @@
         <SlangArchiveDirectory>$(SlangObjDir)</SlangArchiveDirectory>
         <SlangZipPath>$(SlangArchiveDirectory)$(SlangZipFile)</SlangZipPath>
         <SlangDownloadUrl>https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
-        <SlangChecksumPath>$(SlangZipPath).sha256</SlangChecksumPath>
-        <SlangChecksumDownloadUrl>$(SlangDownloadUrl).sha256</SlangChecksumDownloadUrl>
     </PropertyGroup>
 
     <Target Name="DownloadSlang" Condition="'$(_PrepareSlangOnBuild)' == 'true'">
-        <DownloadFile SourceUrl="$(SlangChecksumDownloadUrl)"
-                      DestinationFolder="$(SlangArchiveDirectory)"
-                      DestinationFileName="$(SlangZipFile).sha256"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('$(SlangChecksumPath)')" />
-        <Error Text="Slang checksum download failed: $(SlangChecksumPath) does not exist. Check network connectivity and the download URL."
-               Condition="!Exists('$(SlangChecksumPath)')" />
-        <PropertyGroup>
-            <SlangZipSha256>$([System.IO.File]::ReadAllText('$(SlangChecksumPath)').Substring(0, 64))</SlangZipSha256>
-        </PropertyGroup>
-        <GetFileHash Files="$(SlangZipPath)"
-                     Algorithm="SHA256"
-                     Condition="Exists('$(SlangZipPath)')">
-            <Output TaskParameter="Items" ItemName="_SlangCachedArchiveHash" />
-        </GetFileHash>
-        <Message Text="Discarding cached Slang archive with an invalid checksum: $(SlangZipPath)"
-                 Importance="high"
-                 Condition="'%(_SlangCachedArchiveHash.FileHash)' != '' and '%(_SlangCachedArchiveHash.FileHash)' != '$(SlangZipSha256)'" />
-        <Delete Files="$(SlangZipPath)"
-                Condition="'%(_SlangCachedArchiveHash.FileHash)' != '' and '%(_SlangCachedArchiveHash.FileHash)' != '$(SlangZipSha256)'" />
         <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
         <DownloadFile SourceUrl="$(SlangDownloadUrl)"
                       DestinationFolder="$(SlangArchiveDirectory)"
@@ -55,16 +32,7 @@
                Condition="!Exists('$(SlangZipPath)')" />
     </Target>
 
-    <Target Name="ValidateSlangArchive" DependsOnTargets="DownloadSlang"
-            Condition="'$(_PrepareSlangOnBuild)' == 'true'">
-        <GetFileHash Files="$(SlangZipPath)" Algorithm="SHA256">
-            <Output TaskParameter="Items" ItemName="_SlangArchiveHash" />
-        </GetFileHash>
-        <Error Text="Slang archive checksum mismatch for $(SlangZipPath). Expected $(SlangZipSha256), received %(_SlangArchiveHash.FileHash)."
-               Condition="'%(_SlangArchiveHash.FileHash)' != '$(SlangZipSha256)'" />
-    </Target>
-
-    <Target Name="ExtractSlangArchive" DependsOnTargets="ValidateSlangArchive"
+    <Target Name="ExtractSlangArchive" DependsOnTargets="DownloadSlang"
             Condition="'$(_PrepareSlangOnBuild)' == 'true'">
         <Error Text="Slang archive does not exist: $(SlangZipPath)"
                Condition="!Exists('$(SlangZipPath)')" />

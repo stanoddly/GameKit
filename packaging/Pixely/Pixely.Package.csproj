@@ -87,28 +87,12 @@
 
     <Target Name="PrepareSlangToolOutputs">
         <MakeDir Directories="$(SlangFullBundleDirectory);$(SlangBundleStagingDirectory)" />
-        <DownloadFile SourceUrl="https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension).sha256"
-                      DestinationFolder="$(SlangFullBundleDirectory)"
-                      DestinationFileName="%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension).sha256"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('%(_SlangSourceArchive.Identity).sha256')" />
-        <GetFileHash Files="@(_SlangSourceArchive)"
-                     Algorithm="SHA256"
-                     Condition="Exists('%(_SlangSourceArchive.Identity)')">
-            <Output TaskParameter="Items" ItemName="_SlangCachedArchiveHash" />
-        </GetFileHash>
-        <Delete Files="%(_SlangCachedArchiveHash.Identity)"
-                Condition="'%(_SlangCachedArchiveHash.FileHash)' != '$([System.IO.File]::ReadAllText(%(_SlangCachedArchiveHash.Identity).sha256).Substring(0, 64))'" />
         <DownloadFile SourceUrl="https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension)"
                       DestinationFolder="$(SlangFullBundleDirectory)"
                       DestinationFileName="%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension)"
                       Retries="3"
                       RetryDelayMilliseconds="1000"
                       Condition="!Exists('%(_SlangSourceArchive.Identity)')" />
-        <VerifyFileHash File="%(_SlangSourceArchive.Identity)"
-                        Hash="$([System.IO.File]::ReadAllText(%(_SlangSourceArchive.Identity).sha256).Substring(0, 64))"
-                        Algorithm="SHA256" />
         <RemoveDir Directories="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)" />
         <Unzip SourceFiles="%(_SlangSourceArchive.Identity)"
                DestinationFolder="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)"

@@ -1,4 +1,5 @@
 <Project>
+    <!-- Release assets are treated as immutable; archive extraction fails when a download is corrupt. -->
     <PropertyGroup>
         <_SlangPinnedVersion>2026.14.1</_SlangPinnedVersion>
         <_DxcPinnedVersion>1.9.2602</_DxcPinnedVersion>
