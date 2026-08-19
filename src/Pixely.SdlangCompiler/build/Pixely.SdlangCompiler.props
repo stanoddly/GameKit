@@ -7,20 +7,17 @@
         <SlangPlatform Condition="$([MSBuild]::IsOSPlatform('OSX')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">macos-aarch64</SlangPlatform>
     </PropertyGroup>
 
-    <Import Project="$(MSBuildThisFileDirectory)Pixely.SlangBundle.props" />
-
     <PropertyGroup>
-        <SlangDirName Condition="'$(SlangDirName)' == ''">$(SlangBundleVersion)-$(SlangPlatform)</SlangDirName>
-        <SlangObjDir Condition="'$(SlangObjDir)' == ''">$(MSBuildThisFileDirectory)../obj/</SlangObjDir>
-        <SlangCompilerProjectPath Condition="'$(SlangCompilerProjectPath)' == '' and Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj</SlangCompilerProjectPath>
-        <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangToolRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangToolRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
-        <SlangBaseDir Condition="'$(SlangBaseDir)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)</SlangBaseDir>
-        <SlangBaseDir Condition="'$(SlangBaseDir)' == ''">$(SlangObjDir)$(SlangDirName)</SlangBaseDir>
-        <SlangBinDir Condition="'$(SlangBinDir)' == ''">$(SlangBaseDir)/bin</SlangBinDir>
+        <SlangVersion Condition="'$(SlangVersion)' == ''">2026.14.1</SlangVersion>
+        <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangDxcToolchainRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
         <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
         <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
-        <SlangCompilerPath Condition="'$(SlangCompilerPath)' == ''">$(SlangBinDir)/$(SlangCompilerExeName)</SlangCompilerPath>
+        <SlangCompilerPath Condition="'$(SlangCompilerPath)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
         <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
         <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
+
+    <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">
+        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[$(SlangVersion)]" />
+    </ItemGroup>
 </Project>

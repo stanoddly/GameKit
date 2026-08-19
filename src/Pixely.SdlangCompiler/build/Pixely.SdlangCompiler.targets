@@ -5,29 +5,17 @@
         TaskFactory="TaskHostFactory"
         Runtime="NET" />
 
-    <Target Name="ValidateSlangPlatform" BeforeTargets="PrepareSlangTool"
-            Condition="'$(_PrepareSlangOnBuild)' == 'true' or '@(SdlangShader)' != ''">
+    <Target Name="PrepareSlangTool">
+        <PropertyGroup>
+            <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangDxcToolchainRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
+            <SlangCompilerPath Condition="'$(SlangCompilerPath)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
+        </PropertyGroup>
+        <Error Text="SlangDxcBundle.Toolchain did not expose SlangDxcToolchainRoot."
+               Condition="'$(SlangDxcToolchainRoot)' == ''" />
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
                Condition="'$(SlangPlatform)' == ''" />
-    </Target>
-
-    <Target Name="PrepareSourceSlangTool"
-            Condition="'$(_PrepareSlangOnBuild)' != 'true' and '$(SlangToolRoot)' == ''">
-        <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
-               Condition="'$(SlangPlatform)' == ''" />
-        <Error Text="Slang compiler project does not exist: $(SlangCompilerProjectPath)"
-               Condition="'$(SlangCompilerProjectPath)' == '' or !Exists('$(SlangCompilerProjectPath)')" />
-        <MSBuild Projects="$(SlangCompilerProjectPath)"
-                 Targets="ExtractSlangArchive"
-                 Properties="Configuration=$(Configuration);SlangObjDir=$(SlangObjDir);SlangPlatform=$(SlangPlatform);_PrepareSlangOnBuild=true" />
-    </Target>
-
-    <Target Name="PrepareSlangTool"
-            DependsOnTargets="$(PrepareSlangToolDependsOn);PrepareSourceSlangTool"
-            BeforeTargets="BeforeBuild"
-            Condition="'$(_PrepareSlangOnBuild)' == 'true' or '@(SdlangShader)' != ''">
         <Error Text="Slang tool directory does not exist: $(SlangToolSourceDirectory)"
-               Condition="'$(SlangToolSourceDirectory)' != '' and !Exists('$(SlangToolSourceDirectory)')" />
+               Condition="!Exists('$(SlangToolSourceDirectory)')" />
         <Error Text="Slang compiler does not exist: $(SlangCompilerPath)"
                Condition="!Exists('$(SlangCompilerPath)')" />
     </Target>

@@ -14,6 +14,7 @@ namespace Pixely.Package.Tests;
 public class PackageIntegrationTests
 {
     private const long NuGetPackageSizeLimitBytes = 250_000_000;
+    private const string SlangDxcToolchainVersion = "2026.14.1";
 
     private static readonly string[] RuntimeAssemblies =
     [
@@ -40,18 +41,11 @@ public class PackageIntegrationTests
     private string _packageVersion = null!;
     private string _packagePath = null!;
     private string _symbolPackagePath = null!;
-    private XDocument _slangBundleConfiguration = null!;
 
     [OneTimeSetUp]
     public async Task CreatePackage()
     {
         _repositoryDirectory = GetRepositoryDirectory();
-        _slangBundleConfiguration = XDocument.Load(Path.Combine(
-            _repositoryDirectory,
-            "src",
-            "Pixely.SdlangCompiler",
-            "build",
-            "Pixely.SlangBundle.props"));
         _testArtifactsDirectory = Path.Combine(_repositoryDirectory, "artifacts", "package-tests");
         string? suppliedPackageDirectory = Environment.GetEnvironmentVariable("PIXELY_PACKAGE_DIRECTORY");
         _packageDirectory = suppliedPackageDirectory
@@ -141,20 +135,12 @@ public class PackageIntegrationTests
             Assert.That(entries, Does.Contain("tools/net10.0/any/Pixely.ShaderCommon.dll"));
             Assert.That(entries, Does.Contain("tools/net10.0/any/build/Pixely.SdlangCompiler.props"));
             Assert.That(entries, Does.Contain("tools/net10.0/any/build/Pixely.SdlangCompiler.targets"));
-            Assert.That(entries, Does.Contain("tools/net10.0/any/build/Pixely.SlangBundle.props"));
             Assert.That(entries, Does.Contain("THIRD-PARTY-NOTICES.md"));
             Assert.That(entries, Does.Not.Contain("lib/net10.0/Pixely.SdlangCompiler.dll"));
             Assert.That(entries, Does.Not.Contain("lib/net10.0/Pixely.DependencyInjection.Generator.dll"));
-            Assert.That(entries.Any(entry =>
-                entry.StartsWith("tools/slang/", StringComparison.Ordinal) &&
-                entry.EndsWith(".zip", StringComparison.Ordinal)), Is.False);
+            Assert.That(entries.Any(entry => entry.StartsWith("tools/slang/", StringComparison.Ordinal)), Is.False);
             Assert.That(entries.Any(IsNuGetEmptyFolderPlaceholder), Is.False);
         });
-
-        foreach (string platform in GetSlangPlatforms())
-        {
-            AssertSlangPlatformDirectory(package, platform);
-        }
 
         string shaderProps = ReadPackageEntry(
             package,
@@ -162,9 +148,6 @@ public class PackageIntegrationTests
         string shaderTargets = ReadPackageEntry(
             package,
             "tools/net10.0/any/build/Pixely.SdlangCompiler.targets");
-        string slangBundleProps = ReadPackageEntry(
-            package,
-            "tools/net10.0/any/build/Pixely.SlangBundle.props");
         string pixelyProps = ReadPackageEntry(package, "buildTransitive/Pixely.props");
         Assert.Multiple(() =>
         {
@@ -175,10 +158,9 @@ public class PackageIntegrationTests
             Assert.That(shaderTargets, Does.Not.Contain("Unzip"));
             Assert.That(shaderTargets, Does.Not.Contain("<Copy "));
             Assert.That(shaderTargets, Does.Not.Contain("chmod"));
-            Assert.That(shaderProps, Does.Contain("$(SlangToolSourceDirectory)</SlangBaseDir>"));
-            Assert.That(slangBundleProps, Does.Not.Contain("ExpectedSha256"));
-            Assert.That(slangBundleProps, Does.Not.Contain("Sha256"));
-            Assert.That(pixelyProps, Does.Contain("tools\\slang"));
+            Assert.That(shaderProps, Does.Contain("SlangDxcToolchainRoot"));
+            Assert.That(shaderTargets, Does.Contain("SlangDxcToolchainRoot"));
+            Assert.That(pixelyProps, Does.Not.Contain("tools\\slang"));
             Assert.That(pixelyProps, Does.Not.Contain("SlangObjDir"));
             Assert.That(pixelyProps, Does.Not.Contain("_OwnsSlangInstallation"));
             Assert.That(pixelyProps, Does.Not.Contain("_DownloadSlangOnlyWhenShaders"));
@@ -196,7 +178,7 @@ public class PackageIntegrationTests
             ?? throw new InvalidOperationException("Pixely.nuspec has no metadata element.");
         XElement repository = metadata.Element(ns + "repository")
             ?? throw new InvalidOperationException("Pixely.nuspec has no repository element.");
-        string[] expectedDependencies = GetRuntimePackageDependencies();
+        string[] expectedDependencies = GetPackageDependencies();
         string[] dependencies = metadata
             .Descendants(ns + "dependency")
             .Select(dependency => $"{(string?)dependency.Attribute("id")}:{(string?)dependency.Attribute("version")}")
@@ -264,6 +246,9 @@ public class PackageIntegrationTests
                 slangDirectory,
                 "bin",
                 OperatingSystem.IsWindows() ? "slangc.exe" : "slangc")), Is.True);
+            Assert.That(
+                Directory.GetFiles(slangDirectory, "slang-glsl-module.bin", SearchOption.AllDirectories),
+                Is.Empty);
             Assert.That(Directory.Exists(shaderToolDirectory), Is.False);
             Assert.That(File.Exists(Path.Combine(outputDirectory, "Pixely.SdlangCompiler.dll")), Is.False);
             Assert.That(File.Exists(Path.Combine(outputDirectory, "Microsoft.Build.Framework.dll")), Is.False);
@@ -381,36 +366,33 @@ public class PackageIntegrationTests
         Assert.That(buildOutput, Does.Not.Contain("Downloading Slang"));
     }
 
-    private string[] GetRuntimePackageDependencies()
+    private string[] GetPackageDependencies()
     {
         List<string> dependencies = [];
-        foreach (string assembly in RuntimeAssemblies)
+        string projectPath = Path.Combine(
+            _repositoryDirectory,
+            "packaging",
+            "Pixely",
+            "Pixely.Package.csproj");
+        XDocument project = XDocument.Load(projectPath);
+        foreach (XElement packageReference in project.Descendants().Where(
+                     element => element.Name.LocalName == "PackageReference"))
         {
-            string projectPath = Path.Combine(
-                _repositoryDirectory,
-                "src",
-                assembly,
-                $"{assembly}.csproj");
-            XDocument project = XDocument.Load(projectPath);
-            foreach (XElement packageReference in project.Descendants().Where(
-                         element => element.Name.LocalName == "PackageReference"))
+            string? privateAssets = (string?)packageReference.Attribute("PrivateAssets")
+                ?? packageReference.Elements().SingleOrDefault(
+                    element => element.Name.LocalName == "PrivateAssets")?.Value;
+            if (string.Equals(privateAssets, "all", StringComparison.OrdinalIgnoreCase))
             {
-                string? privateAssets = (string?)packageReference.Attribute("PrivateAssets")
-                    ?? packageReference.Elements().SingleOrDefault(
-                        element => element.Name.LocalName == "PrivateAssets")?.Value;
-                if (string.Equals(privateAssets, "all", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                string packageId = (string?)packageReference.Attribute("Include")
-                    ?? throw new InvalidOperationException($"{projectPath} contains a PackageReference without Include.");
-                string packageVersion = (string?)packageReference.Attribute("Version")
-                    ?? packageReference.Elements().SingleOrDefault(
-                        element => element.Name.LocalName == "Version")?.Value
-                    ?? throw new InvalidOperationException($"{projectPath} contains a PackageReference without Version.");
-                dependencies.Add($"{packageId}:{packageVersion}");
+                continue;
             }
+
+            string packageId = (string?)packageReference.Attribute("Include")
+                ?? throw new InvalidOperationException($"{projectPath} contains a PackageReference without Include.");
+            string packageVersion = (string?)packageReference.Attribute("Version")
+                ?? packageReference.Elements().SingleOrDefault(
+                    element => element.Name.LocalName == "Version")?.Value
+                ?? throw new InvalidOperationException($"{projectPath} contains a PackageReference without Version.");
+            dependencies.Add($"{packageId}:{packageVersion}");
         }
 
         return dependencies.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
@@ -419,59 +401,6 @@ public class PackageIntegrationTests
     private static bool IsNuGetEmptyFolderPlaceholder(string entry)
     {
         return entry == "_._" || entry.EndsWith("/_._", StringComparison.Ordinal);
-    }
-
-    private void AssertSlangPlatformDirectory(ZipArchive package, string platform)
-    {
-        string platformPrefix = $"tools/slang/{platform}/";
-        HashSet<string> entries = package.Entries
-            .Select(entry => entry.FullName)
-            .Where(entry => entry.StartsWith(platformPrefix, StringComparison.Ordinal))
-            .Select(entry => entry[platformPrefix.Length..])
-            .Where(entry => !entry.EndsWith("/", StringComparison.Ordinal))
-            .ToHashSet(StringComparer.Ordinal);
-        string[] requiredEntries = GetRequiredSlangEntries(platform);
-
-        Assert.That(
-            entries,
-            Is.EquivalentTo(requiredEntries),
-            $"The packaged {platform} directory does not match the canonical Slang bundle manifest.");
-    }
-
-    private string[] GetSlangPlatforms()
-    {
-        return _slangBundleConfiguration
-            .Descendants()
-            .Where(element => element.Name.LocalName == "_SlangBundleDistribution")
-            .Select(element => element.Element("Platform")?.Value
-                ?? throw new InvalidOperationException("A Slang bundle distribution has no Platform metadata."))
-            .ToArray();
-    }
-
-    private string[] GetRequiredSlangEntries(string platform)
-    {
-        XElement distribution = _slangBundleConfiguration
-            .Descendants()
-            .FirstOrDefault(element =>
-                element.Name.LocalName == "_SlangBundleDistribution" &&
-                element.Element("Platform")?.Value == platform)
-            ?? throw new InvalidOperationException($"The Slang bundle manifest has no {platform} distribution.");
-        string requiredFiles = distribution.Element("RequiredFiles")?.Value
-            ?? throw new InvalidOperationException($"The {platform} distribution has no RequiredFiles metadata.");
-        string slangVersion = _slangBundleConfiguration
-            .Descendants()
-            .FirstOrDefault(element => element.Name.LocalName == "_SlangPinnedVersion")?.Value
-            ?? throw new InvalidOperationException("The Slang bundle manifest has no pinned Slang version.");
-        string platformPrefix = $"{platform}/";
-
-        return requiredFiles
-            .Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Select(file => file.Replace("$(SlangVersion)", slangVersion, StringComparison.Ordinal))
-            .Select(file => file.StartsWith(platformPrefix, StringComparison.Ordinal)
-                ? file[platformPrefix.Length..]
-                : throw new InvalidOperationException(
-                    $"Required Slang bundle file {file} does not start with {platformPrefix}."))
-            .ToArray();
     }
 
     private static string ReadPackageEntry(ZipArchive package, string entryName)
@@ -519,8 +448,8 @@ public class PackageIntegrationTests
     {
         return Path.Combine(
             _packagesDirectory,
-            "pixely",
-            _packageVersion,
+            "slangdxcbundle.toolchain",
+            SlangDxcToolchainVersion,
             "tools",
             "slang",
             platform);

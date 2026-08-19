@@ -12,45 +12,6 @@
 
     <Import Project="build\Pixely.SdlangCompiler.props" />
 
-    <PropertyGroup>
-        <PrepareSlangToolDependsOn>ExtractSlangArchive</PrepareSlangToolDependsOn>
-        <SlangZipFile>$(SlangDirName).zip</SlangZipFile>
-        <SlangArchiveDirectory>$(SlangObjDir)</SlangArchiveDirectory>
-        <SlangZipPath>$(SlangArchiveDirectory)$(SlangZipFile)</SlangZipPath>
-        <SlangDownloadUrl>https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/$(SlangZipFile)</SlangDownloadUrl>
-    </PropertyGroup>
-
-    <Target Name="DownloadSlang" Condition="'$(_PrepareSlangOnBuild)' == 'true'">
-        <Message Text="Downloading Slang from $(SlangDownloadUrl)..." Importance="high" Condition="!Exists('$(SlangZipPath)')" />
-        <DownloadFile SourceUrl="$(SlangDownloadUrl)"
-                      DestinationFolder="$(SlangArchiveDirectory)"
-                      DestinationFileName="$(SlangZipFile)"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('$(SlangZipPath)')" />
-        <Error Text="Slang download failed: $(SlangZipPath) does not exist. Check network connectivity and the download URL."
-               Condition="!Exists('$(SlangZipPath)')" />
-    </Target>
-
-    <Target Name="ExtractSlangArchive" DependsOnTargets="DownloadSlang"
-            Condition="'$(_PrepareSlangOnBuild)' == 'true'">
-        <Error Text="Slang archive does not exist: $(SlangZipPath)"
-               Condition="!Exists('$(SlangZipPath)')" />
-        <PropertyGroup>
-            <NeedsSlangExtraction Condition="!Exists('$(SlangBinDir)')">true</NeedsSlangExtraction>
-        </PropertyGroup>
-
-        <Message Text="Extracting Slang to $(SlangBaseDir)..." Importance="high"
-                 Condition="'$(NeedsSlangExtraction)' == 'true'" />
-        <Unzip SourceFiles="$(SlangZipPath)"
-               DestinationFolder="$(SlangBaseDir)"
-               Condition="'$(NeedsSlangExtraction)' == 'true'" />
-        <RemoveDir Directories="$(SlangBaseDir)/include;$(SlangBaseDir)/share;$(SlangBaseDir)/lib/cmake"
-                   Condition="'$(NeedsSlangExtraction)' == 'true'" />
-        <Delete Files="$(SlangBaseDir)/LICENSE;$(SlangBaseDir)/README.md"
-                Condition="'$(NeedsSlangExtraction)' == 'true'" />
-    </Target>
-
     <Import Project="build\Pixely.SdlangCompiler.targets" />
 
     <ItemGroup>

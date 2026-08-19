@@ -2,7 +2,6 @@
     <PropertyGroup>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);Pixely.DependencyInjection.Generated</InterceptorsNamespaces>
         <SdlangCompilerAssembly>$(MSBuildThisFileDirectory)..\tools\net10.0\any\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
-        <SlangToolRoot>$(MSBuildThisFileDirectory)..\tools\slang\</SlangToolRoot>
     </PropertyGroup>
 
     <ItemGroup>

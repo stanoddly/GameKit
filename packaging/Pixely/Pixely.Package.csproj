@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <Import Project="..\..\src\Pixely.SdlangCompiler\build\Pixely.SlangBundle.props" />
-
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <!-- Keep the packaging project's own output out of lib while retaining pack's build-output and symbol extension points. -->
@@ -26,11 +24,6 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CollectPixelyBuildOutputs</TargetsForTfmSpecificBuildOutput>
         <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);CollectPixelyDebugSymbols</TargetsForTfmSpecificDebugSymbolsInPackage>
-        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CollectSlangToolOutputs</TargetsForTfmSpecificContentInPackage>
-        <BeforePack>PrepareSlangToolOutputs;$(BeforePack)</BeforePack>
-        <SlangBundleIntermediateDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(BaseIntermediateOutputPath)', 'slang-bundles'))</SlangBundleIntermediateDirectory>
-        <SlangFullBundleDirectory>$(SlangBundleIntermediateDirectory)full/</SlangFullBundleDirectory>
-        <SlangBundleStagingDirectory>$(SlangBundleIntermediateDirectory)staging/</SlangBundleStagingDirectory>
     </PropertyGroup>
 
     <ItemGroup>
@@ -40,26 +33,24 @@
         <PackageReference Include="ppy.SDL3_image-CS" Version="2026.722.0" />
         <PackageReference Include="ppy.SDL3_mixer-CS" Version="2026.722.0" />
         <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.722.0" />
+        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[2026.14.1]" PrivateAssets="none" />
     </ItemGroup>
 
     <ItemGroup>
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.AStar\Pixely.AStar.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Architecture.Testing\Pixely.Architecture.Testing.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Architecture\Pixely.Architecture.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Audio\Pixely.Audio.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Collections\Pixely.Collections.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Componentize\Pixely.Componentize.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Core\Pixely.Core.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.DependencyInjection\Pixely.DependencyInjection.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Events\Pixely.Events.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Logging\Pixely.Logging.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Pencuil\Pixely.Pencuil.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.ShaderCommon\Pixely.ShaderCommon.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely.Utils\Pixely.Utils.csproj" />
-        <_PixelyRuntimeProject Include="..\..\src\Pixely\Pixely.csproj" />
-        <ProjectReference Include="@(_PixelyRuntimeProject)" ReferenceOutputAssembly="false" PrivateAssets="all" />
-        <ProjectReference Include="..\..\src\Pixely.DependencyInjection.Generator\Pixely.DependencyInjection.Generator.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
-        <ProjectReference Include="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.AStar\Pixely.AStar.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Architecture.Testing\Pixely.Architecture.Testing.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Architecture\Pixely.Architecture.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Audio\Pixely.Audio.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Collections\Pixely.Collections.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Componentize\Pixely.Componentize.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Core\Pixely.Core.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.DependencyInjection\Pixely.DependencyInjection.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Events\Pixely.Events.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Logging\Pixely.Logging.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Pencuil\Pixely.Pencuil.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.ShaderCommon\Pixely.ShaderCommon.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely.Utils\Pixely.Utils.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+        <ProjectReference Include="..\..\src\Pixely\Pixely.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
@@ -75,59 +66,12 @@
               Pack="true" PackagePath="tools\net10.0\any\build" />
         <None Include="..\..\src\Pixely.SdlangCompiler\build\Pixely.SdlangCompiler.targets"
               Pack="true" PackagePath="tools\net10.0\any\build" />
-        <None Include="..\..\src\Pixely.SdlangCompiler\build\Pixely.SlangBundle.props"
-              Pack="true" PackagePath="tools\net10.0\any\build" />
         <None Include="buildTransitive\Pixely.props" Pack="true" PackagePath="buildTransitive" />
         <None Include="buildTransitive\Pixely.targets" Pack="true" PackagePath="buildTransitive" />
     </ItemGroup>
 
-    <ItemGroup>
-        <_SlangSourceArchive Include="@(_SlangBundleDistribution->'$(SlangFullBundleDirectory)$(SlangBundleVersion)-%(Platform).zip')" />
-    </ItemGroup>
-
-    <Target Name="PrepareSlangToolOutputs">
-        <MakeDir Directories="$(SlangFullBundleDirectory);$(SlangBundleStagingDirectory)" />
-        <DownloadFile SourceUrl="https://github.com/stanoddly/slang-dxc-bundle/releases/download/$(SlangBundleVersion)/%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension)"
-                      DestinationFolder="$(SlangFullBundleDirectory)"
-                      DestinationFileName="%(_SlangSourceArchive.Filename)%(_SlangSourceArchive.Extension)"
-                      Retries="3"
-                      RetryDelayMilliseconds="1000"
-                      Condition="!Exists('%(_SlangSourceArchive.Identity)')" />
-        <RemoveDir Directories="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)" />
-        <Unzip SourceFiles="%(_SlangSourceArchive.Identity)"
-               DestinationFolder="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)"
-               Include="%(_SlangSourceArchive.BundleEntries)"
-               SkipUnchangedFiles="false" />
-        <CreateItem Include="%(_SlangBundleDistribution.RequiredFiles)">
-            <Output TaskParameter="Include" ItemName="_SlangBundleRequiredFile" />
-        </CreateItem>
-        <ItemGroup>
-            <_MissingSlangBundleRequiredFile Include="@(_SlangBundleRequiredFile)"
-                                             Condition="!Exists('$(SlangBundleStagingDirectory)%(_SlangBundleRequiredFile.Identity)')" />
-        </ItemGroup>
-        <Error Text="Required Slang bundle files were not extracted: @(_MissingSlangBundleRequiredFile, ', ')"
-               Condition="'@(_MissingSlangBundleRequiredFile)' != ''" />
-        <ItemGroup>
-            <ProjectReference Update="@(_PixelyRuntimeProject)">
-                <AdditionalProperties>_PrepareSlangOnBuild=false;SlangToolRoot=$(SlangBundleStagingDirectory)</AdditionalProperties>
-            </ProjectReference>
-            <ProjectReference Update="..\..\src\Pixely.SdlangCompiler\Pixely.SdlangCompiler.csproj">
-                <AdditionalProperties>_PrepareSlangOnBuild=false;SlangToolRoot=$(SlangBundleStagingDirectory)</AdditionalProperties>
-            </ProjectReference>
-        </ItemGroup>
-    </Target>
-
-    <Target Name="CollectSlangToolOutputs" DependsOnTargets="PrepareSlangToolOutputs" Returns="@(TfmSpecificPackageFile)">
-        <ItemGroup>
-            <TfmSpecificPackageFile Include="$(SlangBundleStagingDirectory)%(_SlangSourceArchive.Platform)/**/*">
-                <PackagePath>tools\slang\%(_SlangSourceArchive.Platform)</PackagePath>
-            </TfmSpecificPackageFile>
-        </ItemGroup>
-        <Touch Files="@(TfmSpecificPackageFile)" Time="2000-01-01T00:00:00Z" />
-    </Target>
-
     <Target Name="ResolvePixelyRuntimeOutputs">
-        <MSBuild Projects="@(_PixelyRuntimeProject)"
+        <MSBuild Projects="@(ProjectReference)"
                  Targets="GetTargetPath"
                  BuildInParallel="true"
                  Properties="Configuration=$(Configuration);Version=$(Version);PackageVersion=$(PackageVersion);RepositoryCommit=$(RepositoryCommit);RepositoryBranch=$(RepositoryBranch);ContinuousIntegrationBuild=$(ContinuousIntegrationBuild)">
