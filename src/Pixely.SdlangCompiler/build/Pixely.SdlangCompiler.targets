@@ -5,7 +5,7 @@
         TaskFactory="TaskHostFactory"
         Runtime="NET" />
 
-    <Target Name="PrepareSlangTool">
+    <Target Name="ValidateSlangToolchain">
         <Error Text="SlangDxcBundle.Toolchain did not expose SlangDxcToolchainRoot."
                Condition="'$(SlangDxcToolchainRoot)' == ''" />
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
@@ -16,7 +16,7 @@
                Condition="!Exists('$(SlangCompilerPath)')" />
     </Target>
 
-    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" DependsOnTargets="PrepareSlangTool"
+    <Target Name="CompileSdlangShaders" BeforeTargets="CoreCompile" DependsOnTargets="ValidateSlangToolchain"
             Condition="'@(SdlangShader)' != ''">
         <SdlangCompileTask InputFile="%(SdlangShader.Identity)" SlangCompilerPath="$(SlangCompilerPath)">
             <Output TaskParameter="GeneratedFiles" ItemName="SdlangShaderOutput" />

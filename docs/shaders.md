@@ -41,7 +41,7 @@ Pixely provides the shader compiler for Linux x64/ARM64, Windows x64, and macOS 
 The `SdlangShader` item plus the shared target covers the normal case. To compile from somewhere else, or at a different point in the build, invoke the task directly and pass the compiler path:
 
 ```xml
-<Target Name="CompileGeneratedShaders" AfterTargets="CopyFilesToOutputDirectory" DependsOnTargets="PrepareSlangTool">
+<Target Name="CompileGeneratedShaders" AfterTargets="CopyFilesToOutputDirectory" DependsOnTargets="ValidateSlangToolchain">
     <ItemGroup>
         <GeneratedShader Include="$(OutputPath)\Generated\*.slang" />
     </ItemGroup>

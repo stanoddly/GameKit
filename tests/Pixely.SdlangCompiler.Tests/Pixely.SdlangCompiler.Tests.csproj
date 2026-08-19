@@ -41,7 +41,7 @@
         <ProjectReference Include="../../src/Pixely.SdlangCompiler/Pixely.SdlangCompiler.csproj" />
     </ItemGroup>
 
-    <Target Name="CompileTestSdlangShaders" AfterTargets="CopyFilesToOutputDirectory" DependsOnTargets="PrepareSlangTool">
+    <Target Name="CompileTestSdlangShaders" AfterTargets="CopyFilesToOutputDirectory" DependsOnTargets="ValidateSlangToolchain">
         <ItemGroup>
             <TestSdlangShader Include="$(OutputPath)\TestShaders\*.slang" />
         </ItemGroup>
