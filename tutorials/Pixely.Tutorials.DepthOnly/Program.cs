@@ -15,7 +15,7 @@ static class Program
         builder.AddSingleton<DepthOnlyRenderer>(DepthOnlyRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, DepthOnlyRenderer>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

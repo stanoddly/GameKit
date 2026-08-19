@@ -13,7 +13,7 @@ static class Program
             .UseDefaultRendering(
                 new WindowConfig(Size: (1280, 720), Title: "Game"));
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

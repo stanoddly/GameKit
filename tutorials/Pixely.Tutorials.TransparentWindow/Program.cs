@@ -34,7 +34,7 @@ static class Program
             mouseService.ButtonPress += eventArgs => appControl.Quit();
         });
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

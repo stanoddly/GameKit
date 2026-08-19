@@ -37,7 +37,7 @@ static class Program
 #endif
         });
         builder.AddSingleton<PlayerInputService>(PlayerInputService.Create);
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

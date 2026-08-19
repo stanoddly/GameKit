@@ -17,7 +17,7 @@ static class Program
         builder.AddSingleton<TextInputViewModel>();
         builder.AddSingleton<IPencuilView, TextInputView>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

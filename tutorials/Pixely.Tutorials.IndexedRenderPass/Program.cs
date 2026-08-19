@@ -14,7 +14,7 @@ static class Program
 
         builder.AddSingleton<IRenderer<DefaultRenderContext>>(IndexedRenderPassRenderer.Create);
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }
