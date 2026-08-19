@@ -330,14 +330,15 @@ public class PackageIntegrationTests
             Assert.That(projectContents, Does.Not.Contain("ProjectReference"));
             Assert.That(projectContents, Does.Not.Contain("src\\").And.Not.Contain("src/"));
         });
+        // NuGet on Windows interprets a remote source after a local source as a relative path.
         List<string> restoreArguments =
         [
             "restore",
             projectPath,
             "--source",
-            _packageDirectory,
-            "--source",
             "https://api.nuget.org/v3/index.json",
+            "--source",
+            _packageDirectory,
             $"--property:PixelyPackageVersion={_packageVersion}",
             $"--property:RestorePackagesPath={_packagesDirectory}",
             "--nologo"
