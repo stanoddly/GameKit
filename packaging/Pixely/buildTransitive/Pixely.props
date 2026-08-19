@@ -1,7 +1,6 @@
 <Project>
     <PropertyGroup>
         <InterceptorsNamespaces>$(InterceptorsNamespaces);Pixely.DependencyInjection.Generated</InterceptorsNamespaces>
-        <SdlangCompilerAssembly>$(MSBuildThisFileDirectory)..\tools\net10.0\any\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
 
     <ItemGroup>

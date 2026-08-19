@@ -8,13 +8,13 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <SlangVersion Condition="'$(SlangVersion)' == ''">2026.14.1</SlangVersion>
-        <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangDxcToolchainRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
+        <SlangVersion>2026.14.1</SlangVersion>
+        <SlangToolSourceDirectory>$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
+        <SlangCompilerExeName>slangc</SlangCompilerExeName>
         <SlangCompilerExeName Condition="$([MSBuild]::IsOSPlatform('Windows'))">slangc.exe</SlangCompilerExeName>
-        <SlangCompilerExeName Condition="'$(SlangCompilerExeName)' == ''">slangc</SlangCompilerExeName>
-        <SlangCompilerPath Condition="'$(SlangCompilerPath)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
-        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == '' and Exists('$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll')">$(MSBuildThisFileDirectory)..\lib\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
-        <SdlangCompilerAssembly Condition="'$(SdlangCompilerAssembly)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
+        <SlangCompilerPath>$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
+        <SdlangCompilerAssembly Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\$(TargetFramework)\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
+        <SdlangCompilerAssembly Condition="!Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.dll</SdlangCompilerAssembly>
     </PropertyGroup>
 
     <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\Pixely.SdlangCompiler.csproj')">

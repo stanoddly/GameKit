@@ -6,10 +6,6 @@
         Runtime="NET" />
 
     <Target Name="PrepareSlangTool">
-        <PropertyGroup>
-            <SlangToolSourceDirectory Condition="'$(SlangToolSourceDirectory)' == '' and '$(SlangDxcToolchainRoot)' != '' and '$(SlangPlatform)' != ''">$(SlangDxcToolchainRoot)$(SlangPlatform)/</SlangToolSourceDirectory>
-            <SlangCompilerPath Condition="'$(SlangCompilerPath)' == '' and '$(SlangToolSourceDirectory)' != ''">$(SlangToolSourceDirectory)bin/$(SlangCompilerExeName)</SlangCompilerPath>
-        </PropertyGroup>
         <Error Text="SlangDxcBundle.Toolchain did not expose SlangDxcToolchainRoot."
                Condition="'$(SlangDxcToolchainRoot)' == ''" />
         <Error Text="Unsupported platform for Slang shader compiler. Supported: Linux x64, Linux ARM64, Windows x64, macOS x64, macOS ARM64."
