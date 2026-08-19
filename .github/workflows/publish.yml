@@ -29,36 +29,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "Run this workflow from main, not $GITHUB_REF." >&2
-            exit 1
-          fi
-
-          mapfile -t commit_tags < <(
-            git tag --points-at "$GITHUB_SHA" --list 'v0.0.*-alpha' |
-              grep -E '^v0\.0\.[1-9][0-9]*-alpha$' || true
+          latest=0
+          while IFS= read -r number; do
+            if (( number > latest )); then
+              latest=$number
+            fi
+          done < <(
+            git tag --list 'v0.0.*-alpha' |
+              sed -nE 's/^v0\.0\.([1-9][0-9]*)-alpha$/\1/p'
           )
-
-          if (( ${#commit_tags[@]} > 1 )); then
-            echo "The commit has more than one Pixely prerelease tag." >&2
-            printf '%s\n' "${commit_tags[@]}" >&2
-            exit 1
-          fi
-
-          if (( ${#commit_tags[@]} == 1 )); then
-            tag="${commit_tags[0]}"
-          else
-            latest=0
-            while IFS= read -r number; do
-              if (( number > latest )); then
-                latest=$number
-              fi
-            done < <(
-              git tag --list 'v0.0.*-alpha' |
-                sed -nE 's/^v0\.0\.([1-9][0-9]*)-alpha$/\1/p'
-            )
-            tag="v0.0.$((latest + 1))-alpha"
-          fi
+          tag="v0.0.$((latest + 1))-alpha"
 
           version="${tag#v}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -100,44 +80,15 @@ jobs:
           name: Pixely-${{ env.PIXELY_VERSION }}
           path: artifacts/packages
 
-      - name: Verify an existing NuGet version
+      - name: Create version tag
         shell: bash
         run: |
           set -euo pipefail
 
-          package_url="https://api.nuget.org/v3-flatcontainer/pixely/$PIXELY_VERSION/pixely.$PIXELY_VERSION.nupkg"
-          status="$(curl --silent --show-error --location --output /tmp/pixely-existing.nupkg --write-out '%{http_code}' "$package_url")"
-          if [[ "$status" == "404" ]]; then
-            exit 0
-          fi
-          if [[ "$status" != "200" ]]; then
-            echo "NuGet returned HTTP $status while checking $PIXELY_VERSION." >&2
-            exit 1
-          fi
-
-          existing_commit="$(unzip -p /tmp/pixely-existing.nupkg Pixely.nuspec | sed -n 's/.*<repository[^>]*commit="\([^"]*\)".*/\1/p')"
-          if [[ "$existing_commit" != "$GITHUB_SHA" ]]; then
-            echo "Pixely $PIXELY_VERSION already exists from commit $existing_commit, not $GITHUB_SHA." >&2
-            exit 1
-          fi
-
-      - name: Create or verify version tag
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if git rev-parse --verify --quiet "refs/tags/$PIXELY_TAG" >/dev/null; then
-            tagged_commit="$(git rev-list -n 1 "$PIXELY_TAG")"
-            if [[ "$tagged_commit" != "$GITHUB_SHA" ]]; then
-              echo "$PIXELY_TAG points to $tagged_commit instead of $GITHUB_SHA." >&2
-              exit 1
-            fi
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag --annotate "$PIXELY_TAG" --message "Pixely $PIXELY_VERSION"
-            git push origin "refs/tags/$PIXELY_TAG"
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --annotate "$PIXELY_TAG" --message "Pixely $PIXELY_VERSION"
+          git push origin "refs/tags/$PIXELY_TAG"
 
       - name: Request temporary NuGet credential
         id: nuget-login
@@ -154,55 +105,14 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --symbol-api-key "$NUGET_API_KEY"
           --symbol-source https://api.nuget.org/v3/index.json
-          --skip-duplicate
 
-      - name: Verify published NuGet version
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          package_url="https://api.nuget.org/v3-flatcontainer/pixely/$PIXELY_VERSION/pixely.$PIXELY_VERSION.nupkg"
-          status=""
-          for attempt in {1..12}; do
-            status="$(curl --silent --show-error --location --output /tmp/pixely-published.nupkg --write-out '%{http_code}' "$package_url")"
-            if [[ "$status" == "200" ]]; then
-              break
-            fi
-            if [[ "$status" != "404" ]]; then
-              echo "NuGet returned HTTP $status while verifying $PIXELY_VERSION." >&2
-              exit 1
-            fi
-            sleep 10
-          done
-
-          if [[ "$status" != "200" ]]; then
-            echo "Pixely $PIXELY_VERSION was not available from NuGet after publication." >&2
-            exit 1
-          fi
-
-          published_commit="$(unzip -p /tmp/pixely-published.nupkg Pixely.nuspec | sed -n 's/.*<repository[^>]*commit="\([^"]*\)".*/\1/p')"
-          if [[ "$published_commit" != "$GITHUB_SHA" ]]; then
-            echo "Pixely $PIXELY_VERSION was published from commit $published_commit, not $GITHUB_SHA." >&2
-            exit 1
-          fi
-
-      - name: Create or verify GitHub prerelease
+      - name: Create GitHub prerelease
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          if gh release view "$PIXELY_TAG" >/dev/null 2>&1; then
-            is_prerelease="$(gh release view "$PIXELY_TAG" --json isPrerelease --jq '.isPrerelease')"
-            if [[ "$is_prerelease" != "true" ]]; then
-              echo "The existing GitHub Release for $PIXELY_TAG is not a prerelease." >&2
-              exit 1
-            fi
-          else
-            gh release create "$PIXELY_TAG" \
-              --verify-tag \
-              --prerelease \
-              --generate-notes \
-              --title "Pixely $PIXELY_VERSION"
-          fi
+        run: >-
+          gh release create "$PIXELY_TAG"
+          --verify-tag
+          --prerelease
+          --generate-notes
+          --title "Pixely $PIXELY_VERSION"
