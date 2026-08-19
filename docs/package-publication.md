@@ -10,7 +10,7 @@ Create a nuget.org trusted-publishing policy with these GitHub details:
 - repository: `Pixely`
 - workflow file: `publish.yml`
 
-Set the GitHub repository variable `NUGET_USER` to the nuget.org profile name that owns the trusted-publishing policy. No NuGet API key is stored in GitHub.
+No NuGet API key is stored in GitHub.
 
 If nuget.org marks a new policy as pending full activation, publish within its displayed seven-day activation window. The window can be restarted from the policy page if it expires.
 
