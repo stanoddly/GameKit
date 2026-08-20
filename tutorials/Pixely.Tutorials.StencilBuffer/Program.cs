@@ -15,7 +15,7 @@ static class Program
         builder.AddSingleton<StencilBufferRenderer>(StencilBufferRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, StencilBufferRenderer>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

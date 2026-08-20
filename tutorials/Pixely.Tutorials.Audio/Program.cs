@@ -114,8 +114,8 @@ static class Program
             };
         });
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 
     private static AudioSource[] CreateBufferedSources(IAudioSystem audioSystem, DefaultAudioGroups groups, AudioBuffer buffer)

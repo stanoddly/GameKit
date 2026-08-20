@@ -17,7 +17,7 @@ static class Program
         builder.AddSingleton(new FileDialogsViewModel());
         builder.AddSingleton<IPencuilView, FileDialogsView>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

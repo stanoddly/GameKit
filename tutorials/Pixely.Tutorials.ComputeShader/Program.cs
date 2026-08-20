@@ -15,7 +15,7 @@ static class Program
         builder.AddSingleton<ComputeRenderer>(ComputeRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, ComputeRenderer>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

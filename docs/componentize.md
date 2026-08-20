@@ -178,5 +178,5 @@ Program.Main
   ├─ Build IServiceProvider               // create services
   ├─ ServiceLocator.SetServiceProvider()   // make them global
   ├─ InitialStage(gameWorld)              // create GameObjects, attach components
-  └─ gameKitApp.Run()                     // game loop (systems update/render)
+  └─ pixelyApp.Run()                      // game loop (systems update/render)
 ```

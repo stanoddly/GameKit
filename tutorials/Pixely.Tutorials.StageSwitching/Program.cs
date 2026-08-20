@@ -16,7 +16,7 @@ static class Program
 
         builder.AddSingleton<IPencuilView, MenuView>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }

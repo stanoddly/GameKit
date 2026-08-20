@@ -15,7 +15,7 @@ static class Program
         builder.AddSingleton<ImageLoadingRenderer>(ImageLoadingRenderer.Create);
         builder.AddAlias<IRenderer<DefaultRenderContext>, ImageLoadingRenderer>();
 
-        using IPixelyApp gameKitApp = builder.Build();
-        return gameKitApp.Run();
+        using IPixelyApp pixelyApp = builder.Build();
+        return pixelyApp.Run();
     }
 }
