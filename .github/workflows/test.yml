@@ -9,6 +9,10 @@ on:
         required: false
         type: string
         default: 0.0.0-alpha.package-tests
+      run_source_validation:
+        required: false
+        type: boolean
+        default: true
 
 env:
   PIXELY_PACKAGE_VERSION: ${{ inputs.package_version || '0.0.0-alpha.package-tests' }}
@@ -16,6 +20,7 @@ env:
 
 jobs:
   test:
+    if: ${{ github.event_name == 'pull_request' || inputs.run_source_validation }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -52,6 +57,7 @@ jobs:
 
   package:
     needs: test
+    if: ${{ always() && (needs.test.result == 'success' || (github.event_name != 'pull_request' && inputs.run_source_validation == false)) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

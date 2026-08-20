@@ -50,6 +50,7 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       package_version: ${{ needs.prepare.outputs.version }}
+      run_source_validation: false
 
   publish:
     needs:
