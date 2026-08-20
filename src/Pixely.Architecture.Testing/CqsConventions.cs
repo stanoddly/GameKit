@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Pixely.Architecture.Events;
 
 namespace Pixely.Architecture.Testing;
 
@@ -37,8 +38,12 @@ public static class CqsConventions
         CqsConventionsOptions options = new();
         configure?.Invoke(options);
 
-        Type[] concreteTypes = types
+        Type[] allTypes = types
             .Where(type => !type.IsDefined(typeof(CompilerGeneratedAttribute), false))
+            .Distinct()
+            .ToArray();
+
+        Type[] concreteTypes = allTypes
             .Where(type => type.IsClass && !type.IsAbstract)
             .ToArray();
 
@@ -65,6 +70,10 @@ public static class CqsConventions
             .Distinct()
             .ToArray();
 
+        Type[] eventTypes = allTypes
+            .Where(type => type != typeof(DomainMessage) && typeof(DomainMessage).IsAssignableFrom(type))
+            .ToArray();
+
         List<string> violations = new();
 
         CheckDataRecords(commandTypes, "Command", violations);
@@ -75,7 +84,7 @@ public static class CqsConventions
         CheckHandlersHaveNoPublicConstructors(commandHandlers.Concat(queryHandlers), violations);
         CheckCommandHandlersDoNotDependOnHandlers(commandHandlers, violations);
         CheckQueryResultsAreReadonly(queryResultTypes, violations);
-        CheckQueryResultSuffix(queryResultTypes, options, violations);
+        CheckQdoConventions(allTypes, commandTypes, queryTypes, queryResultTypes, eventTypes, options, violations);
 
         return new ArchitectureReport(violations);
     }
@@ -86,7 +95,7 @@ public static class CqsConventions
         {
             if (!IsRecord(type))
             {
-                violations.Add($"{role} {type.FullName} must be a record (intent is data, not behaviour).");
+                violations.Add($"{role} {type.FullName} must be a record (the boundary contract is data, not behaviour).");
             }
 
             if (!HasNoCustomMethods(type))
@@ -164,25 +173,162 @@ public static class CqsConventions
         }
     }
 
-    private static void CheckQueryResultSuffix(
+    private static void CheckQdoConventions(
+        Type[] allTypes,
+        Type[] commandTypes,
+        Type[] queryTypes,
         Type[] resultTypes,
+        Type[] eventTypes,
         CqsConventionsOptions options,
         List<string> violations)
     {
-        if (!options.RequiresQueryResultSuffix)
+        if (!options.RequiresQdoSuffix)
         {
             return;
         }
 
         foreach (Type resultType in resultTypes)
         {
-            if (resultType.Name.EndsWith("Result", StringComparison.Ordinal))
+            if (HasSuffix(resultType, "Qdo"))
             {
                 continue;
             }
 
             violations.Add(
-                $"Query result {resultType.FullName} should be a named result type ending with 'Result'.");
+                $"Query result {resultType.FullName} must be a query data object ending with 'Qdo'.");
+        }
+
+        Type[] qdoTypes = allTypes
+            .Where(type => HasSuffix(type, "Qdo"))
+            .ToArray();
+
+        CheckDataRecords(qdoTypes, "QDO", violations);
+        CheckQdosAreReadonly(qdoTypes.Except(resultTypes), violations);
+
+        HashSet<Type> queryOutputGraph = DataGraph(resultTypes, allTypes);
+        foreach (Type qdoType in qdoTypes.Where(type => !queryOutputGraph.Contains(type)))
+        {
+            violations.Add($"QDO {qdoType.FullName} must belong to a query output graph.");
+        }
+
+        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(commandTypes, allTypes), "command", violations);
+        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(queryTypes, allTypes), "query input", violations);
+        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(eventTypes, allTypes), "event", violations);
+    }
+
+    private static void CheckQdosAreReadonly(IEnumerable<Type> qdoTypes, List<string> violations)
+    {
+        foreach (Type qdoType in qdoTypes)
+        {
+            if (!QueryResultRules.IsReadonly(qdoType, out string reason))
+            {
+                violations.Add($"QDO {qdoType.FullName} must be read-only to consumers: {reason}");
+            }
+        }
+    }
+
+    private static void CheckQdosAreAbsentFromGraph(
+        Type[] qdoTypes,
+        HashSet<Type> graph,
+        string role,
+        List<string> violations)
+    {
+        foreach (Type qdoType in qdoTypes.Where(graph.Contains))
+        {
+            violations.Add($"QDO {qdoType.FullName} must not belong to a {role} graph; QDOs originate only from queries.");
+        }
+    }
+
+    private static HashSet<Type> DataGraph(IEnumerable<Type> roots, IReadOnlyCollection<Type> allTypes)
+    {
+        HashSet<Type> availableTypes = allTypes.ToHashSet();
+        HashSet<Type> graph = new();
+        Queue<Type> toVisit = new(roots);
+
+        while (toVisit.Count > 0)
+        {
+            Type current = toVisit.Dequeue();
+            foreach (Type candidate in UnwrapDataType(current))
+            {
+                Type graphType = candidate.IsGenericType && !candidate.IsGenericTypeDefinition
+                    ? candidate.GetGenericTypeDefinition()
+                    : candidate;
+
+                if (!availableTypes.Contains(graphType) || !graph.Add(graphType))
+                {
+                    continue;
+                }
+
+                foreach (PropertyInfo property in candidate.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (property.GetMethod != null)
+                    {
+                        toVisit.Enqueue(property.PropertyType);
+                    }
+                }
+
+                foreach (FieldInfo field in candidate.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    toVisit.Enqueue(field.FieldType);
+                }
+            }
+        }
+
+        return graph;
+    }
+
+    private static bool HasSuffix(Type type, string suffix)
+    {
+        string name = type.Name;
+        int genericAritySeparator = name.IndexOf('`');
+        if (genericAritySeparator >= 0)
+        {
+            name = name[..genericAritySeparator];
+        }
+
+        return name.EndsWith(suffix, StringComparison.Ordinal);
+    }
+
+    private static IEnumerable<Type> UnwrapDataType(Type type)
+    {
+        if (type.IsByRef || type.IsPointer || type.IsArray)
+        {
+            Type? elementType = type.GetElementType();
+            if (elementType != null)
+            {
+                foreach (Type nested in UnwrapDataType(elementType))
+                {
+                    yield return nested;
+                }
+            }
+
+            yield break;
+        }
+
+        Type? nullableUnderlyingType = Nullable.GetUnderlyingType(type);
+        if (nullableUnderlyingType != null)
+        {
+            foreach (Type nested in UnwrapDataType(nullableUnderlyingType))
+            {
+                yield return nested;
+            }
+
+            yield break;
+        }
+
+        yield return type;
+
+        if (!type.IsGenericType)
+        {
+            yield break;
+        }
+
+        foreach (Type genericArgument in type.GetGenericArguments())
+        {
+            foreach (Type nested in UnwrapDataType(genericArgument))
+            {
+                yield return nested;
+            }
         }
     }
 

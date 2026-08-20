@@ -12,7 +12,7 @@ its requested postcondition holds, including an accepted idempotent no-op. It re
 for an expected domain rejection and must not apply the requested state change in that case. Invalid program
 state and infrastructure failures use exceptions. The result carries an integer code (0 = success) and a
 localized error message; it converts to `bool` implicitly. A query is a side-effect-free read; its handler
-returns the result.
+returns a query data object (QDO).
 
 ```csharp
 public sealed record MoveCommand(UnitId Unit, TilePoint Destination);
@@ -27,9 +27,11 @@ internal sealed class MoveCommandHandler : ICommandHandler<MoveCommand>
 
 public sealed record MovementRangeQuery(UnitId Unit);
 
-internal sealed class MovementRangeQueryHandler : IQueryHandler<MovementRangeQuery, MovementRange>
+public sealed record MovementRangeQdo(IReadOnlyList<TilePoint> Tiles);
+
+internal sealed class MovementRangeQueryHandler : IQueryHandler<MovementRangeQuery, MovementRangeQdo>
 {
-    public MovementRange Handle(MovementRangeQuery query) { /* compute */ }
+    public MovementRangeQdo Handle(MovementRangeQuery query) { /* compute */ }
 }
 ```
 
@@ -38,12 +40,31 @@ Register each as its closed interface so cross-assembly callers depend on the co
 
 ```csharp
 services.AddSingleton<ICommandHandler<MoveCommand>, MoveCommandHandler>();
-services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRange>, MovementRangeQueryHandler>();
+services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRangeQdo>, MovementRangeQueryHandler>();
 ```
 
 Queries are invoked directly — inject `IQueryHandler<TQuery, TResult>` where you need it and call `Handle`.
-Commands go through the dispatcher. A query result is a temporary snapshot: do not cache it across frames
-or expect it to update in place — re-query instead (see [architecture-concept.md](architecture-concept.md)).
+Commands go through the dispatcher.
+
+## Query data objects
+
+A QDO is a behaviourless record that describes the data requested from the Model. Its name ends with `Qdo`,
+and every query returns a named QDO even when it contains only one scalar value:
+
+```csharp
+public sealed record UnitCountQuery(Faction Faction);
+public sealed record UnitCountQdo(int Count);
+```
+
+QDOs are recursively read-only to consumers: expose get-only or `init` properties and read-only collection
+interfaces or immutable collections, not public setters, mutable collections, or arrays. This is consumer-side
+read-only access rather than a guarantee that the Model never reuses its backing storage. A QDO remains a
+temporary snapshot: do not cache it across frames or expect it to update in place — re-query instead.
+
+A QDO originates only in a query output graph. Do not use QDOs as command data, query input, or event data.
+Presenters and Views may accept and consume them normally. This keeps QDO distinct from the Model's internal
+representation and from DTOs used to batch data across remote calls. See
+[architecture-concept.md](architecture-concept.md) for the full boundary rules.
 
 Handlers return a `CommandResult`, never the entity they created. When a command creates something the
 caller must reference afterward, the **caller supplies the identity** — a client-generated id passed into

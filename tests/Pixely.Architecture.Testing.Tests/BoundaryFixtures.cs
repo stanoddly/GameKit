@@ -24,16 +24,16 @@ internal sealed class SpawnCommandHandler : ICommandHandler<SpawnCommand>
 // Query whose result type is public and reachable only via the (internal) handler's Handle return type.
 public record CountQuery(int Group);
 
-internal sealed class CountQueryHandler : IQueryHandler<CountQuery, CountResult>
+internal sealed class CountQueryHandler : IQueryHandler<CountQuery, CountQdo>
 {
     internal CountQueryHandler()
     {
     }
 
-    public CountResult Handle(CountQuery query) => new(query.Group);
+    public CountQdo Handle(CountQuery query) => new(query.Group);
 }
 
-public record CountResult(int Total);
+public record CountQdo(int Total);
 
 // Event, public — surface by virtue of deriving from DomainMessage.
 public sealed record ThingSpawnedEvent(int Id) : DomainMessage;

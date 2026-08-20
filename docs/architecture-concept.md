@@ -31,9 +31,16 @@ used as defined in RFC 2119.
   domain rejection and MUST NOT apply the requested state change in that case.
   Invalid program state and infrastructure failures use exceptions. The result is
   an acceptance outcome, not model data — reads are queries.
-- **Query** — a requested read. MUST NOT have side effects.
+- **Query** — a requested read. MUST NOT have side effects. Its result MUST be a
+  **query data object (QDO)**: a behaviourless, read-only snapshot whose type
+  ends with `Qdo`. Even a scalar result is wrapped in a named QDO so the Model
+  boundary remains explicit.
 - **Event** — notification of a discrete occurrence. MUST be raised by domain
   objects and consumed by Presenters.
+
+QDO is Pixely-specific terminology. It distinguishes a query projection from a
+data transfer object (DTO), whose original pattern addresses batching data for
+expensive remote calls; see Martin Fowler's [Local DTO](https://martinfowler.com/bliki/LocalDTO.html).
 
 ## Boundary contract vs. internal representation
 
@@ -86,13 +93,17 @@ Ask in order:
   published as events; expose it as a query. Only discrete transitions
   (`MovementStarted` / `MovementStopped`) SHOULD be published; in between, the
   Presenter re-queries each frame and feeds the View the fresh snapshot.
-- **Query results are temporary.** A result is a snapshot, valid only until the
-  next `Step(dt)` or handled command. Consumers MUST NOT cache it across frames
-  and MUST NOT expect it to update in place — the Model may be out-of-process
-  (e.g. a server) in the future, so results are plain data, not live handles
-  into Model memory. Hot-path queries MAY return pooled or reused buffers that
-  are only valid for the current frame; temporariness is the contract either
-  way.
+- **QDOs are query-output data.** A QDO MUST originate in a query output graph
+  and MUST NOT be part of a command, query input, or event data graph. Presenters
+  and Views MAY consume QDOs; the restriction applies to which side of the Model
+  boundary produces them. A QDO MUST be a behaviourless record and MUST be
+  recursively read-only to consumers.
+- **QDOs are temporary.** A QDO is a snapshot, valid only until the next
+  `Step(dt)` or handled command. Consumers MUST NOT cache it across frames and
+  MUST NOT expect it to update in place — the Model may be out-of-process (e.g.
+  a server) in the future, so QDOs are plain data, not live handles into Model
+  memory. Hot-path queries MAY return pooled or reused buffers that are only
+  valid for the current frame; temporariness is the contract either way.
 - **Commands aren't the simulation.** A `SimulationTickCommand` that mutates
   thousands of entities SHOULD be `Step(dt)` instead. Commands are intent;
   stepping is not.

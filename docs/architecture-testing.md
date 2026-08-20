@@ -1,15 +1,18 @@
 # Architecture testing
 
 `Pixely.Architecture.Testing` turns the boundary claims in [architecture-concept.md](architecture-concept.md)
-into reflection checks a game runs as ordinary unit tests. Roles are discovered through the
-`Pixely.Architecture` contracts (`ICommandHandler<>`, `IQueryHandler<,>`, `DomainMessage`), not
-name suffixes.
+into reflection checks a game runs as ordinary unit tests. Commands, queries, handlers, and events are discovered
+through the `Pixely.Architecture` contracts (`ICommandHandler<>`, `IQueryHandler<,>`, `DomainMessage`). QDO roots
+are discovered from query-handler result types; `Qdo` names are also scanned when the QDO convention is enabled
+so misplaced or orphaned QDOs can be reported.
 
 Both entry points are framework-agnostic: they return an `ArchitectureReport` (a `Violations`
 list, `IsValid`, and a formatted `ToString()`), so you assert with whatever test framework you use.
 
 ```csharp
-ArchitectureReport report = CqsConventions.Check(typeof(GameModule).Assembly);
+ArchitectureReport report = CqsConventions.Check(
+    options => options.RequireQdoSuffix(),
+    typeof(GameModule).Assembly);
 Assert.That(report.Violations, Is.Empty, report.ToString());
 ```
 
@@ -25,6 +28,7 @@ Assert.That(report.Violations, Is.Empty, report.ToString());
 - **Command handlers don't depend on other command handlers** — shared behaviour belongs in a domain
   service, not handler chaining.
 - **Query results are recursively readonly** — see below.
+- **QDO convention** — `RequireQdoSuffix()` enforces named query-output records and their placement.
 
 `CommandDispatcher`, `DomainEventDispatchHook`, and similar infrastructure are not discovered as handlers
 (they don't implement the handler interfaces), so they need no exclusion.
@@ -48,6 +52,27 @@ Non-public setters are allowed so the Model can construct and fill result instan
 (object initializers, mapping, deserialization) while consumers still cannot mutate them. This does
 not make a result a live handle — a query result is a temporary snapshot, never cached across frames
 (see [architecture-concept.md](architecture-concept.md)).
+
+### Query data objects
+
+Enable the QDO convention when checking the Model assemblies:
+
+```csharp
+ArchitectureReport report = CqsConventions.Check(
+    options => options.RequireQdoSuffix(),
+    typeof(GameModule).Assembly);
+```
+
+The convention enforces:
+
+- every `TResult` of `IQueryHandler<TQuery, TResult>` is a named type ending with `Qdo`; scalar and collection
+  results therefore require a named wrapper,
+- every type ending with `Qdo` is a behaviourless record and is recursively read-only to consumers,
+- every `Qdo` type belongs to a query output data graph, including QDOs nested inside another QDO, and
+- no `Qdo` type belongs to a command, query input, or event data graph.
+
+“Only query output” describes the Model boundary direction. Presenter and View methods may accept QDOs after a
+query produces them. Shared QDOs and QDOs nested within other QDOs are allowed.
 
 ## ModelBoundary
 
@@ -91,6 +116,7 @@ types are reachable through the contract rather than only through incidental ref
 public void CqsConventions_AreHeld()
 {
     ArchitectureReport report = CqsConventions.Check(
+        options => options.RequireQdoSuffix(),
         typeof(GameModule).Assembly, typeof(EditorModule).Assembly);
     Assert.That(report.Violations, Is.Empty, report.ToString());
 }

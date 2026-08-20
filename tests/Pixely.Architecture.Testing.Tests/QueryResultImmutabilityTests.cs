@@ -9,7 +9,7 @@ public sealed class QueryResultImmutabilityTests
     public void ReadonlyResults_IncludingInternalSetterAndReadOnlyCollections_AreClean()
     {
         ArchitectureReport report = CqsConventions.CheckTypes(
-            [typeof(GoodResultQueryHandler), typeof(InternalSetterQueryHandler)]);
+            [typeof(GoodQdoQueryHandler), typeof(InternalSetterQueryHandler)]);
 
         Assert.That(report.IsValid, Is.True, report.ToString());
     }
@@ -20,7 +20,7 @@ public sealed class QueryResultImmutabilityTests
         ArchitectureReport report = CqsConventions.CheckTypes([typeof(PublicSetterQueryHandler)]);
 
         Assert.That(report.Violations, Has.Exactly(1).Items);
-        Assert.That(report.Violations[0], Does.Contain(nameof(PublicSetterResult)).And.Contain("public setter"));
+        Assert.That(report.Violations[0], Does.Contain(nameof(PublicSetterQdo)).And.Contain("public setter"));
     }
 
     [Test]
@@ -29,7 +29,7 @@ public sealed class QueryResultImmutabilityTests
         ArchitectureReport report = CqsConventions.CheckTypes([typeof(ListQueryHandler)]);
 
         Assert.That(report.Violations, Has.Exactly(1).Items);
-        Assert.That(report.Violations[0], Does.Contain(nameof(ListResult)));
+        Assert.That(report.Violations[0], Does.Contain(nameof(ListQdo)));
     }
 
     [Test]
@@ -38,7 +38,7 @@ public sealed class QueryResultImmutabilityTests
         ArchitectureReport report = CqsConventions.CheckTypes([typeof(ArrayQueryHandler)]);
 
         Assert.That(report.Violations, Has.Exactly(1).Items);
-        Assert.That(report.Violations[0], Does.Contain(nameof(ArrayResult)).And.Contain("array"));
+        Assert.That(report.Violations[0], Does.Contain(nameof(ArrayQdo)).And.Contain("array"));
     }
 
     [Test]

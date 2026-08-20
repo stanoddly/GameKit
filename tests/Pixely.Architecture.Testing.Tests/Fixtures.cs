@@ -29,15 +29,61 @@ internal sealed class UnitsInRangeQueryHandler : IQueryHandler<UnitsInRangeQuery
     public int Handle(UnitsInRangeQuery query) => query.Radius;
 }
 
-internal sealed record UnitsInRangeResult(IReadOnlyList<int> UnitIds);
+internal sealed record UnitQdo(int UnitId);
 
-internal sealed class UnitsInRangeResultQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeResult>
+internal sealed record UnitsInRangeQdo(IReadOnlyList<UnitQdo> Units);
+
+internal sealed record PageQdo<T>(IReadOnlyList<T> Items);
+
+internal sealed class UnitsInRangeQdoQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeQdo>
 {
-    internal UnitsInRangeResultQueryHandler()
+    internal UnitsInRangeQdoQueryHandler()
     {
     }
 
-    public UnitsInRangeResult Handle(UnitsInRangeQuery query) => new([]);
+    public UnitsInRangeQdo Handle(UnitsInRangeQuery query) => new([]);
+}
+
+internal sealed class PagedUnitsQueryHandler : IQueryHandler<UnitsInRangeQuery, PageQdo<UnitQdo>>
+{
+    internal PagedUnitsQueryHandler()
+    {
+    }
+
+    public PageQdo<UnitQdo> Handle(UnitsInRangeQuery query) => new([]);
+}
+
+internal sealed record OrphanQdo(int Value);
+
+internal sealed record QdoCommand(UnitQdo Unit);
+
+internal sealed class QdoCommandHandler : ICommandHandler<QdoCommand>
+{
+    internal QdoCommandHandler()
+    {
+    }
+
+    public CommandResult Handle(QdoCommand command) => CommandResult.Success;
+}
+
+internal sealed record QdoInputQuery(UnitQdo Unit);
+
+internal sealed class QdoInputQueryHandler : IQueryHandler<QdoInputQuery, UnitsInRangeQdo>
+{
+    internal QdoInputQueryHandler()
+    {
+    }
+
+    public UnitsInRangeQdo Handle(QdoInputQuery query) => new([]);
+}
+
+internal sealed record QdoEvent(UnitQdo Unit) : Pixely.Architecture.Events.DomainMessage;
+
+internal sealed record MutableQdo
+{
+    public int Value { get; set; }
+
+    public int Increment() => Value + 1;
 }
 
 // Deliberate violations, each isolated so a single rule fires.
