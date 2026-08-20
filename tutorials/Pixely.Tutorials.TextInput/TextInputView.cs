@@ -1,3 +1,4 @@
+using System.Globalization;
 using Pixely.Gpu;
 using Pixely.Input;
 using Pixely.Pencuil;
@@ -12,8 +13,9 @@ public class TextInputViewModel : IPencuilViewModel
     public bool IsDirty { get; set; } = true;
 
     private string _name = "Player";
-    private string _width = "64";
-    private string _height = "48";
+    private int _width = 64;
+    private int _height = 48;
+    private float _scale = 1f;
 
     public TextInputViewModel(IClipboardService clipboardService)
     {
@@ -33,7 +35,7 @@ public class TextInputViewModel : IPencuilViewModel
         }
     }
 
-    public string Width
+    public int Width
     {
         get => _width;
         set
@@ -46,7 +48,7 @@ public class TextInputViewModel : IPencuilViewModel
         }
     }
 
-    public string Height
+    public int Height
     {
         get => _height;
         set
@@ -54,6 +56,19 @@ public class TextInputViewModel : IPencuilViewModel
             if (_height != value)
             {
                 _height = value;
+                IsDirty = true;
+            }
+        }
+    }
+
+    public float Scale
+    {
+        get => _scale;
+        set
+        {
+            if (_scale != value)
+            {
+                _scale = value;
                 IsDirty = true;
             }
         }
@@ -86,6 +101,9 @@ public class TextInputView : PencuilView<TextInputViewModel>
         int startX = pencil.Center.X - 120;
         int startY = 80;
 
+        pencil.MoveTo(startX, 40);
+        pencil.Text("Enter or click away commits; Escape cancels.", _labelFont, LabelColor);
+
         using (pencil.WithGap(12))
         using (pencil.WithDirection(LayoutDirection.Bottom))
         {
@@ -101,28 +119,40 @@ public class TextInputView : PencuilView<TextInputViewModel>
 
             pencil.Text("Width", _labelFont, LabelColor);
 
-            string width = ViewModel.Width;
-            if (pencil.TextField(1, ref width, _font, 240))
+            int width = ViewModel.Width;
+            if (pencil.NumberField(1, ref width, _font, 240, CultureInfo.InvariantCulture))
             {
                 ViewModel.Width = width;
             }
 
             pencil.Text("Height", _labelFont, LabelColor);
 
-            string height = ViewModel.Height;
-            if (pencil.TextField(2, ref height, _font, 240))
+            int height = ViewModel.Height;
+            if (pencil.NumberField(2, ref height, _font, 240, CultureInfo.InvariantCulture))
             {
                 ViewModel.Height = height;
             }
+
+            pencil.Text("Scale", _labelFont, LabelColor);
+
+            float scale = ViewModel.Scale;
+            if (pencil.NumberField(3, ref scale, _font, 240, CultureInfo.InvariantCulture))
+            {
+                ViewModel.Scale = scale;
+            }
         }
 
-        pencil.MoveTo(startX, startY + 280);
-        pencil.Text($"Name: {ViewModel.Name}  Size: {ViewModel.Width}x{ViewModel.Height}", _font, ValueColor);
+        pencil.MoveTo(startX, startY + 330);
+        string scaleText = ViewModel.Scale.ToString(CultureInfo.InvariantCulture);
+        pencil.Text(
+            $"Name: {ViewModel.Name}  Size: {ViewModel.Width}x{ViewModel.Height}  Scale: {scaleText}",
+            _font,
+            ValueColor);
 
         string clipboardText = ViewModel.ClipboardText;
         if (clipboardText.Length > 0)
         {
-            pencil.MoveTo(startX, startY + 310);
+            pencil.MoveTo(startX, startY + 360);
             pencil.Text($"Clipboard: {clipboardText}", _labelFont, LabelColor);
         }
     }

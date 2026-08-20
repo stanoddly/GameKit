@@ -117,8 +117,10 @@ public class Pencil
 
     public int? FocusedControlId { get; private set; }
     public bool HasFocus => FocusedControlId != null;
-    internal bool FocusClaimedThisFrame;
+    internal bool FocusedControlSeenThisFrame;
     internal TextFieldEditingState? EditingState;
+    private int? _pendingFocusedControlId;
+    private TextFieldEditingState? _pendingEditingState;
 
     public Pencil(
         IFontSystem fontSystem,
@@ -273,19 +275,49 @@ public class Pencil
 
     public bool IsFocused(int id) => FocusedControlId == id;
 
-    internal void Focus(int id, string initialValue)
+    internal void Focus(int id, string initialValue, Predicate<string>? acceptsEdit = null)
     {
         FocusedControlId = id;
-        FocusClaimedThisFrame = true;
-        EditingState = new TextFieldEditingState(initialValue);
+        FocusedControlSeenThisFrame = true;
+        EditingState = new TextFieldEditingState(initialValue, acceptsEdit);
         Invalidate();
     }
 
+    internal void RequestFocus(int id, string initialValue, Predicate<string>? acceptsEdit)
+    {
+        if (!HasFocus)
+        {
+            Focus(id, initialValue, acceptsEdit);
+            return;
+        }
+
+        if (IsFocused(id))
+        {
+            return;
+        }
+
+        _pendingFocusedControlId = id;
+        _pendingEditingState = new TextFieldEditingState(initialValue, acceptsEdit);
+        Invalidate();
+    }
+
+    internal bool HasPendingFocus => _pendingFocusedControlId != null;
+
     internal void Blur()
     {
-        FocusedControlId = null;
-        EditingState = null;
+        FocusedControlId = _pendingFocusedControlId;
+        EditingState = _pendingEditingState;
+        _pendingFocusedControlId = null;
+        _pendingEditingState = null;
         Invalidate();
+    }
+
+    internal void FinishBuild()
+    {
+        if (HasFocus && !FocusedControlSeenThisFrame)
+        {
+            Blur();
+        }
     }
 
     internal void InsertText(string text)
@@ -295,13 +327,7 @@ public class Pencil
             return;
         }
 
-        if (EditingState.HasSelection)
-        {
-            EditingState.DeleteSelection();
-        }
-
-        EditingState.Buffer = EditingState.Buffer.Insert(EditingState.CursorPosition, text);
-        EditingState.CursorPosition += text.Length;
+        EditingState.TryInsertText(text);
         Invalidate();
     }
 
@@ -317,33 +343,31 @@ public class Pencil
             case Scancode.Backspace:
                 if (EditingState.HasSelection)
                 {
-                    EditingState.DeleteSelection();
+                    EditingState.TryDeleteSelection();
                 }
                 else if (ctrl)
                 {
                     int target = FindWordBoundaryLeft(EditingState.Buffer, EditingState.CursorPosition);
-                    EditingState.Buffer = EditingState.Buffer.Remove(target, EditingState.CursorPosition - target);
-                    EditingState.CursorPosition = target;
+                    EditingState.TryRemove(target, EditingState.CursorPosition - target);
                 }
                 else if (EditingState.CursorPosition > 0)
                 {
-                    EditingState.Buffer = EditingState.Buffer.Remove(EditingState.CursorPosition - 1, 1);
-                    EditingState.CursorPosition--;
+                    EditingState.TryRemove(EditingState.CursorPosition - 1, 1);
                 }
                 break;
             case Scancode.Delete:
                 if (EditingState.HasSelection)
                 {
-                    EditingState.DeleteSelection();
+                    EditingState.TryDeleteSelection();
                 }
                 else if (ctrl)
                 {
                     int target = FindWordBoundaryRight(EditingState.Buffer, EditingState.CursorPosition);
-                    EditingState.Buffer = EditingState.Buffer.Remove(EditingState.CursorPosition, target - EditingState.CursorPosition);
+                    EditingState.TryRemove(EditingState.CursorPosition, target - EditingState.CursorPosition);
                 }
                 else if (EditingState.CursorPosition < EditingState.Buffer.Length)
                 {
-                    EditingState.Buffer = EditingState.Buffer.Remove(EditingState.CursorPosition, 1);
+                    EditingState.TryRemove(EditingState.CursorPosition, 1);
                 }
                 break;
             case Scancode.Left:
@@ -436,8 +460,11 @@ public class Pencil
             case Scancode.X:
                 if (ctrl && EditingState.HasSelection)
                 {
-                    _clipboardService.SetText(EditingState.GetSelectedText());
-                    EditingState.DeleteSelection();
+                    string selectedText = EditingState.GetSelectedText();
+                    if (EditingState.TryDeleteSelection())
+                    {
+                        _clipboardService.SetText(selectedText);
+                    }
                 }
                 else if (!ctrl)
                 {
@@ -450,12 +477,7 @@ public class Pencil
                     string? clipboardText = _clipboardService.GetText();
                     if (clipboardText != null)
                     {
-                        if (EditingState.HasSelection)
-                        {
-                            EditingState.DeleteSelection();
-                        }
-                        EditingState.Buffer = EditingState.Buffer.Insert(EditingState.CursorPosition, clipboardText);
-                        EditingState.CursorPosition += clipboardText.Length;
+                        EditingState.TryInsertText(clipboardText);
                     }
                 }
                 else
@@ -628,6 +650,64 @@ public static class PencilExtensions
 
     public static bool TextField(this Pencil pencil, int id, ref string value, Font font, int width)
     {
+        bool committed = TextField(
+            pencil,
+            id,
+            value,
+            font,
+            width,
+            null,
+            null,
+            out string committedValue);
+
+        if (committed)
+        {
+            value = committedValue;
+        }
+
+        return committed;
+    }
+
+    public static bool NumberField<T>(
+        this Pencil pencil,
+        int id,
+        ref T value,
+        Font font,
+        int width,
+        IFormatProvider? formatProvider = null)
+        where T : struct, INumber<T>
+    {
+        string formattedValue = value.ToString(null, formatProvider);
+        Predicate<string> acceptsEdit = text => CanEditNumber<T>(text, formatProvider);
+        Predicate<string> canCommit = text => TryParseFiniteNumber(text, formatProvider, out T _);
+        bool committed = TextField(
+            pencil,
+            id,
+            formattedValue,
+            font,
+            width,
+            acceptsEdit,
+            canCommit,
+            out string committedValue);
+
+        if (committed && TryParseFiniteNumber(committedValue, formatProvider, out T parsedValue))
+        {
+            value = parsedValue;
+        }
+
+        return committed;
+    }
+
+    private static bool TextField(
+        Pencil pencil,
+        int id,
+        string value,
+        Font font,
+        int width,
+        Predicate<string>? acceptsEdit,
+        Predicate<string>? canCommit,
+        out string committedValue)
+    {
         GuiStyle style = pencil.Style;
         int padding = style.TextPadding;
         Vector2Int textSize = pencil.MeasureText("Ay", font);
@@ -638,20 +718,39 @@ public static class PencilExtensions
 
         bool isFocused = pencil.IsFocused(id);
         bool committed = false;
+        committedValue = value;
 
         if (isFocused && pencil.EditingState != null)
         {
-            if (pencil.EditingState.Committed)
+            pencil.FocusedControlSeenThisFrame = true;
+            bool focusLost =
+                pencil.HasPendingFocus ||
+                (pencil.CursorJustReleased && !area.Intersects(pencil.CursorPosition));
+
+            if (pencil.EditingState.Canceled)
             {
-                value = pencil.EditingState.Buffer;
-                committed = true;
                 pencil.Blur();
                 isFocused = false;
             }
-            else if (pencil.EditingState.Canceled)
+            else if (pencil.EditingState.Committed || focusLost)
             {
-                pencil.Blur();
-                isFocused = false;
+                bool validCommit = canCommit == null || canCommit(pencil.EditingState.Buffer);
+                if (validCommit)
+                {
+                    committedValue = pencil.EditingState.Buffer;
+                    committed = true;
+                    pencil.Blur();
+                    isFocused = false;
+                }
+                else if (focusLost)
+                {
+                    pencil.Blur();
+                    isFocused = false;
+                }
+                else
+                {
+                    pencil.EditingState.Committed = false;
+                }
             }
         }
 
@@ -659,8 +758,8 @@ public static class PencilExtensions
         {
             if (!isFocused)
             {
-                pencil.Focus(id, value);
-                isFocused = true;
+                pencil.RequestFocus(id, value, acceptsEdit);
+                isFocused = pencil.IsFocused(id);
             }
         }
 
@@ -720,18 +819,39 @@ public static class PencilExtensions
 
         return committed;
     }
+
+    private static bool CanEditNumber<T>(string text, IFormatProvider? formatProvider)
+        where T : struct, INumber<T>
+    {
+        return
+            text.Length == 0 ||
+            TryParseFiniteNumber(text, formatProvider, out T _) ||
+            TryParseFiniteNumber(text + "0", formatProvider, out T _);
+    }
+
+    private static bool TryParseFiniteNumber<T>(
+        string text,
+        IFormatProvider? formatProvider,
+        out T value)
+        where T : struct, INumber<T>
+    {
+        return T.TryParse(text, formatProvider, out value) && T.IsFinite(value);
+    }
 }
 
 internal class TextFieldEditingState
 {
+    private readonly Predicate<string>? _acceptsEdit;
+
     public string Buffer;
     public int CursorPosition;
     public int? SelectionAnchor;
     public bool Committed;
     public bool Canceled;
 
-    public TextFieldEditingState(string initialValue)
+    public TextFieldEditingState(string initialValue, Predicate<string>? acceptsEdit = null)
     {
+        _acceptsEdit = acceptsEdit;
         Buffer = initialValue;
         CursorPosition = initialValue.Length;
     }
@@ -761,16 +881,39 @@ internal class TextFieldEditingState
         return Buffer.Substring(start, length);
     }
 
-    public void DeleteSelection()
+    public bool TryInsertText(string text)
+    {
+        (int start, int length) = GetSelectionRange();
+        return TryReplace(start, length, text);
+    }
+
+    public bool TryDeleteSelection()
     {
         (int start, int length) = GetSelectionRange();
         if (length == 0)
         {
-            return;
+            return false;
         }
 
-        Buffer = Buffer.Remove(start, length);
-        CursorPosition = start;
+        return TryReplace(start, length, string.Empty);
+    }
+
+    public bool TryRemove(int start, int length)
+    {
+        return TryReplace(start, length, string.Empty);
+    }
+
+    private bool TryReplace(int start, int length, string replacement)
+    {
+        string candidate = Buffer.Remove(start, length).Insert(start, replacement);
+        if (_acceptsEdit != null && !_acceptsEdit(candidate))
+        {
+            return false;
+        }
+
+        Buffer = candidate;
+        CursorPosition = start + replacement.Length;
         SelectionAnchor = null;
+        return true;
     }
 }

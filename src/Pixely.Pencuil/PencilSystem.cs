@@ -103,7 +103,8 @@ internal sealed class PencilSystem : IUpdatable
 
         if (needsBuild)
         {
-            _pencil.FocusClaimedThisFrame = false;
+            _pencil.FocusedControlSeenThisFrame = false;
+            _pencil.NeedsUpdate = false;
             _pencil.ResetInteractionTests();
 
             foreach (IPencuilView view in _views)
@@ -111,12 +112,7 @@ internal sealed class PencilSystem : IUpdatable
                 view.Build(_pencil);
             }
 
-            if (_pencil.CursorJustReleased && _pencil.HasFocus && !_pencil.FocusClaimedThisFrame)
-            {
-                _pencil.Blur();
-            }
-
-            _pencil.NeedsUpdate = false;
+            _pencil.FinishBuild();
             _pencil.InstructionsChanged = _pencil.HaveInstructionsChanged();
             _pencil.MarkInstructionsCompleted();
             _pencil.CycleInstructions();
