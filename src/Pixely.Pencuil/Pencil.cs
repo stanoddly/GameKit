@@ -708,12 +708,13 @@ public static class PencilExtensions
             NumberFieldValidators<T>.CanCommit,
             out string committedValue);
 
-        if (committed && TryParseFiniteNumber(committedValue, formatProvider, out T parsedValue))
+        if (!committed || !TryParseFiniteNumber(committedValue, formatProvider, out T parsedValue))
         {
-            value = parsedValue;
+            return false;
         }
 
-        return committed;
+        value = parsedValue;
+        return true;
     }
 
     private static bool TextField(
