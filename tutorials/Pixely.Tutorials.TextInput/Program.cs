@@ -10,7 +10,7 @@ static class Program
     {
         PixelyAppBuilder builder = new PixelyAppBuilder()
             .UseDefaultRendering(
-                new WindowConfig(Size: (640, 440), Title: "Text Input"))
+                new WindowConfig(Size: (640, 500), Title: "Text Input"))
             .UsePencuil()
             .AddContentFromProjectDirectory("../Pixely.Tutorials.Hotbar/Content");
 
