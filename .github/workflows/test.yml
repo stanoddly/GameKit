@@ -3,16 +3,10 @@ name: Test
 on:
   pull_request:
     branches: [main]
-  workflow_call:
-    inputs:
-      package_version:
-        required: false
-        type: string
-        default: 0.0.0-alpha.package-tests
 
 env:
-  PIXELY_PACKAGE_VERSION: ${{ inputs.package_version || '0.0.0-alpha.package-tests' }}
-  PIXELY_PACKAGE_ARTIFACT: Pixely-${{ inputs.package_version || '0.0.0-alpha.package-tests' }}
+  PIXELY_PACKAGE_VERSION: 0.0.0-alpha.package-tests
+  PIXELY_PACKAGE_ARTIFACT: Pixely-0.0.0-alpha.package-tests
 
 jobs:
   test:
@@ -125,3 +119,19 @@ jobs:
         env:
           PIXELY_PACKAGE_DIRECTORY: ${{ github.workspace }}/artifacts/package-under-test
         run: dotnet test tests/Pixely.Package.Tests/Pixely.Package.Tests.csproj --no-build --filter 'TestCategory=PackageIntegration' -p:TreatWarningsAsErrors=true
+
+  package-validation:
+    needs: package-consumer
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify package consumers
+        env:
+          PACKAGE_CONSUMER_RESULT: ${{ needs.package-consumer.result }}
+        shell: bash
+        run: |
+          if [[ "$PACKAGE_CONSUMER_RESULT" != "success" ]]; then
+            echo "Package consumer validation did not succeed."
+            exit 1
+          fi
