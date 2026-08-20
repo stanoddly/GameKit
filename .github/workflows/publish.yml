@@ -55,16 +55,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Selected Pixely $version from $GITHUB_SHA."
 
-  validate:
-    needs: prepare
-    uses: ./.github/workflows/validate-package.yml
-    with:
-      package_version: ${{ needs.prepare.outputs.version }}
-
   publish:
-    needs:
-      - prepare
-      - validate
+    needs: prepare
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -84,11 +76,20 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download validated package artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: Pixely-${{ env.PIXELY_VERSION }}
-          path: artifacts/packages
+      - name: Pack release
+        env:
+          REPOSITORY_COMMIT: ${{ github.sha }}
+          REPOSITORY_BRANCH: ${{ github.ref }}
+        run: >-
+          dotnet pack packaging/Pixely/Pixely.Package.csproj
+          --configuration Release
+          --output artifacts/packages
+          --property:PackageVersion=$PIXELY_VERSION
+          --property:Version=$PIXELY_VERSION
+          --property:RepositoryCommit=$REPOSITORY_COMMIT
+          --property:RepositoryBranch=$REPOSITORY_BRANCH
+          --property:ContinuousIntegrationBuild=true
+          -p:TreatWarningsAsErrors=true
 
       - name: Create version tag
         shell: bash
