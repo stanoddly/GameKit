@@ -275,19 +275,33 @@ public class Pencil
 
     public bool IsFocused(int id) => FocusedControlId == id;
 
-    internal void Focus(int id, string initialValue, Predicate<string>? acceptsEdit = null)
+    internal void Focus(
+        int id,
+        string initialValue,
+        IFormatProvider? formatProvider = null,
+        TextFieldValidator? acceptsEdit = null,
+        TextFieldValidator? canCommit = null)
     {
         FocusedControlId = id;
         FocusedControlSeenThisFrame = true;
-        EditingState = new TextFieldEditingState(initialValue, acceptsEdit);
+        EditingState = new TextFieldEditingState(
+            initialValue,
+            formatProvider,
+            acceptsEdit,
+            canCommit);
         Invalidate();
     }
 
-    internal void RequestFocus(int id, string initialValue, Predicate<string>? acceptsEdit)
+    internal void RequestFocus(
+        int id,
+        string initialValue,
+        IFormatProvider? formatProvider,
+        TextFieldValidator? acceptsEdit,
+        TextFieldValidator? canCommit)
     {
         if (!HasFocus)
         {
-            Focus(id, initialValue, acceptsEdit);
+            Focus(id, initialValue, formatProvider, acceptsEdit, canCommit);
             return;
         }
 
@@ -297,7 +311,11 @@ public class Pencil
         }
 
         _pendingFocusedControlId = id;
-        _pendingEditingState = new TextFieldEditingState(initialValue, acceptsEdit);
+        _pendingEditingState = new TextFieldEditingState(
+            initialValue,
+            formatProvider,
+            acceptsEdit,
+            canCommit);
         Invalidate();
     }
 
@@ -658,6 +676,7 @@ public static class PencilExtensions
             width,
             null,
             null,
+            null,
             out string committedValue);
 
         if (committed)
@@ -678,16 +697,15 @@ public static class PencilExtensions
         where T : struct, INumber<T>
     {
         string formattedValue = value.ToString(null, formatProvider);
-        Predicate<string> acceptsEdit = text => CanEditNumber<T>(text, formatProvider);
-        Predicate<string> canCommit = text => TryParseFiniteNumber(text, formatProvider, out T _);
         bool committed = TextField(
             pencil,
             id,
             formattedValue,
             font,
             width,
-            acceptsEdit,
-            canCommit,
+            formatProvider,
+            NumberFieldValidators<T>.AcceptsEdit,
+            NumberFieldValidators<T>.CanCommit,
             out string committedValue);
 
         if (committed && TryParseFiniteNumber(committedValue, formatProvider, out T parsedValue))
@@ -704,8 +722,9 @@ public static class PencilExtensions
         string value,
         Font font,
         int width,
-        Predicate<string>? acceptsEdit,
-        Predicate<string>? canCommit,
+        IFormatProvider? formatProvider,
+        TextFieldValidator? acceptsEdit,
+        TextFieldValidator? canCommit,
         out string committedValue)
     {
         GuiStyle style = pencil.Style;
@@ -734,8 +753,7 @@ public static class PencilExtensions
             }
             else if (pencil.EditingState.Committed || focusLost)
             {
-                bool validCommit = canCommit == null || canCommit(pencil.EditingState.Buffer);
-                if (validCommit)
+                if (pencil.EditingState.CanCommit())
                 {
                     committedValue = pencil.EditingState.Buffer;
                     committed = true;
@@ -758,7 +776,12 @@ public static class PencilExtensions
         {
             if (!isFocused)
             {
-                pencil.RequestFocus(id, value, acceptsEdit);
+                pencil.RequestFocus(
+                    id,
+                    value,
+                    formatProvider,
+                    acceptsEdit,
+                    canCommit);
                 isFocused = pencil.IsFocused(id);
             }
         }
@@ -837,11 +860,26 @@ public static class PencilExtensions
     {
         return T.TryParse(text, formatProvider, out value) && T.IsFinite(value);
     }
+
+    private static class NumberFieldValidators<T>
+        where T : struct, INumber<T>
+    {
+        internal static readonly TextFieldValidator AcceptsEdit =
+            static (text, formatProvider) => CanEditNumber<T>(text, formatProvider);
+
+        internal static readonly TextFieldValidator CanCommit =
+            static (text, formatProvider) =>
+                TryParseFiniteNumber(text, formatProvider, out T _);
+    }
 }
+
+internal delegate bool TextFieldValidator(string text, IFormatProvider? formatProvider);
 
 internal class TextFieldEditingState
 {
-    private readonly Predicate<string>? _acceptsEdit;
+    private readonly IFormatProvider? _formatProvider;
+    private readonly TextFieldValidator? _acceptsEdit;
+    private readonly TextFieldValidator? _canCommit;
 
     public string Buffer;
     public int CursorPosition;
@@ -849,9 +887,15 @@ internal class TextFieldEditingState
     public bool Committed;
     public bool Canceled;
 
-    public TextFieldEditingState(string initialValue, Predicate<string>? acceptsEdit = null)
+    public TextFieldEditingState(
+        string initialValue,
+        IFormatProvider? formatProvider = null,
+        TextFieldValidator? acceptsEdit = null,
+        TextFieldValidator? canCommit = null)
     {
+        _formatProvider = formatProvider;
         _acceptsEdit = acceptsEdit;
+        _canCommit = canCommit;
         Buffer = initialValue;
         CursorPosition = initialValue.Length;
     }
@@ -903,10 +947,15 @@ internal class TextFieldEditingState
         return TryReplace(start, length, string.Empty);
     }
 
+    public bool CanCommit()
+    {
+        return _canCommit == null || _canCommit(Buffer, _formatProvider);
+    }
+
     private bool TryReplace(int start, int length, string replacement)
     {
         string candidate = Buffer.Remove(start, length).Insert(start, replacement);
-        if (_acceptsEdit != null && !_acceptsEdit(candidate))
+        if (_acceptsEdit != null && !_acceptsEdit(candidate, _formatProvider))
         {
             return false;
         }
