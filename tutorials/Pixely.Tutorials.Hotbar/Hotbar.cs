@@ -74,32 +74,27 @@ public class Hotbar : PencuilView<HotbarViewModel>
     {
         int hoveredSlot = -1;
         Vector2Int hoveredPos = default;
+        int totalExtent = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
+        Vector2Int anchor = pencil.BottomCenter;
+        int hotbarX = anchor.X - totalExtent / 2;
+        int hotbarY = anchor.Y - SlotSize - 16;
+        pencil.MoveTo(hotbarX, hotbarY);
 
-        using (pencil.WithGap(SlotGap))
-        using (pencil.WithDirection(LayoutDirection.Right))
+        using (pencil.Row(gap: SlotGap))
         {
-            int totalExtent = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
-            Vector2Int anchor = pencil.BottomCenter;
-            pencil.MoveTo(anchor.X - totalExtent / 2, anchor.Y - SlotSize - 16);
-
             for (int i = 0; i < SlotCount; i++)
             {
-                Vector2Int slotPos = pencil.CurrentPosition;
-
                 Color color = i == ViewModel.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
 
-                CursorState state = pencil.Panel(SlotSize, SlotSize, color);
-
-                // Draw icon centered in slot (32x32 icon in 48x48 slot = 8px padding)
-                Vector2Int nextPos = pencil.CurrentPosition;
-                Vector2Int nextSize = pencil.CurrentSize;
-                const int iconPadding = (SlotSize - 32) / 2;
-                pencil.MoveTo(slotPos.X + iconPadding, slotPos.Y + iconPadding);
-                pencil.Image(_slotSprites[i], Colors.White);
-                pencil.CurrentPosition = nextPos;
-                pencil.CurrentSize = nextSize;
+                CursorState state;
+                using (pencil.Sized(SlotSize, SlotSize))
+                using (pencil.Overlay(Alignment.Center))
+                {
+                    state = pencil.Panel(SlotSize, SlotSize, color);
+                    pencil.Image(_slotSprites[i], Colors.White);
+                }
 
                 if (state == CursorState.Clicked)
                 {
@@ -108,7 +103,9 @@ public class Hotbar : PencuilView<HotbarViewModel>
                 if (state >= CursorState.Hovered)
                 {
                     hoveredSlot = i;
-                    hoveredPos = slotPos;
+                    hoveredPos = new Vector2Int(
+                        hotbarX + i * (SlotSize + SlotGap),
+                        hotbarY);
                 }
             }
         }
