@@ -106,6 +106,10 @@ Ask in order:
   pooled or reused buffers that are only valid for the current frame. This
   lifetime belongs to the query result; a BDO carried by a command or event MUST
   remain valid for that message's lifetime.
+- **Boundary mapping belongs to handlers.** Command and query handlers MUST own
+  mapping between BDOs and Model internals, but MAY delegate it to an internal
+  mapper. Domain objects MUST NOT depend on BDOs, and BDOs MUST NOT contain
+  conversion behaviour. Persistence mapping is a separate concern.
 - **Commands aren't the simulation.** A `SimulationTickCommand` that mutates
   thousands of entities SHOULD be `Step(dt)` instead. Commands are intent;
   stepping is not.
