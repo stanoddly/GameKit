@@ -82,6 +82,11 @@ public class RenderPass<TValidator> : IRenderPass
     public void BindVertexSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();
+
+        foreach (Texture texture in textures)
+        {
+            texture.ThrowIfDisposed();
+        }
         
         byte numSamplers = (byte)Math.Max(_vertexShaderBindingCounts.NumSamplers, slot + textures.Length);
         _vertexShaderBindingCounts = _vertexShaderBindingCounts with { NumSamplers = numSamplers };
@@ -105,6 +110,11 @@ public class RenderPass<TValidator> : IRenderPass
     public void BindFragmentSamplers(ReadOnlySpan<Texture> textures, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();
+
+        foreach (Texture texture in textures)
+        {
+            texture.ThrowIfDisposed();
+        }
         
         byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + textures.Length);
         _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };
@@ -136,6 +146,7 @@ public class RenderPass<TValidator> : IRenderPass
     public void BindFragmentSamplerArray(TextureArray textureArray, Sampler sampler, uint slot = 0)
     {
         ThrowIfDisposed();
+        textureArray.ThrowIfDisposed();
 
         byte numSamplers = (byte)Math.Max(_fragmentShaderBindingCounts.NumSamplers, slot + 1);
         _fragmentShaderBindingCounts = _fragmentShaderBindingCounts with { NumSamplers = numSamplers };

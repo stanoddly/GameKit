@@ -46,6 +46,14 @@ public abstract class Texture: IDisposable, IGpuMemorySized
         return new Vector4(u0, v0, u1, v1);
     }
 
+    internal void ThrowIfDisposed()
+    {
+        if (SdlGpuTexture.IsNull)
+        {
+            throw new ObjectDisposedException(nameof(Texture));
+        }
+    }
+
     public abstract void Dispose();
 }
 
