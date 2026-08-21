@@ -74,6 +74,18 @@ public class UserTexture: Texture
     }
 }
 
+internal sealed class BorrowedTexture : Texture
+{
+    internal BorrowedTexture(Texture owner) : base(owner.SdlGpuTexture, owner.Size, owner.Format, owner.SizeInBytes)
+    {
+    }
+
+    public override void Dispose()
+    {
+        SdlGpuTexture = Pointer<SDL_GPUTexture>.Null;
+    }
+}
+
 public class SwapchainTexture : Texture
 {
     internal SwapchainTexture(Pointer<SDL_GPUTexture> sdlGpuTexture, ShortSize size, TextureFormat format)
