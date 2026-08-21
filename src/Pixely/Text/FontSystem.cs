@@ -8,6 +8,7 @@ namespace Pixely.Text;
 
 internal class FontSystem: IFontSystem, IUpdatable
 {
+    // The cache owns the native texture. The weak borrowed handle tracks consumers because they may retain the Texture independently of its TextSpriteAsset.
     private readonly record struct CachedTextSprite(WeakReference<BorrowedTexture> BorrowedTexture, Texture Owner);
 
     private readonly GpuMemorySystem _gpuMemorySystem;
@@ -241,6 +242,7 @@ internal class FontSystem: IFontSystem, IUpdatable
     private void ReleaseCachedTextSprite((string text, Font font) key, CachedTextSprite cached)
     {
         _textSpriteCache.Remove(key);
+        // Invalidate a surviving borrowed handle before releasing the native texture it refers to.
         if (cached.BorrowedTexture.TryGetTarget(out BorrowedTexture? borrowedTexture))
         {
             borrowedTexture.Dispose();

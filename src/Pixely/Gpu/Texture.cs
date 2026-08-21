@@ -74,6 +74,7 @@ public class UserTexture: Texture
     }
 }
 
+// Shares a native texture handle while leaving ownership and native disposal with the source texture.
 internal sealed class BorrowedTexture : Texture
 {
     internal BorrowedTexture(Texture owner) : base(owner.SdlGpuTexture, owner.Size, owner.Format, owner.SizeInBytes)
@@ -82,6 +83,7 @@ internal sealed class BorrowedTexture : Texture
 
     public override void Dispose()
     {
+        // Invalidate only this borrowed handle; releasing the native texture remains the owner's responsibility.
         SdlGpuTexture = Pointer<SDL_GPUTexture>.Null;
     }
 }
