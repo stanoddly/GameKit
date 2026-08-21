@@ -84,7 +84,7 @@ public static class CqsConventions
         CheckHandlersHaveNoPublicConstructors(commandHandlers.Concat(queryHandlers), violations);
         CheckCommandHandlersDoNotDependOnHandlers(commandHandlers, violations);
         CheckQueryResultsAreReadonly(queryResultTypes, violations);
-        CheckQdoConventions(allTypes, commandTypes, queryTypes, queryResultTypes, eventTypes, options, violations);
+        CheckBdoConventions(allTypes, commandTypes, queryTypes, queryResultTypes, eventTypes, options, violations);
 
         return new ArchitectureReport(violations);
     }
@@ -173,7 +173,7 @@ public static class CqsConventions
         }
     }
 
-    private static void CheckQdoConventions(
+    private static void CheckBdoConventions(
         Type[] allTypes,
         Type[] commandTypes,
         Type[] queryTypes,
@@ -182,60 +182,45 @@ public static class CqsConventions
         CqsConventionsOptions options,
         List<string> violations)
     {
-        if (!options.RequiresQdoSuffix)
+        if (!options.RequiresBdoSuffix)
         {
             return;
         }
 
         foreach (Type resultType in resultTypes)
         {
-            if (HasSuffix(resultType, "Qdo"))
+            if (HasSuffix(resultType, "Bdo"))
             {
                 continue;
             }
 
             violations.Add(
-                $"Query result {resultType.FullName} must be a query data object ending with 'Qdo'.");
+                $"Query result {resultType.FullName} must be a boundary data object ending with 'Bdo'.");
         }
 
-        Type[] qdoTypes = allTypes
-            .Where(type => HasSuffix(type, "Qdo"))
+        Type[] bdoTypes = allTypes
+            .Where(type => HasSuffix(type, "Bdo"))
             .ToArray();
 
-        CheckDataRecords(qdoTypes, "QDO", violations);
-        CheckQdosAreReadonly(qdoTypes.Except(resultTypes), violations);
+        CheckDataRecords(bdoTypes, "BDO", violations);
+        CheckBdosAreReadonly(bdoTypes.Except(resultTypes), violations);
 
-        HashSet<Type> queryOutputGraph = DataGraph(resultTypes, allTypes);
-        foreach (Type qdoType in qdoTypes.Where(type => !queryOutputGraph.Contains(type)))
+        IEnumerable<Type> boundaryRoots = commandTypes.Concat(queryTypes).Concat(resultTypes).Concat(eventTypes);
+        HashSet<Type> boundaryGraph = DataGraph(boundaryRoots, allTypes);
+        foreach (Type bdoType in bdoTypes.Where(type => !boundaryGraph.Contains(type)))
         {
-            violations.Add($"QDO {qdoType.FullName} must belong to a query output graph.");
+            violations.Add($"BDO {bdoType.FullName} must belong to a Model boundary graph.");
         }
-
-        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(commandTypes, allTypes), "command", violations);
-        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(queryTypes, allTypes), "query input", violations);
-        CheckQdosAreAbsentFromGraph(qdoTypes, DataGraph(eventTypes, allTypes), "event", violations);
     }
 
-    private static void CheckQdosAreReadonly(IEnumerable<Type> qdoTypes, List<string> violations)
+    private static void CheckBdosAreReadonly(IEnumerable<Type> bdoTypes, List<string> violations)
     {
-        foreach (Type qdoType in qdoTypes)
+        foreach (Type bdoType in bdoTypes)
         {
-            if (!QueryResultRules.IsReadonly(qdoType, out string reason))
+            if (!QueryResultRules.IsReadonly(bdoType, out string reason))
             {
-                violations.Add($"QDO {qdoType.FullName} must be read-only to consumers: {reason}");
+                violations.Add($"BDO {bdoType.FullName} must be read-only to consumers: {reason}");
             }
-        }
-    }
-
-    private static void CheckQdosAreAbsentFromGraph(
-        Type[] qdoTypes,
-        HashSet<Type> graph,
-        string role,
-        List<string> violations)
-    {
-        foreach (Type qdoType in qdoTypes.Where(graph.Contains))
-        {
-            violations.Add($"QDO {qdoType.FullName} must not belong to a {role} graph; QDOs originate only from queries.");
         }
     }
 

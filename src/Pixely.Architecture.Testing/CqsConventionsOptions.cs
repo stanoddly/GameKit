@@ -5,15 +5,15 @@ namespace Pixely.Architecture.Testing;
 /// </summary>
 public sealed class CqsConventionsOptions
 {
-    internal bool RequiresQdoSuffix { get; private set; }
+    internal bool RequiresBdoSuffix { get; private set; }
 
     /// <summary>
-    /// Requires every query handler result type to be a query data object ending with <c>Qdo</c>, and verifies
-    /// that QDOs are behaviourless, read-only data records used only in query output graphs.
+    /// Requires every query handler result type to be a boundary data object ending with <c>Bdo</c>, and verifies
+    /// that BDOs are behaviourless, read-only data records used in Model boundary graphs.
     /// </summary>
-    public CqsConventionsOptions RequireQdoSuffix()
+    public CqsConventionsOptions RequireBdoSuffix()
     {
-        RequiresQdoSuffix = true;
+        RequiresBdoSuffix = true;
         return this;
     }
 }

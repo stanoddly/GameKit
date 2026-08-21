@@ -29,57 +29,81 @@ internal sealed class UnitsInRangeQueryHandler : IQueryHandler<UnitsInRangeQuery
     public int Handle(UnitsInRangeQuery query) => query.Radius;
 }
 
-internal sealed record UnitQdo(int UnitId);
+internal sealed record UnitBdo(int UnitId);
 
-internal sealed record UnitsInRangeQdo(IReadOnlyList<UnitQdo> Units);
+internal sealed record UnitsInRangeBdo(IReadOnlyList<UnitBdo> Units);
 
-internal sealed record PageQdo<T>(IReadOnlyList<T> Items);
+internal sealed record PageBdo<T>(IReadOnlyList<T> Items);
 
-internal sealed class UnitsInRangeQdoQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeQdo>
+internal sealed class UnitsInRangeBdoQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeBdo>
 {
-    internal UnitsInRangeQdoQueryHandler()
+    internal UnitsInRangeBdoQueryHandler()
     {
     }
 
-    public UnitsInRangeQdo Handle(UnitsInRangeQuery query) => new([]);
+    public UnitsInRangeBdo Handle(UnitsInRangeQuery query) => new([]);
 }
 
-internal sealed class PagedUnitsQueryHandler : IQueryHandler<UnitsInRangeQuery, PageQdo<UnitQdo>>
+internal sealed class PagedUnitsQueryHandler : IQueryHandler<UnitsInRangeQuery, PageBdo<UnitBdo>>
 {
     internal PagedUnitsQueryHandler()
     {
     }
 
-    public PageQdo<UnitQdo> Handle(UnitsInRangeQuery query) => new([]);
+    public PageBdo<UnitBdo> Handle(UnitsInRangeQuery query) => new([]);
 }
 
-internal sealed record OrphanQdo(int Value);
+internal sealed record OrphanBdo(int Value);
 
-internal sealed record QdoCommand(UnitQdo Unit);
+internal sealed record BdoCommand(UnitBdo Unit);
 
-internal sealed class QdoCommandHandler : ICommandHandler<QdoCommand>
+internal sealed class BdoCommandHandler : ICommandHandler<BdoCommand>
 {
-    internal QdoCommandHandler()
+    internal BdoCommandHandler()
     {
     }
 
-    public CommandResult Handle(QdoCommand command) => CommandResult.Success;
+    public CommandResult Handle(BdoCommand command) => CommandResult.Success;
 }
 
-internal sealed record QdoInputQuery(UnitQdo Unit);
+internal sealed record BdoInputQuery(UnitBdo Unit);
 
-internal sealed class QdoInputQueryHandler : IQueryHandler<QdoInputQuery, UnitsInRangeQdo>
+internal sealed class BdoInputQueryHandler : IQueryHandler<BdoInputQuery, UnitsInRangeBdo>
 {
-    internal QdoInputQueryHandler()
+    internal BdoInputQueryHandler()
     {
     }
 
-    public UnitsInRangeQdo Handle(QdoInputQuery query) => new([]);
+    public UnitsInRangeBdo Handle(BdoInputQuery query) => new([]);
 }
 
-internal sealed record QdoEvent(UnitQdo Unit) : Pixely.Architecture.Events.DomainMessage;
+internal sealed record BdoEvent(UnitBdo Unit) : Pixely.Architecture.Events.DomainMessage;
 
-internal sealed record MutableQdo
+internal sealed record SettingsBdo(int Volume);
+
+internal sealed record GetSettingsQuery;
+
+internal sealed class GetSettingsQueryHandler : IQueryHandler<GetSettingsQuery, SettingsBdo>
+{
+    internal GetSettingsQueryHandler()
+    {
+    }
+
+    public SettingsBdo Handle(GetSettingsQuery query) => new(100);
+}
+
+internal sealed record SaveSettingsCommand(SettingsBdo Settings);
+
+internal sealed class SaveSettingsCommandHandler : ICommandHandler<SaveSettingsCommand>
+{
+    internal SaveSettingsCommandHandler()
+    {
+    }
+
+    public CommandResult Handle(SaveSettingsCommand command) => CommandResult.Success;
+}
+
+internal sealed record MutableBdo
 {
     public int Value { get; set; }
 
