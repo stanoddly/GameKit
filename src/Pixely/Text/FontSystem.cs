@@ -8,8 +8,8 @@ namespace Pixely.Text;
 
 internal class FontSystem: IFontSystem, IUpdatable
 {
-    // The cache owns the native texture. The weak borrowed handle tracks consumers because they may retain the Texture independently of its TextSpriteAsset.
-    private readonly record struct CachedTextSprite(WeakReference<BorrowedTexture> BorrowedTexture, Texture Owner);
+    // The cache owns the native texture. Weak handles reuse its asset and track consumers that retain the Texture independently of the TextSpriteAsset.
+    private readonly record struct CachedTextSprite(WeakReference<TextSpriteAsset> TextSprite, WeakReference<BorrowedTexture> BorrowedTexture, Texture Owner);
 
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;
@@ -79,8 +79,15 @@ internal class FontSystem: IFontSystem, IUpdatable
         {
             if (cached.BorrowedTexture.TryGetTarget(out BorrowedTexture? cachedTexture) && !cachedTexture.IsDisposed)
             {
+                if (cached.TextSprite.TryGetTarget(out TextSpriteAsset? cachedTextSprite))
+                {
+                    return cachedTextSprite;
+                }
+
                 ShortSize cachedSize = cachedTexture.Size;
-                return new TextSpriteAsset(cachedTexture, new ShortRectangle(0, 0, cachedSize.Width, cachedSize.Height));
+                TextSpriteAsset textSprite = new(cachedTexture, new ShortRectangle(0, 0, cachedSize.Width, cachedSize.Height));
+                cached.TextSprite.SetTarget(textSprite);
+                return textSprite;
             }
 
             ReleaseCachedTextSprite(cacheKey, cached);
@@ -95,7 +102,7 @@ internal class FontSystem: IFontSystem, IUpdatable
             ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
             TextSpriteAsset textSprite = new(borrowedTexture, imageRegion);
 
-            _textSpriteCache[cacheKey] = new CachedTextSprite(new WeakReference<BorrowedTexture>(borrowedTexture), owner);
+            _textSpriteCache[cacheKey] = new CachedTextSprite(new WeakReference<TextSpriteAsset>(textSprite), new WeakReference<BorrowedTexture>(borrowedTexture), owner);
 
             return textSprite;
         }
