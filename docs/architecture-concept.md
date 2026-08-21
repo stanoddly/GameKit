@@ -31,9 +31,15 @@ used as defined in RFC 2119.
   domain rejection and MUST NOT apply the requested state change in that case.
   Invalid program state and infrastructure failures use exceptions. The result is
   an acceptance outcome, not model data — reads are queries.
-- **Query** — a requested read. MUST NOT have side effects.
+- **Query** — a requested read. MUST NOT have side effects. Its result MUST be a
+  **boundary data object (BDO)**: a behaviourless, recursively read-only data
+  contract whose type ends with `Bdo`. Even a scalar result is wrapped in a named
+  BDO so the Model boundary remains explicit.
 - **Event** — notification of a discrete occurrence. MUST be raised by domain
   objects and consumed by Presenters.
+
+BDO is Pixely-specific terminology for data in the Model boundary contract. It
+is independent of which boundary operation carries the data and its direction.
 
 ## Boundary contract vs. internal representation
 
@@ -86,13 +92,24 @@ Ask in order:
   published as events; expose it as a query. Only discrete transitions
   (`MovementStarted` / `MovementStopped`) SHOULD be published; in between, the
   Presenter re-queries each frame and feeds the View the fresh snapshot.
-- **Query results are temporary.** A result is a snapshot, valid only until the
-  next `Step(dt)` or handled command. Consumers MUST NOT cache it across frames
-  and MUST NOT expect it to update in place — the Model may be out-of-process
-  (e.g. a server) in the future, so results are plain data, not live handles
-  into Model memory. Hot-path queries MAY return pooled or reused buffers that
-  are only valid for the current frame; temporariness is the contract either
-  way.
+- **BDOs are role-neutral boundary data.** A BDO MUST belong to at least one
+  command, query input, query output, or event data graph. It MAY be shared
+  between graphs when they use the same data contract. For example, a settings
+  query MAY return `SettingsBdo`, which a save-settings command MAY accept. Its
+  name SHOULD describe the represented data rather than one use of it. A BDO
+  MUST be a behaviourless record and MUST be recursively read-only to consumers.
+- **Query results are temporary.** A BDO instance returned by a query is a
+  snapshot, valid only until the next `Step(dt)` or handled command. Consumers
+  MUST NOT cache it across frames and MUST NOT expect it to update in place —
+  the Model may be out-of-process (e.g. a server) in the future, so BDOs are
+  plain data, not live handles into Model memory. Hot-path queries MAY return
+  pooled or reused buffers that are only valid for the current frame. This
+  lifetime belongs to the query result; a BDO carried by a command or event MUST
+  remain valid for that message's lifetime.
+- **Boundary mapping belongs to handlers.** Command and query handlers MUST own
+  mapping between BDOs and Model internals, but MAY delegate it to an internal
+  mapper. Domain objects MUST NOT depend on BDOs, and BDOs MUST NOT contain
+  conversion behaviour. Persistence mapping is a separate concern.
 - **Commands aren't the simulation.** A `SimulationTickCommand` that mutates
   thousands of entities SHOULD be `Step(dt)` instead. Commands are intent;
   stepping is not.

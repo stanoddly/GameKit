@@ -35,10 +35,10 @@ public sealed class ModelBoundaryTests
     {
         List<string> violations = CheckReachability(DisallowAllOutsideSurface());
 
-        // SpawnRequest (via command property), CountResult (via query handler return), and the event must
+        // SpawnRequest (via command property), CountBdo (via query handler return), and the event must
         // not be reported. Only the genuine leak should remain.
         Assert.That(violations, Has.None.Contains(nameof(SpawnRequest)));
-        Assert.That(violations, Has.None.Contains(nameof(CountResult)));
+        Assert.That(violations, Has.None.Contains(nameof(CountBdo)));
         Assert.That(violations, Has.None.Contains(nameof(ThingSpawnedEvent)));
     }
 

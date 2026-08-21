@@ -29,15 +29,85 @@ internal sealed class UnitsInRangeQueryHandler : IQueryHandler<UnitsInRangeQuery
     public int Handle(UnitsInRangeQuery query) => query.Radius;
 }
 
-internal sealed record UnitsInRangeResult(IReadOnlyList<int> UnitIds);
+internal sealed record UnitBdo(int UnitId);
 
-internal sealed class UnitsInRangeResultQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeResult>
+internal sealed record UnitsInRangeBdo(IReadOnlyList<UnitBdo> Units);
+
+internal sealed record PageBdo<T>(IReadOnlyList<T> Items);
+
+internal sealed class UnitsInRangeBdoQueryHandler : IQueryHandler<UnitsInRangeQuery, UnitsInRangeBdo>
 {
-    internal UnitsInRangeResultQueryHandler()
+    internal UnitsInRangeBdoQueryHandler()
     {
     }
 
-    public UnitsInRangeResult Handle(UnitsInRangeQuery query) => new([]);
+    public UnitsInRangeBdo Handle(UnitsInRangeQuery query) => new([]);
+}
+
+internal sealed class PagedUnitsQueryHandler : IQueryHandler<UnitsInRangeQuery, PageBdo<UnitBdo>>
+{
+    internal PagedUnitsQueryHandler()
+    {
+    }
+
+    public PageBdo<UnitBdo> Handle(UnitsInRangeQuery query) => new([]);
+}
+
+internal sealed record OrphanBdo(int Value);
+
+internal sealed record BdoCommand(UnitBdo Unit);
+
+internal sealed class BdoCommandHandler : ICommandHandler<BdoCommand>
+{
+    internal BdoCommandHandler()
+    {
+    }
+
+    public CommandResult Handle(BdoCommand command) => CommandResult.Success;
+}
+
+internal sealed record BdoInputQuery(UnitBdo Unit);
+
+internal sealed class BdoInputQueryHandler : IQueryHandler<BdoInputQuery, UnitsInRangeBdo>
+{
+    internal BdoInputQueryHandler()
+    {
+    }
+
+    public UnitsInRangeBdo Handle(BdoInputQuery query) => new([]);
+}
+
+internal sealed record BdoEvent(UnitBdo Unit) : Pixely.Architecture.Events.DomainMessage;
+
+internal sealed record SettingsBdo(int Volume);
+
+internal sealed record GetSettingsQuery;
+
+internal sealed class GetSettingsQueryHandler : IQueryHandler<GetSettingsQuery, SettingsBdo>
+{
+    internal GetSettingsQueryHandler()
+    {
+    }
+
+    public SettingsBdo Handle(GetSettingsQuery query) => new(100);
+}
+
+internal sealed record SaveSettingsCommand(SettingsBdo Settings);
+
+internal sealed class SaveSettingsCommandHandler : ICommandHandler<SaveSettingsCommand>
+{
+    internal SaveSettingsCommandHandler()
+    {
+    }
+
+    public CommandResult Handle(SaveSettingsCommand command) => CommandResult.Success;
+}
+
+internal sealed record MutableBdo
+{
+    public int Value { get; set; }
+
+    public int Increment() => Value + 1;
 }
 
 // Deliberate violations, each isolated so a single rule fires.

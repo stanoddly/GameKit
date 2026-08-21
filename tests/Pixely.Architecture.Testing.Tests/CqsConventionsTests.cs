@@ -13,24 +13,98 @@ public sealed class CqsConventionsTests
     }
 
     [Test]
-    public void RequireQueryResultSuffix_WithResultType_HasNoViolations()
+    public void RequireBdoSuffix_WithBdoGraph_HasNoViolations()
     {
         ArchitectureReport report = CqsConventions.CheckTypes(
-            [typeof(UnitsInRangeResultQueryHandler)],
-            options => options.RequireQueryResultSuffix());
+            [typeof(UnitsInRangeQuery), typeof(UnitsInRangeBdo), typeof(UnitBdo), typeof(UnitsInRangeBdoQueryHandler)],
+            options => options.RequireBdoSuffix());
 
         Assert.That(report.IsValid, Is.True, report.ToString());
     }
 
     [Test]
-    public void RequireQueryResultSuffix_WithScalarResult_IsReported()
+    public void RequireBdoSuffix_WithGenericBdo_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(UnitsInRangeQuery), typeof(PageBdo<>), typeof(UnitBdo), typeof(PagedUnitsQueryHandler)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithScalarResult_IsReported()
     {
         ArchitectureReport report = CqsConventions.CheckTypes(
             [typeof(UnitsInRangeQueryHandler)],
-            options => options.RequireQueryResultSuffix());
+            options => options.RequireBdoSuffix());
 
         Assert.That(report.Violations, Has.Exactly(1).Items);
-        Assert.That(report.Violations[0], Does.Contain("System.Int32").And.Contain("ending with 'Result'"));
+        Assert.That(report.Violations[0], Does.Contain("System.Int32").And.Contain("ending with 'Bdo'"));
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithOrphanBdo_IsReported()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(OrphanBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.Violations, Has.Exactly(1).Items);
+        Assert.That(report.Violations[0], Does.Contain(nameof(OrphanBdo)).And.Contain("Model boundary graph"));
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithBdoInCommandGraph_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(BdoCommandHandler), typeof(BdoCommand), typeof(UnitBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithBdoSharedByQueryOutputAndCommandInput_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(GetSettingsQueryHandler), typeof(GetSettingsQuery), typeof(SaveSettingsCommandHandler), typeof(SaveSettingsCommand), typeof(SettingsBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithBdoInQueryInputGraph_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(BdoInputQueryHandler), typeof(BdoInputQuery), typeof(UnitsInRangeBdo), typeof(UnitBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithBdoInEventGraph_HasNoViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(BdoEvent), typeof(UnitBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.IsValid, Is.True, report.ToString());
+    }
+
+    [Test]
+    public void RequireBdoSuffix_WithMutableOrphanBdo_ReportsReadOnlyAndOriginViolations()
+    {
+        ArchitectureReport report = CqsConventions.CheckTypes(
+            [typeof(MutableBdo)],
+            options => options.RequireBdoSuffix());
+
+        Assert.That(report.Violations, Has.Exactly(3).Items);
+        Assert.That(report.Violations, Has.Some.Contains(nameof(MutableBdo)).And.Contains("custom methods"));
+        Assert.That(report.Violations, Has.Some.Contains(nameof(MutableBdo)).And.Contains("read-only to consumers"));
+        Assert.That(report.Violations, Has.Some.Contains(nameof(MutableBdo)).And.Contains("Model boundary graph"));
     }
 
     [Test]
@@ -84,5 +158,17 @@ public sealed class CqsConventionsTests
 
         Assert.That(report.IsValid, Is.False);
         Assert.That(report.Violations, Has.Some.Contains(nameof(PublicCommandHandler)));
+    }
+
+    [Test]
+    public void Check_WithBdoConvention_ScansAssembliesEndToEnd()
+    {
+        ArchitectureReport report = CqsConventions.Check(
+            options => options.RequireBdoSuffix(),
+            typeof(CqsConventionsTests).Assembly);
+
+        Assert.That(report.IsValid, Is.False);
+        Assert.That(report.Violations, Has.Some.Contains(nameof(OrphanBdo)).And.Contains("Model boundary graph"));
+        Assert.That(report.Violations, Has.None.Contains(nameof(UnitBdo)));
     }
 }

@@ -12,7 +12,7 @@ its requested postcondition holds, including an accepted idempotent no-op. It re
 for an expected domain rejection and must not apply the requested state change in that case. Invalid program
 state and infrastructure failures use exceptions. The result carries an integer code (0 = success) and a
 localized error message; it converts to `bool` implicitly. A query is a side-effect-free read; its handler
-returns the result.
+returns a boundary data object (BDO).
 
 ```csharp
 public sealed record MoveCommand(UnitId Unit, TilePoint Destination);
@@ -27,9 +27,11 @@ internal sealed class MoveCommandHandler : ICommandHandler<MoveCommand>
 
 public sealed record MovementRangeQuery(UnitId Unit);
 
-internal sealed class MovementRangeQueryHandler : IQueryHandler<MovementRangeQuery, MovementRange>
+public sealed record MovementRangeBdo(IReadOnlyList<TilePoint> Tiles);
+
+internal sealed class MovementRangeQueryHandler : IQueryHandler<MovementRangeQuery, MovementRangeBdo>
 {
-    public MovementRange Handle(MovementRangeQuery query) { /* compute */ }
+    public MovementRangeBdo Handle(MovementRangeQuery query) { /* compute */ }
 }
 ```
 
@@ -38,12 +40,31 @@ Register each as its closed interface so cross-assembly callers depend on the co
 
 ```csharp
 services.AddSingleton<ICommandHandler<MoveCommand>, MoveCommandHandler>();
-services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRange>, MovementRangeQueryHandler>();
+services.AddSingleton<IQueryHandler<MovementRangeQuery, MovementRangeBdo>, MovementRangeQueryHandler>();
 ```
 
 Queries are invoked directly — inject `IQueryHandler<TQuery, TResult>` where you need it and call `Handle`.
-Commands go through the dispatcher. A query result is a temporary snapshot: do not cache it across frames
-or expect it to update in place — re-query instead (see [architecture-concept.md](architecture-concept.md)).
+Commands go through the dispatcher.
+
+## Boundary data objects
+
+A BDO is a behaviourless, recursively read-only record in the Model boundary contract. Its name ends with
+`Bdo`, and every query returns a named BDO even when it contains only one scalar value:
+
+```csharp
+public sealed record UnitCountQuery(Faction Faction);
+public sealed record UnitCountBdo(int Count);
+```
+
+BDOs are recursively read-only to consumers: expose get-only or `init` properties and read-only collection
+interfaces or immutable collections, not public setters, mutable collections, or arrays. This is consumer-side
+read-only access rather than a guarantee that the Model never reuses its backing storage. A BDO instance returned
+by a query is a temporary snapshot: do not cache it across frames or expect it to update in place — re-query instead.
+
+A BDO must belong to at least one command, query input, query output, or event data graph. The same BDO may be
+shared between graphs when they use the same data contract. For example, a settings query may return
+`SettingsBdo`, which a save-settings command accepts. A BDO carried by a command or event must remain valid for
+that message's lifetime. See [architecture-concept.md](architecture-concept.md) for the full boundary rules.
 
 Handlers return a `CommandResult`, never the entity they created. When a command creates something the
 caller must reference afterward, the **caller supplies the identity** — a client-generated id passed into
