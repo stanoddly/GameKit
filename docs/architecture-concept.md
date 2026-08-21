@@ -40,7 +40,7 @@ used as defined in RFC 2119.
 
 QDO is Pixely-specific terminology. It distinguishes a query projection from a
 data transfer object (DTO), whose original pattern addresses batching data for
-expensive remote calls; see Martin Fowler's [Local DTO](https://martinfowler.com/bliki/LocalDTO.html).
+expensive remote calls.
 
 ## Boundary contract vs. internal representation
 
