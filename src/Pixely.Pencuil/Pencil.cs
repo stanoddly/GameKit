@@ -64,11 +64,9 @@ public class Pencil
 
     internal List<ColoredRectangleInstruction> _coloredRectangleInstructions = new();
     internal List<TextureRegionInstruction> _textureRegionInstructions = new();
-    private List<TextSpriteAsset> _textSpriteAssets = new();
 
     private List<ColoredRectangleInstruction> _previousColoredRectangleInstructions = new();
     private List<TextureRegionInstruction> _previousTextureRegionInstructions = new();
-    private List<TextSpriteAsset> _previousTextSpriteAssets = new();
 
     internal List<ColoredRectangleInstruction> CompletedColoredRectangleInstructions => _previousColoredRectangleInstructions;
     internal List<TextureRegionInstruction> CompletedTextureRegionInstructions => _previousTextureRegionInstructions;
@@ -259,7 +257,6 @@ public class Pencil
         Rectangle area = new Rectangle(position, size);
 
         AddTexture(sprite.Texture, area, uvs, (FColor)color);
-        _textSpriteAssets.Add(sprite);
 
         CurrentSize = size;
         CurrentPosition = DetermineNextPosition(size);
@@ -589,12 +586,9 @@ public class Pencil
             (_previousColoredRectangleInstructions, _coloredRectangleInstructions);
         (_textureRegionInstructions, _previousTextureRegionInstructions) =
             (_previousTextureRegionInstructions, _textureRegionInstructions);
-        (_textSpriteAssets, _previousTextSpriteAssets) =
-            (_previousTextSpriteAssets, _textSpriteAssets);
 
         _coloredRectangleInstructions.Clear();
         _textureRegionInstructions.Clear();
-        _textSpriteAssets.Clear();
         _depth = 0;
     }
 }

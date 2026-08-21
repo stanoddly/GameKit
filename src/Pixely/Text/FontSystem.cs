@@ -6,13 +6,13 @@ using SDL;
 
 namespace Pixely.Text;
 
-internal class FontSystem: IFontSystem, IUpdatable
+internal class FontSystem: IFontSystem
 {
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;
     private readonly List<Font> _fonts = new();
     private readonly Dictionary<(string path, ushort size, FontRasterizationMode rasterizationMode, FontHintingMode hintingMode), Font> _fontCache = new();
-    private readonly Dictionary<(string text, Font font), (WeakReference<TextSpriteAsset> WeakRef, Texture Texture)> _textSpriteCache = new();
+    private readonly Dictionary<(string text, Font font), TextSpriteAsset> _textSpriteCache = new();
 
     private FontSystem(GpuMemorySystem gpuMemorySystem, VirtualFileSystem fileSystem)
     {
@@ -71,20 +71,15 @@ internal class FontSystem: IFontSystem, IUpdatable
 
     public TextSpriteAsset CreateTextSprite(string text, Font font)
     {
-        var cacheKey = (text, font);
-        if (_textSpriteCache.TryGetValue(cacheKey, out var cached))
+        (string text, Font font) cacheKey = (text, font);
+        if (_textSpriteCache.TryGetValue(cacheKey, out TextSpriteAsset? cachedSprite))
         {
-            if (cached.WeakRef.TryGetTarget(out TextSpriteAsset? cachedSprite))
+            if (!cachedSprite.Texture.IsDisposed)
             {
                 return cachedSprite;
             }
 
-            ShortSize size = cached.Texture.Size;
-            ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
-            TextSpriteAsset textSprite = new(cached.Texture, imageRegion);
-
-            _textSpriteCache[cacheKey] = (new WeakReference<TextSpriteAsset>(textSprite), cached.Texture);
-            return textSprite;
+            _textSpriteCache.Remove(cacheKey);
         }
 
         Pointer<SDL_Surface> surface = RenderTextToSurface(text, font);
@@ -95,8 +90,7 @@ internal class FontSystem: IFontSystem, IUpdatable
             ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
             TextSpriteAsset textSprite = new(texture, imageRegion);
 
-            var newWeakRef = new WeakReference<TextSpriteAsset>(textSprite);
-            _textSpriteCache[cacheKey] = (newWeakRef, texture);
+            _textSpriteCache[cacheKey] = textSprite;
 
             return textSprite;
         }
@@ -199,36 +193,18 @@ internal class FontSystem: IFontSystem, IUpdatable
         }
     }
 
-    public void Update()
-    {
-        var keysToRemove = new List<(string text, Font font)>();
-        foreach (var kvp in _textSpriteCache)
-        {
-            if (!kvp.Value.WeakRef.TryGetTarget(out _))
-            {
-                kvp.Value.Texture.Dispose();
-                keysToRemove.Add(kvp.Key);
-            }
-        }
-
-        foreach (var key in keysToRemove)
-        {
-            _textSpriteCache.Remove(key);
-        }
-    }
-
     public void ReleaseTextSprite(TextSpriteAsset textSprite)
     {
-        var keysToRemove = new List<(string text, Font font)>();
-        foreach (var kvp in _textSpriteCache)
+        List<(string text, Font font)> keysToRemove = new();
+        foreach (KeyValuePair<(string text, Font font), TextSpriteAsset> cacheEntry in _textSpriteCache)
         {
-            if (kvp.Value.WeakRef.TryGetTarget(out TextSpriteAsset? target) && ReferenceEquals(target, textSprite))
+            if (ReferenceEquals(cacheEntry.Value, textSprite))
             {
-                keysToRemove.Add(kvp.Key);
+                keysToRemove.Add(cacheEntry.Key);
             }
         }
 
-        foreach (var key in keysToRemove)
+        foreach ((string text, Font font) key in keysToRemove)
         {
             _textSpriteCache.Remove(key);
         }
@@ -251,9 +227,9 @@ internal class FontSystem: IFontSystem, IUpdatable
 
     public void Dispose()
     {
-        foreach (var kvp in _textSpriteCache)
+        foreach (TextSpriteAsset textSprite in _textSpriteCache.Values)
         {
-            kvp.Value.Texture.Dispose();
+            textSprite.Dispose();
         }
         _textSpriteCache.Clear();
 

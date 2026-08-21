@@ -7,6 +7,7 @@ namespace Pixely.Gpu;
 public abstract class Texture: IDisposable, IGpuMemorySized
 {
     internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
+    internal bool IsDisposed => SdlGpuTexture.IsNull;
     public TextureFormat Format { get; }
     public ShortSize Size { get; }
     public long SizeInBytes { get; }
@@ -48,7 +49,7 @@ public abstract class Texture: IDisposable, IGpuMemorySized
 
     internal void ThrowIfDisposed()
     {
-        if (SdlGpuTexture.IsNull)
+        if (IsDisposed)
         {
             throw new ObjectDisposedException(nameof(Texture));
         }
