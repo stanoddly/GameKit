@@ -8,11 +8,14 @@ namespace Pixely.Text;
 
 internal class FontSystem: IFontSystem, IUpdatable
 {
+    // The cache owns the backing texture. Weak handles reuse its asset and track consumers that retain the Texture independently of the TextSpriteAsset.
+    private readonly record struct CachedTextSprite(WeakReference<TextSpriteAsset> TextSprite, WeakReference<BorrowedTexture> BorrowedTexture, Texture BackingTexture);
+
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;
     private readonly List<Font> _fonts = new();
     private readonly Dictionary<(string path, ushort size, FontRasterizationMode rasterizationMode, FontHintingMode hintingMode), Font> _fontCache = new();
-    private readonly Dictionary<(string text, Font font), (WeakReference<TextSpriteAsset> WeakRef, Texture Texture)> _textSpriteCache = new();
+    private readonly Dictionary<(string text, Font font), CachedTextSprite> _textSpriteCache = new();
 
     private FontSystem(GpuMemorySystem gpuMemorySystem, VirtualFileSystem fileSystem)
     {
@@ -71,32 +74,35 @@ internal class FontSystem: IFontSystem, IUpdatable
 
     public TextSpriteAsset CreateTextSprite(string text, Font font)
     {
-        var cacheKey = (text, font);
-        if (_textSpriteCache.TryGetValue(cacheKey, out var cached))
+        (string text, Font font) cacheKey = (text, font);
+        if (_textSpriteCache.TryGetValue(cacheKey, out CachedTextSprite cached))
         {
-            if (cached.WeakRef.TryGetTarget(out TextSpriteAsset? cachedSprite))
+            if (cached.BorrowedTexture.TryGetTarget(out BorrowedTexture? cachedTexture) && !cachedTexture.IsDisposed)
             {
-                return cachedSprite;
+                if (cached.TextSprite.TryGetTarget(out TextSpriteAsset? cachedTextSprite))
+                {
+                    return cachedTextSprite;
+                }
+
+                ShortSize cachedSize = cachedTexture.Size;
+                TextSpriteAsset textSprite = new(cachedTexture, new ShortRectangle(0, 0, cachedSize.Width, cachedSize.Height));
+                cached.TextSprite.SetTarget(textSprite);
+                return textSprite;
             }
 
-            ShortSize size = cached.Texture.Size;
-            ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
-            TextSpriteAsset textSprite = new(cached.Texture, imageRegion);
-
-            _textSpriteCache[cacheKey] = (new WeakReference<TextSpriteAsset>(textSprite), cached.Texture);
-            return textSprite;
+            ReleaseCachedTextSprite(cacheKey, cached);
         }
 
         Pointer<SDL_Surface> surface = RenderTextToSurface(text, font);
         try
         {
-            Texture texture = CreateTextureFromSurface(surface);
-            ShortSize size = texture.Size;
+            Texture backingTexture = CreateTextureFromSurface(surface);
+            BorrowedTexture borrowedTexture = new BorrowedTexture(backingTexture);
+            ShortSize size = borrowedTexture.Size;
             ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
-            TextSpriteAsset textSprite = new(texture, imageRegion);
+            TextSpriteAsset textSprite = new(borrowedTexture, imageRegion);
 
-            var newWeakRef = new WeakReference<TextSpriteAsset>(textSprite);
-            _textSpriteCache[cacheKey] = (newWeakRef, texture);
+            _textSpriteCache[cacheKey] = new CachedTextSprite(new WeakReference<TextSpriteAsset>(textSprite), new WeakReference<BorrowedTexture>(borrowedTexture), backingTexture);
 
             return textSprite;
         }
@@ -199,41 +205,56 @@ internal class FontSystem: IFontSystem, IUpdatable
         }
     }
 
-    public void Update()
-    {
-        var keysToRemove = new List<(string text, Font font)>();
-        foreach (var kvp in _textSpriteCache)
-        {
-            if (!kvp.Value.WeakRef.TryGetTarget(out _))
-            {
-                kvp.Value.Texture.Dispose();
-                keysToRemove.Add(kvp.Key);
-            }
-        }
-
-        foreach (var key in keysToRemove)
-        {
-            _textSpriteCache.Remove(key);
-        }
-    }
-
     public void ReleaseTextSprite(TextSpriteAsset textSprite)
     {
-        var keysToRemove = new List<(string text, Font font)>();
-        foreach (var kvp in _textSpriteCache)
+        (string text, Font font)? keyToRemove = null;
+        foreach (KeyValuePair<(string text, Font font), CachedTextSprite> cacheEntry in _textSpriteCache)
         {
-            if (kvp.Value.WeakRef.TryGetTarget(out TextSpriteAsset? target) && ReferenceEquals(target, textSprite))
+            if (cacheEntry.Value.BorrowedTexture.TryGetTarget(out BorrowedTexture? borrowedTexture) && ReferenceEquals(borrowedTexture, textSprite.Texture))
             {
-                keysToRemove.Add(kvp.Key);
+                keyToRemove = cacheEntry.Key;
+                break;
             }
         }
 
-        foreach (var key in keysToRemove)
+        if (keyToRemove is (string text, Font font) key && _textSpriteCache.TryGetValue(key, out CachedTextSprite cached))
         {
-            _textSpriteCache.Remove(key);
+            ReleaseCachedTextSprite(key, cached);
+            return;
         }
 
         textSprite.Dispose();
+    }
+
+    public void Update()
+    {
+        List<(string text, Font font)> keysToRemove = new();
+        foreach (KeyValuePair<(string text, Font font), CachedTextSprite> cacheEntry in _textSpriteCache)
+        {
+            if (!cacheEntry.Value.BorrowedTexture.TryGetTarget(out BorrowedTexture? borrowedTexture) || borrowedTexture.IsDisposed)
+            {
+                keysToRemove.Add(cacheEntry.Key);
+            }
+        }
+
+        foreach ((string text, Font font) key in keysToRemove)
+        {
+            if (_textSpriteCache.TryGetValue(key, out CachedTextSprite cached))
+            {
+                ReleaseCachedTextSprite(key, cached);
+            }
+        }
+    }
+
+    private void ReleaseCachedTextSprite((string text, Font font) key, CachedTextSprite cached)
+    {
+        _textSpriteCache.Remove(key);
+        // Invalidate a surviving borrowed handle before releasing the native texture it refers to.
+        if (cached.BorrowedTexture.TryGetTarget(out BorrowedTexture? borrowedTexture))
+        {
+            borrowedTexture.Dispose();
+        }
+        cached.BackingTexture.Dispose();
     }
 
     public void ReleaseFont(Font font)
@@ -251,9 +272,13 @@ internal class FontSystem: IFontSystem, IUpdatable
 
     public void Dispose()
     {
-        foreach (var kvp in _textSpriteCache)
+        foreach (CachedTextSprite cached in _textSpriteCache.Values)
         {
-            kvp.Value.Texture.Dispose();
+            if (cached.BorrowedTexture.TryGetTarget(out BorrowedTexture? borrowedTexture))
+            {
+                borrowedTexture.Dispose();
+            }
+            cached.BackingTexture.Dispose();
         }
         _textSpriteCache.Clear();
 

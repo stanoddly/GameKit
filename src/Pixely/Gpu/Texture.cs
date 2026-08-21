@@ -7,6 +7,7 @@ namespace Pixely.Gpu;
 public abstract class Texture: IDisposable, IGpuMemorySized
 {
     internal Pointer<SDL_GPUTexture> SdlGpuTexture { get; set; }
+    internal bool IsDisposed => SdlGpuTexture.IsNull;
     public TextureFormat Format { get; }
     public ShortSize Size { get; }
     public long SizeInBytes { get; }
@@ -46,6 +47,14 @@ public abstract class Texture: IDisposable, IGpuMemorySized
         return new Vector4(u0, v0, u1, v1);
     }
 
+    internal void ThrowIfDisposed()
+    {
+        if (IsDisposed)
+        {
+            throw new ObjectDisposedException(nameof(Texture));
+        }
+    }
+
     public abstract void Dispose();
 }
 
@@ -62,6 +71,20 @@ public class UserTexture: Texture
     public override void Dispose()
     {
         _gpuDevice.ReleaseTexture(this);
+    }
+}
+
+// Aliases the backing texture's native handle without taking ownership of it.
+internal sealed class BorrowedTexture : Texture
+{
+    internal BorrowedTexture(Texture backingTexture) : base(backingTexture.SdlGpuTexture, backingTexture.Size, backingTexture.Format, backingTexture.SizeInBytes)
+    {
+    }
+
+    public override void Dispose()
+    {
+        // Invalidate only this borrowed handle; the backing texture remains responsible for native disposal.
+        SdlGpuTexture = Pointer<SDL_GPUTexture>.Null;
     }
 }
 
