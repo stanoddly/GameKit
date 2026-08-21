@@ -8,8 +8,8 @@ namespace Pixely.Text;
 
 internal class FontSystem: IFontSystem, IUpdatable
 {
-    // The cache owns the native texture. Weak handles reuse its asset and track consumers that retain the Texture independently of the TextSpriteAsset.
-    private readonly record struct CachedTextSprite(WeakReference<TextSpriteAsset> TextSprite, WeakReference<BorrowedTexture> BorrowedTexture, Texture Owner);
+    // The cache owns the backing texture. Weak handles reuse its asset and track consumers that retain the Texture independently of the TextSpriteAsset.
+    private readonly record struct CachedTextSprite(WeakReference<TextSpriteAsset> TextSprite, WeakReference<BorrowedTexture> BorrowedTexture, Texture BackingTexture);
 
     private readonly GpuMemorySystem _gpuMemorySystem;
     private readonly VirtualFileSystem _fileSystem;
@@ -96,13 +96,13 @@ internal class FontSystem: IFontSystem, IUpdatable
         Pointer<SDL_Surface> surface = RenderTextToSurface(text, font);
         try
         {
-            Texture owner = CreateTextureFromSurface(surface);
-            BorrowedTexture borrowedTexture = new BorrowedTexture(owner);
+            Texture backingTexture = CreateTextureFromSurface(surface);
+            BorrowedTexture borrowedTexture = new BorrowedTexture(backingTexture);
             ShortSize size = borrowedTexture.Size;
             ShortRectangle imageRegion = new(0, 0, size.Width, size.Height);
             TextSpriteAsset textSprite = new(borrowedTexture, imageRegion);
 
-            _textSpriteCache[cacheKey] = new CachedTextSprite(new WeakReference<TextSpriteAsset>(textSprite), new WeakReference<BorrowedTexture>(borrowedTexture), owner);
+            _textSpriteCache[cacheKey] = new CachedTextSprite(new WeakReference<TextSpriteAsset>(textSprite), new WeakReference<BorrowedTexture>(borrowedTexture), backingTexture);
 
             return textSprite;
         }
@@ -254,7 +254,7 @@ internal class FontSystem: IFontSystem, IUpdatable
         {
             borrowedTexture.Dispose();
         }
-        cached.Owner.Dispose();
+        cached.BackingTexture.Dispose();
     }
 
     public void ReleaseFont(Font font)
@@ -278,7 +278,7 @@ internal class FontSystem: IFontSystem, IUpdatable
             {
                 borrowedTexture.Dispose();
             }
-            cached.Owner.Dispose();
+            cached.BackingTexture.Dispose();
         }
         _textSpriteCache.Clear();
 
