@@ -449,8 +449,7 @@ public class GpuDevice : IDisposable
         
         unsafe
         {
-            // TODO: this is silently crashing since probably not all resources are cleaned appropriately (?)
-            //SDL3.SDL_DestroyGPUDevice(SdlGpuDevice);
+            SDL3.SDL_DestroyGPUDevice(SdlGpuDevice);
             SdlGpuDevice = null;
         }
     }
