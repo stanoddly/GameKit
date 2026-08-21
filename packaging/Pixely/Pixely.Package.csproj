@@ -34,7 +34,7 @@
         <PackageReference Include="ppy.SDL3_mixer-CS" Version="2026.722.0" />
         <PackageReference Include="ppy.SDL3_ttf-CS" Version="2026.722.0" />
         <!-- Declare the dependency directly so Pixely.nuspec propagates its buildTransitive assets. -->
-        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[2026.14.1]" PrivateAssets="none" />
+        <PackageReference Include="SlangDxcBundle.Toolchain" Version="[2026.16.0]" PrivateAssets="none" />
     </ItemGroup>
 
     <ItemGroup>

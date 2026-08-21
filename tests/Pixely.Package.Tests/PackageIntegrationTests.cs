@@ -14,8 +14,6 @@ namespace Pixely.Package.Tests;
 public class PackageIntegrationTests
 {
     private const long NuGetPackageSizeLimitBytes = 250_000_000;
-    private const string SlangDxcToolchainVersion = "2026.14.1";
-
     private static readonly string[] RuntimeAssemblies =
     [
         "Pixely.AStar",
@@ -447,13 +445,10 @@ public class PackageIntegrationTests
 
     private string GetRestoredSlangDirectory(string platform)
     {
-        return Path.Combine(
-            _packagesDirectory,
-            "slangdxcbundle.toolchain",
-            SlangDxcToolchainVersion,
-            "tools",
-            "slang",
-            platform);
+        string packageDirectory = Path.Combine(_packagesDirectory, "slangdxcbundle.toolchain");
+        string[] restoredPackageDirectories = Directory.Exists(packageDirectory) ? Directory.GetDirectories(packageDirectory) : [];
+        Assert.That(restoredPackageDirectories, Has.Length.EqualTo(1), $"Expected exactly one restored SlangDxcBundle.Toolchain package in {packageDirectory}.");
+        return Path.Combine(restoredPackageDirectories.Single(), "tools", "slang", platform);
     }
 
     private string GetConsumerDirectory(string name)
