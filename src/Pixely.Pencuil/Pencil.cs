@@ -162,7 +162,7 @@ public partial class Pencil
             }
         }
 
-        return IsOverLayoutInteractiveArea(position);
+        return false;
     }
 
     public void AddRectangle(Rectangle rectangle, Color color)
@@ -253,22 +253,11 @@ public partial class Pencil
         TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
         Vector4 uvs = sprite.CalculateTextureRegionUVs();
         Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
-        if (TryAddLayoutTexture(
-            size,
-            sprite.Texture,
-            uvs,
-            (FColor)color))
-        {
-            return;
-        }
-
-        Vector2Int position = CurrentPosition;
+        Vector2Int position = BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
 
         AddTexture(sprite.Texture, area, uvs, (FColor)color);
-
-        CurrentSize = size;
-        CurrentPosition = DetermineNextPosition(size);
+        EndLayoutElement(position, size);
     }
 
     public Vector2Int MeasureText(string text, Font font)
@@ -346,7 +335,7 @@ public partial class Pencil
             Blur();
         }
 
-        CompleteLayoutBuild();
+        ValidateLayoutBuild();
     }
 
     internal void InsertText(string text)
@@ -584,7 +573,7 @@ public partial class Pencil
         _hoverInTests.Clear();
         _hoverOutTests.Clear();
         _clickTests.Clear();
-        ResetLayoutBuild();
+        ValidateLayoutBuild();
     }
 
     internal void MarkInstructionsCompleted()
@@ -610,58 +599,28 @@ public static class PencilExtensions
     public static void Image(this Pencil pencil, SpriteAsset sprite, Color tint)
     {
         Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
-        if (pencil.TryAddLayoutTexture(
-            size,
-            sprite.Texture,
-            sprite.CalculateTextureRegionUVs(),
-            (FColor)tint))
-        {
-            return;
-        }
-
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
     }
 
     public static void Image(this Pencil pencil, SpriteAsset sprite, int width, int height, Color tint)
     {
         Vector2Int size = new Vector2Int(width, height);
-        if (pencil.TryAddLayoutTexture(
-            size,
-            sprite.Texture,
-            sprite.CalculateTextureRegionUVs(),
-            (FColor)tint))
-        {
-            return;
-        }
-
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
     }
 
     public static CursorState Panel(this Pencil pencil, int width, int height, Color color)
     {
         Vector2Int size = new Vector2Int(width, height);
-        if (pencil.TryAddLayoutRectangle(
-            size,
-            color,
-            true,
-            out CursorState cursorState))
-        {
-            return cursorState;
-        }
-
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddRectangle(area, color);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
 
         pencil.AddHoverTest(area);
         pencil.AddHoverInTest(area);
@@ -679,19 +638,9 @@ public static class PencilExtensions
     public static void Rectangle(this Pencil pencil, int width, int height, Color color)
     {
         Vector2Int size = new(width, height);
-        if (pencil.TryAddLayoutRectangle(
-            size,
-            color,
-            false,
-            out CursorState _))
-        {
-            return;
-        }
-
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         pencil.AddRectangle(new Rectangle(position, size), color);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
     }
 
     public static CursorState Button(this Pencil pencil, string text, Font font)

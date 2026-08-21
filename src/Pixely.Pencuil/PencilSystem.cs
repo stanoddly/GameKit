@@ -109,15 +109,7 @@ internal sealed class PencilSystem : IUpdatable
 
             foreach (IPencuilView view in _views)
             {
-                _pencil.BeginLayoutView(view);
-                try
-                {
-                    view.Build(_pencil);
-                }
-                finally
-                {
-                    _pencil.EndLayoutView(view);
-                }
+                view.Build(_pencil);
             }
 
             _pencil.FinishBuild();

@@ -84,6 +84,7 @@ public class Hotbar : PencuilView<HotbarViewModel>
         {
             for (int i = 0; i < SlotCount; i++)
             {
+                Vector2Int slotPosition = pencil.CurrentPosition;
                 Color color = i == ViewModel.SelectedSlot ? SelectedColor
                     : i == _hoveredSlot ? HoverColor
                     : SlotColor;
@@ -103,9 +104,7 @@ public class Hotbar : PencuilView<HotbarViewModel>
                 if (state >= CursorState.Hovered)
                 {
                     hoveredSlot = i;
-                    hoveredPos = new Vector2Int(
-                        hotbarX + i * (SlotSize + SlotGap),
-                        hotbarY);
+                    hoveredPos = slotPosition;
                 }
             }
         }

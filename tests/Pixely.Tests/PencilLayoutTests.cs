@@ -8,9 +8,9 @@ namespace Pixely.Tests;
 public sealed class PencilLayoutTests
 {
     [Test]
-    public void Row_WithNestedOverlay_ContributesArrangedBoundsToParent()
+    public void Row_WithNestedOverlay_ContributesBoundsToParent()
     {
-        Pencil pencil = CreatePencil(200, 100);
+        Pencil pencil = CreatePencil();
         pencil.MoveTo(10, 20);
 
         using (pencil.Row(gap: 4))
@@ -40,7 +40,7 @@ public sealed class PencilLayoutTests
     [Test]
     public void Padding_WithColumn_IncludesInsetsAndGap()
     {
-        Pencil pencil = CreatePencil(200, 100);
+        Pencil pencil = CreatePencil();
 
         using (pencil.Padding(5))
         using (pencil.Column(gap: 2))
@@ -62,38 +62,39 @@ public sealed class PencilLayoutTests
     }
 
     [Test]
-    public void Expanded_DistributesRemainingSpaceByFlex()
+    public void Sized_ContributesFixedBoundsToRow()
     {
-        Pencil pencil = CreatePencil(100, 20);
+        Pencil pencil = CreatePencil();
 
-        using (pencil.Sized(100, 20))
-        using (pencil.Row(gap: 10, crossAxisAlignment: CrossAxisAlignment.Stretch))
+        using (pencil.Row(gap: 4))
         {
-            using (pencil.Expanded())
+            using (pencil.Sized(30, 20))
+            using (pencil.Overlay())
             {
-                pencil.Rectangle(1, 1, Colors.White);
+                pencil.Rectangle(10, 5, Colors.White);
             }
 
-            using (pencil.Expanded(2))
-            {
-                pencil.Rectangle(1, 1, Colors.Black);
-            }
+            pencil.Rectangle(5, 5, Colors.Black);
         }
 
-        Assert.That(pencil._coloredRectangleInstructions.Select(instruction => instruction.Area), Is.EqualTo(new[]
+        Assert.Multiple(() =>
         {
-            new Rectangle(0, 0, 30, 20),
-            new Rectangle(40, 0, 60, 20)
-        }));
+            Assert.That(pencil.CurrentSize, Is.EqualTo(new Vector2Int(39, 20)));
+            Assert.That(pencil._coloredRectangleInstructions.Select(instruction => instruction.Area), Is.EqualTo(new[]
+            {
+                new Rectangle(0, 0, 10, 5),
+                new Rectangle(34, 0, 5, 5)
+            }));
+        });
     }
 
     [Test]
-    public void Align_CentersContentWithinSizedBounds()
+    public void Overlay_CentersControlsWithinSizedBounds()
     {
-        Pencil pencil = CreatePencil(100, 40);
+        Pencil pencil = CreatePencil();
 
         using (pencil.Sized(100, 40))
-        using (pencil.Align(Alignment.Center))
+        using (pencil.Overlay(Alignment.Center))
         {
             pencil.Rectangle(20, 10, Colors.White);
         }
@@ -102,85 +103,61 @@ public sealed class PencilLayoutTests
     }
 
     [Test]
-    public void Panel_UsesCompletedLayoutHitAreaOnNextBuild()
+    public void Panel_UsesCurrentLayoutAreaForInteraction()
     {
-        Pencil pencil = CreatePencil(100, 40);
-        object view = new();
-        pencil.CursorPosition = new Vector2Int(10, 10);
+        Pencil pencil = CreatePencil();
+        pencil.CursorPosition = new Vector2Int(15, 10);
+        pencil.MoveTo(10, 5);
 
-        CursorState initialState = BuildPanel(pencil, view);
-        pencil.CycleInstructions();
-        pencil.ResetInteractionTests();
-        CursorState nextState = BuildPanel(pencil, view);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(initialState, Is.EqualTo(CursorState.None));
-            Assert.That(nextState, Is.EqualTo(CursorState.Hovered));
-        });
-    }
-
-    [Test]
-    public void Panels_InDifferentViews_HaveIndependentGeneratedIdentity()
-    {
-        Pencil pencil = CreatePencil(100, 40);
-        object leftView = new();
-        object rightView = new();
-        BuildPanelAt(pencil, leftView, 0);
-        BuildPanelAt(pencil, rightView, 50);
-        pencil.FinishBuild();
-        pencil.CycleInstructions();
-        pencil.ResetInteractionTests();
-        pencil.CursorPosition = new Vector2Int(60, 10);
-
-        CursorState leftState = BuildPanelAt(pencil, leftView, 0);
-        CursorState rightState = BuildPanelAt(pencil, rightView, 50);
-        pencil.FinishBuild();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(leftState, Is.EqualTo(CursorState.None));
-            Assert.That(rightState, Is.EqualTo(CursorState.Hovered));
-        });
-    }
-
-    [Test]
-    public void LayoutBuild_AfterWarmup_DoesNotAllocateManagedMemory()
-    {
-        Pencil pencil = CreatePencil(100, 40);
-        BuildRectangles(pencil);
-        pencil.CycleInstructions();
-        pencil.ResetInteractionTests();
-        BuildRectangles(pencil);
-        pencil.CycleInstructions();
-        pencil.ResetInteractionTests();
-
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        BuildRectangles(pencil);
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-        Assert.That(allocated, Is.Zero);
-    }
-
-    private static CursorState BuildPanel(Pencil pencil, object view)
-    {
-        CursorState state = BuildPanelAt(pencil, view, 0);
-        pencil.FinishBuild();
-        return state;
-    }
-
-    private static CursorState BuildPanelAt(Pencil pencil, object view, int x)
-    {
-        pencil.BeginLayoutView(view);
-        pencil.MoveTo(x, 0);
         CursorState state;
         using (pencil.Sized(40, 20))
         using (pencil.Overlay())
         {
             state = pencil.Panel(40, 20, Colors.White);
         }
-        pencil.EndLayoutView(view);
-        return state;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(state, Is.EqualTo(CursorState.Hovered));
+            Assert.That(pencil.IsOverInteractiveArea(pencil.CursorPosition), Is.True);
+        });
+    }
+
+    [Test]
+    public void Rectangle_DoesNotCreateInteractiveArea()
+    {
+        Pencil pencil = CreatePencil();
+        pencil.CursorPosition = new Vector2Int(5, 5);
+
+        pencil.Rectangle(10, 10, Colors.White);
+
+        Assert.That(pencil.IsOverInteractiveArea(pencil.CursorPosition), Is.False);
+    }
+
+    [Test]
+    public void AlignedOverlay_WithoutBounds_IsRejected()
+    {
+        Pencil pencil = CreatePencil();
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => pencil.Overlay(Alignment.Center));
+
+        Assert.That(exception.Message, Is.EqualTo("An aligned Overlay requires bounds from a Sized or Padding scope."));
+    }
+
+    [Test]
+    public void LayoutBuild_AfterWarmup_DoesNotAllocateManagedMemory()
+    {
+        Pencil pencil = CreatePencil();
+        BuildRectangles(pencil);
+        pencil.CycleInstructions();
+        BuildRectangles(pencil);
+        pencil.CycleInstructions();
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        BuildRectangles(pencil);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.That(allocated, Is.Zero);
     }
 
     private static void BuildRectangles(Pencil pencil)
@@ -194,21 +171,16 @@ public sealed class PencilLayoutTests
         pencil.FinishBuild();
     }
 
-    private static Pencil CreatePencil(int width, int height)
+    private static Pencil CreatePencil()
     {
         Pencil pencil = new(new ThrowingFontSystem(), new TestClipboardService(), GuiStyles.Style);
-        pencil.UpdateViewport(width, height);
-        pencil.ResetInteractionTests();
+        pencil.UpdateViewport(200, 100);
         return pencil;
     }
 
     private sealed class ThrowingFontSystem : IFontSystem
     {
-        public Font Load(
-            string path,
-            ushort size,
-            FontRasterizationMode rasterizationMode = FontRasterizationMode.Blended,
-            FontHintingMode hintingMode = FontHintingMode.Normal) =>
+        public Font Load(string path, ushort size, FontRasterizationMode rasterizationMode = FontRasterizationMode.Blended, FontHintingMode hintingMode = FontHintingMode.Normal) =>
             throw new AssertionException("Font system should not be called.");
 
         public TextSpriteAsset CreateTextSprite(string text, Font font) =>
@@ -229,7 +201,10 @@ public sealed class PencilLayoutTests
     {
         public bool HasText => false;
 
-        public string? GetText() => null;
+        public string? GetText()
+        {
+            return null;
+        }
 
         public void SetText(string text)
         {
