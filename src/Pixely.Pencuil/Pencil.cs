@@ -55,7 +55,7 @@ public readonly struct GapDisposer : IDisposable
     public void Dispose() => _context.CurrentGap = _previousGap;
 }
 
-public class Pencil
+public partial class Pencil
 {
     private readonly IFontSystem _fontSystem;
     private readonly IClipboardService _clipboardService;
@@ -253,13 +253,11 @@ public class Pencil
         TextSpriteAsset sprite = _fontSystem.CreateTextSprite(text, font);
         Vector4 uvs = sprite.CalculateTextureRegionUVs();
         Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
-        Vector2Int position = CurrentPosition;
+        Vector2Int position = BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
 
         AddTexture(sprite.Texture, area, uvs, (FColor)color);
-
-        CurrentSize = size;
-        CurrentPosition = DetermineNextPosition(size);
+        EndLayoutElement(position, size);
     }
 
     public Vector2Int MeasureText(string text, Font font)
@@ -336,6 +334,8 @@ public class Pencil
         {
             Blur();
         }
+
+        ValidateLayoutBuild();
     }
 
     internal void InsertText(string text)
@@ -573,6 +573,7 @@ public class Pencil
         _hoverInTests.Clear();
         _hoverOutTests.Clear();
         _clickTests.Clear();
+        ValidateLayoutBuild();
     }
 
     internal void MarkInstructionsCompleted()
@@ -598,31 +599,28 @@ public static class PencilExtensions
     public static void Image(this Pencil pencil, SpriteAsset sprite, Color tint)
     {
         Vector2Int size = new Vector2Int(sprite.Size.X, sprite.Size.Y);
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
     }
 
     public static void Image(this Pencil pencil, SpriteAsset sprite, int width, int height, Color tint)
     {
         Vector2Int size = new Vector2Int(width, height);
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddTexture(sprite.Texture, area, sprite.CalculateTextureRegionUVs(), (FColor)tint);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
     }
 
     public static CursorState Panel(this Pencil pencil, int width, int height, Color color)
     {
         Vector2Int size = new Vector2Int(width, height);
-        Vector2Int position = pencil.CurrentPosition;
+        Vector2Int position = pencil.BeginLayoutElement(size);
         Rectangle area = new Rectangle(position, size);
         pencil.AddRectangle(area, color);
-        pencil.CurrentSize = size;
-        pencil.CurrentPosition = pencil.DetermineNextPosition(size);
+        pencil.EndLayoutElement(position, size);
 
         pencil.AddHoverTest(area);
         pencil.AddHoverInTest(area);
@@ -637,8 +635,22 @@ public static class PencilExtensions
         return pencil.CursorJustReleased ? CursorState.Clicked : CursorState.Hovered;
     }
 
+    public static void Rectangle(this Pencil pencil, int width, int height, Color color)
+    {
+        Vector2Int size = new(width, height);
+        Vector2Int position = pencil.BeginLayoutElement(size);
+        pencil.AddRectangle(new Rectangle(position, size), color);
+        pencil.EndLayoutElement(position, size);
+    }
+
     public static CursorState Button(this Pencil pencil, string text, Font font)
     {
+        if (pencil.IsLayoutActive)
+        {
+            throw new NotSupportedException(
+                "Button does not support layout scopes yet.");
+        }
+
         GuiStyle style = pencil.Style;
 
         Vector2Int size = pencil.MeasureText(text, font);
@@ -728,6 +740,12 @@ public static class PencilExtensions
         TextFieldValidator? canCommit,
         out string committedValue)
     {
+        if (pencil.IsLayoutActive)
+        {
+            throw new NotSupportedException(
+                "TextField and NumberField do not support layout scopes yet.");
+        }
+
         GuiStyle style = pencil.Style;
         int padding = style.TextPadding;
         Vector2Int textSize = pencil.MeasureText("Ay", font);
